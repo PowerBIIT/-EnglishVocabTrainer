@@ -3,7 +3,7 @@
 import { ArrowLeft, BookOpen, Volume2, Palette, Bot, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
-import { useVocabStore } from '@/lib/store';
+import { useVocabStore, useHydration } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 interface SelectProps {
@@ -77,9 +77,18 @@ function SettingRow({ label, description, children }: SettingRowProps) {
 }
 
 export default function SettingsPage() {
+  const hydrated = useHydration();
   const settings = useVocabStore((state) => state.settings);
   const updateSettings = useVocabStore((state) => state.updateSettings);
   const stats = useVocabStore((state) => state.stats);
+
+  if (!hydrated) {
+    return (
+      <div className="p-4 flex items-center justify-center min-h-screen">
+        <p className="text-slate-500">Ładowanie...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-6 max-w-lg mx-auto pb-24">
@@ -255,6 +264,26 @@ export default function SettingsPage() {
                   passingScore: v as 5 | 6 | 7 | 8,
                 })
               }
+            />
+          </SettingRow>
+
+          <SettingRow
+            label="Adaptacyjna trudność"
+            description="Dostosuj trudność do poziomu"
+          >
+            <Toggle
+              checked={settings.pronunciation.adaptiveDifficulty}
+              onChange={(v) => updateSettings('pronunciation', { adaptiveDifficulty: v })}
+            />
+          </SettingRow>
+
+          <SettingRow
+            label="Wskazówki fonemowe"
+            description="Pokaż porady o pozycji ust"
+          >
+            <Toggle
+              checked={settings.pronunciation.showPhonemeHints}
+              onChange={(v) => updateSettings('pronunciation', { showPhonemeHints: v })}
             />
           </SettingRow>
         </CardContent>

@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { QuizSession, QuizResults } from '@/components/quiz/Quiz';
-import { useVocabStore } from '@/lib/store';
+import { useVocabStore, useHydration } from '@/lib/store';
 import { VocabularyItem, QuizMode, QuizResult } from '@/types';
 import { cn, shuffleArray } from '@/lib/utils';
 
@@ -47,6 +47,7 @@ const quizModes: { id: QuizMode; label: string; icon: React.ReactNode; descripti
 ];
 
 export default function QuizPage() {
+  const hydrated = useHydration();
   const router = useRouter();
   const [sessionState, setSessionState] = useState<SessionState>('setup');
   const [selectedMode, setSelectedMode] = useState<QuizMode>('en_to_pl');
@@ -62,6 +63,14 @@ export default function QuizPage() {
   const incrementSessionCount = useVocabStore((state) => state.incrementSessionCount);
 
   const categories = getCategories();
+
+  if (!hydrated) {
+    return (
+      <div className="p-4 flex items-center justify-center min-h-screen">
+        <p className="text-slate-500">Ładowanie...</p>
+      </div>
+    );
+  }
 
   const startQuiz = () => {
     const count = settings.session.quizQuestionCount;

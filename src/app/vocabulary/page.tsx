@@ -15,11 +15,12 @@ import {
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { useVocabStore } from '@/lib/store';
+import { useVocabStore, useHydration } from '@/lib/store';
 import { VocabularyItem } from '@/types';
 import { cn, speak } from '@/lib/utils';
 
 export default function VocabularyPage() {
+  const hydrated = useHydration();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
   const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
@@ -32,6 +33,14 @@ export default function VocabularyPage() {
   const removeVocabulary = useVocabStore((state) => state.removeVocabulary);
 
   const categories = getCategories();
+
+  if (!hydrated) {
+    return (
+      <div className="p-4 flex items-center justify-center min-h-screen">
+        <p className="text-slate-500">Ładowanie...</p>
+      </div>
+    );
+  }
 
   // Filter vocabulary
   const filteredVocabulary = vocabulary.filter((word) => {

@@ -7,12 +7,13 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FlashcardSession } from '@/components/flashcard/Flashcard';
-import { useVocabStore } from '@/lib/store';
+import { useVocabStore, useHydration } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
 type SessionState = 'setup' | 'active' | 'complete';
 
 export default function FlashcardsPage() {
+  const hydrated = useHydration();
   const router = useRouter();
   const [sessionState, setSessionState] = useState<SessionState>('setup');
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
@@ -26,6 +27,14 @@ export default function FlashcardsPage() {
   const incrementSessionCount = useVocabStore((state) => state.incrementSessionCount);
 
   const categories = getCategories();
+
+  if (!hydrated) {
+    return (
+      <div className="p-4 flex items-center justify-center min-h-screen">
+        <p className="text-slate-500">Ładowanie...</p>
+      </div>
+    );
+  }
 
   const startSession = () => {
     const count = settings.session.flashcardCount;

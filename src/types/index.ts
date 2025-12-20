@@ -12,6 +12,34 @@ export interface VocabularyItem {
   source: 'manual' | 'photo' | 'ai_generated' | 'preset';
 }
 
+// Pronunciation attempt history
+export interface PronunciationAttempt {
+  id: string;
+  vocab_id: string;
+  timestamp: Date;
+  score: number;
+  recognizedText: string;
+  expectedWord: string;
+  errorPhonemes?: string[];
+  aiTip?: string;
+  phonemeType?: PhonemeType;
+}
+
+// Phoneme types for Polish learners
+export type PhonemeType =
+  | 'th_voiceless'    // /θ/ - think, bath
+  | 'th_voiced'       // /ð/ - this, that
+  | 'w_sound'         // /w/ - water, wine (vs Polish 'v')
+  | 'v_sound'         // /v/ - very, voice
+  | 'english_r'       // /r/ - red, very (vs Polish rolled r)
+  | 'schwa'           // /ə/ - about, the
+  | 'short_i'         // /ɪ/ - ship, bit
+  | 'long_ee'         // /iː/ - sheep, beat
+  | 'short_u'         // /ʊ/ - full, book
+  | 'long_oo'         // /uː/ - fool, boot
+  | 'ng_sound'        // /ŋ/ - sing, thing
+  | 'final_clusters'; // -sts, -sks, -ths
+
 // User progress for each vocabulary item
 export interface UserProgress {
   vocab_id: string;
@@ -19,9 +47,11 @@ export interface UserProgress {
   times_correct: number;
   times_wrong: number;
   avg_pronunciation_score: number;
+  pronunciation_attempts: number;
   last_seen: Date;
   next_review: Date;
   status: 'new' | 'learning' | 'mastered';
+  pronunciationHistory?: PronunciationAttempt[];
 }
 
 // Quiz types
@@ -52,12 +82,25 @@ export interface SessionSettings {
   repeatMistakes: boolean;
 }
 
+// Pronunciation focus mode
+export type PronunciationFocusMode =
+  | 'random'           // losowe słowa
+  | 'weak_words'       // słowa z niskim wynikiem wymowy
+  | 'new_words'        // nowe słowa
+  | 'phoneme_specific' // ćwiczenie konkretnego fonemu
+  | 'review';          // słowa do powtórki
+
 // Pronunciation settings
 export interface PronunciationSettings {
   voice: 'british' | 'american' | 'australian';
   speed: 0.7 | 1 | 1.2;
   autoPlay: boolean;
   passingScore: 5 | 6 | 7 | 8;
+  sessionLength: 5 | 10 | 15 | 20 | 'all';
+  focusMode: PronunciationFocusMode;
+  targetPhoneme?: PhonemeType;
+  adaptiveDifficulty: boolean;
+  showPhonemeHints: boolean;
 }
 
 // General settings
@@ -96,6 +139,13 @@ export interface UserStats {
   totalTimeSpent: number;
   lastSessionDate: Date | null;
   badges: Badge[];
+  // Pronunciation specific stats
+  pronunciationStreak: number;
+  longestPronunciationStreak: number;
+  totalPronunciationSessions: number;
+  averagePronunciationScore: number;
+  phonemeMastery: Partial<Record<PhonemeType, number>>; // 0-100% mastery per phoneme
+  lastPronunciationDate: Date | null;
 }
 
 // Badge types
@@ -134,4 +184,49 @@ export interface CategorySummary {
   learningWords: number;
   newWords: number;
   masteryPercentage: number;
+}
+
+// Phoneme drill structure
+export interface PhonemeDrill {
+  id: string;
+  phonemeType: PhonemeType;
+  phonemeSymbol: string;        // IPA symbol: /θ/, /ð/, etc.
+  nameEn: string;               // "voiceless th"
+  namePl: string;               // "bezdźwięczne th"
+  polishEquivalent?: string;    // closest Polish sound if any
+  commonMistake: string;        // what Poles typically say instead
+  instructionPl: string;        // how to make the sound
+  mouthTip: string;             // position of tongue, lips
+  minimalPairs: MinimalPair[];  // pairs to practice
+  practiceWords: DrillWord[];   // words to practice
+  difficulty: 'easy' | 'medium' | 'hard';
+}
+
+export interface MinimalPair {
+  word1: string;
+  phonetic1: string;
+  word2: string;
+  phonetic2: string;
+  meaningPl1: string;
+  meaningPl2: string;
+}
+
+export interface DrillWord {
+  word: string;
+  phonetic: string;
+  meaningPl: string;
+  phonemePosition: 'initial' | 'medial' | 'final';
+}
+
+// Pronunciation session result
+export interface PronunciationSessionResult {
+  sessionId: string;
+  startedAt: Date;
+  completedAt: Date;
+  focusMode: PronunciationFocusMode;
+  targetPhoneme?: PhonemeType;
+  totalWords: number;
+  averageScore: number;
+  attempts: PronunciationAttempt[];
+  xpEarned: number;
 }

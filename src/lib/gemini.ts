@@ -1,7 +1,7 @@
 // Gemini API Service Layer
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
-const DEFAULT_MODEL = 'gemini-1.5-flash';
+const DEFAULT_MODEL = 'gemini-2.0-flash';
 
 interface GeminiResponse {
   candidates?: {
@@ -122,23 +122,43 @@ export class GeminiService {
 // AI Prompts for different functions
 export const AI_PROMPTS = {
   evaluatePronunciation: (expected: string, phonetic: string, spoken: string) => `
-Jesteś nauczycielem angielskiego oceniającym wymowę polskiego ucznia.
+Jesteś ekspertem fonetyki angielskiej oceniającym wymowę POLSKIEGO ucznia.
 
 Słówko do wymówienia: "${expected}"
 Transkrypcja IPA: "${phonetic}"
 Uczeń powiedział (rozpoznane przez STT): "${spoken}"
 
-Oceń wymowę 1-10 biorąc pod uwagę:
-- Czy słowo jest rozpoznawalne
-- Czy kluczowe dźwięki są poprawne
-- Typowe błędy Polaków (th, w/v, r, schwa)
+ZADANIE: Przeprowadź szczegółową analizę fonetyczną.
+
+TYPOWE BŁĘDY POLAKÓW - szukaj ich aktywnie:
+1. /θ/ (th bezdźwięczne) - Polacy wymawiają jako "t" lub "f" (think → tink/fink)
+2. /ð/ (th dźwięczne) - Polacy wymawiają jako "d" lub "v" (this → dis/vis)
+3. /w/ - Polacy wymawiają jako "v" (water → vater, wine → vine)
+4. /r/ - Polacy używają r drżącego zamiast angielskiego retroflex
+5. /ə/ (schwa) - Polacy wymawiają pełne samogłoski zamiast zredukowanej szwy
+6. /ɪ/ vs /iː/ - Polacy nie rozróżniają ship/sheep
+7. /ʊ/ vs /uː/ - Polacy nie rozróżniają full/fool
+8. /ŋ/ - Polacy dodają twarde "g" (singing → singing-g)
+9. Końcowe zbitki spółgłosek (-sts, -sks) - Polacy upraszczają lub dodają samogłoskę
+
+OCENA (1-10):
+- 9-10: Wymowa natywna lub prawie natywna
+- 7-8: Dobra wymowa, drobne błędy nie wpływające na zrozumienie
+- 5-6: Zrozumiała, ale z wyraźnymi błędami
+- 3-4: Trudna do zrozumienia
+- 1-2: Niezrozumiała
 
 Odpowiedz TYLKO w formacie JSON (bez markdown, bez \`\`\`):
 {
   "score": <1-10>,
   "correct": <true jeśli score >= 7>,
-  "feedback": "<feedback po polsku, max 2 zdania>",
-  "tip": "<konkretna wskazówka fonetyczna, np. 'Dźwięk th - włóż język między zęby'>"
+  "feedback": "<feedback po polsku, max 2 zdania, zachęcający ton>",
+  "tip": "<KONKRETNA wskazówka JAK poprawić, np. 'Przy th włóż język między zęby i wydmuchuj powietrze'>",
+  "errorPhonemes": ["lista błędnych fonemów, np. 'th', 'w', 'schwa'"],
+  "phonemeAnalysis": [
+    {"phoneme": "<fonem IPA>", "correct": <true/false>, "issue": "<opis problemu jeśli błąd>"}
+  ],
+  "polishInterference": "<który polski nawyk spowodował błąd, jeśli wykryto>"
 }`,
 
   generateWords: (topic: string, count: number, level: string) => `
@@ -239,17 +259,35 @@ Odpowiedz po polsku w przyjaznym tonie, używaj emoji.`,
 
 // Helper to safely parse JSON from AI response
 export function parseAIResponse<T>(response: string): T {
-  // Remove markdown code blocks if present
   let cleaned = response.trim();
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.slice(7);
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.slice(3);
+
+  // Remove markdown code blocks (```json or ```)
+  cleaned = cleaned.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?\s*```$/, '');
+
+  // Handle cases where Gemini adds explanation text before/after JSON
+  // Find the first { and last } to extract just the JSON object
+  const firstBrace = cleaned.indexOf('{');
+  const lastBrace = cleaned.lastIndexOf('}');
+
+  if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.substring(firstBrace, lastBrace + 1);
   }
-  if (cleaned.endsWith('```')) {
-    cleaned = cleaned.slice(0, -3);
-  }
+
   cleaned = cleaned.trim();
 
-  return JSON.parse(cleaned);
+  if (!cleaned) {
+    throw new Error('Empty response after cleanup');
+  }
+
+  try {
+    return JSON.parse(cleaned);
+  } catch (parseError) {
+    // Log the problematic response for debugging
+    console.error('Failed to parse Gemini response as JSON:');
+    console.error('Original:', response);
+    console.error('Cleaned:', cleaned);
+    throw new Error(
+      `Invalid JSON response: ${parseError instanceof Error ? parseError.message : 'unknown error'}`
+    );
+  }
 }

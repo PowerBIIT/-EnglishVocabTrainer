@@ -1,0 +1,395 @@
+import { PhonemeDrill, PhonemeType } from '@/types';
+
+export const phonemeDrills: PhonemeDrill[] = [
+  // TH voiceless /θ/
+  {
+    id: 'th-voiceless',
+    phonemeType: 'th_voiceless',
+    phonemeSymbol: '/θ/',
+    nameEn: 'Voiceless TH',
+    namePl: 'Bezdźwięczne TH',
+    polishEquivalent: undefined,
+    commonMistake: 'Polacy często wymawiają jako "t" lub "f"',
+    instructionPl: 'Włóż język między zęby i wydmuchaj powietrze. Nie wibruj strunami głosowymi.',
+    mouthTip: 'Język między zębami, delikatnie dotyka górnych zębów. Powietrze przepływa wokół języka.',
+    difficulty: 'hard',
+    minimalPairs: [
+      { word1: 'think', phonetic1: '/θɪŋk/', word2: 'sink', phonetic2: '/sɪŋk/', meaningPl1: 'myśleć', meaningPl2: 'zlewozmywak' },
+      { word1: 'three', phonetic1: '/θriː/', word2: 'tree', phonetic2: '/triː/', meaningPl1: 'trzy', meaningPl2: 'drzewo' },
+      { word1: 'thin', phonetic1: '/θɪn/', word2: 'tin', phonetic2: '/tɪn/', meaningPl1: 'chudy', meaningPl2: 'cyna' },
+      { word1: 'path', phonetic1: '/pɑːθ/', word2: 'pass', phonetic2: '/pɑːs/', meaningPl1: 'ścieżka', meaningPl2: 'przepustka' },
+    ],
+    practiceWords: [
+      { word: 'think', phonetic: '/θɪŋk/', meaningPl: 'myśleć', phonemePosition: 'initial' },
+      { word: 'three', phonetic: '/θriː/', meaningPl: 'trzy', phonemePosition: 'initial' },
+      { word: 'through', phonetic: '/θruː/', meaningPl: 'przez', phonemePosition: 'initial' },
+      { word: 'thank', phonetic: '/θæŋk/', meaningPl: 'dziękować', phonemePosition: 'initial' },
+      { word: 'thought', phonetic: '/θɔːt/', meaningPl: 'myśl', phonemePosition: 'initial' },
+      { word: 'math', phonetic: '/mæθ/', meaningPl: 'matematyka', phonemePosition: 'final' },
+      { word: 'bath', phonetic: '/bɑːθ/', meaningPl: 'kąpiel', phonemePosition: 'final' },
+      { word: 'both', phonetic: '/bəʊθ/', meaningPl: 'oba', phonemePosition: 'final' },
+      { word: 'healthy', phonetic: '/ˈhelθi/', meaningPl: 'zdrowy', phonemePosition: 'medial' },
+      { word: 'nothing', phonetic: '/ˈnʌθɪŋ/', meaningPl: 'nic', phonemePosition: 'medial' },
+    ],
+  },
+
+  // TH voiced /ð/
+  {
+    id: 'th-voiced',
+    phonemeType: 'th_voiced',
+    phonemeSymbol: '/ð/',
+    nameEn: 'Voiced TH',
+    namePl: 'Dźwięczne TH',
+    polishEquivalent: undefined,
+    commonMistake: 'Polacy często wymawiają jako "d" lub "v"',
+    instructionPl: 'Tak samo jak bezdźwięczne TH, ale wibruj strunami głosowymi. Poczuj wibrację w gardle.',
+    mouthTip: 'Język między zębami, wibracja strun głosowych. Słyszalny dźwięk gardłowy.',
+    difficulty: 'hard',
+    minimalPairs: [
+      { word1: 'this', phonetic1: '/ðɪs/', word2: 'dis', phonetic2: '/dɪs/', meaningPl1: 'to/ten', meaningPl2: '(slang) obrażać' },
+      { word1: 'that', phonetic1: '/ðæt/', word2: 'dat', phonetic2: '/dæt/', meaningPl1: 'tamten', meaningPl2: '(slang) to' },
+      { word1: 'they', phonetic1: '/ðeɪ/', word2: 'day', phonetic2: '/deɪ/', meaningPl1: 'oni', meaningPl2: 'dzień' },
+      { word1: 'breathe', phonetic1: '/briːð/', word2: 'breed', phonetic2: '/briːd/', meaningPl1: 'oddychać', meaningPl2: 'hodować' },
+    ],
+    practiceWords: [
+      { word: 'this', phonetic: '/ðɪs/', meaningPl: 'to/ten', phonemePosition: 'initial' },
+      { word: 'that', phonetic: '/ðæt/', meaningPl: 'tamten', phonemePosition: 'initial' },
+      { word: 'the', phonetic: '/ðə/', meaningPl: 'określnik', phonemePosition: 'initial' },
+      { word: 'they', phonetic: '/ðeɪ/', meaningPl: 'oni', phonemePosition: 'initial' },
+      { word: 'there', phonetic: '/ðeə/', meaningPl: 'tam', phonemePosition: 'initial' },
+      { word: 'mother', phonetic: '/ˈmʌðə/', meaningPl: 'matka', phonemePosition: 'medial' },
+      { word: 'father', phonetic: '/ˈfɑːðə/', meaningPl: 'ojciec', phonemePosition: 'medial' },
+      { word: 'weather', phonetic: '/ˈweðə/', meaningPl: 'pogoda', phonemePosition: 'medial' },
+      { word: 'breathe', phonetic: '/briːð/', meaningPl: 'oddychać', phonemePosition: 'final' },
+      { word: 'with', phonetic: '/wɪð/', meaningPl: 'z', phonemePosition: 'final' },
+    ],
+  },
+
+  // W sound /w/
+  {
+    id: 'w-sound',
+    phonemeType: 'w_sound',
+    phonemeSymbol: '/w/',
+    nameEn: 'W sound',
+    namePl: 'Dźwięk W',
+    polishEquivalent: 'Podobne do polskiego "ł" ale krótsze',
+    commonMistake: 'Polacy często wymawiają jako "v" (water = vater)',
+    instructionPl: 'Zaokrąglij usta jak do "u", potem szybko przejdź do następnej samogłoski. Wargi muszą być zaokrąglone!',
+    mouthTip: 'Usta mocno zaokrąglone i wysunięte do przodu, jak przy dmuchaniu świeczki. Głos od razu.',
+    difficulty: 'medium',
+    minimalPairs: [
+      { word1: 'west', phonetic1: '/west/', word2: 'vest', phonetic2: '/vest/', meaningPl1: 'zachód', meaningPl2: 'kamizelka' },
+      { word1: 'wine', phonetic1: '/waɪn/', word2: 'vine', phonetic2: '/vaɪn/', meaningPl1: 'wino', meaningPl2: 'winorośl' },
+      { word1: 'wet', phonetic1: '/wet/', word2: 'vet', phonetic2: '/vet/', meaningPl1: 'mokry', meaningPl2: 'weterynarz' },
+      { word1: 'wail', phonetic1: '/weɪl/', word2: 'veil', phonetic2: '/veɪl/', meaningPl1: 'lament', meaningPl2: 'welon' },
+    ],
+    practiceWords: [
+      { word: 'water', phonetic: '/ˈwɔːtə/', meaningPl: 'woda', phonemePosition: 'initial' },
+      { word: 'window', phonetic: '/ˈwɪndəʊ/', meaningPl: 'okno', phonemePosition: 'initial' },
+      { word: 'work', phonetic: '/wɜːk/', meaningPl: 'praca', phonemePosition: 'initial' },
+      { word: 'world', phonetic: '/wɜːld/', meaningPl: 'świat', phonemePosition: 'initial' },
+      { word: 'want', phonetic: '/wɒnt/', meaningPl: 'chcieć', phonemePosition: 'initial' },
+      { word: 'away', phonetic: '/əˈweɪ/', meaningPl: 'z dala', phonemePosition: 'medial' },
+      { word: 'always', phonetic: '/ˈɔːlweɪz/', meaningPl: 'zawsze', phonemePosition: 'medial' },
+      { word: 'between', phonetic: '/bɪˈtwiːn/', meaningPl: 'pomiędzy', phonemePosition: 'medial' },
+      { word: 'question', phonetic: '/ˈkwestʃən/', meaningPl: 'pytanie', phonemePosition: 'medial' },
+      { word: 'sandwich', phonetic: '/ˈsænwɪtʃ/', meaningPl: 'kanapka', phonemePosition: 'medial' },
+    ],
+  },
+
+  // V sound /v/
+  {
+    id: 'v-sound',
+    phonemeType: 'v_sound',
+    phonemeSymbol: '/v/',
+    nameEn: 'V sound',
+    namePl: 'Dźwięk V',
+    polishEquivalent: 'Identyczny jak polskie "w" w "woda"',
+    commonMistake: 'Mylenie z W - Polacy często używają V zamiast W',
+    instructionPl: 'Górne zęby dotykają dolnej wargi. Wibracja strun głosowych. Tak jak polskie "w".',
+    mouthTip: 'Górne zęby lekko dotykają wewnętrznej strony dolnej wargi. Powietrze przepływa z wibracją.',
+    difficulty: 'easy',
+    minimalPairs: [
+      { word1: 'vest', phonetic1: '/vest/', word2: 'best', phonetic2: '/best/', meaningPl1: 'kamizelka', meaningPl2: 'najlepszy' },
+      { word1: 'vine', phonetic1: '/vaɪn/', word2: 'fine', phonetic2: '/faɪn/', meaningPl1: 'winorośl', meaningPl2: 'dobry' },
+      { word1: 'van', phonetic1: '/væn/', word2: 'fan', phonetic2: '/fæn/', meaningPl1: 'furgonetka', meaningPl2: 'wentylator' },
+      { word1: 'very', phonetic1: '/ˈveri/', word2: 'ferry', phonetic2: '/ˈferi/', meaningPl1: 'bardzo', meaningPl2: 'prom' },
+    ],
+    practiceWords: [
+      { word: 'very', phonetic: '/ˈveri/', meaningPl: 'bardzo', phonemePosition: 'initial' },
+      { word: 'voice', phonetic: '/vɔɪs/', meaningPl: 'głos', phonemePosition: 'initial' },
+      { word: 'view', phonetic: '/vjuː/', meaningPl: 'widok', phonemePosition: 'initial' },
+      { word: 'video', phonetic: '/ˈvɪdiəʊ/', meaningPl: 'wideo', phonemePosition: 'initial' },
+      { word: 'visit', phonetic: '/ˈvɪzɪt/', meaningPl: 'odwiedzać', phonemePosition: 'initial' },
+      { word: 'over', phonetic: '/ˈəʊvə/', meaningPl: 'nad', phonemePosition: 'medial' },
+      { word: 'never', phonetic: '/ˈnevə/', meaningPl: 'nigdy', phonemePosition: 'medial' },
+      { word: 'every', phonetic: '/ˈevri/', meaningPl: 'każdy', phonemePosition: 'medial' },
+      { word: 'have', phonetic: '/hæv/', meaningPl: 'mieć', phonemePosition: 'final' },
+      { word: 'love', phonetic: '/lʌv/', meaningPl: 'kochać', phonemePosition: 'final' },
+    ],
+  },
+
+  // English R /r/
+  {
+    id: 'english-r',
+    phonemeType: 'english_r',
+    phonemeSymbol: '/r/',
+    nameEn: 'English R',
+    namePl: 'Angielskie R',
+    polishEquivalent: undefined,
+    commonMistake: 'Polacy używają "r" drżącego (rolled R), angielskie R nie drży',
+    instructionPl: 'Język NIE dotyka podniebienia ani zębów. Cofnij język do tyłu i zaokrąglij usta. Język "unosi się" ale nie dotyka niczego.',
+    mouthTip: 'Czubek języka uniesiony ale nie dotyka niczego. Usta lekko zaokrąglone. Brak drżenia!',
+    difficulty: 'medium',
+    minimalPairs: [
+      { word1: 'right', phonetic1: '/raɪt/', word2: 'light', phonetic2: '/laɪt/', meaningPl1: 'prawo', meaningPl2: 'światło' },
+      { word1: 'red', phonetic1: '/red/', word2: 'led', phonetic2: '/led/', meaningPl1: 'czerwony', meaningPl2: 'prowadził' },
+      { word1: 'rock', phonetic1: '/rɒk/', word2: 'lock', phonetic2: '/lɒk/', meaningPl1: 'skała', meaningPl2: 'zamek' },
+      { word1: 'raw', phonetic1: '/rɔː/', word2: 'law', phonetic2: '/lɔː/', meaningPl1: 'surowy', meaningPl2: 'prawo' },
+    ],
+    practiceWords: [
+      { word: 'red', phonetic: '/red/', meaningPl: 'czerwony', phonemePosition: 'initial' },
+      { word: 'right', phonetic: '/raɪt/', meaningPl: 'prawo', phonemePosition: 'initial' },
+      { word: 'run', phonetic: '/rʌn/', meaningPl: 'biegać', phonemePosition: 'initial' },
+      { word: 'room', phonetic: '/ruːm/', meaningPl: 'pokój', phonemePosition: 'initial' },
+      { word: 'read', phonetic: '/riːd/', meaningPl: 'czytać', phonemePosition: 'initial' },
+      { word: 'very', phonetic: '/ˈveri/', meaningPl: 'bardzo', phonemePosition: 'medial' },
+      { word: 'sorry', phonetic: '/ˈsɒri/', meaningPl: 'przepraszam', phonemePosition: 'medial' },
+      { word: 'tomorrow', phonetic: '/təˈmɒrəʊ/', meaningPl: 'jutro', phonemePosition: 'medial' },
+      { word: 'car', phonetic: '/kɑː/', meaningPl: 'samochód', phonemePosition: 'final' },
+      { word: 'far', phonetic: '/fɑː/', meaningPl: 'daleko', phonemePosition: 'final' },
+    ],
+  },
+
+  // Schwa /ə/
+  {
+    id: 'schwa',
+    phonemeType: 'schwa',
+    phonemeSymbol: '/ə/',
+    nameEn: 'Schwa (unstressed vowel)',
+    namePl: 'Szwa (nieakcentowana samogłoska)',
+    polishEquivalent: 'Podobne do bardzo krótkiego "e" lub "y"',
+    commonMistake: 'Polacy wymawiają pełne samogłoski zamiast zredukowanej szwy',
+    instructionPl: 'Najczęstszy dźwięk w angielskim! Bardzo krótka, neutralna samogłoska. Usta rozluźnione, bez napięcia.',
+    mouthTip: 'Usta neutralne, rozluźnione. Bardzo krótki dźwięk. Nie akcentuj tej samogłoski!',
+    difficulty: 'medium',
+    minimalPairs: [
+      { word1: 'about', phonetic1: '/əˈbaʊt/', word2: 'a bout', phonetic2: '/eɪ baʊt/', meaningPl1: 'o/około', meaningPl2: 'walka' },
+      { word1: 'the', phonetic1: '/ðə/', word2: 'thee', phonetic2: '/ðiː/', meaningPl1: 'określnik', meaningPl2: 'ty (archaiczne)' },
+    ],
+    practiceWords: [
+      { word: 'about', phonetic: '/əˈbaʊt/', meaningPl: 'o/około', phonemePosition: 'initial' },
+      { word: 'again', phonetic: '/əˈɡen/', meaningPl: 'znowu', phonemePosition: 'initial' },
+      { word: 'alone', phonetic: '/əˈləʊn/', meaningPl: 'sam', phonemePosition: 'initial' },
+      { word: 'the', phonetic: '/ðə/', meaningPl: 'określnik', phonemePosition: 'initial' },
+      { word: 'a', phonetic: '/ə/', meaningPl: 'określnik', phonemePosition: 'initial' },
+      { word: 'mother', phonetic: '/ˈmʌðə/', meaningPl: 'matka', phonemePosition: 'final' },
+      { word: 'doctor', phonetic: '/ˈdɒktə/', meaningPl: 'lekarz', phonemePosition: 'final' },
+      { word: 'computer', phonetic: '/kəmˈpjuːtə/', meaningPl: 'komputer', phonemePosition: 'medial' },
+      { word: 'problem', phonetic: '/ˈprɒbləm/', meaningPl: 'problem', phonemePosition: 'medial' },
+      { word: 'possible', phonetic: '/ˈpɒsəbl/', meaningPl: 'możliwy', phonemePosition: 'medial' },
+    ],
+  },
+
+  // Short I /ɪ/
+  {
+    id: 'short-i',
+    phonemeType: 'short_i',
+    phonemeSymbol: '/ɪ/',
+    nameEn: 'Short I',
+    namePl: 'Krótkie I',
+    polishEquivalent: 'Między polskim "i" a "y"',
+    commonMistake: 'Polacy wymawiają zbyt długie i ostre "i"',
+    instructionPl: 'Krótsze i bardziej rozluźnione niż polskie "i". Język niżej, usta bardziej otwarte.',
+    mouthTip: 'Usta lekko otwarte, język w środku ust, rozluźniony. Krótki dźwięk!',
+    difficulty: 'medium',
+    minimalPairs: [
+      { word1: 'ship', phonetic1: '/ʃɪp/', word2: 'sheep', phonetic2: '/ʃiːp/', meaningPl1: 'statek', meaningPl2: 'owca' },
+      { word1: 'bit', phonetic1: '/bɪt/', word2: 'beat', phonetic2: '/biːt/', meaningPl1: 'kawałek', meaningPl2: 'bić' },
+      { word1: 'sit', phonetic1: '/sɪt/', word2: 'seat', phonetic2: '/siːt/', meaningPl1: 'siedzieć', meaningPl2: 'siedzenie' },
+      { word1: 'fill', phonetic1: '/fɪl/', word2: 'feel', phonetic2: '/fiːl/', meaningPl1: 'napełnić', meaningPl2: 'czuć' },
+    ],
+    practiceWords: [
+      { word: 'sit', phonetic: '/sɪt/', meaningPl: 'siedzieć', phonemePosition: 'medial' },
+      { word: 'bit', phonetic: '/bɪt/', meaningPl: 'kawałek', phonemePosition: 'medial' },
+      { word: 'ship', phonetic: '/ʃɪp/', meaningPl: 'statek', phonemePosition: 'medial' },
+      { word: 'big', phonetic: '/bɪɡ/', meaningPl: 'duży', phonemePosition: 'medial' },
+      { word: 'this', phonetic: '/ðɪs/', meaningPl: 'to', phonemePosition: 'medial' },
+      { word: 'fish', phonetic: '/fɪʃ/', meaningPl: 'ryba', phonemePosition: 'medial' },
+      { word: 'milk', phonetic: '/mɪlk/', meaningPl: 'mleko', phonemePosition: 'medial' },
+      { word: 'with', phonetic: '/wɪð/', meaningPl: 'z', phonemePosition: 'medial' },
+      { word: 'trip', phonetic: '/trɪp/', meaningPl: 'podróż', phonemePosition: 'medial' },
+      { word: 'listen', phonetic: '/ˈlɪsn/', meaningPl: 'słuchać', phonemePosition: 'medial' },
+    ],
+  },
+
+  // Long EE /iː/
+  {
+    id: 'long-ee',
+    phonemeType: 'long_ee',
+    phonemeSymbol: '/iː/',
+    nameEn: 'Long EE',
+    namePl: 'Długie I',
+    polishEquivalent: 'Podobne do polskiego "i" ale dłuższe',
+    commonMistake: 'Mylenie z krótkim /ɪ/',
+    instructionPl: 'Długie, napięte "i". Usta uśmiechnięte, język wysoko z przodu.',
+    mouthTip: 'Wargi rozciągnięte jak do uśmiechu. Język wysoko, blisko podniebienia. Dłuższy dźwięk!',
+    difficulty: 'easy',
+    minimalPairs: [
+      { word1: 'sheep', phonetic1: '/ʃiːp/', word2: 'ship', phonetic2: '/ʃɪp/', meaningPl1: 'owca', meaningPl2: 'statek' },
+      { word1: 'beat', phonetic1: '/biːt/', word2: 'bit', phonetic2: '/bɪt/', meaningPl1: 'bić', meaningPl2: 'kawałek' },
+      { word1: 'seat', phonetic1: '/siːt/', word2: 'sit', phonetic2: '/sɪt/', meaningPl1: 'siedzenie', meaningPl2: 'siedzieć' },
+      { word1: 'feet', phonetic1: '/fiːt/', word2: 'fit', phonetic2: '/fɪt/', meaningPl1: 'stopy', meaningPl2: 'pasować' },
+    ],
+    practiceWords: [
+      { word: 'see', phonetic: '/siː/', meaningPl: 'widzieć', phonemePosition: 'final' },
+      { word: 'be', phonetic: '/biː/', meaningPl: 'być', phonemePosition: 'final' },
+      { word: 'three', phonetic: '/θriː/', meaningPl: 'trzy', phonemePosition: 'final' },
+      { word: 'key', phonetic: '/kiː/', meaningPl: 'klucz', phonemePosition: 'final' },
+      { word: 'meet', phonetic: '/miːt/', meaningPl: 'spotkać', phonemePosition: 'medial' },
+      { word: 'speak', phonetic: '/spiːk/', meaningPl: 'mówić', phonemePosition: 'medial' },
+      { word: 'read', phonetic: '/riːd/', meaningPl: 'czytać', phonemePosition: 'medial' },
+      { word: 'people', phonetic: '/ˈpiːpl/', meaningPl: 'ludzie', phonemePosition: 'initial' },
+      { word: 'teacher', phonetic: '/ˈtiːtʃə/', meaningPl: 'nauczyciel', phonemePosition: 'medial' },
+      { word: 'easy', phonetic: '/ˈiːzi/', meaningPl: 'łatwy', phonemePosition: 'initial' },
+    ],
+  },
+
+  // Short U /ʊ/
+  {
+    id: 'short-u',
+    phonemeType: 'short_u',
+    phonemeSymbol: '/ʊ/',
+    nameEn: 'Short U',
+    namePl: 'Krótkie U',
+    polishEquivalent: 'Między polskim "u" a "o"',
+    commonMistake: 'Polacy wymawiają pełne "u"',
+    instructionPl: 'Krótkie, rozluźnione. Usta lekko zaokrąglone ale nie tak mocno jak przy długim /uː/.',
+    mouthTip: 'Usta lekko zaokrąglone, język cofnięty. Krótki, rozluźniony dźwięk.',
+    difficulty: 'medium',
+    minimalPairs: [
+      { word1: 'full', phonetic1: '/fʊl/', word2: 'fool', phonetic2: '/fuːl/', meaningPl1: 'pełny', meaningPl2: 'głupiec' },
+      { word1: 'pull', phonetic1: '/pʊl/', word2: 'pool', phonetic2: '/puːl/', meaningPl1: 'ciągnąć', meaningPl2: 'basen' },
+      { word1: 'look', phonetic1: '/lʊk/', word2: 'Luke', phonetic2: '/luːk/', meaningPl1: 'patrzeć', meaningPl2: 'Łukasz' },
+    ],
+    practiceWords: [
+      { word: 'book', phonetic: '/bʊk/', meaningPl: 'książka', phonemePosition: 'medial' },
+      { word: 'look', phonetic: '/lʊk/', meaningPl: 'patrzeć', phonemePosition: 'medial' },
+      { word: 'good', phonetic: '/ɡʊd/', meaningPl: 'dobry', phonemePosition: 'medial' },
+      { word: 'put', phonetic: '/pʊt/', meaningPl: 'kłaść', phonemePosition: 'medial' },
+      { word: 'full', phonetic: '/fʊl/', meaningPl: 'pełny', phonemePosition: 'medial' },
+      { word: 'could', phonetic: '/kʊd/', meaningPl: 'mógłby', phonemePosition: 'medial' },
+      { word: 'would', phonetic: '/wʊd/', meaningPl: 'by', phonemePosition: 'medial' },
+      { word: 'should', phonetic: '/ʃʊd/', meaningPl: 'powinien', phonemePosition: 'medial' },
+      { word: 'foot', phonetic: '/fʊt/', meaningPl: 'stopa', phonemePosition: 'medial' },
+      { word: 'woman', phonetic: '/ˈwʊmən/', meaningPl: 'kobieta', phonemePosition: 'initial' },
+    ],
+  },
+
+  // Long OO /uː/
+  {
+    id: 'long-oo',
+    phonemeType: 'long_oo',
+    phonemeSymbol: '/uː/',
+    nameEn: 'Long OO',
+    namePl: 'Długie U',
+    polishEquivalent: 'Podobne do polskiego "u" ale dłuższe',
+    commonMistake: 'Mylenie z krótkim /ʊ/',
+    instructionPl: 'Długie "u" z mocno zaokrąglonymi ustami.',
+    mouthTip: 'Usta mocno zaokrąglone i wysunięte. Język cofnięty do tyłu. Dłuższy dźwięk!',
+    difficulty: 'easy',
+    minimalPairs: [
+      { word1: 'fool', phonetic1: '/fuːl/', word2: 'full', phonetic2: '/fʊl/', meaningPl1: 'głupiec', meaningPl2: 'pełny' },
+      { word1: 'pool', phonetic1: '/puːl/', word2: 'pull', phonetic2: '/pʊl/', meaningPl1: 'basen', meaningPl2: 'ciągnąć' },
+      { word1: 'Luke', phonetic1: '/luːk/', word2: 'look', phonetic2: '/lʊk/', meaningPl1: 'Łukasz', meaningPl2: 'patrzeć' },
+    ],
+    practiceWords: [
+      { word: 'two', phonetic: '/tuː/', meaningPl: 'dwa', phonemePosition: 'final' },
+      { word: 'do', phonetic: '/duː/', meaningPl: 'robić', phonemePosition: 'final' },
+      { word: 'blue', phonetic: '/bluː/', meaningPl: 'niebieski', phonemePosition: 'final' },
+      { word: 'food', phonetic: '/fuːd/', meaningPl: 'jedzenie', phonemePosition: 'medial' },
+      { word: 'school', phonetic: '/skuːl/', meaningPl: 'szkoła', phonemePosition: 'medial' },
+      { word: 'soon', phonetic: '/suːn/', meaningPl: 'wkrótce', phonemePosition: 'medial' },
+      { word: 'room', phonetic: '/ruːm/', meaningPl: 'pokój', phonemePosition: 'medial' },
+      { word: 'moon', phonetic: '/muːn/', meaningPl: 'księżyc', phonemePosition: 'medial' },
+      { word: 'new', phonetic: '/njuː/', meaningPl: 'nowy', phonemePosition: 'final' },
+      { word: 'true', phonetic: '/truː/', meaningPl: 'prawdziwy', phonemePosition: 'final' },
+    ],
+  },
+
+  // NG sound /ŋ/
+  {
+    id: 'ng-sound',
+    phonemeType: 'ng_sound',
+    phonemeSymbol: '/ŋ/',
+    nameEn: 'NG sound',
+    namePl: 'Dźwięk NG',
+    polishEquivalent: 'Podobne do "n" przed "k" lub "g"',
+    commonMistake: 'Polacy często wymawiają twarde "ng" lub tylko "n"',
+    instructionPl: 'Tylna część języka dotyka miękkiego podniebienia. Powietrze wychodzi przez nos.',
+    mouthTip: 'Tył języka uniesiony do miękkiego podniebienia. Dźwięk nosowy, bez "g" na końcu w większości słów.',
+    difficulty: 'medium',
+    minimalPairs: [
+      { word1: 'sing', phonetic1: '/sɪŋ/', word2: 'sin', phonetic2: '/sɪn/', meaningPl1: 'śpiewać', meaningPl2: 'grzech' },
+      { word1: 'ring', phonetic1: '/rɪŋ/', word2: 'rim', phonetic2: '/rɪm/', meaningPl1: 'pierścionek', meaningPl2: 'brzeg' },
+      { word1: 'king', phonetic1: '/kɪŋ/', word2: 'kin', phonetic2: '/kɪn/', meaningPl1: 'król', meaningPl2: 'krewni' },
+    ],
+    practiceWords: [
+      { word: 'sing', phonetic: '/sɪŋ/', meaningPl: 'śpiewać', phonemePosition: 'final' },
+      { word: 'thing', phonetic: '/θɪŋ/', meaningPl: 'rzecz', phonemePosition: 'final' },
+      { word: 'ring', phonetic: '/rɪŋ/', meaningPl: 'pierścionek', phonemePosition: 'final' },
+      { word: 'king', phonetic: '/kɪŋ/', meaningPl: 'król', phonemePosition: 'final' },
+      { word: 'long', phonetic: '/lɒŋ/', meaningPl: 'długi', phonemePosition: 'final' },
+      { word: 'wrong', phonetic: '/rɒŋ/', meaningPl: 'zły', phonemePosition: 'final' },
+      { word: 'singing', phonetic: '/ˈsɪŋɪŋ/', meaningPl: 'śpiewanie', phonemePosition: 'medial' },
+      { word: 'thinking', phonetic: '/ˈθɪŋkɪŋ/', meaningPl: 'myślenie', phonemePosition: 'medial' },
+      { word: 'English', phonetic: '/ˈɪŋɡlɪʃ/', meaningPl: 'angielski', phonemePosition: 'medial' },
+      { word: 'finger', phonetic: '/ˈfɪŋɡə/', meaningPl: 'palec', phonemePosition: 'medial' },
+    ],
+  },
+
+  // Final consonant clusters
+  {
+    id: 'final-clusters',
+    phonemeType: 'final_clusters',
+    phonemeSymbol: '/-CC(C)/',
+    nameEn: 'Final Consonant Clusters',
+    namePl: 'Końcowe zbitki spółgłosek',
+    polishEquivalent: undefined,
+    commonMistake: 'Polacy dodają samogłoskę między spółgłoski lub upraszczają zbitki',
+    instructionPl: 'Wymawiaj wszystkie spółgłoski na końcu słowa bez dodawania samogłoski między nimi. Ćwicz powoli.',
+    mouthTip: 'Płynnie przechodź między spółgłoskami. Nie dodawaj "e" ani "y" między nimi.',
+    difficulty: 'hard',
+    minimalPairs: [
+      { word1: 'tests', phonetic1: '/tests/', word2: 'test', phonetic2: '/test/', meaningPl1: 'testy', meaningPl2: 'test' },
+      { word1: 'asks', phonetic1: '/ɑːsks/', word2: 'ask', phonetic2: '/ɑːsk/', meaningPl1: 'pyta', meaningPl2: 'pytać' },
+    ],
+    practiceWords: [
+      { word: 'tests', phonetic: '/tests/', meaningPl: 'testy', phonemePosition: 'final' },
+      { word: 'texts', phonetic: '/teksts/', meaningPl: 'teksty', phonemePosition: 'final' },
+      { word: 'asks', phonetic: '/ɑːsks/', meaningPl: 'pyta', phonemePosition: 'final' },
+      { word: 'tasks', phonetic: '/tɑːsks/', meaningPl: 'zadania', phonemePosition: 'final' },
+      { word: 'months', phonetic: '/mʌnθs/', meaningPl: 'miesiące', phonemePosition: 'final' },
+      { word: 'sixths', phonetic: '/sɪksθs/', meaningPl: 'szóste', phonemePosition: 'final' },
+      { word: 'strengths', phonetic: '/streŋθs/', meaningPl: 'siły', phonemePosition: 'final' },
+      { word: 'worlds', phonetic: '/wɜːldz/', meaningPl: 'światy', phonemePosition: 'final' },
+      { word: 'scripts', phonetic: '/skrɪpts/', meaningPl: 'skrypty', phonemePosition: 'final' },
+      { word: 'glimpsed', phonetic: '/ɡlɪmpst/', meaningPl: 'mignął', phonemePosition: 'final' },
+    ],
+  },
+];
+
+// Helper to get drill by phoneme type
+export const getDrillByPhoneme = (phonemeType: PhonemeType): PhonemeDrill | undefined => {
+  return phonemeDrills.find((d) => d.phonemeType === phonemeType);
+};
+
+// Get all phoneme types available
+export const getAvailablePhonemes = (): PhonemeType[] => {
+  return phonemeDrills.map((d) => d.phonemeType);
+};
+
+// Get drills by difficulty
+export const getDrillsByDifficulty = (difficulty: 'easy' | 'medium' | 'hard'): PhonemeDrill[] => {
+  return phonemeDrills.filter((d) => d.difficulty === difficulty);
+};

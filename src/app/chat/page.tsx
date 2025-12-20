@@ -16,7 +16,7 @@ import {
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { useVocabStore } from '@/lib/store';
+import { useVocabStore, useHydration } from '@/lib/store';
 import { VocabularyItem } from '@/types';
 import { cn, generateId } from '@/lib/utils';
 
@@ -39,6 +39,7 @@ interface ParsedWord {
 }
 
 export default function ChatPage() {
+  const hydrated = useHydration();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -66,6 +67,14 @@ export default function ChatPage() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  if (!hydrated) {
+    return (
+      <div className="p-4 flex items-center justify-center min-h-screen">
+        <p className="text-slate-500">Ładowanie...</p>
+      </div>
+    );
+  }
 
   const addAssistantMessage = (content: string) => {
     setMessages((prev) => [

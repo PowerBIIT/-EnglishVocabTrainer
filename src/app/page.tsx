@@ -16,10 +16,11 @@ import {
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar, CircularProgress } from '@/components/ui/ProgressBar';
-import { useVocabStore } from '@/lib/store';
+import { useVocabStore, useHydration } from '@/lib/store';
 import { getLevelProgress } from '@/lib/utils';
 
 export default function HomePage() {
+  const hydrated = useHydration();
   const stats = useVocabStore((state) => state.stats);
   const vocabulary = useVocabStore((state) => state.vocabulary);
   const progress = useVocabStore((state) => state.progress);
@@ -38,6 +39,15 @@ export default function HomePage() {
     vocabulary.length > 0
       ? Math.round((masteredCount / vocabulary.length) * 100)
       : 0;
+
+  // Show loading state until hydration is complete
+  if (!hydrated) {
+    return (
+      <div className="p-4 flex items-center justify-center min-h-screen">
+        <p className="text-slate-500">Ładowanie...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 space-y-6 max-w-lg mx-auto">

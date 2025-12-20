@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useEffect, useState } from 'react';
 import {
   VocabularyItem,
   UserProgress,
@@ -8,6 +9,10 @@ import {
   Badge,
   QuizResult,
   FlashcardAction,
+  PronunciationAttempt,
+  PronunciationFocusMode,
+  PhonemeType,
+  PronunciationSessionResult,
 } from '@/types';
 import { sampleVocabulary } from '@/data/vocabulary';
 
@@ -25,6 +30,11 @@ const defaultSettings: AppSettings = {
     speed: 0.7,
     autoPlay: false,
     passingScore: 7,
+    sessionLength: 10,
+    focusMode: 'random',
+    targetPhoneme: undefined,
+    adaptiveDifficulty: true,
+    showPhonemeHints: true,
   },
   general: {
     language: 'pl',
@@ -51,6 +61,13 @@ const defaultStats: UserStats = {
   totalTimeSpent: 0,
   lastSessionDate: null,
   badges: [],
+  // Pronunciation specific
+  pronunciationStreak: 0,
+  longestPronunciationStreak: 0,
+  totalPronunciationSessions: 0,
+  averagePronunciationScore: 0,
+  phonemeMastery: {},
+  lastPronunciationDate: null,
 };
 
 // XP thresholds for levels
@@ -71,6 +88,19 @@ interface VocabStore {
   updateProgress: (vocabId: string, correct: boolean) => void;
   updatePronunciationScore: (vocabId: string, score: number) => void;
   getNextReviewWords: (count: number | 'all') => VocabularyItem[];
+
+  // Pronunciation specific
+  addPronunciationAttempt: (attempt: PronunciationAttempt) => void;
+  getNextPronunciationWords: (
+    count: number | 'all',
+    focusMode: PronunciationFocusMode,
+    targetPhoneme?: PhonemeType
+  ) => VocabularyItem[];
+  updatePronunciationStreak: () => void;
+  updatePhonemeMastery: (phoneme: PhonemeType, score: number) => void;
+  completePronunciationSession: (result: PronunciationSessionResult) => void;
+  getPronunciationHistory: (vocabId?: string) => PronunciationAttempt[];
+  getWeakPronunciationWords: (limit?: number) => VocabularyItem[];
 
   // Settings
   settings: AppSettings;
@@ -145,9 +175,11 @@ export const useVocabStore = create<VocabStore>()(
             times_correct: 0,
             times_wrong: 0,
             avg_pronunciation_score: 0,
+            pronunciation_attempts: 0,
             last_seen: new Date(),
             next_review: new Date(),
             status: 'new' as const,
+            pronunciationHistory: [],
           };
 
           const times_correct = existing.times_correct + (correct ? 1 : 0);
@@ -235,6 +267,220 @@ export const useVocabStore = create<VocabStore>()(
             : dueWords.sort(() => Math.random() - 0.5);
 
         return count === 'all' ? sorted : sorted.slice(0, count);
+      },
+
+      // Pronunciation specific actions
+      addPronunciationAttempt: (attempt) =>
+        set((state) => {
+          const existing = state.progress[attempt.vocab_id] || {
+            vocab_id: attempt.vocab_id,
+            times_seen: 0,
+            times_correct: 0,
+            times_wrong: 0,
+            avg_pronunciation_score: 0,
+            pronunciation_attempts: 0,
+            last_seen: new Date(),
+            next_review: new Date(),
+            status: 'new' as const,
+            pronunciationHistory: [],
+          };
+
+          const history = existing.pronunciationHistory || [];
+          const newHistory = [...history, attempt].slice(-50); // Keep last 50 attempts
+          const attempts = (existing.pronunciation_attempts || 0) + 1;
+          const newAvg =
+            ((existing.avg_pronunciation_score || 0) * (attempts - 1) + attempt.score) / attempts;
+
+          return {
+            progress: {
+              ...state.progress,
+              [attempt.vocab_id]: {
+                ...existing,
+                pronunciation_attempts: attempts,
+                avg_pronunciation_score: newAvg,
+                pronunciationHistory: newHistory,
+                last_seen: new Date(),
+              },
+            },
+          };
+        }),
+
+      getNextPronunciationWords: (count, focusMode, targetPhoneme) => {
+        const state = get();
+        let words = [...state.vocabulary];
+
+        switch (focusMode) {
+          case 'weak_words':
+            // Sort by lowest pronunciation score
+            words = words
+              .filter((w) => {
+                const prog = state.progress[w.id];
+                return prog && prog.pronunciation_attempts > 0;
+              })
+              .sort((a, b) => {
+                const progA = state.progress[a.id];
+                const progB = state.progress[b.id];
+                return (progA?.avg_pronunciation_score || 0) - (progB?.avg_pronunciation_score || 0);
+              });
+            break;
+
+          case 'new_words':
+            // Words never practiced for pronunciation
+            words = words.filter((w) => {
+              const prog = state.progress[w.id];
+              return !prog || !prog.pronunciation_attempts;
+            });
+            break;
+
+          case 'phoneme_specific':
+            // Filter by words containing target phoneme
+            if (targetPhoneme) {
+              const phonemePatterns: Record<string, RegExp> = {
+                th_voiceless: /th/i,
+                th_voiced: /th/i,
+                w_sound: /^w|[^o]w/i,
+                v_sound: /v/i,
+                english_r: /r/i,
+                schwa: /[aeiou]/i,
+                short_i: /i(?!e)/i,
+                long_ee: /ee|ea|ie/i,
+                short_u: /oo|u(?!e)/i,
+                long_oo: /oo|ue/i,
+                ng_sound: /ng|nk/i,
+                final_clusters: /(sts|sks|ths)$/i,
+              };
+              const pattern = phonemePatterns[targetPhoneme];
+              if (pattern) {
+                words = words.filter((w) => pattern.test(w.en));
+              }
+            }
+            break;
+
+          case 'review':
+            // Words that need review based on score
+            words = words.filter((w) => {
+              const prog = state.progress[w.id];
+              return prog && prog.avg_pronunciation_score < state.settings.pronunciation.passingScore;
+            });
+            break;
+
+          default:
+            // Random - shuffle
+            words = words.sort(() => Math.random() - 0.5);
+        }
+
+        // If adaptive difficulty is on, prioritize medium difficulty
+        if (state.settings.pronunciation.adaptiveDifficulty && focusMode !== 'weak_words') {
+          words = words.sort((a, b) => {
+            const progA = state.progress[a.id];
+            const progB = state.progress[b.id];
+            const scoreA = progA?.avg_pronunciation_score || 5;
+            const scoreB = progB?.avg_pronunciation_score || 5;
+            // Prioritize words with score around 5-7 (not too easy, not too hard)
+            const diffA = Math.abs(scoreA - 6);
+            const diffB = Math.abs(scoreB - 6);
+            return diffA - diffB;
+          });
+        }
+
+        return count === 'all' ? words : words.slice(0, count);
+      },
+
+      updatePronunciationStreak: () =>
+        set((state) => {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+
+          const lastPronunciation = state.stats.lastPronunciationDate
+            ? new Date(state.stats.lastPronunciationDate)
+            : null;
+          if (lastPronunciation) {
+            lastPronunciation.setHours(0, 0, 0, 0);
+          }
+
+          let newStreak = state.stats.pronunciationStreak;
+
+          if (!lastPronunciation) {
+            newStreak = 1;
+          } else {
+            const diffDays = Math.floor(
+              (today.getTime() - lastPronunciation.getTime()) / (1000 * 60 * 60 * 24)
+            );
+            if (diffDays === 0) {
+              // Same day, no change
+            } else if (diffDays === 1) {
+              newStreak += 1;
+            } else {
+              newStreak = 1; // Streak broken
+            }
+          }
+
+          return {
+            stats: {
+              ...state.stats,
+              pronunciationStreak: newStreak,
+              longestPronunciationStreak: Math.max(newStreak, state.stats.longestPronunciationStreak),
+              lastPronunciationDate: new Date(),
+            },
+          };
+        }),
+
+      updatePhonemeMastery: (phoneme, score) =>
+        set((state) => {
+          const currentMastery = state.stats.phonemeMastery[phoneme] || 0;
+          // Rolling average with more weight on recent scores
+          const newMastery = Math.round(currentMastery * 0.7 + (score * 10) * 0.3);
+
+          return {
+            stats: {
+              ...state.stats,
+              phonemeMastery: {
+                ...state.stats.phonemeMastery,
+                [phoneme]: Math.min(100, newMastery),
+              },
+            },
+          };
+        }),
+
+      completePronunciationSession: (result) =>
+        set((state) => {
+          const totalSessions = state.stats.totalPronunciationSessions + 1;
+          const currentAvg = state.stats.averagePronunciationScore;
+          const newAvg = (currentAvg * (totalSessions - 1) + result.averageScore) / totalSessions;
+
+          return {
+            stats: {
+              ...state.stats,
+              totalPronunciationSessions: totalSessions,
+              averagePronunciationScore: newAvg,
+            },
+          };
+        }),
+
+      getPronunciationHistory: (vocabId) => {
+        const state = get();
+        if (vocabId) {
+          return state.progress[vocabId]?.pronunciationHistory || [];
+        }
+        // Return all history from all words
+        return Object.values(state.progress)
+          .flatMap((p) => p.pronunciationHistory || [])
+          .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      },
+
+      getWeakPronunciationWords: (limit = 10) => {
+        const state = get();
+        return state.vocabulary
+          .filter((w) => {
+            const prog = state.progress[w.id];
+            return prog && prog.pronunciation_attempts > 0 && prog.avg_pronunciation_score < 7;
+          })
+          .sort((a, b) => {
+            const progA = state.progress[a.id];
+            const progB = state.progress[b.id];
+            return (progA?.avg_pronunciation_score || 0) - (progB?.avg_pronunciation_score || 0);
+          })
+          .slice(0, limit);
       },
 
       // Settings actions
@@ -352,9 +598,11 @@ export const useVocabStore = create<VocabStore>()(
             times_correct: 0,
             times_wrong: 0,
             avg_pronunciation_score: 0,
+            pronunciation_attempts: 0,
             last_seen: new Date(),
             next_review: new Date(),
             status: 'new' as const,
+            pronunciationHistory: [],
           };
 
           let daysUntilReview = 1;
@@ -438,3 +686,14 @@ export const useVocabStore = create<VocabStore>()(
     }
   )
 );
+
+// Hook to handle hydration - prevents SSR/client mismatch
+export const useHydration = () => {
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    setHydrated(true);
+  }, []);
+
+  return hydrated;
+};
