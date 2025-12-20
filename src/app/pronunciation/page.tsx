@@ -152,11 +152,56 @@ export default function PronunciationPage() {
     setIsRecording(false);
   };
 
-  const evaluatePronunciation = (spoken: string) => {
+  const evaluatePronunciation = async (spoken: string) => {
     if (!currentWord) return;
     setIsProcessing(true);
 
-    // Simple pronunciation evaluation (in production, use AI API)
+    try {
+      // Try AI evaluation first
+      const response = await fetch('/api/ai/evaluate-pronunciation', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          expected: currentWord.en,
+          phonetic: currentWord.phonetic,
+          spoken,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.fallback || data.error) {
+        // Fallback to local evaluation
+        evaluateLocally(spoken);
+        return;
+      }
+
+      // Use AI result
+      setResult({
+        score: data.score,
+        feedback: data.feedback,
+        tip: data.tip,
+        recognized: spoken,
+      });
+
+      setScores((prev) => [...prev, data.score]);
+      updatePronunciationScore(currentWord.id, data.score);
+
+      if (data.score >= 8) {
+        addXp(XP_ACTIONS.pronunciation_good);
+      }
+    } catch (error) {
+      console.error('AI evaluation error:', error);
+      // Fallback to local evaluation
+      evaluateLocally(spoken);
+    }
+
+    setIsProcessing(false);
+  };
+
+  const evaluateLocally = (spoken: string) => {
+    if (!currentWord) return;
+
     const expected = currentWord.en.toLowerCase().replace(/^(a |an |the )/i, '');
     const spokenClean = spoken.toLowerCase().replace(/^(a |an |the )/i, '');
 
@@ -169,24 +214,24 @@ export default function PronunciationPage() {
     let tip = '';
 
     if (score >= 9) {
-      feedback = 'Doskonale! Wymowa praktycznie perfekcyjna!';
+      feedback = 'Doskonale! Wymowa praktycznie perfekcyjna! 🎉';
     } else if (score >= 7) {
-      feedback = 'Bardzo dobrze! Drobne niedociągnięcia.';
+      feedback = 'Bardzo dobrze! Drobne niedociągnięcia. 👍';
       tip = 'Posłuchaj jeszcze raz wzorcowej wymowy.';
     } else if (score >= 5) {
-      feedback = 'Nieźle, ale można lepiej.';
+      feedback = 'Nieźle, ale można lepiej. 💪';
       tip = 'Zwróć uwagę na akcent i wyraźność.';
     } else {
-      feedback = 'Wymaga więcej ćwiczeń.';
+      feedback = 'Wymaga więcej ćwiczeń. 📚';
       tip = 'Posłuchaj wzorca i spróbuj powtórzyć sylaba po sylabie.';
     }
 
     // Check for common Polish learner mistakes
     if (expected.includes('th') && !spokenClean.includes('th')) {
-      tip = 'Dźwięk "th" - włóż język między zęby i wydmuchuj powietrze.';
+      tip = '💡 Dźwięk "th" - włóż język między zęby i wydmuchuj powietrze.';
     }
     if (expected.includes('w') && spokenClean.replace('w', 'v') === expected.replace('w', 'v')) {
-      tip = 'Dźwięk "w" - zaokrąglij usta jak do "u", nie wymawiaj jak "v".';
+      tip = '💡 Dźwięk "w" - zaokrąglij usta jak do "u", nie wymawiaj jak "v".';
     }
 
     setResult({
@@ -202,8 +247,6 @@ export default function PronunciationPage() {
     if (score >= 8) {
       addXp(XP_ACTIONS.pronunciation_good);
     }
-
-    setIsProcessing(false);
   };
 
   const calculateSimilarity = (str1: string, str2: string): number => {

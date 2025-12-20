@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Navigation } from '@/components/layout/Navigation';
+import { ClientLayout } from '@/components/layout/ClientLayout';
 
 export const metadata: Metadata = {
   title: 'English Vocab Trainer',
@@ -18,6 +19,7 @@ export default function RootLayout({
         <div className="min-h-screen flex flex-col">
           <main className="flex-1 pb-20">{children}</main>
           <Navigation />
+          <ClientLayout />
         </div>
       </body>
     </html>
