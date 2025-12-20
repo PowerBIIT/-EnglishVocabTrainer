@@ -1,0 +1,264 @@
+'use client';
+
+import { useState } from 'react';
+import { Volume2, ChevronLeft, ChevronRight, Check, X, AlertTriangle } from 'lucide-react';
+import { VocabularyItem, FlashcardAction } from '@/types';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { cn, speak } from '@/lib/utils';
+import { useVocabStore } from '@/lib/store';
+
+interface FlashcardProps {
+  item: VocabularyItem;
+  onAction: (action: FlashcardAction) => void;
+  showActions?: boolean;
+}
+
+export function Flashcard({ item, onAction, showActions = true }: FlashcardProps) {
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [animationClass, setAnimationClass] = useState('');
+  const settings = useVocabStore((state) => state.settings);
+
+  const handleSpeak = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await speak(item.en, {
+        voice: settings.pronunciation.voice,
+        speed: settings.pronunciation.speed,
+      });
+    } catch (error) {
+      console.error('TTS error:', error);
+    }
+  };
+
+  const handleAction = (action: FlashcardAction) => {
+    const animClass =
+      action === 'know'
+        ? 'swipe-right'
+        : action === 'repeat'
+        ? 'swipe-left'
+        : 'swipe-up';
+
+    setAnimationClass(animClass);
+    setIsAnimating(true);
+
+    setTimeout(() => {
+      setIsAnimating(false);
+      setAnimationClass('');
+      setIsFlipped(false);
+      onAction(action);
+    }, 300);
+  };
+
+  return (
+    <div className="w-full max-w-md mx-auto">
+      <div
+        className={cn(
+          'flashcard-container w-full aspect-[3/4] cursor-pointer',
+          animationClass
+        )}
+        onClick={() => !isAnimating && setIsFlipped(!isFlipped)}
+      >
+        <div className={cn('flashcard relative w-full h-full', isFlipped && 'flipped')}>
+          {/* Front */}
+          <Card
+            variant="elevated"
+            className="flashcard-front flex flex-col items-center justify-center p-6"
+          >
+            <div className="absolute top-4 right-4">
+              <button
+                onClick={handleSpeak}
+                className="p-2 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors"
+              >
+                <Volume2 size={24} />
+              </button>
+            </div>
+
+            <div className="text-center space-y-4">
+              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
+                {item.en}
+              </h2>
+              <p className="text-lg text-slate-500 dark:text-slate-400 font-mono">
+                {item.phonetic}
+              </p>
+            </div>
+
+            <p className="absolute bottom-6 text-sm text-slate-400 dark:text-slate-500">
+              Kliknij, aby zobaczyć tłumaczenie
+            </p>
+          </Card>
+
+          {/* Back */}
+          <Card
+            variant="elevated"
+            className="flashcard-back flex flex-col items-center justify-center p-6 bg-primary-50 dark:bg-slate-700"
+          >
+            <div className="absolute top-4 right-4">
+              <button
+                onClick={handleSpeak}
+                className="p-2 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors"
+              >
+                <Volume2 size={24} />
+              </button>
+            </div>
+
+            <div className="text-center space-y-4">
+              <h2 className="text-2xl font-bold text-primary-700 dark:text-primary-300">
+                {item.pl}
+              </h2>
+
+              {item.example_en && (
+                <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded-xl">
+                  <p className="text-slate-700 dark:text-slate-300 italic">
+                    "{item.example_en}"
+                  </p>
+                  {item.example_pl && (
+                    <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">
+                      "{item.example_pl}"
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="absolute bottom-4 left-4 right-4 flex justify-center gap-2">
+              <span
+                className={cn(
+                  'px-2 py-1 rounded-full text-xs font-medium',
+                  item.difficulty === 'easy' &&
+                    'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
+                  item.difficulty === 'medium' &&
+                    'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
+                  item.difficulty === 'hard' &&
+                    'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                )}
+              >
+                {item.difficulty === 'easy'
+                  ? 'Łatwe'
+                  : item.difficulty === 'medium'
+                  ? 'Średnie'
+                  : 'Trudne'}
+              </span>
+              <span className="px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300">
+                {item.category}
+              </span>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      {showActions && (
+        <div className="flex justify-center gap-4 mt-6">
+          <Button
+            variant="danger"
+            size="lg"
+            onClick={() => handleAction('repeat')}
+            className="flex items-center gap-2"
+          >
+            <X size={20} />
+            Powtórz
+          </Button>
+
+          <Button
+            variant="secondary"
+            size="lg"
+            onClick={() => handleAction('hard')}
+            className="flex items-center gap-2"
+          >
+            <AlertTriangle size={20} />
+            Trudne
+          </Button>
+
+          <Button
+            variant="success"
+            size="lg"
+            onClick={() => handleAction('know')}
+            className="flex items-center gap-2"
+          >
+            <Check size={20} />
+            Umiem
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+interface FlashcardSessionProps {
+  words: VocabularyItem[];
+  onComplete: () => void;
+}
+
+export function FlashcardSession({ words, onComplete }: FlashcardSessionProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [repeatQueue, setRepeatQueue] = useState<VocabularyItem[]>([]);
+  const processFlashcardAction = useVocabStore((state) => state.processFlashcardAction);
+  const addXp = useVocabStore((state) => state.addXp);
+
+  const allWords = [...words, ...repeatQueue];
+  const currentWord = allWords[currentIndex];
+  const progress = ((currentIndex + 1) / allWords.length) * 100;
+
+  const handleAction = (action: FlashcardAction) => {
+    processFlashcardAction(currentWord.id, action);
+
+    if (action === 'know') {
+      addXp(10);
+    } else if (action === 'repeat') {
+      setRepeatQueue((prev) => [...prev, currentWord]);
+    }
+
+    if (currentIndex + 1 >= allWords.length) {
+      addXp(30); // Session complete bonus
+      onComplete();
+    } else {
+      setCurrentIndex((prev) => prev + 1);
+    }
+  };
+
+  if (!currentWord) {
+    return null;
+  }
+
+  return (
+    <div className="p-4">
+      {/* Progress bar */}
+      <div className="mb-6">
+        <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2">
+          <span>
+            {currentIndex + 1} z {allWords.length}
+          </span>
+          <span>{Math.round(progress)}%</span>
+        </div>
+        <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+          <div
+            className="h-full bg-primary-500 transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      <Flashcard item={currentWord} onAction={handleAction} />
+
+      {/* Navigation hint */}
+      <div className="flex justify-center gap-8 mt-8 text-slate-400 dark:text-slate-500 text-sm">
+        <div className="flex items-center gap-1">
+          <ChevronLeft size={16} />
+          Powtórz
+        </div>
+        <div className="flex items-center gap-1">
+          Trudne
+          <span className="rotate-90">
+            <ChevronRight size={16} />
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          Umiem
+          <ChevronRight size={16} />
+        </div>
+      </div>
+    </div>
+  );
+}
