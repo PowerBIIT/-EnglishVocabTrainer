@@ -322,9 +322,9 @@ export default function VocabularyPage() {
         </div>
       )}
 
-      {/* Add button */}
+      {/* Add button - positioned on left to avoid chatbot */}
       <Link href="/chat">
-        <Button className="fixed bottom-20 right-4 rounded-full w-14 h-14 shadow-lg">
+        <Button className="fixed bottom-20 left-4 rounded-full w-14 h-14 shadow-lg">
           <Plus size={24} />
         </Button>
       </Link>
