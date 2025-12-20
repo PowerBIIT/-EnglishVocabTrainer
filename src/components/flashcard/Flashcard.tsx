@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { cn, speak } from '@/lib/utils';
 import { useVocabStore } from '@/lib/store';
+import { getCategoryLabel } from '@/lib/categories';
 
 interface FlashcardProps {
   item: VocabularyItem;
@@ -141,7 +142,7 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
                   : 'Trudne'}
               </span>
               <span className="px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300">
-                {item.category}
+                {getCategoryLabel(item.category)}
               </span>
             </div>
           </Card>
@@ -196,6 +197,7 @@ export function FlashcardSession({ words, onComplete }: FlashcardSessionProps) {
   const [repeatQueue, setRepeatQueue] = useState<VocabularyItem[]>([]);
   const processFlashcardAction = useVocabStore((state) => state.processFlashcardAction);
   const addXp = useVocabStore((state) => state.addXp);
+  const updateDailyMissionProgress = useVocabStore((state) => state.updateDailyMissionProgress);
 
   const allWords = [...words, ...repeatQueue];
   const currentWord = allWords[currentIndex];
@@ -206,6 +208,7 @@ export function FlashcardSession({ words, onComplete }: FlashcardSessionProps) {
 
     if (action === 'know') {
       addXp(10);
+      updateDailyMissionProgress('flashcards', 1);
     } else if (action === 'repeat') {
       setRepeatQueue((prev) => [...prev, currentWord]);
     }

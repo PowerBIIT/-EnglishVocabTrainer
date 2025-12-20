@@ -21,53 +21,6 @@ import { PhonemeType, PhonemeDrill, DrillWord } from '@/types';
 import { cn, speak, XP_ACTIONS } from '@/lib/utils';
 import { phonemeDrills, getDrillByPhoneme } from '@/data/phonemeDrills';
 
-// Web Speech API types
-interface SpeechRecognitionEvent {
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionResultList {
-  readonly length: number;
-  [index: number]: SpeechRecognitionResult;
-}
-
-interface SpeechRecognitionResult {
-  readonly length: number;
-  [index: number]: SpeechRecognitionAlternative;
-}
-
-interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
-}
-
-interface SpeechRecognitionErrorEvent {
-  error: string;
-}
-
-interface SpeechRecognition extends EventTarget {
-  lang: string;
-  interimResults: boolean;
-  maxAlternatives: number;
-  onstart: (() => void) | null;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-}
-
-interface SpeechRecognitionConstructor {
-  new (): SpeechRecognition;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition?: SpeechRecognitionConstructor;
-    webkitSpeechRecognition?: SpeechRecognitionConstructor;
-  }
-}
-
 type DrillState = 'select' | 'learn' | 'practice' | 'complete';
 
 const DIFFICULTY_COLORS = {
@@ -503,7 +456,7 @@ export default function PhonemeDrillsPage() {
                 </button>
 
                 <p className="text-sm text-primary-600 dark:text-primary-400">
-                  💡 Pamiętaj: {selectedDrill.mouthTip}
+                  Wskazówka: {selectedDrill.mouthTip}
                 </p>
               </div>
             ) : (

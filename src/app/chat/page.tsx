@@ -4,8 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import {
   ArrowLeft,
   Send,
-  Camera,
-  Sparkles,
   Check,
   X,
   Plus,
@@ -18,7 +16,9 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useVocabStore, useHydration } from '@/lib/store';
 import { VocabularyItem } from '@/types';
-import { cn, generateId } from '@/lib/utils';
+import { cn, formatDate, generateId } from '@/lib/utils';
+import { getCategoryLabel } from '@/lib/categories';
+import { parseVocabularyInput } from '@/lib/parseVocabulary';
 
 interface Message {
   id: string;
@@ -39,13 +39,14 @@ interface ParsedWord {
 }
 
 export default function ChatPage() {
+  const NEW_SET_OPTION = '__new__';
   const hydrated = useHydration();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
       role: 'assistant',
       content:
-        'Cześć! 👋 Jestem Twoim asystentem AI do nauki słówek. Mogę:\n\n📝 Dodać słówka które wpiszesz (np. "breakfast - śniadanie")\n🎯 Wygenerować słówka na temat (np. "Wygeneruj 10 słówek o sporcie")\n📷 Wyciągnąć słówka ze zdjęcia notatek\n📊 Pokazać statystyki Twojej biblioteki\n\nJak mogę Ci pomóc?',
+        'Witaj! Jestem Twoim asystentem AI do nauki słówek. Mogę:\n\n• Dodać słówka, które wpiszesz (np. \"breakfast - śniadanie\")\n• Wygenerować słówka na temat (np. \"Wygeneruj 10 słówek o sporcie\")\n• Wyciągnąć słówka ze zdjęcia notatek\n• Pokazać statystyki Twojej biblioteki\n\nJak mogę Ci pomóc?',
       timestamp: new Date(),
     },
   ]);
@@ -53,6 +54,8 @@ export default function ChatPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [parsedWords, setParsedWords] = useState<ParsedWord[]>([]);
   const [suggestedCategory, setSuggestedCategory] = useState('');
+  const [suggestedSetName, setSuggestedSetName] = useState('');
+  const [selectedSetOption, setSelectedSetOption] = useState(NEW_SET_OPTION);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -61,12 +64,21 @@ export default function ChatPage() {
   const vocabulary = useVocabStore((state) => state.vocabulary);
   const addVocabulary = useVocabStore((state) => state.addVocabulary);
   const getCategories = useVocabStore((state) => state.getCategories);
+  const createSet = useVocabStore((state) => state.createSet);
+  const sets = useVocabStore((state) => state.sets);
 
   const categories = getCategories();
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    if (selectedSetOption === NEW_SET_OPTION) return;
+    if (!sets.some((set) => set.id === selectedSetOption)) {
+      setSelectedSetOption(NEW_SET_OPTION);
+    }
+  }, [NEW_SET_OPTION, selectedSetOption, sets]);
 
   if (!hydrated) {
     return (
@@ -86,6 +98,12 @@ export default function ChatPage() {
         timestamp: new Date(),
       },
     ]);
+  };
+
+  const buildSetName = (base?: string) => {
+    const trimmed = base?.trim();
+    const label = trimmed && trimmed.length > 0 ? trimmed : 'Nowy zestaw';
+    return `${label} (${formatDate(new Date())})`;
   };
 
   const handleSend = async () => {
@@ -148,12 +166,12 @@ export default function ChatPage() {
       lowerText.includes('moje słówka')
     ) {
       addAssistantMessage(
-        `📚 Masz łącznie **${vocabulary.length}** słówek w **${categories.length}** kategoriach:\n\n${categories
+        `Masz łącznie **${vocabulary.length}** słówek w **${categories.length}** kategoriach:\n\n${categories
           .map((cat) => {
             const count = vocabulary.filter((v) => v.category === cat).length;
-            return `• ${cat}: ${count} słówek`;
+            return `• ${getCategoryLabel(cat)}: ${count} słówek`;
           })
-          .join('\n')}\n\nChcesz dodać więcej słówek? 🎯`
+          .join('\n')}\n\nChcesz dodać więcej słówek?`
       );
       return;
     }
@@ -183,10 +201,13 @@ export default function ChatPage() {
             selected: true,
           }))
         );
-        setSuggestedCategory(data.topic || topic);
+        const finalTopic = data.topic || topic;
+        setSuggestedCategory(finalTopic);
+        setSuggestedSetName(buildSetName(finalTopic));
+        setSelectedSetOption(NEW_SET_OPTION);
 
         addAssistantMessage(
-          `🎯 Wygenerowałem **${data.words.length}** słówek na temat "${topic}" (poziom ${level})!\n\nZaznacz te, które chcesz dodać do biblioteki:`
+          `Wygenerowałem **${data.words.length}** słówek na temat \"${topic}\" (poziom ${level}).\n\nZaznacz te, które chcesz dodać do biblioteki:`
         );
       } else {
         throw new Error('No words generated');
@@ -208,15 +229,17 @@ export default function ChatPage() {
 
     setParsedWords(fallbackWords.slice(0, count));
     setSuggestedCategory(topic);
+    setSuggestedSetName(buildSetName(topic));
+    setSelectedSetOption(NEW_SET_OPTION);
 
     addAssistantMessage(
-      `⚠️ Użyłem lokalnych danych (brak klucza API).\n\nZnalazłem ${Math.min(count, fallbackWords.length)} przykładowych słówek. Skonfiguruj GEMINI_API_KEY w .env.local dla pełnej funkcjonalności.`
+      `Użyłem lokalnych danych (brak klucza API).\n\nZnalazłem ${Math.min(count, fallbackWords.length)} przykładowych słówek. Skonfiguruj GEMINI_API_KEY w .env.local dla pełnej funkcjonalności.`
     );
   };
 
   const parseTextWithAI = async (text: string) => {
     // First try local parsing
-    const localWords = parseWordsLocally(text);
+    const localWords = parseVocabularyInput(text);
 
     if (localWords.length > 0) {
       // Use AI to enhance with phonetics
@@ -231,9 +254,12 @@ export default function ChatPage() {
           const data = await response.json();
           if (data.words && data.words.length > 0) {
             setParsedWords(data.words.map((w: ParsedWord) => ({ ...w, selected: true })));
-            setSuggestedCategory(data.category_suggestion || 'Moje słówka');
+            const category = data.category_suggestion || 'Moje słówka';
+            setSuggestedCategory(category);
+            setSuggestedSetName(buildSetName(category));
+            setSelectedSetOption(NEW_SET_OPTION);
             addAssistantMessage(
-              `✨ Znalazłem **${data.words.length}** słówek! Dodałem poprawne transkrypcje fonetyczne.\n\nZaznacz te, które chcesz dodać:`
+              `Znalazłem **${data.words.length}** słówek. Dodałem poprawne transkrypcje fonetyczne.\n\nZaznacz te, które chcesz dodać:`
             );
             return;
           }
@@ -245,37 +271,16 @@ export default function ChatPage() {
       // Fallback to local parsing
       setParsedWords(localWords.map((w) => ({ ...w, selected: true })));
       setSuggestedCategory('Moje słówka');
+      setSuggestedSetName(buildSetName('Moje słówka'));
+      setSelectedSetOption(NEW_SET_OPTION);
       addAssistantMessage(
-        `📝 Znalazłem **${localWords.length}** słówek! Zaznacz te, które chcesz dodać:`
+        `Znalazłem **${localWords.length}** słówek. Zaznacz te, które chcesz dodać:`
       );
     } else {
       addAssistantMessage(
-        '🤔 Nie rozpoznałem słówek. Spróbuj wpisać w formacie:\n\n• `słowo - tłumaczenie`\n• `word1 - translation1, word2 - translation2`\n\nLub napisz: **"Wygeneruj 10 słówek o [temat]"**'
+        'Nie rozpoznałem słówek. Spróbuj wpisać w formacie:\n\n• `słowo - tłumaczenie`\n• `word1 - translation1, word2 - translation2`\n\nLub napisz: **\"Wygeneruj 10 słówek o [temat]\"**'
       );
     }
-  };
-
-  const parseWordsLocally = (text: string): Omit<ParsedWord, 'selected'>[] => {
-    const words: Omit<ParsedWord, 'selected'>[] = [];
-    const parts = text.split(/[,\n]+/);
-
-    for (const part of parts) {
-      const match = part.match(/([^-=]+)[-=](.+)/);
-      if (match) {
-        const en = match[1].trim();
-        const pl = match[2].trim();
-        if (en && pl && en.length > 1 && pl.length > 1) {
-          words.push({
-            en,
-            phonetic: `/${en.toLowerCase()}/`,
-            pl,
-            difficulty: 'medium',
-          });
-        }
-      }
-    }
-
-    return words;
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -290,7 +295,7 @@ export default function ChatPage() {
       {
         id: generateId(),
         role: 'user',
-        content: `📷 Przesłano zdjęcie: ${file.name}`,
+        content: `Przesłano zdjęcie: ${file.name}`,
         timestamp: new Date(),
       },
     ]);
@@ -319,20 +324,23 @@ export default function ChatPage() {
 
           if (data.words && data.words.length > 0) {
             setParsedWords(data.words.map((w: ParsedWord) => ({ ...w, selected: true })));
-            setSuggestedCategory(data.category_suggestion || 'Ze zdjęcia');
+            const category = data.category_suggestion || 'Ze zdjęcia';
+            setSuggestedCategory(category);
+            setSuggestedSetName(buildSetName(category));
+            setSelectedSetOption(NEW_SET_OPTION);
 
             addAssistantMessage(
-              `📸 Znalazłem **${data.words.length}** słówek na zdjęciu!\n\n${data.notes ? `📝 Uwagi: ${data.notes}\n\n` : ''}Zaznacz te, które chcesz dodać:`
+              `Znalazłem **${data.words.length}** słówek na zdjęciu.\n\n${data.notes ? `Uwagi: ${data.notes}\n\n` : ''}Zaznacz te, które chcesz dodać:`
             );
           } else {
             addAssistantMessage(
-              '😕 Nie udało się rozpoznać słówek na zdjęciu. Upewnij się, że notatki są czytelne i zawierają słówka angielskie z tłumaczeniami.'
+              'Nie udało się rozpoznać słówek na zdjęciu. Upewnij się, że notatki są czytelne i zawierają słówka angielskie z tłumaczeniami.'
             );
           }
         } catch (error) {
           console.error('Image extraction error:', error);
           addAssistantMessage(
-            '❌ Nie udało się przetworzyć zdjęcia. Upewnij się, że klucz API jest skonfigurowany w .env.local'
+            'Nie udało się przetworzyć zdjęcia. Upewnij się, że klucz API jest skonfigurowany w .env.local.'
           );
         }
 
@@ -342,7 +350,7 @@ export default function ChatPage() {
       reader.readAsDataURL(file);
     } catch (error) {
       console.error('File read error:', error);
-      addAssistantMessage('❌ Nie udało się wczytać pliku.');
+      addAssistantMessage('Nie udało się wczytać pliku.');
       setIsProcessing(false);
     }
 
@@ -365,12 +373,27 @@ export default function ChatPage() {
       return;
     }
 
+    let targetSetId = '';
+    let targetSetName = '';
+    const existingSet = sets.find((set) => set.id === selectedSetOption);
+    if (selectedSetOption !== NEW_SET_OPTION && existingSet) {
+      targetSetId = existingSet.id;
+      targetSetName = existingSet.name;
+    } else {
+      const setLabel =
+        suggestedSetName.trim() || buildSetName(suggestedCategory || 'Nowy zestaw');
+      const newSet = createSet(setLabel);
+      targetSetId = newSet.id;
+      targetSetName = newSet.name;
+    }
+
     const newVocab: VocabularyItem[] = selectedWords.map((w) => ({
       id: generateId(),
       en: w.en,
       phonetic: w.phonetic,
       pl: w.pl,
       category: suggestedCategory || 'Moje słówka',
+      setIds: [targetSetId],
       example_en: w.example_en,
       example_pl: w.example_pl,
       difficulty: w.difficulty || 'medium',
@@ -381,19 +404,23 @@ export default function ChatPage() {
     addVocabulary(newVocab);
     setParsedWords([]);
     setSuggestedCategory('');
+    setSuggestedSetName('');
+    setSelectedSetOption(NEW_SET_OPTION);
 
     addAssistantMessage(
-      `✅ Dodano **${selectedWords.length}** słówek do kategorii "${suggestedCategory || 'Moje słówka'}"! 🎉\n\nCo jeszcze mogę dla Ciebie zrobić?`
+      `Dodano **${selectedWords.length}** słówek do zestawu \"${targetSetName}\" w kategorii \"${suggestedCategory || 'Moje słówka'}\".\n\nCo jeszcze mogę dla Ciebie zrobić?`
     );
   };
 
   const cancelWords = () => {
     setParsedWords([]);
     setSuggestedCategory('');
+    setSuggestedSetName('');
+    setSelectedSetOption(NEW_SET_OPTION);
   };
 
   return (
-    <div className="flex flex-col h-screen max-w-lg mx-auto">
+    <div className="flex flex-col h-screen max-w-3xl mx-auto">
       {/* Header */}
       <div className="p-4 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
         <div className="flex items-center gap-4">
@@ -417,7 +444,7 @@ export default function ChatPage() {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-32">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-[calc(8rem+env(safe-area-inset-bottom))]">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -443,17 +470,51 @@ export default function ChatPage() {
         {parsedWords.length > 0 && (
           <Card className="mx-2">
             <CardContent className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                  Kategoria:
-                </p>
-                <input
-                  type="text"
-                  value={suggestedCategory}
-                  onChange={(e) => setSuggestedCategory(e.target.value)}
-                  className="text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 max-w-[200px]"
-                  placeholder="Nazwa kategorii"
-                />
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400 min-w-[80px]">
+                    Zestaw:
+                  </p>
+                  <select
+                    data-testid="set-selector"
+                    value={selectedSetOption}
+                    onChange={(e) => setSelectedSetOption(e.target.value)}
+                    className="text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 flex-1"
+                  >
+                    <option value={NEW_SET_OPTION}>Utwórz nowy zestaw</option>
+                    {sets.map((set) => (
+                      <option key={set.id} value={set.id}>
+                        {set.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {selectedSetOption === NEW_SET_OPTION && (
+                  <div className="flex items-center gap-3">
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400 min-w-[80px]">
+                      Nazwa:
+                    </p>
+                    <input
+                      type="text"
+                      value={suggestedSetName}
+                      onChange={(e) => setSuggestedSetName(e.target.value)}
+                      className="text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 flex-1"
+                      placeholder="Nazwa zestawu"
+                    />
+                  </div>
+                )}
+                <div className="flex items-center gap-3">
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400 min-w-[80px]">
+                    Kategoria:
+                  </p>
+                  <input
+                    type="text"
+                    value={suggestedCategory}
+                    onChange={(e) => setSuggestedCategory(e.target.value)}
+                    className="text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 flex-1"
+                    placeholder="Nazwa kategorii"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2 max-h-[300px] overflow-y-auto">
@@ -523,33 +584,33 @@ export default function ChatPage() {
       </div>
 
       {/* Input */}
-      <div className="fixed bottom-16 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4">
-        <div className="max-w-lg mx-auto">
+      <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-0 right-0 md:left-24 md:bottom-8 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4">
+        <div className="max-w-3xl mx-auto">
           {/* Quick actions */}
           <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
             <button
               onClick={() => setInput('Wygeneruj 10 słówek o podróżowaniu')}
               className="flex-shrink-0 px-3 py-1.5 bg-primary-50 dark:bg-primary-900 text-primary-600 dark:text-primary-400 rounded-full text-sm hover:bg-primary-100"
             >
-              ✈️ Podróże
+              Podróże
             </button>
             <button
               onClick={() => setInput('Wygeneruj 10 słówek o jedzeniu')}
               className="flex-shrink-0 px-3 py-1.5 bg-primary-50 dark:bg-primary-900 text-primary-600 dark:text-primary-400 rounded-full text-sm hover:bg-primary-100"
             >
-              🍕 Jedzenie
+              Jedzenie
             </button>
             <button
               onClick={() => setInput('Wygeneruj 10 słówek o pracy')}
               className="flex-shrink-0 px-3 py-1.5 bg-primary-50 dark:bg-primary-900 text-primary-600 dark:text-primary-400 rounded-full text-sm hover:bg-primary-100"
             >
-              💼 Praca
+              Praca
             </button>
             <button
               onClick={() => setInput('Ile mam słówek?')}
               className="flex-shrink-0 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-full text-sm hover:bg-slate-200"
             >
-              📊 Statystyki
+              Statystyki
             </button>
           </div>
 

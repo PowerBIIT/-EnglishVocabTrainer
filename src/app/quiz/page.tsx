@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Target, Shuffle, Clock, Keyboard, Volume2 } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -10,6 +9,7 @@ import { QuizSession, QuizResults } from '@/components/quiz/Quiz';
 import { useVocabStore, useHydration } from '@/lib/store';
 import { VocabularyItem, QuizMode, QuizResult } from '@/types';
 import { cn, shuffleArray } from '@/lib/utils';
+import { getCategoryLabel } from '@/lib/categories';
 
 type SessionState = 'setup' | 'active' | 'results';
 
@@ -48,21 +48,83 @@ const quizModes: { id: QuizMode; label: string; icon: React.ReactNode; descripti
 
 export default function QuizPage() {
   const hydrated = useHydration();
-  const router = useRouter();
   const [sessionState, setSessionState] = useState<SessionState>('setup');
   const [selectedMode, setSelectedMode] = useState<QuizMode>('en_to_pl');
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
+  const [selectedSetId, setSelectedSetId] = useState<'all' | 'unassigned' | string>('all');
   const [sessionWords, setSessionWords] = useState<VocabularyItem[]>([]);
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
 
   const vocabulary = useVocabStore((state) => state.vocabulary);
   const settings = useVocabStore((state) => state.settings);
-  const getCategories = useVocabStore((state) => state.getCategories);
+  const sets = useVocabStore((state) => state.sets);
   const getNextReviewWords = useVocabStore((state) => state.getNextReviewWords);
   const updateStreak = useVocabStore((state) => state.updateStreak);
   const incrementSessionCount = useVocabStore((state) => state.incrementSessionCount);
 
-  const categories = getCategories();
+  const setCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    sets.forEach((set) => {
+      counts[set.id] = 0;
+    });
+    vocabulary.forEach((word) => {
+      const ids = word.setIds ?? [];
+      ids.forEach((id) => {
+        counts[id] = (counts[id] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [sets, vocabulary]);
+
+  const unassignedCount = useMemo(
+    () => vocabulary.filter((word) => (word.setIds ?? []).length === 0).length,
+    [vocabulary]
+  );
+
+  const filterBySet = useCallback(
+    (words: VocabularyItem[]) => {
+      if (selectedSetId === 'all') return words;
+      if (selectedSetId === 'unassigned') {
+        return words.filter((word) => (word.setIds ?? []).length === 0);
+      }
+      return words.filter((word) => (word.setIds ?? []).includes(selectedSetId));
+    },
+    [selectedSetId]
+  );
+
+  const categories = useMemo(() => {
+    const filtered = filterBySet(vocabulary);
+    return Array.from(new Set(filtered.map((word) => word.category)));
+  }, [filterBySet, vocabulary]);
+
+  useEffect(() => {
+    if (selectedCategory !== 'all' && !categories.includes(selectedCategory)) {
+      setSelectedCategory('all');
+    }
+  }, [categories, selectedCategory]);
+
+  useEffect(() => {
+    if (
+      selectedSetId !== 'all' &&
+      selectedSetId !== 'unassigned' &&
+      !sets.some((set) => set.id === selectedSetId)
+    ) {
+      setSelectedSetId('all');
+    }
+  }, [selectedSetId, sets]);
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filterBySet(vocabulary).forEach((word) => {
+      counts[word.category] = (counts[word.category] || 0) + 1;
+    });
+    return counts;
+  }, [filterBySet, vocabulary]);
+
+  const filteredVocabularyCount = useMemo(
+    () => filterBySet(vocabulary).length,
+    [filterBySet, vocabulary]
+  );
 
   if (!hydrated) {
     return (
@@ -74,7 +136,7 @@ export default function QuizPage() {
 
   const startQuiz = () => {
     const count = settings.session.quizQuestionCount;
-    let words = getNextReviewWords(count);
+    let words = filterBySet(getNextReviewWords(count));
 
     if (selectedCategory !== 'all') {
       words = words.filter((w) => w.category === selectedCategory);
@@ -82,7 +144,7 @@ export default function QuizPage() {
 
     if (words.length < 4) {
       // Need at least 4 words for quiz options
-      words = vocabulary
+      words = filterBySet(vocabulary)
         .filter((w) => selectedCategory === 'all' || w.category === selectedCategory)
         .sort(() => Math.random() - 0.5);
     }
@@ -172,7 +234,7 @@ export default function QuizPage() {
   }
 
   return (
-    <div className="p-4 space-y-6 max-w-lg mx-auto">
+    <div className="p-4 space-y-6 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/">
@@ -185,7 +247,7 @@ export default function QuizPage() {
             Quiz
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Sprawdź swoją wiedzę
+            Wybierz zestaw i sprawdź swoją wiedzę
           </p>
         </div>
       </div>
@@ -232,6 +294,53 @@ export default function QuizPage() {
         </CardContent>
       </Card>
 
+      {/* Set selection */}
+      <Card>
+        <CardContent className="p-4 space-y-4">
+          <h3 className="font-medium text-slate-800 dark:text-slate-100">
+            Zestaw
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedSetId('all')}
+              className={cn(
+                'px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                selectedSetId === 'all'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+              )}
+            >
+              Wszystkie ({vocabulary.length})
+            </button>
+            <button
+              onClick={() => setSelectedSetId('unassigned')}
+              className={cn(
+                'px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                selectedSetId === 'unassigned'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+              )}
+            >
+              Bez zestawu ({unassignedCount})
+            </button>
+            {sets.map((set) => (
+              <button
+                key={set.id}
+                onClick={() => setSelectedSetId(set.id)}
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                  selectedSetId === set.id
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                )}
+              >
+                {set.name} ({setCounts[set.id] ?? 0})
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Category selection */}
       <Card>
         <CardContent className="p-4 space-y-4">
@@ -248,7 +357,7 @@ export default function QuizPage() {
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
               )}
             >
-              Wszystkie
+              Wszystkie ({filteredVocabularyCount})
             </button>
             {categories.map((cat) => (
               <button
@@ -261,7 +370,7 @@ export default function QuizPage() {
                     : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                 )}
               >
-                {cat}
+                {getCategoryLabel(cat)} ({categoryCounts[cat] ?? 0})
               </button>
             ))}
           </div>
@@ -289,7 +398,7 @@ export default function QuizPage() {
                 </div>
               )}
             </div>
-            <Link href="/settings" className="text-sm text-primary-500">
+            <Link href="/profile#settings" className="text-sm text-primary-500">
               Zmień
             </Link>
           </div>

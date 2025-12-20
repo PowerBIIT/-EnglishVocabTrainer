@@ -3,25 +3,31 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 15, 23, 42;
-  --background-start-rgb: 248, 250, 252;
-  --background-end-rgb: 241, 245, 249;
+  --foreground-rgb: 16, 24, 40;
+  --background-start-rgb: 238, 247, 246;
+  --background-end-rgb: 246, 249, 255;
+  --surface-rgb: 255, 255, 255;
+  --surface-border: 226, 232, 240;
+  --shadow-color: 14, 30, 52;
 }
 
 .dark {
   --foreground-rgb: 248, 250, 252;
-  --background-start-rgb: 15, 23, 42;
-  --background-end-rgb: 30, 41, 59;
+  --background-start-rgb: 12, 19, 30;
+  --background-end-rgb: 20, 30, 45;
+  --surface-rgb: 17, 24, 39;
+  --surface-border: 51, 65, 85;
+  --shadow-color: 0, 0, 0;
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  background-color: rgb(var(--background-start-rgb));
+  background-image:
+    radial-gradient(1200px 600px at 10% -10%, rgba(31, 138, 128, 0.12), transparent 65%),
+    radial-gradient(900px 500px at 90% 0%, rgba(245, 158, 11, 0.12), transparent 60%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0)),
+    linear-gradient(180deg, rgb(var(--background-start-rgb)), rgb(var(--background-end-rgb)));
   min-height: 100vh;
 }
 

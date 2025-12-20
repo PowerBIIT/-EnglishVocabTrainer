@@ -5,11 +5,18 @@ export interface VocabularyItem {
   phonetic: string;
   pl: string;
   category: string;
+  setIds?: string[];
   example_en?: string;
   example_pl?: string;
   difficulty: 'easy' | 'medium' | 'hard';
   created_at: Date;
   source: 'manual' | 'photo' | 'ai_generated' | 'preset';
+}
+
+export interface StudySet {
+  id: string;
+  name: string;
+  createdAt: Date;
 }
 
 // Pronunciation attempt history
@@ -146,6 +153,31 @@ export interface UserStats {
   averagePronunciationScore: number;
   phonemeMastery: Partial<Record<PhonemeType, number>>; // 0-100% mastery per phoneme
   lastPronunciationDate: Date | null;
+}
+
+// Daily mission types
+export type MissionType = 'flashcards' | 'quiz' | 'pronunciation' | 'mixed';
+
+export interface DailyMission {
+  id: string;
+  date: string;
+  type: MissionType;
+  title: string;
+  description: string;
+  target: number;
+  progress: number;
+  rewardXp: number;
+  completed: boolean;
+}
+
+// App state stored per user
+export interface AppState {
+  vocabulary: VocabularyItem[];
+  sets: StudySet[];
+  progress: Record<string, UserProgress>;
+  settings: AppSettings;
+  stats: UserStats;
+  dailyMission: DailyMission;
 }
 
 // Badge types

@@ -53,7 +53,7 @@ export function AITutor() {
         {
           id: '1',
           role: 'assistant',
-          content: `Cześć! 👋 Jestem Eva, Twój asystent do nauki angielskiego!\n\nMam kilka pomysłów jak mogę Ci pomóc:\n• Wyjaśnię dowolne słówko szczegółowo\n• Pomogę z wymową\n• Dam wskazówki do nauki\n• Odpowiem na pytania o gramatykę\n\nO co chcesz zapytać? 🎓`,
+          content: `Cześć! Jestem Eva, Twój asystent do nauki angielskiego.\n\nMogę Ci pomóc w następujących tematach:\n• Wyjaśnienie słówek krok po kroku\n• Wymowa i akcent\n• Wskazówki do nauki\n• Pytania o gramatykę\n\nO co chcesz zapytać?`,
           timestamp: new Date(),
         },
       ]);
@@ -114,7 +114,7 @@ Aktualna seria: ${stats.currentStreak} dni
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content:
-          '😅 Przepraszam, mam chwilowe problemy z połączeniem. Spróbuj ponownie za chwilę!\n\n(Upewnij się, że klucz API jest skonfigurowany w .env.local)',
+          'Mam chwilowe problemy z połączeniem. Spróbuj ponownie za chwilę.\n\nUpewnij się, że klucz API jest skonfigurowany w .env.local.',
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -146,7 +146,7 @@ Aktualna seria: ${stats.currentStreak} dni
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-4 w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center z-50"
+        className="fixed bottom-[calc(7rem+env(safe-area-inset-bottom))] right-4 md:bottom-8 md:right-6 w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-amber-400 text-white shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center z-50"
         title="Otwórz asystenta AI"
       >
         <Sparkles size={24} />
@@ -155,9 +155,9 @@ Aktualna seria: ${stats.currentStreak} dni
   }
 
   return (
-    <div className="fixed bottom-24 right-4 w-[360px] h-[500px] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden border border-slate-200 dark:border-slate-700">
+    <div className="fixed bottom-[calc(7rem+env(safe-area-inset-bottom))] right-4 md:bottom-8 md:right-6 w-[360px] h-[500px] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden border border-slate-200 dark:border-slate-700">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 flex items-center justify-between">
+      <div className="bg-gradient-to-r from-primary-500 to-amber-400 text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
             <Sparkles size={20} />
@@ -189,7 +189,7 @@ Aktualna seria: ${stats.currentStreak} dni
               className={cn(
                 'max-w-[85%] rounded-2xl px-4 py-3 relative group',
                 message.role === 'user'
-                  ? 'bg-purple-500 text-white rounded-br-md'
+                  ? 'bg-primary-600 text-white rounded-br-md'
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-bl-md'
               )}
             >
@@ -197,7 +197,7 @@ Aktualna seria: ${stats.currentStreak} dni
               {message.role === 'assistant' && (
                 <button
                   onClick={() => handleSpeakText(message.content)}
-                  className="absolute -right-8 top-2 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-purple-500"
+                  className="absolute -right-8 top-2 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-primary-600"
                   title="Wymów angielskie słowa"
                 >
                   <Volume2 size={16} />
@@ -211,7 +211,7 @@ Aktualna seria: ${stats.currentStreak} dni
           <div className="flex justify-start">
             <div className="bg-slate-100 dark:bg-slate-700 rounded-2xl rounded-bl-md px-4 py-3">
               <div className="flex items-center gap-2">
-                <Loader2 size={16} className="animate-spin text-purple-500" />
+                <Loader2 size={16} className="animate-spin text-primary-500" />
                 <span className="text-sm text-slate-500">Eva pisze...</span>
               </div>
             </div>
@@ -232,7 +232,7 @@ Aktualna seria: ${stats.currentStreak} dni
                       action.prompt.endsWith(': ')
                     )
                   }
-                  className="flex items-center gap-2 px-3 py-2 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded-full text-sm hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors"
                 >
                   <action.icon size={14} />
                   {action.label}
@@ -255,13 +255,13 @@ Aktualna seria: ${stats.currentStreak} dni
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Zapytaj o cokolwiek..."
-            className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             disabled={isLoading}
           />
           <Button
             onClick={() => handleSend()}
             disabled={!input.trim() || isLoading}
-            className="bg-purple-500 hover:bg-purple-600 px-4"
+            className="bg-primary-600 hover:bg-primary-700 px-4"
           >
             <Send size={18} />
           </Button>

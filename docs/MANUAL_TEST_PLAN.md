@@ -20,12 +20,50 @@
 - [ ] Głośniki/słuchawki (dla testów TTS)
 
 ### 2.2 Przygotowanie danych
-- [ ] Wyczyść localStorage przed testami (`localStorage.clear()`)
+- [ ] Użyj nowego konta lub wyczyść dane w bazie (np. `docker compose down -v`)
+- [ ] Dodaj min. 20 słówek w co najmniej 2 zestawach/kategoriach
 - [ ] Przygotuj zdjęcie z notatkami (opcjonalnie)
 
 ---
 
 ## 3. Testy funkcjonalne
+
+### 3.0 Logowanie i onboarding
+
+#### TC-AUTH-001: Logowanie przez Google
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Otwórz `/login` | Widoczny ekran logowania |
+| 2 | Kliknij "Zaloguj się przez Google" | Poprawny redirect do Google |
+| 3 | Zaloguj się | Powrót do aplikacji |
+
+#### TC-AUTH-002: Onboarding wymuszony
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Pierwsze logowanie | Użytkownik trafia na `/onboarding` |
+| 2 | Spróbuj wejść na `/` | Przekierowanie na onboarding |
+| 3 | Wybierz skina | Przejście do kroku dodania zestawu |
+| 4 | Wpisz nazwę zestawu i min. 3 słówka | Aktywny przycisk "Przejdź do misji" |
+| 5 | Ukończ misję startową | Onboarding kończy się i następuje redirect na `/` |
+
+#### TC-AUTH-003: Wybór skina mascota
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Wybierz skina w onboardingu | Skin zapisany |
+| 2 | Wejdź w profil (sekcja Mascot) | Ten sam skin zaznaczony |
+| 3 | Zmień skina w profilu | Zmiana widoczna w UI |
+
+#### TC-AUTH-004: Synchronizacja danych
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Dodaj słówko na urządzeniu A | Słówko zapisane |
+| 2 | Zaloguj się na urządzeniu B | Słówko widoczne |
+
+#### TC-AUTH-005: Wylogowanie
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Wejdź do profilu | Widoczny przycisk wylogowania |
+| 2 | Kliknij "Wyloguj" | Powrót na `/login` |
 
 ### 3.1 Dashboard (Strona główna)
 
@@ -33,14 +71,14 @@
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
 | 1 | Otwórz aplikację na `/` | Dashboard się wyświetla |
-| 2 | Sprawdź sekcję statystyk | Seria: 0 dni, XP: 0 |
-| 3 | Sprawdź poziom | Poziom 1, 0% postępu |
-| 4 | Sprawdź kategorię | 4 kategorie widoczne |
+| 2 | Sprawdź sekcję statystyk | Seria i XP widoczne (>= 0) |
+| 3 | Sprawdź poziom | Poziom widoczny (>= 1) |
+| 4 | Sprawdź kategorię | Widoczna co najmniej 1 kategoria z onboardingu |
 
 #### TC-DASH-002: Nawigacja do modułów
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
-| 1 | Kliknij "Zacznij naukę" | Przekierowanie do `/flashcards` |
+| 1 | Kliknij przycisk misji dnia | Przekierowanie do `/flashcards` |
 | 2 | Wróć i kliknij kafelek "Fiszki" | Przekierowanie do `/flashcards` |
 | 3 | Wróć i kliknij kafelek "Quiz" | Przekierowanie do `/quiz` |
 
@@ -51,7 +89,7 @@
 | 2 | Kliknij ikonę Słówka | Przekierowanie do `/vocabulary` |
 | 3 | Kliknij ikonę Wymowa | Przekierowanie do `/pronunciation` |
 | 4 | Kliknij ikonę Czat | Przekierowanie do `/chat` |
-| 5 | Kliknij ikonę Ustawienia | Przekierowanie do `/settings` |
+| 5 | Kliknij ikonę Profil | Przekierowanie do `/profile` |
 
 ---
 
@@ -95,7 +133,7 @@
 #### TC-FLASH-006: Filtrowanie kategorii
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
-| 1 | Wybierz kategorię "Health Problems" | Tylko słówka z tej kategorii |
+| 1 | Wybierz dowolną kategorię | Tylko słówka z tej kategorii |
 | 2 | Rozpocznij sesję | Fiszki tylko o zdrowiu |
 
 ---
@@ -117,7 +155,7 @@
 |------|-------|---------------------|
 | 1 | Wybierz tryb "EN → PL", rozpocznij | Pytanie z 4 odpowiedziami |
 | 2 | Słówko angielskie widoczne | Z fonetyką IPA |
-| 3 | Kliknij poprawną odpowiedź | Zielone podświetlenie, ✓ |
+| 3 | Kliknij poprawną odpowiedź | Zielone podświetlenie, poprawna odpowiedź |
 | 4 | Kliknij błędną odpowiedź | Czerwone podświetlenie, poprawna pokazana |
 
 #### TC-QUIZ-003: Quiz PL → EN
@@ -161,7 +199,7 @@
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
 | 1 | Odpowiedz 100% poprawnie | Komunikat "Perfekcyjnie!" |
-| 2 | Sprawdź animację | Emoji 🎉 widoczne |
+| 2 | Sprawdź animację | Ikona nagrody widoczna |
 
 ---
 
@@ -233,8 +271,9 @@
 |------|-------|---------------------|
 | 1 | Wpisz: "breakfast - śniadanie" | AI parsuje słówko |
 | 2 | Sprawdź propozycję | Checkbox, fonetyka, tłumaczenie |
-| 3 | Zaznacz słówko | Checkbox aktywny |
-| 4 | Kliknij "Dodaj" | Słówko dodane do biblioteki |
+| 3 | Upewnij się, że "Utwórz nowy zestaw" | Pole nazwy zestawu widoczne |
+| 4 | Wpisz nazwę zestawu | Nazwa zapamiętana |
+| 5 | Kliknij "Dodaj" | Słówko dodane do biblioteki |
 
 #### TC-CHAT-003: Dodawanie wielu słówek
 | Krok | Akcja | Oczekiwany rezultat |
@@ -246,7 +285,7 @@
 #### TC-CHAT-004: Generowanie słówek po temacie
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
-| 1 | Wpisz: "Wygeneruj 5 słówek o podróżowaniu" | Lista 5 słówek travel |
+| 1 | Wpisz: "Wygeneruj 5 słówek o podróżowaniu" | Lista 5 słówek w podanym temacie |
 | 2 | Sprawdź słówka | Tematycznie powiązane |
 | 3 | Dodaj wszystkie | Słówka w bibliotece |
 
@@ -270,6 +309,14 @@
 | 2 | Kliknij "Anuluj" | Lista znika |
 | 3 | Sprawdź bibliotekę | Słówka nie dodane |
 
+#### TC-CHAT-008: Wybór istniejącego zestawu
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Upewnij się, że istnieje zestaw | Widoczny w profilu |
+| 2 | Sparsuj nowe słówka | Lista propozycji widoczna |
+| 3 | Wybierz zestaw z listy | Pole nazwy znika |
+| 4 | Kliknij "Dodaj" | Słówka przypisane do wybranego zestawu |
+
 ---
 
 ### 3.6 Biblioteka Słówek
@@ -280,18 +327,19 @@
 | 1 | Przejdź do `/vocabulary` | Lista słówek widoczna |
 | 2 | Sprawdź grupowanie | Słówka pogrupowane wg kategorii |
 | 3 | Sprawdź licznik | "X słówek w Y kategoriach" |
+| 4 | Sprawdź chipy zestawów | Każde słówko ma przypisany zestaw lub "Bez zestawu" |
 
 #### TC-VOCAB-002: Wyszukiwanie słówek
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
-| 1 | Wpisz "head" w pole szukaj | Filtrowane: "headache" itp. |
+| 1 | Wpisz fragment istniejącego słówka | Lista ograniczona do pasujących |
 | 2 | Wpisz "ból" | Filtrowane po polsku |
 | 3 | Wyczyść pole | Wszystkie słówka widoczne |
 
 #### TC-VOCAB-003: Filtrowanie kategorii
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
-| 1 | Kliknij "Health Problems" | Tylko ta kategoria |
+| 1 | Kliknij wybraną kategorię | Tylko ta kategoria |
 | 2 | Kliknij "Wszystkie" | Wszystkie kategorie |
 
 #### TC-VOCAB-004: Odtwarzanie wymowy
@@ -304,7 +352,7 @@
 |------|-------|---------------------|
 | 1 | Kliknij "Wybierz" | Tryb selekcji aktywny |
 | 2 | Zaznacz 3 słówka | Checkboxy zaznaczone |
-| 3 | Kliknij "Usuń (3)" | Potwierdzenie |
+| 3 | Kliknij ikonę kosza z licznikiem | Potwierdzenie |
 | 4 | Potwierdź usunięcie | Słówka usunięte |
 
 #### TC-VOCAB-006: Anulowanie usuwania
@@ -323,7 +371,22 @@
 #### TC-VOCAB-008: Przycisk dodawania
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
-| 1 | Kliknij "+" (prawy dolny róg) | Przekierowanie do `/chat` |
+| 1 | Kliknij "+" (lewy dolny róg) | Przekierowanie do `/chat` |
+
+#### TC-VOCAB-009: Filtrowanie po zestawach
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Kliknij wybrany zestaw | Widoczne tylko słówka z tego zestawu |
+| 2 | Kliknij "Bez zestawu" | Widoczne tylko nieprzypisane słówka |
+| 3 | Kliknij "Wszystkie zestawy" | Widoczne wszystkie słówka |
+
+#### TC-VOCAB-010: Przenoszenie do zestawu
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Kliknij "Wybierz" | Panel przenoszenia widoczny |
+| 2 | Zaznacz kilka słówek | Licznik rośnie |
+| 3 | Wybierz zestaw docelowy | Wybór zapisany |
+| 4 | Kliknij "Przenieś" | Słówka przypisane do zestawu |
 
 ---
 
@@ -332,7 +395,7 @@
 #### TC-SET-001: Ustawienia sesji
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
-| 1 | Przejdź do `/settings` | Formularz ustawień |
+| 1 | Przejdź do `/profile#settings` | Formularz ustawień |
 | 2 | Zmień "Pytań w quizie" na 15 | Zapisane |
 | 3 | Rozpocznij quiz | 15 pytań |
 
@@ -467,26 +530,21 @@
 
 ---
 
-## 7. Testy localStorage
+## 7. Testy synchronizacji danych (backend)
 
-#### TC-STOR-001: Zapis danych
+#### TC-SYNC-001: Persistencja stanu
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
-| 1 | Dodaj słówko | `vocab-storage` w localStorage |
-| 2 | Zmień ustawienia | Zapisane w localStorage |
-| 3 | Zdobądź XP | Zapisane w localStorage |
+| 1 | Dodaj słówko w czacie | Słówko widoczne w bibliotece |
+| 2 | Odśwież stronę | Słówko nadal widoczne |
+| 3 | Wyloguj i zaloguj się | Dane zachowane |
 
-#### TC-STOR-002: Odczyt danych
+#### TC-SYNC-002: Spójność zestawów
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
-| 1 | Odśwież stronę | Dane przywrócone |
-| 2 | Zamknij/otwórz przeglądarkę | Dane przywrócone |
-
-#### TC-STOR-003: Uszkodzone dane
-| Krok | Akcja | Oczekiwany rezultat |
-|------|-------|---------------------|
-| 1 | Ręcznie uszkodź JSON | Aplikacja obsługuje błąd |
-| 2 | Wyczyść localStorage | Domyślne dane załadowane |
+| 1 | Przypisz słówka do zestawu | Słówka w zestawie |
+| 2 | Odśwież stronę | Przypisanie zachowane |
+| 3 | Usuń zestaw w profilu | Słówka przechodzą do "Bez zestawu" |
 
 ---
 
@@ -523,9 +581,10 @@
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
 | 1 | Przejdź do czatu | Czat AI |
-| 2 | Dodaj 5 słówek | Słówka w bibliotece |
-| 3 | Rozpocznij fiszki z nową kategorią | Nowe słówka w sesji |
-| 4 | Przejdź quiz z nowymi słówkami | Działają poprawnie |
+| 2 | Dodaj 5 słówek i nazwij zestaw | Słówka w bibliotece |
+| 3 | Sprawdź profil | Zestaw i licznik słówek widoczne |
+| 4 | Rozpocznij fiszki z wybranym zestawem | Nowe słówka w sesji |
+| 5 | Przejdź quiz z nowymi słówkami | Działają poprawnie |
 
 ---
 
@@ -544,7 +603,7 @@
 - [ ] Testy na urządzeniu mobilnym
 - [ ] Build produkcyjny działa (`npm run build`)
 - [ ] Brak błędów w konsoli
-- [ ] localStorage działa poprawnie
+- [ ] Synchronizacja danych działa poprawnie
 - [ ] Dane testowe zresetowane
 
 ---

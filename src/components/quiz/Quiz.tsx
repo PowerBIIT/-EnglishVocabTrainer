@@ -35,6 +35,15 @@ function QuizQuestion({
   const questionText = mode === 'en_to_pl' ? word.en : word.pl;
   const isTyping = mode === 'typing';
 
+  const handleTimeUp = useCallback(() => {
+    if (!showResult) {
+      setShowResult(true);
+      setTimeout(() => {
+        onAnswer('', false, timeLimit || 0);
+      }, 1500);
+    }
+  }, [onAnswer, showResult, timeLimit]);
+
   // Timer effect
   useEffect(() => {
     if (!timeLimit || showResult) return;
@@ -50,7 +59,7 @@ function QuizQuestion({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [timeLimit, showResult]);
+  }, [handleTimeUp, showResult, timeLimit]);
 
   // Auto-play for listening mode
   useEffect(() => {
@@ -61,15 +70,6 @@ function QuizQuestion({
       });
     }
   }, [mode, word.en, settings.pronunciation]);
-
-  const handleTimeUp = () => {
-    if (!showResult) {
-      setShowResult(true);
-      setTimeout(() => {
-        onAnswer('', false, timeLimit || 0);
-      }, 1500);
-    }
-  };
 
   const handleSelectAnswer = (answer: string) => {
     if (showResult) return;
@@ -238,6 +238,7 @@ export function QuizSession({ words, mode, onComplete }: QuizSessionProps) {
   const settings = useVocabStore((state) => state.settings);
   const updateProgress = useVocabStore((state) => state.updateProgress);
   const addXp = useVocabStore((state) => state.addXp);
+  const updateDailyMissionProgress = useVocabStore((state) => state.updateDailyMissionProgress);
 
   const currentWord = words[currentIndex];
   const progress = ((currentIndex + 1) / words.length) * 100;
@@ -289,6 +290,7 @@ export function QuizSession({ words, mode, onComplete }: QuizSessionProps) {
     if (correct) {
       const xp = settings.session.timeLimit ? XP_ACTIONS.correct_with_timer : XP_ACTIONS.correct_answer;
       addXp(xp);
+      updateDailyMissionProgress('quiz', 1);
 
       // Check for streaks
       const streak = results.filter((r) => r.correct).length + 1;
@@ -376,7 +378,7 @@ export function QuizResults({ results, words, onRetry, onClose }: QuizResultsPro
       <Card variant="elevated" className="text-center p-8">
         {isPerfect ? (
           <div className="space-y-4">
-            <div className="text-6xl">🎉</div>
+            <Trophy size={64} className="mx-auto text-amber-500" />
             <h2 className="text-2xl font-bold text-success-600 dark:text-success-400">
               Perfekcyjnie!
             </h2>

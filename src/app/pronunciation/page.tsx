@@ -1,54 +1,6 @@
 'use client';
 
-// Web Speech API types
-interface SpeechRecognitionEvent {
-  results: SpeechRecognitionResultList;
-}
-
-interface SpeechRecognitionResultList {
-  readonly length: number;
-  [index: number]: SpeechRecognitionResult;
-}
-
-interface SpeechRecognitionResult {
-  readonly length: number;
-  readonly isFinal: boolean;
-  [index: number]: SpeechRecognitionAlternative;
-}
-
-interface SpeechRecognitionAlternative {
-  transcript: string;
-  confidence: number;
-}
-
-interface SpeechRecognitionErrorEvent {
-  error: string;
-}
-
-interface SpeechRecognition extends EventTarget {
-  lang: string;
-  interimResults: boolean;
-  maxAlternatives: number;
-  onstart: (() => void) | null;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
-  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-}
-
-interface SpeechRecognitionConstructor {
-  new (): SpeechRecognition;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition?: SpeechRecognitionConstructor;
-    webkitSpeechRecognition?: SpeechRecognitionConstructor;
-  }
-}
-
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import {
   ArrowLeft,
   Mic,
@@ -62,7 +14,11 @@ import {
   Flame,
   BarChart3,
   BookOpen,
+  Shuffle,
+  TrendingDown,
+  Sparkles,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -83,12 +39,15 @@ interface PronunciationResult {
 
 type SessionState = 'setup' | 'practice' | 'complete';
 
-const FOCUS_MODE_LABELS: Record<PronunciationFocusMode, { label: string; icon: string; desc: string }> = {
-  random: { label: 'Losowe', icon: '🎲', desc: 'Losowe słowa z Twojego słownika' },
-  weak_words: { label: 'Słabe słowa', icon: '💪', desc: 'Słowa z niską oceną wymowy' },
-  new_words: { label: 'Nowe słowa', icon: '✨', desc: 'Słowa bez ćwiczenia wymowy' },
-  phoneme_specific: { label: 'Konkretny fonem', icon: '🎯', desc: 'Ćwicz wybrany dźwięk' },
-  review: { label: 'Powtórka', icon: '🔄', desc: 'Słowa wymagające powtórki' },
+const FOCUS_MODE_LABELS: Record<
+  PronunciationFocusMode,
+  { label: string; icon: LucideIcon; desc: string }
+> = {
+  random: { label: 'Losowe', icon: Shuffle, desc: 'Losowe słowa z Twojego słownika' },
+  weak_words: { label: 'Słabe słowa', icon: TrendingDown, desc: 'Słowa z niską oceną wymowy' },
+  new_words: { label: 'Nowe słowa', icon: Sparkles, desc: 'Słowa bez ćwiczenia wymowy' },
+  phoneme_specific: { label: 'Konkretny fonem', icon: Target, desc: 'Ćwicz wybrany dźwięk' },
+  review: { label: 'Powtórka', icon: RotateCcw, desc: 'Słowa wymagające powtórki' },
 };
 
 const SESSION_LENGTHS = [5, 10, 15, 20] as const;
@@ -104,6 +63,7 @@ export default function PronunciationPage() {
   const [scores, setScores] = useState<number[]>([]);
   const [recordingStatus, setRecordingStatus] = useState<string>('');
   const [recognizedText, setRecognizedText] = useState<string>('');
+  const [selectedSetId, setSelectedSetId] = useState<'all' | 'unassigned' | string>('all');
 
   // Session config
   const [selectedLength, setSelectedLength] = useState<number>(10);
@@ -114,6 +74,8 @@ export default function PronunciationPage() {
 
   const settings = useVocabStore((state) => state.settings);
   const stats = useVocabStore((state) => state.stats);
+  const vocabulary = useVocabStore((state) => state.vocabulary);
+  const sets = useVocabStore((state) => state.sets);
   const addXp = useVocabStore((state) => state.addXp);
   const addPronunciationAttempt = useVocabStore((state) => state.addPronunciationAttempt);
   const getNextPronunciationWords = useVocabStore((state) => state.getNextPronunciationWords);
@@ -121,15 +83,64 @@ export default function PronunciationPage() {
   const updatePhonemeMastery = useVocabStore((state) => state.updatePhonemeMastery);
   const completePronunciationSession = useVocabStore((state) => state.completePronunciationSession);
   const getWeakPronunciationWords = useVocabStore((state) => state.getWeakPronunciationWords);
+  const updateDailyMissionProgress = useVocabStore((state) => state.updateDailyMissionProgress);
 
   const currentWord = sessionWords[currentIndex];
   const progress = sessionWords.length > 0 ? ((currentIndex + 1) / sessionWords.length) * 100 : 0;
   const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
-  const weakWordsCount = getWeakPronunciationWords(100).length;
+  const setCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    sets.forEach((set) => {
+      counts[set.id] = 0;
+    });
+    vocabulary.forEach((word) => {
+      const ids = word.setIds ?? [];
+      ids.forEach((id) => {
+        counts[id] = (counts[id] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [sets, vocabulary]);
+
+  const unassignedCount = useMemo(
+    () => vocabulary.filter((word) => (word.setIds ?? []).length === 0).length,
+    [vocabulary]
+  );
+
+  const filterBySet = useCallback(
+    (words: VocabularyItem[]) => {
+      if (selectedSetId === 'all') return words;
+      if (selectedSetId === 'unassigned') {
+        return words.filter((word) => (word.setIds ?? []).length === 0);
+      }
+      return words.filter((word) => (word.setIds ?? []).includes(selectedSetId));
+    },
+    [selectedSetId]
+  );
+
+  const weakWordsCount = useMemo(
+    () => filterBySet(getWeakPronunciationWords(100)).length,
+    [filterBySet, getWeakPronunciationWords]
+  );
+
+  useEffect(() => {
+    if (
+      selectedSetId !== 'all' &&
+      selectedSetId !== 'unassigned' &&
+      !sets.some((set) => set.id === selectedSetId)
+    ) {
+      setSelectedSetId('all');
+    }
+  }, [selectedSetId, sets]);
 
   const startSession = () => {
-    const words = getNextPronunciationWords(selectedLength, selectedFocusMode, selectedPhoneme);
+    const words = getNextPronunciationWords(
+      selectedLength,
+      selectedFocusMode,
+      selectedPhoneme,
+      selectedSetId === 'all' ? undefined : selectedSetId
+    );
     if (words.length === 0) {
       alert('Brak słów spełniających kryteria. Spróbuj innego trybu.');
       return;
@@ -141,7 +152,7 @@ export default function PronunciationPage() {
     setSessionState('practice');
   };
 
-  const finishSession = () => {
+  const finishSession = useCallback(() => {
     updatePronunciationStreak();
     completePronunciationSession({
       sessionId: Date.now().toString(),
@@ -155,13 +166,21 @@ export default function PronunciationPage() {
       xpEarned: scores.filter((s) => s >= 8).length * XP_ACTIONS.pronunciation_good,
     });
     setSessionState('complete');
-  };
+  }, [
+    avgScore,
+    completePronunciationSession,
+    scores,
+    selectedFocusMode,
+    selectedPhoneme,
+    sessionWords.length,
+    updatePronunciationStreak,
+  ]);
 
   useEffect(() => {
     if (sessionState === 'practice' && currentIndex >= sessionWords.length && sessionWords.length > 0) {
       finishSession();
     }
-  }, [currentIndex, sessionWords.length, sessionState]);
+  }, [currentIndex, finishSession, sessionState, sessionWords.length]);
 
   const handleSpeak = async () => {
     if (!currentWord) return;
@@ -179,14 +198,14 @@ export default function PronunciationPage() {
     const SpeechRecognitionApi = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognitionApi) {
-      setRecordingStatus('❌ Przeglądarka nie obsługuje rozpoznawania mowy. Użyj Chrome lub Edge.');
+      setRecordingStatus('Przeglądarka nie obsługuje rozpoznawania mowy. Użyj Chrome lub Edge.');
       return;
     }
 
     // Reset states
     setResult(null);
     setRecognizedText('');
-    setRecordingStatus('🎤 Uruchamiam mikrofon...');
+    setRecordingStatus('Uruchamiam mikrofon...');
 
     const recognition = new SpeechRecognitionApi();
 
@@ -205,13 +224,13 @@ export default function PronunciationPage() {
       hasResult = false;
       hasSpeechStarted = false;
       setIsRecording(true);
-      setRecordingStatus('🎙️ Mikrofon aktywny - mów teraz!');
+      setRecordingStatus('Mikrofon aktywny - mów teraz.');
     };
 
     // Audio capture started (microphone is working)
     recognition.onaudiostart = () => {
       console.log('[STT] Audio capture started');
-      setRecordingStatus('🎤 Nagrywam - powiedz słowo...');
+      setRecordingStatus('Nagrywam - powiedz słowo...');
     };
 
     // Sound detected (any sound, not necessarily speech)
@@ -223,14 +242,14 @@ export default function PronunciationPage() {
     recognition.onspeechstart = () => {
       console.log('[STT] Speech detected');
       hasSpeechStarted = true;
-      setRecordingStatus('🗣️ Słyszę Cię, mów dalej...');
+      setRecordingStatus('Słyszę Cię, mów dalej...');
     };
 
     // Speech ended
     recognition.onspeechend = () => {
       console.log('[STT] Speech ended');
       if (!hasResult) {
-        setRecordingStatus('⏳ Przetwarzam...');
+        setRecordingStatus('Przetwarzam...');
       }
     };
 
@@ -247,21 +266,21 @@ export default function PronunciationPage() {
       if (isFinal) {
         hasResult = true;
         setRecognizedText(transcript);
-        setRecordingStatus(`✅ Rozpoznano: "${transcript}" (${(confidence * 100).toFixed(0)}%)`);
+        setRecordingStatus(`Rozpoznano: "${transcript}" (${(confidence * 100).toFixed(0)}%)`);
         setIsRecording(false);
         // Stop recognition after getting result
         recognition.stop();
         evaluatePronunciation(transcript.toLowerCase());
       } else {
         // Show interim result while speaking
-        setRecordingStatus(`🎙️ "${transcript}"...`);
+        setRecordingStatus(`Rozpoznaje: "${transcript}"...`);
       }
     };
 
     // No match found
     recognition.onnomatch = () => {
       console.log('[STT] No match - speech not recognized');
-      setRecordingStatus('❓ Nie rozpoznano słowa. Spróbuj mówić wyraźniej.');
+      setRecordingStatus('Nie rozpoznano słowa. Spróbuj mówić wyraźniej.');
     };
 
     // Error occurred
@@ -271,15 +290,15 @@ export default function PronunciationPage() {
       hasResult = true;
 
       const errorMessages: Record<string, string> = {
-        'no-speech': '🔇 Nie wykryto mowy. Sprawdź czy mikrofon działa i mów głośno.',
-        'audio-capture': '🎤 Nie można uzyskać dostępu do mikrofonu. Sprawdź czy jest podłączony.',
-        'not-allowed': '🚫 Brak uprawnień do mikrofonu. Kliknij ikonę 🔒 w pasku adresu i zezwól.',
-        'network': '🌐 Błąd sieci. Rozpoznawanie wymaga internetu (używa serwerów Google).',
-        'aborted': '⏹️ Nagrywanie przerwane.',
-        'service-not-allowed': '🚫 Usługa rozpoznawania mowy niedostępna.',
+        'no-speech': 'Nie wykryto mowy. Sprawdź czy mikrofon działa i mów głośno.',
+        'audio-capture': 'Nie można uzyskać dostępu do mikrofonu. Sprawdź czy jest podłączony.',
+        'not-allowed': 'Brak uprawnień do mikrofonu. Kliknij ikonę blokady w pasku adresu i zezwól.',
+        'network': 'Błąd sieci. Rozpoznawanie wymaga internetu (używa serwerów Google).',
+        'aborted': 'Nagrywanie przerwane.',
+        'service-not-allowed': 'Usługa rozpoznawania mowy niedostępna.',
       };
 
-      setRecordingStatus(errorMessages[event.error] || `❌ Błąd: ${event.error}`);
+      setRecordingStatus(errorMessages[event.error] || `Błąd: ${event.error}`);
     };
 
     // Recognition ended
@@ -289,10 +308,10 @@ export default function PronunciationPage() {
 
       if (!hasResult) {
         if (hasSpeechStarted) {
-          setRecordingStatus('❓ Nie udało się rozpoznać. Spróbuj mówić wolniej i wyraźniej.');
+          setRecordingStatus('Nie udało się rozpoznać. Spróbuj mówić wolniej i wyraźniej.');
         } else {
           // No speech was detected at all - likely microphone issue
-          setRecordingStatus('🔇 Nie wykryto dźwięku. Sprawdź: 1) Czy mikrofon nie jest wyciszony 2) Czy Chrome używa właściwego mikrofonu (chrome://settings/content/microphone)');
+          setRecordingStatus('Nie wykryto dźwięku. Sprawdź: 1) Czy mikrofon nie jest wyciszony 2) Czy Chrome używa właściwego mikrofonu (chrome://settings/content/microphone)');
           console.log('[STT] TIP: Check microphone at chrome://settings/content/microphone');
         }
       }
@@ -305,7 +324,7 @@ export default function PronunciationPage() {
       console.log('[STT] Recognition.start() called');
     } catch (error) {
       console.error('[STT] Failed to start:', error);
-      setRecordingStatus('❌ Nie udało się uruchomić rozpoznawania mowy');
+      setRecordingStatus('Nie udało się uruchomić rozpoznawania mowy');
       setIsRecording(false);
     }
   };
@@ -320,7 +339,7 @@ export default function PronunciationPage() {
   const evaluatePronunciation = async (spoken: string) => {
     if (!currentWord) return;
     setIsProcessing(true);
-    setRecordingStatus('🤖 Wysyłam do AI...');
+    setRecordingStatus('Wysyłam do AI...');
     console.log('Evaluating pronunciation:', spoken, 'for word:', currentWord.en);
 
     try {
@@ -340,7 +359,7 @@ export default function PronunciationPage() {
       // If API returned fallback flag or error, use local evaluation
       if (data.fallback || data.error) {
         console.log('API fallback triggered:', data.error || 'No API key');
-        setRecordingStatus('⚠️ Używam lokalnej oceny...');
+        setRecordingStatus('Używam lokalnej oceny...');
         evaluateLocally(spoken);
         return;
       }
@@ -348,12 +367,12 @@ export default function PronunciationPage() {
       // Validate response has required fields
       if (typeof data.score !== 'number' || !data.feedback) {
         console.warn('Invalid API response structure:', data);
-        setRecordingStatus('⚠️ Nieprawidłowa odpowiedź API');
+        setRecordingStatus('Nieprawidłowa odpowiedź API');
         evaluateLocally(spoken);
         return;
       }
 
-      setRecordingStatus('✅ Analiza gotowa!');
+      setRecordingStatus('Analiza gotowa.');
 
       const pronunciationResult: PronunciationResult = {
         score: data.score,
@@ -387,8 +406,9 @@ export default function PronunciationPage() {
         updatePhonemeMastery(selectedPhoneme, data.score);
       }
 
-      if (data.score >= 8) {
+      if (data.score >= settings.pronunciation.passingScore) {
         addXp(XP_ACTIONS.pronunciation_good);
+        updateDailyMissionProgress('pronunciation', 1);
       }
     } catch (error) {
       console.error('AI evaluation error:', error);
@@ -448,8 +468,9 @@ export default function PronunciationPage() {
       updatePhonemeMastery(selectedPhoneme, score);
     }
 
-    if (score >= 8) {
+    if (score >= settings.pronunciation.passingScore) {
       addXp(XP_ACTIONS.pronunciation_good);
+      updateDailyMissionProgress('pronunciation', 1);
     }
   };
 
@@ -528,7 +549,7 @@ export default function PronunciationPage() {
   // SETUP SCREEN
   if (sessionState === 'setup') {
     return (
-      <div className="p-4 space-y-6 max-w-lg mx-auto">
+      <div className="p-4 space-y-6 max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Link href="/">
@@ -595,6 +616,53 @@ export default function PronunciationPage() {
           </CardContent>
         </Card>
 
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <BookOpen size={18} />
+              Zestaw
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedSetId('all')}
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                  selectedSetId === 'all'
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                )}
+              >
+                Wszystkie ({vocabulary.length})
+              </button>
+              <button
+                onClick={() => setSelectedSetId('unassigned')}
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                  selectedSetId === 'unassigned'
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                )}
+              >
+                Bez zestawu ({unassignedCount})
+              </button>
+              {sets.map((set) => (
+                <button
+                  key={set.id}
+                  onClick={() => setSelectedSetId(set.id)}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                    selectedSetId === set.id
+                      ? 'bg-primary-500 text-white'
+                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                  )}
+                >
+                  {set.name} ({setCounts[set.id] ?? 0})
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Focus mode */}
         <Card>
           <CardContent className="p-4 space-y-3">
@@ -604,7 +672,7 @@ export default function PronunciationPage() {
             </h3>
             <div className="space-y-2">
               {(Object.keys(FOCUS_MODE_LABELS) as PronunciationFocusMode[]).map((mode) => {
-                const { label, icon, desc } = FOCUS_MODE_LABELS[mode];
+                const { label, icon: Icon, desc } = FOCUS_MODE_LABELS[mode];
                 const isDisabled = mode === 'weak_words' && weakWordsCount === 0;
                 return (
                   <button
@@ -624,7 +692,7 @@ export default function PronunciationPage() {
                       isDisabled && 'opacity-50 cursor-not-allowed'
                     )}
                   >
-                    <span className="text-2xl">{icon}</span>
+                    <Icon size={20} className="text-primary-600 dark:text-primary-400" />
                     <div>
                       <p className="font-medium text-slate-800 dark:text-slate-100">
                         {label}
@@ -691,9 +759,11 @@ export default function PronunciationPage() {
   // COMPLETE SCREEN
   if (sessionState === 'complete') {
     return (
-      <div className="p-4 space-y-6 max-w-lg mx-auto">
+      <div className="p-4 space-y-6 max-w-2xl mx-auto">
         <Card variant="elevated" className="text-center p-8">
-          <div className="text-6xl mb-4">🎤</div>
+          <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-900 flex items-center justify-center">
+            <Mic size={32} className="text-primary-600" />
+          </div>
           <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
             Sesja zakończona!
           </h2>
@@ -754,7 +824,7 @@ export default function PronunciationPage() {
   }
 
   return (
-    <div className="p-4 space-y-6 max-w-lg mx-auto">
+    <div className="p-4 space-y-6 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <button
@@ -801,7 +871,7 @@ export default function PronunciationPage() {
           {!result ? (
             <div className="text-center space-y-4">
               <p className="text-slate-600 dark:text-slate-400">
-                {isRecording ? '🎙️ Słucham... Powiedz słowo!' : 'Kliknij mikrofon i powiedz słówko'}
+                {isRecording ? 'Słucham... Powiedz słowo.' : 'Kliknij mikrofon i powiedz słowo.'}
               </p>
 
               <button
@@ -844,7 +914,7 @@ export default function PronunciationPage() {
                     <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                   <p className="text-sm text-primary-600 dark:text-primary-400">
-                    🤖 AI analizuje Twoją wymowę...
+                    AI analizuje Twoją wymowę...
                   </p>
                 </div>
               )}
@@ -862,7 +932,7 @@ export default function PronunciationPage() {
                 <p className="text-slate-800 dark:text-slate-100">{result.feedback}</p>
                 {result.tip && (
                   <p className="text-sm text-primary-600 dark:text-primary-400">
-                    💡 {result.tip}
+                    Wskazówka: {result.tip}
                   </p>
                 )}
                 {result.errorPhonemes && result.errorPhonemes.length > 0 && (
@@ -880,7 +950,7 @@ export default function PronunciationPage() {
                 )}
                 {result.polishInterference && (
                   <p className="text-xs text-amber-600 dark:text-amber-400">
-                    🇵🇱 {result.polishInterference}
+                    Wpływ polskiego: {result.polishInterference}
                   </p>
                 )}
                 {result.recognized && (

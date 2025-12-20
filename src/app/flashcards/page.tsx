@@ -1,32 +1,94 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ArrowLeft, BookOpen, Shuffle, Filter } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, BookOpen, Shuffle, Filter, Check } from 'lucide-react';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FlashcardSession } from '@/components/flashcard/Flashcard';
 import { useVocabStore, useHydration } from '@/lib/store';
 import { cn } from '@/lib/utils';
+import { getCategoryLabel } from '@/lib/categories';
 
 type SessionState = 'setup' | 'active' | 'complete';
 
 export default function FlashcardsPage() {
   const hydrated = useHydration();
-  const router = useRouter();
   const [sessionState, setSessionState] = useState<SessionState>('setup');
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
+  const [selectedSetId, setSelectedSetId] = useState<'all' | 'unassigned' | string>('all');
   const [sessionWords, setSessionWords] = useState<typeof vocabulary>([]);
 
   const vocabulary = useVocabStore((state) => state.vocabulary);
   const settings = useVocabStore((state) => state.settings);
-  const getCategories = useVocabStore((state) => state.getCategories);
+  const sets = useVocabStore((state) => state.sets);
   const getNextReviewWords = useVocabStore((state) => state.getNextReviewWords);
   const updateStreak = useVocabStore((state) => state.updateStreak);
   const incrementSessionCount = useVocabStore((state) => state.incrementSessionCount);
 
-  const categories = getCategories();
+  const setCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    sets.forEach((set) => {
+      counts[set.id] = 0;
+    });
+    vocabulary.forEach((word) => {
+      const ids = word.setIds ?? [];
+      ids.forEach((id) => {
+        counts[id] = (counts[id] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [sets, vocabulary]);
+
+  const unassignedCount = useMemo(
+    () => vocabulary.filter((word) => (word.setIds ?? []).length === 0).length,
+    [vocabulary]
+  );
+
+  const filterBySet = useCallback(
+    (words: typeof vocabulary) => {
+      if (selectedSetId === 'all') return words;
+      if (selectedSetId === 'unassigned') {
+        return words.filter((word) => (word.setIds ?? []).length === 0);
+      }
+      return words.filter((word) => (word.setIds ?? []).includes(selectedSetId));
+    },
+    [selectedSetId]
+  );
+
+  const categories = useMemo(() => {
+    const filtered = filterBySet(vocabulary);
+    return Array.from(new Set(filtered.map((word) => word.category)));
+  }, [filterBySet, vocabulary]);
+
+  useEffect(() => {
+    if (selectedCategory !== 'all' && !categories.includes(selectedCategory)) {
+      setSelectedCategory('all');
+    }
+  }, [categories, selectedCategory]);
+
+  useEffect(() => {
+    if (
+      selectedSetId !== 'all' &&
+      selectedSetId !== 'unassigned' &&
+      !sets.some((set) => set.id === selectedSetId)
+    ) {
+      setSelectedSetId('all');
+    }
+  }, [selectedSetId, sets]);
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filterBySet(vocabulary).forEach((word) => {
+      counts[word.category] = (counts[word.category] || 0) + 1;
+    });
+    return counts;
+  }, [filterBySet, vocabulary]);
+
+  const filteredVocabularyCount = useMemo(
+    () => filterBySet(vocabulary).length,
+    [filterBySet, vocabulary]
+  );
 
   if (!hydrated) {
     return (
@@ -38,7 +100,7 @@ export default function FlashcardsPage() {
 
   const startSession = () => {
     const count = settings.session.flashcardCount;
-    let words = getNextReviewWords(count);
+    let words = filterBySet(getNextReviewWords(count));
 
     if (selectedCategory !== 'all') {
       words = words.filter((w) => w.category === selectedCategory);
@@ -46,7 +108,7 @@ export default function FlashcardsPage() {
 
     if (words.length === 0) {
       // If no words due for review, get some random words
-      words = vocabulary
+      words = filterBySet(vocabulary)
         .filter((w) => selectedCategory === 'all' || w.category === selectedCategory)
         .sort(() => Math.random() - 0.5)
         .slice(0, typeof count === 'number' ? count : vocabulary.length);
@@ -86,7 +148,9 @@ export default function FlashcardsPage() {
     return (
       <div className="min-h-screen p-4 flex flex-col items-center justify-center">
         <Card variant="elevated" className="w-full max-w-md text-center p-8">
-          <div className="text-6xl mb-4">🎉</div>
+          <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-success-50 dark:bg-success-900 flex items-center justify-center">
+            <Check size={32} className="text-success-600" />
+          </div>
           <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
             Gratulacje!
           </h2>
@@ -114,7 +178,7 @@ export default function FlashcardsPage() {
   }
 
   return (
-    <div className="p-4 space-y-6 max-w-lg mx-auto">
+    <div className="p-4 space-y-6 max-w-2xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/">
@@ -127,10 +191,59 @@ export default function FlashcardsPage() {
             Fiszki
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Wybierz kategorię i zacznij naukę
+            Wybierz zestaw lub kategorię i zacznij naukę
           </p>
         </div>
       </div>
+
+      {/* Set selection */}
+      <Card>
+        <CardContent className="p-4 space-y-4">
+          <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+            <Filter size={18} />
+            <span className="text-sm font-medium">Zestaw</span>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedSetId('all')}
+              className={cn(
+                'px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                selectedSetId === 'all'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+              )}
+            >
+              Wszystkie ({vocabulary.length})
+            </button>
+            <button
+              onClick={() => setSelectedSetId('unassigned')}
+              className={cn(
+                'px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                selectedSetId === 'unassigned'
+                  ? 'bg-primary-500 text-white'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+              )}
+            >
+              Bez zestawu ({unassignedCount})
+            </button>
+            {sets.map((set) => (
+              <button
+                key={set.id}
+                onClick={() => setSelectedSetId(set.id)}
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm font-medium transition-colors',
+                  selectedSetId === set.id
+                    ? 'bg-primary-500 text-white'
+                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                )}
+              >
+                {set.name} ({setCounts[set.id] ?? 0})
+              </button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Category selection */}
       <Card>
@@ -150,10 +263,10 @@ export default function FlashcardsPage() {
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
               )}
             >
-              Wszystkie ({vocabulary.length})
+              Wszystkie ({filteredVocabularyCount})
             </button>
             {categories.map((cat) => {
-              const count = vocabulary.filter((v) => v.category === cat).length;
+              const count = categoryCounts[cat] ?? 0;
               return (
                 <button
                   key={cat}
@@ -165,7 +278,7 @@ export default function FlashcardsPage() {
                       : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                   )}
                 >
-                  {cat} ({count})
+                  {getCategoryLabel(cat)} ({count})
                 </button>
               );
             })}
@@ -183,7 +296,7 @@ export default function FlashcardsPage() {
                 Ustawienia sesji
               </span>
             </div>
-            <Link href="/settings" className="text-sm text-primary-500">
+            <Link href="/profile#settings" className="text-sm text-primary-500">
               Zmień
             </Link>
           </div>
@@ -221,8 +334,8 @@ export default function FlashcardsPage() {
       <Card className="bg-primary-50 dark:bg-primary-900 border-0">
         <CardContent className="p-4">
           <p className="text-sm text-primary-700 dark:text-primary-300">
-            💡 <strong>Wskazówka:</strong> Przeciągaj fiszki w prawo (umiem),
-            w lewo (powtórz) lub w górę (trudne) aby szybciej się uczyć!
+            <strong>Wskazówka:</strong> Przeciągaj fiszki w prawo (umiem),
+            w lewo (powtórz) lub w górę (trudne), aby szybciej się uczyć.
           </p>
         </CardContent>
       </Card>

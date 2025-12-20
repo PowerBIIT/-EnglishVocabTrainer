@@ -1,8 +1,8 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import { useEffect, useState } from 'react';
 import {
   VocabularyItem,
+  AppState,
   UserProgress,
   AppSettings,
   UserStats,
@@ -13,75 +13,33 @@ import {
   PronunciationFocusMode,
   PhonemeType,
   PronunciationSessionResult,
+  DailyMission,
+  StudySet,
 } from '@/types';
-import { sampleVocabulary } from '@/data/vocabulary';
+import { applyMissionReward, createDefaultState, ensureDailyMission, hydrateAppState } from '@/lib/appState';
+import { generateId, getLevelProgress } from '@/lib/utils';
 
-// Default settings
-const defaultSettings: AppSettings = {
-  session: {
-    quizQuestionCount: 10,
-    flashcardCount: 10,
-    timeLimit: null,
-    wordOrder: 'random',
-    repeatMistakes: true,
-  },
-  pronunciation: {
-    voice: 'british',
-    speed: 0.7,
-    autoPlay: false,
-    passingScore: 7,
-    sessionLength: 10,
-    focusMode: 'random',
-    targetPhoneme: undefined,
-    adaptiveDifficulty: true,
-    showPhonemeHints: true,
-  },
-  general: {
-    language: 'pl',
-    theme: 'auto',
-    sounds: true,
-    notifications: false,
-    offlineMode: false,
-  },
-  ai: {
-    feedbackDetail: 'detailed',
-    feedbackLanguage: 'pl',
-    phoneticHints: true,
-  },
-};
-
-// Default stats
-const defaultStats: UserStats = {
-  totalXp: 0,
-  level: 1,
-  currentStreak: 0,
-  longestStreak: 0,
-  totalWordsLearned: 0,
-  totalSessionsCompleted: 0,
-  totalTimeSpent: 0,
-  lastSessionDate: null,
-  badges: [],
-  // Pronunciation specific
-  pronunciationStreak: 0,
-  longestPronunciationStreak: 0,
-  totalPronunciationSessions: 0,
-  averagePronunciationScore: 0,
-  phonemeMastery: {},
-  lastPronunciationDate: null,
-};
-
-// XP thresholds for levels
-const levelThresholds = [
-  0, 100, 250, 450, 700, 1000, 1400, 1900, 2500, 3200, 4000, 5000, 6200, 7600,
-  9200, 11000, 13000, 15500, 18500, 22000,
-];
+const defaultState = createDefaultState();
 
 interface VocabStore {
+  // Sync
+  isReady: boolean;
+  hydrateFromServer: (state: AppState) => void;
+  setReady: (ready: boolean) => void;
+
   // Vocabulary
   vocabulary: VocabularyItem[];
   addVocabulary: (items: VocabularyItem[]) => void;
   removeVocabulary: (ids: string[]) => void;
   updateVocabulary: (id: string, updates: Partial<VocabularyItem>) => void;
+
+  // Sets
+  sets: StudySet[];
+  createSet: (name: string) => StudySet;
+  renameSet: (id: string, name: string) => void;
+  deleteSet: (id: string) => void;
+  assignWordsToSet: (wordIds: string[], setId: string) => void;
+  replaceWordsSet: (wordIds: string[], setId: string | null) => void;
 
   // Progress
   progress: Record<string, UserProgress>;
@@ -94,7 +52,8 @@ interface VocabStore {
   getNextPronunciationWords: (
     count: number | 'all',
     focusMode: PronunciationFocusMode,
-    targetPhoneme?: PhonemeType
+    targetPhoneme?: PhonemeType,
+    setId?: string | 'unassigned'
   ) => VocabularyItem[];
   updatePronunciationStreak: () => void;
   updatePhonemeMastery: (phoneme: PhonemeType, score: number) => void;
@@ -116,6 +75,10 @@ interface VocabStore {
   addBadge: (badge: Badge) => void;
   incrementSessionCount: () => void;
 
+  // Daily mission
+  dailyMission: DailyMission;
+  updateDailyMissionProgress: (source: DailyMission['type'], amount?: number) => void;
+
   // Quiz session
   currentQuizResults: QuizResult[];
   addQuizResult: (result: QuizResult) => void;
@@ -135,20 +98,31 @@ interface VocabStore {
   }[];
 }
 
-export const useVocabStore = create<VocabStore>()(
-  persist(
-    (set, get) => ({
-      // Initial state
-      vocabulary: sampleVocabulary,
-      progress: {},
-      settings: defaultSettings,
-      stats: defaultStats,
+export const useVocabStore = create<VocabStore>()((set, get) => ({
+  // Initial state
+  ...defaultState,
+  isReady: false,
+  currentQuizResults: [],
+
+  // Sync actions
+  hydrateFromServer: (state) =>
+    set(() => ({
+      ...hydrateAppState(state),
       currentQuizResults: [],
+      isReady: true,
+    })),
+  setReady: (ready) => set(() => ({ isReady: ready })),
 
       // Vocabulary actions
       addVocabulary: (items) =>
         set((state) => ({
-          vocabulary: [...state.vocabulary, ...items],
+          vocabulary: [
+            ...state.vocabulary,
+            ...items.map((item) => ({
+              ...item,
+              setIds: item.setIds ?? [],
+            })),
+          ],
         })),
 
       removeVocabulary: (ids) =>
@@ -164,6 +138,85 @@ export const useVocabStore = create<VocabStore>()(
           vocabulary: state.vocabulary.map((v) =>
             v.id === id ? { ...v, ...updates } : v
           ),
+        })),
+
+      // Set actions
+      createSet: (name) => {
+        const trimmed = name.trim() || 'Nowy zestaw';
+        const existingNames = new Set(
+          get().sets.map((set) => set.name.trim().toLowerCase())
+        );
+
+        let finalName = trimmed;
+        let suffix = 2;
+        while (existingNames.has(finalName.toLowerCase())) {
+          finalName = `${trimmed} (${suffix})`;
+          suffix += 1;
+        }
+
+        const newSet = {
+          id: generateId(),
+          name: finalName,
+          createdAt: new Date(),
+        };
+
+        set((state) => ({
+          sets: [...state.sets, newSet],
+        }));
+
+        return newSet;
+      },
+
+      renameSet: (id, name) =>
+        set((state) => {
+          const trimmed = name.trim();
+          if (!trimmed) return state;
+
+          const existingNames = new Set(
+            state.sets
+              .filter((set) => set.id !== id)
+              .map((set) => set.name.trim().toLowerCase())
+          );
+
+          let finalName = trimmed;
+          let suffix = 2;
+          while (existingNames.has(finalName.toLowerCase())) {
+            finalName = `${trimmed} (${suffix})`;
+            suffix += 1;
+          }
+
+          return {
+            sets: state.sets.map((set) =>
+              set.id === id ? { ...set, name: finalName } : set
+            ),
+          };
+        }),
+
+      deleteSet: (id) =>
+        set((state) => ({
+          sets: state.sets.filter((set) => set.id !== id),
+          vocabulary: state.vocabulary.map((word) => ({
+            ...word,
+            setIds: (word.setIds ?? []).filter((setId) => setId !== id),
+          })),
+        })),
+
+      assignWordsToSet: (wordIds, setId) =>
+        set((state) => ({
+          vocabulary: state.vocabulary.map((word) => {
+            if (!wordIds.includes(word.id)) return word;
+            const existing = word.setIds ?? [];
+            if (existing.includes(setId)) return word;
+            return { ...word, setIds: [...existing, setId] };
+          }),
+        })),
+      replaceWordsSet: (wordIds, setId) =>
+        set((state) => ({
+          vocabulary: state.vocabulary.map((word) => {
+            if (!wordIds.includes(word.id)) return word;
+            const nextIds = setId ? [setId] : [];
+            return { ...word, setIds: nextIds };
+          }),
         })),
 
       // Progress actions
@@ -305,9 +358,15 @@ export const useVocabStore = create<VocabStore>()(
           };
         }),
 
-      getNextPronunciationWords: (count, focusMode, targetPhoneme) => {
+      getNextPronunciationWords: (count, focusMode, targetPhoneme, setId) => {
         const state = get();
         let words = [...state.vocabulary];
+
+        if (setId === 'unassigned') {
+          words = words.filter((word) => (word.setIds ?? []).length === 0);
+        } else if (setId) {
+          words = words.filter((word) => (word.setIds ?? []).includes(setId));
+        }
 
         switch (focusMode) {
           case 'weak_words':
@@ -499,15 +558,7 @@ export const useVocabStore = create<VocabStore>()(
       addXp: (amount) =>
         set((state) => {
           const newXp = state.stats.totalXp + amount;
-          let newLevel = state.stats.level;
-
-          // Calculate new level
-          for (let i = levelThresholds.length - 1; i >= 0; i--) {
-            if (newXp >= levelThresholds[i]) {
-              newLevel = i + 1;
-              break;
-            }
-          }
+          const newLevel = getLevelProgress(newXp).level;
 
           return {
             stats: {
@@ -577,6 +628,34 @@ export const useVocabStore = create<VocabStore>()(
             totalSessionsCompleted: state.stats.totalSessionsCompleted + 1,
           },
         })),
+
+      // Daily mission actions
+      updateDailyMissionProgress: (source, amount = 1) =>
+        set((state) => {
+          const mission = ensureDailyMission(state.dailyMission);
+          if (mission.completed) {
+            return { dailyMission: mission };
+          }
+
+          if (mission.type !== source && mission.type !== 'mixed') {
+            return { dailyMission: mission };
+          }
+
+          const progress = Math.min(mission.target, mission.progress + amount);
+          const completed = progress >= mission.target;
+          const updatedMission = {
+            ...mission,
+            progress,
+            completed,
+          };
+
+          return {
+            dailyMission: updatedMission,
+            stats: completed
+              ? applyMissionReward(state.stats, mission.rewardXp)
+              : state.stats,
+          };
+        }),
 
       // Quiz session actions
       addQuizResult: (result) =>
@@ -674,26 +753,16 @@ export const useVocabStore = create<VocabStore>()(
           };
         });
       },
-    }),
-    {
-      name: 'vocab-storage',
-      partialize: (state) => ({
-        vocabulary: state.vocabulary,
-        progress: state.progress,
-        settings: state.settings,
-        stats: state.stats,
-      }),
-    }
-  )
-);
+}));
 
 // Hook to handle hydration - prevents SSR/client mismatch
 export const useHydration = () => {
   const [hydrated, setHydrated] = useState(false);
+  const isReady = useVocabStore((state) => state.isReady);
 
   useEffect(() => {
     setHydrated(true);
   }, []);
 
-  return hydrated;
+  return hydrated && isReady;
 };

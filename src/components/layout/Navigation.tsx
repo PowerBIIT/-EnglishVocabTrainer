@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, Mic, MessageCircle, Settings } from 'lucide-react';
+import { Home, BookOpen, Mic, MessageCircle, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -10,39 +10,48 @@ const navItems = [
   { href: '/vocabulary', icon: BookOpen, label: 'Słówka' },
   { href: '/pronunciation', icon: Mic, label: 'Wymowa' },
   { href: '/chat', icon: MessageCircle, label: 'Czat' },
-  { href: '/settings', icon: Settings, label: 'Ustawienia' },
+  { href: '/profile', icon: UserCircle, label: 'Profil' },
 ];
 
 export function Navigation() {
   const pathname = usePathname();
 
+  if (pathname === '/login' || pathname === '/onboarding') {
+    return null;
+  }
+
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 z-50">
-      <div className="max-w-lg mx-auto px-4">
-        <ul className="flex justify-around items-center h-16">
-          {navItems.map(({ href, icon: Icon, label }) => {
-            const isActive = pathname === href;
-            return (
-              <li key={href}>
-                <Link
-                  href={href}
-                  className={cn(
-                    'flex flex-col items-center gap-1 px-3 py-2 rounded-lg transition-colors',
-                    isActive
-                      ? 'text-primary-600 dark:text-primary-400'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
-                  )}
-                >
-                  <Icon
-                    size={24}
-                    className={cn(isActive && 'animate-bounce')}
-                  />
-                  <span className="text-xs font-medium">{label}</span>
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+    <nav className="fixed bottom-0 left-0 right-0 md:top-0 md:left-0 md:right-auto md:h-screen md:w-24 bg-white/90 dark:bg-slate-900/90 border-t md:border-t-0 md:border-r border-slate-200 dark:border-slate-700 backdrop-blur z-50 pb-[env(safe-area-inset-bottom)] md:pb-0">
+      <div className="max-w-lg md:max-w-none mx-auto px-4 md:px-0 h-full">
+        <div className="h-full flex md:flex-col md:items-center md:py-6 md:gap-6">
+          <div className="hidden md:flex flex-col items-center gap-2 text-primary-600">
+            <div className="w-10 h-10 rounded-2xl bg-primary-100 dark:bg-primary-900 flex items-center justify-center font-display text-lg">
+              EV
+            </div>
+            <span className="text-xs text-slate-500">Trainer</span>
+          </div>
+          <ul className="flex justify-around items-center h-[calc(4rem+env(safe-area-inset-bottom))] md:h-auto md:flex-col md:gap-3 md:mt-4 w-full">
+            {navItems.map(({ href, icon: Icon, label }) => {
+              const isActive = pathname === href;
+              return (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    className={cn(
+                      'flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all',
+                      isActive
+                        ? 'bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 shadow-sm'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                    )}
+                  >
+                    <Icon size={22} className={cn(isActive && 'scale-110')} />
+                    <span className="text-[11px] font-medium">{label}</span>
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </div>
     </nav>
   );
