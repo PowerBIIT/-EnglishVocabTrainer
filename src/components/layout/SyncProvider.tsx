@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useVocabStore } from '@/lib/store';
-import { createDefaultState } from '@/lib/appState';
 import type { AppState } from '@/types';
 
 const SYNC_DEBOUNCE_MS = 800;
@@ -48,52 +47,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        const legacyRaw = localStorage.getItem('vocab-storage');
-        let legacyState: Record<string, unknown> | null = null;
-        if (legacyRaw) {
-          try {
-            const parsed = JSON.parse(legacyRaw);
-            legacyState = parsed?.state ?? parsed;
-          } catch (error) {
-            legacyState = null;
-          }
-        }
-
-        const serverState = payload.data as Record<string, unknown>;
-        const serverHasProgress =
-          Object.keys((serverState as { progress?: Record<string, unknown> }).progress || {}).length > 0;
-        const serverHasXp =
-          ((serverState as { stats?: { totalXp?: number } }).stats?.totalXp || 0) > 0;
-
-        const legacyHasProgress =
-          !!legacyState &&
-          Object.keys((legacyState as { progress?: Record<string, unknown> }).progress || {}).length > 0;
-        const legacyHasXp =
-          ((legacyState as { stats?: { totalXp?: number } }).stats?.totalXp || 0) > 0;
-
-        if (legacyState && (legacyHasProgress || legacyHasXp) && !serverHasProgress && !serverHasXp) {
-          const defaults = createDefaultState();
-          const mergedState = {
-            ...defaults,
-            ...legacyState,
-            dailyMission:
-              (legacyState as { dailyMission?: typeof defaults.dailyMission }).dailyMission ||
-              defaults.dailyMission,
-          };
-
-          hydrateFromServer(mergedState);
-          hasLoadedRef.current = true;
-
-          await fetch('/api/user/state', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ data: mergedState }),
-          });
-          localStorage.removeItem('vocab-storage');
-          return;
-        }
-
-        hydrateFromServer(serverState as unknown as AppState);
+        hydrateFromServer(payload.data as unknown as AppState);
         hasLoadedRef.current = true;
       } catch (error) {
         if (!cancelled) {
