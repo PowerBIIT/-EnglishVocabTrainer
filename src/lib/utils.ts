@@ -68,7 +68,11 @@ export function getLevelProgress(xp: number): {
 // TTS utility using Web Speech API
 export function speak(
   text: string,
-  options: { voice?: 'british' | 'american' | 'australian'; speed?: number } = {}
+  options: {
+    voice?: 'british' | 'american' | 'australian';
+    speed?: number;
+    locale?: string;
+  } = {}
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     if (!('speechSynthesis' in window)) {
@@ -78,13 +82,16 @@ export function speak(
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.rate = options.speed || 1;
-    utterance.lang = 'en-GB'; // Default to British
-
-    // Try to find the right voice
     const voices = speechSynthesis.getVoices();
-    let voiceLang = 'en-GB';
-    if (options.voice === 'american') voiceLang = 'en-US';
-    else if (options.voice === 'australian') voiceLang = 'en-AU';
+    let voiceLang = options.locale || 'en-GB';
+
+    if (voiceLang.startsWith('en')) {
+      if (options.voice === 'american') voiceLang = 'en-US';
+      else if (options.voice === 'australian') voiceLang = 'en-AU';
+      else voiceLang = 'en-GB';
+    }
+
+    utterance.lang = voiceLang;
 
     const voice = voices.find((v) => v.lang.startsWith(voiceLang));
     if (voice) utterance.voice = voice;

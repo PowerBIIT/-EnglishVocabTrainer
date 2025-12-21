@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GeminiService, AI_PROMPTS, parseAIResponse } from '@/lib/gemini';
 
 interface ExtractedWord {
-  en: string;
+  target: string;
   phonetic: string;
-  pl: string;
+  native: string;
   difficulty: 'easy' | 'medium' | 'hard';
 }
 
@@ -25,7 +25,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { imageBase64, mimeType = 'image/jpeg' } = await request.json();
+    const {
+      imageBase64,
+      mimeType = 'image/jpeg',
+      targetLanguage = 'en',
+      nativeLanguage = 'pl',
+    } = await request.json();
 
     if (!imageBase64) {
       return NextResponse.json(
@@ -35,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     const gemini = new GeminiService(apiKey);
-    const prompt = AI_PROMPTS.extractFromImage();
+    const prompt = AI_PROMPTS.extractFromImage(targetLanguage, nativeLanguage);
 
     const response = await gemini.generateWithImage(
       prompt,

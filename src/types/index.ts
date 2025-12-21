@@ -1,3 +1,14 @@
+export type NativeLanguage = 'pl' | 'de' | 'uk';
+export type TargetLanguage = 'en' | 'pl';
+export type LearningPairId = 'pl-en' | 'de-en' | 'uk-pl';
+export type FeedbackLanguage = 'pl' | 'en' | 'de' | 'uk';
+
+export interface LearningSettings {
+  nativeLanguage: NativeLanguage;
+  targetLanguage: TargetLanguage;
+  pairId: LearningPairId;
+}
+
 // Vocabulary item model
 export interface VocabularyItem {
   id: string;
@@ -11,12 +22,14 @@ export interface VocabularyItem {
   difficulty: 'easy' | 'medium' | 'hard';
   created_at: Date;
   source: 'manual' | 'photo' | 'ai_generated' | 'preset';
+  languagePair?: LearningPairId;
 }
 
 export interface StudySet {
   id: string;
   name: string;
   createdAt: Date;
+  languagePair?: LearningPairId;
 }
 
 // Pronunciation attempt history
@@ -123,7 +136,7 @@ export interface GeneralSettings {
 // AI settings
 export interface AISettings {
   feedbackDetail: 'short' | 'detailed';
-  feedbackLanguage: 'pl' | 'en';
+  feedbackLanguage: FeedbackLanguage;
   phoneticHints: boolean;
 }
 
@@ -133,6 +146,7 @@ export interface AppSettings {
   pronunciation: PronunciationSettings;
   general: GeneralSettings;
   ai: AISettings;
+  learning: LearningSettings;
 }
 
 // User stats

@@ -11,6 +11,7 @@ import { VocabularyItem, QuizMode, QuizResult } from '@/types';
 import { cn, shuffleArray } from '@/lib/utils';
 import { getCategoryLabel } from '@/lib/categories';
 import { useLanguage } from '@/lib/i18n';
+import { getLanguageLabel, getLearningPair } from '@/lib/languages';
 
 type SessionState = 'setup' | 'active' | 'results';
 type QuizModeOption = {
@@ -38,14 +39,17 @@ const quizPageCopy = {
     needFourWrong: 'Potrzebujesz minimum 4 błędnych odpowiedzi aby powtórzyć!',
     questionsLabel: (count: number | 'all') =>
       `${count === 'all' ? 'Wszystkie' : count} pytań`,
-    modeEnToPl: 'EN → PL',
-    modeEnToPlDesc: 'Słówko angielskie, wybierz polskie',
-    modePlToEn: 'PL → EN',
-    modePlToEnDesc: 'Słówko polskie, wybierz angielskie',
+    modeTargetToNative: (target: string, native: string) => `${target} → ${native}`,
+    modeTargetToNativeDesc: (target: string, native: string) =>
+      `Słówko ${target.toLowerCase()}, wybierz tłumaczenie ${native.toLowerCase()}`,
+    modeNativeToTarget: (native: string, target: string) => `${native} → ${target}`,
+    modeNativeToTargetDesc: (native: string, target: string) =>
+      `Słówko ${native.toLowerCase()}, wybierz tłumaczenie ${target.toLowerCase()}`,
     modeTyping: 'Wpisywanie',
-    modeTypingDesc: 'Wpisz angielskie tłumaczenie',
+    modeTypingDesc: (target: string) => `Wpisz tłumaczenie w języku ${target.toLowerCase()}`,
     modeListening: 'Słuchanie',
-    modeListeningDesc: 'Odsłuchaj i wybierz słówko',
+    modeListeningDesc: (target: string, native: string) =>
+      `Odsłuchaj słowo (${target.toLowerCase()}) i wybierz tłumaczenie ${native.toLowerCase()}`,
     modeMixed: 'Mieszany',
     modeMixedDesc: 'Losowo wszystkie tryby',
   },
@@ -66,14 +70,17 @@ const quizPageCopy = {
     needFourWrong: 'You need at least 4 wrong answers to retry.',
     questionsLabel: (count: number | 'all') =>
       `${count === 'all' ? 'All' : count} questions`,
-    modeEnToPl: 'EN → PL',
-    modeEnToPlDesc: 'English word, choose the Polish translation',
-    modePlToEn: 'PL → EN',
-    modePlToEnDesc: 'Polish word, choose the English translation',
+    modeTargetToNative: (target: string, native: string) => `${target} → ${native}`,
+    modeTargetToNativeDesc: (target: string, native: string) =>
+      `${target} word, choose the ${native} translation`,
+    modeNativeToTarget: (native: string, target: string) => `${native} → ${target}`,
+    modeNativeToTargetDesc: (native: string, target: string) =>
+      `${native} word, choose the ${target} translation`,
     modeTyping: 'Typing',
-    modeTypingDesc: 'Type the English translation',
+    modeTypingDesc: (target: string) => `Type the ${target} translation`,
     modeListening: 'Listening',
-    modeListeningDesc: 'Listen and choose the word',
+    modeListeningDesc: (target: string, native: string) =>
+      `Listen to a ${target} word and choose the ${native} translation`,
     modeMixed: 'Mixed',
     modeMixedDesc: 'Random all modes',
   },
@@ -92,31 +99,36 @@ export default function QuizPage() {
   const [sessionWords, setSessionWords] = useState<VocabularyItem[]>([]);
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
 
+  const learning = useVocabStore((state) => state.settings.learning);
+  const activePair = useMemo(() => getLearningPair(learning.pairId), [learning.pairId]);
+  const targetLabel = getLanguageLabel(activePair.target, language);
+  const nativeLabel = getLanguageLabel(activePair.native, language);
+
   const quizModes = useMemo<QuizModeOption[]>(
     () => [
       {
         id: 'en_to_pl',
-        label: t.modeEnToPl,
+        label: t.modeTargetToNative(targetLabel, nativeLabel),
         icon: <Target size={24} />,
-        description: t.modeEnToPlDesc,
+        description: t.modeTargetToNativeDesc(targetLabel, nativeLabel),
       },
       {
         id: 'pl_to_en',
-        label: t.modePlToEn,
+        label: t.modeNativeToTarget(nativeLabel, targetLabel),
         icon: <Target size={24} className="rotate-180" />,
-        description: t.modePlToEnDesc,
+        description: t.modeNativeToTargetDesc(nativeLabel, targetLabel),
       },
       {
         id: 'typing',
         label: t.modeTyping,
         icon: <Keyboard size={24} />,
-        description: t.modeTypingDesc,
+        description: t.modeTypingDesc(targetLabel),
       },
       {
         id: 'listening',
         label: t.modeListening,
         icon: <Volume2 size={24} />,
-        description: t.modeListeningDesc,
+        description: t.modeListeningDesc(targetLabel, nativeLabel),
       },
       {
         id: 'mixed',
@@ -125,12 +137,12 @@ export default function QuizPage() {
         description: t.modeMixedDesc,
       },
     ],
-    [t]
+    [nativeLabel, t, targetLabel]
   );
 
-  const vocabulary = useVocabStore((state) => state.vocabulary);
+  const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
   const settings = useVocabStore((state) => state.settings);
-  const sets = useVocabStore((state) => state.sets);
+  const sets = useVocabStore((state) => state.getActiveSets());
   const getNextReviewWords = useVocabStore((state) => state.getNextReviewWords);
   const updateStreak = useVocabStore((state) => state.updateStreak);
   const incrementSessionCount = useVocabStore((state) => state.incrementSessionCount);

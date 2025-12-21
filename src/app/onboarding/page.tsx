@@ -10,28 +10,33 @@ import { Button } from '@/components/ui/Button';
 import { FlashcardSession } from '@/components/flashcard/Flashcard';
 import { useHydration, useVocabStore } from '@/lib/store';
 import { parseVocabularyInput } from '@/lib/parseVocabulary';
-import { generateId } from '@/lib/utils';
+import { cn, generateId } from '@/lib/utils';
 import { useLanguage } from '@/lib/i18n';
+import { getLanguageLabel, getLearningPair, LEARNING_PAIRS, LEARNING_PAIR_SAMPLES } from '@/lib/languages';
 
 const MISSION_WORDS = 3;
 
-type Step = 'skin' | 'words' | 'mission' | 'done';
+type Step = 'pair' | 'skin' | 'words' | 'mission' | 'done';
 
 const onboardingCopy = {
   pl: {
     loading: 'Ładowanie...',
     title: 'Start przygody',
     stepLabel: (current: number, total: number) => `Krok ${current} z ${total}`,
+    choosePair: 'Wybierz parę językową',
+    choosePairDesc: 'To ustawia język interfejsu, AI oraz kierunek nauki.',
+    choosePairHint: 'Możesz zmienić później w profilu.',
+    choosePairAction: 'Dalej',
     chooseSkin: 'Wybierz styl przewodnika',
     chooseSkinDesc: 'Twój mascot będzie prowadził misje i nagrody.',
     startMission: 'Zaczynamy misję',
     addFirstSet: 'Dodaj pierwszy zestaw słówek',
     addFirstSetDesc: 'Wklej słówka w formacie: word - tłumaczenie.',
-    formatHint: 'word - tłumaczenie',
+    formatHint: (example: string) => `Format: ${example}`,
     setNameLabel: 'Nazwa zestawu',
     setNamePlaceholder: 'Np. Klasówka z biologii',
     wordsLabel: (min: number) => `Słówka (min. ${min})`,
-    wordsPlaceholder: 'apple - jabłko\npear - gruszka\nplum - śliwka',
+    wordsPlaceholder: (example: string) => `${example}\n...`,
     detectedWords: (count: number) => `Wykryte słówka: ${count}`,
     requiredWords: (count: number) => `Wymagane: ${count}`,
     goToMission: 'Przejdź do misji',
@@ -46,16 +51,20 @@ const onboardingCopy = {
     loading: 'Loading...',
     title: 'Start the adventure',
     stepLabel: (current: number, total: number) => `Step ${current} of ${total}`,
+    choosePair: 'Choose your learning pair',
+    choosePairDesc: 'This sets the interface language, AI feedback, and learning direction.',
+    choosePairHint: 'You can change it later in profile.',
+    choosePairAction: 'Continue',
     chooseSkin: 'Choose your guide style',
     chooseSkinDesc: 'Your mascot will lead missions and rewards.',
     startMission: 'Start the mission',
     addFirstSet: 'Add your first word set',
     addFirstSetDesc: 'Paste words in the format: word - translation.',
-    formatHint: 'word - translation',
+    formatHint: (example: string) => `Format: ${example}`,
     setNameLabel: 'Set name',
     setNamePlaceholder: 'e.g. Biology test',
     wordsLabel: (min: number) => `Words (min. ${min})`,
-    wordsPlaceholder: 'apple - jabłko\npear - gruszka\nplum - śliwka',
+    wordsPlaceholder: (example: string) => `${example}\n...`,
     detectedWords: (count: number) => `Detected words: ${count}`,
     requiredWords: (count: number) => `Required: ${count}`,
     goToMission: 'Go to mission',
@@ -76,15 +85,19 @@ export default function OnboardingPage() {
   const { data: session, update } = useSession();
   const language = useLanguage();
   const t = (onboardingCopy[language] ?? onboardingCopy.pl) as OnboardingCopy;
-  const [step, setStep] = useState<Step>('skin');
+  const [step, setStep] = useState<Step>('pair');
   const [selectedSkin, setSelectedSkin] = useState(session?.user?.mascotSkin || 'explorer');
   const [setName, setSetName] = useState('');
   const [rawWords, setRawWords] = useState('');
   const [onboardingSetId, setOnboardingSetId] = useState<string | null>(null);
   const [onboardingSetName, setOnboardingSetName] = useState('');
-  const vocabulary = useVocabStore((state) => state.vocabulary);
+  const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
   const addVocabulary = useVocabStore((state) => state.addVocabulary);
   const createSet = useVocabStore((state) => state.createSet);
+  const settings = useVocabStore((state) => state.settings);
+  const setLearningPair = useVocabStore((state) => state.setLearningPair);
+  const activePair = getLearningPair(settings.learning.pairId);
+  const examplePair = LEARNING_PAIR_SAMPLES[activePair.id] ?? { target: 'word', native: 'translation' };
 
   const parsedWords = useMemo(() => parseVocabularyInput(rawWords), [rawWords]);
   const canStartMission = setName.trim().length > 0 && parsedWords.length >= MISSION_WORDS;
@@ -99,8 +112,16 @@ export default function OnboardingPage() {
   }, [onboardingSetId, vocabulary]);
 
   const stepIndex =
-    step === 'skin' ? 1 : step === 'words' ? 2 : step === 'mission' ? 3 : 4;
-  const totalSteps = 4;
+    step === 'pair'
+      ? 1
+      : step === 'skin'
+      ? 2
+      : step === 'words'
+      ? 3
+      : step === 'mission'
+      ? 4
+      : 5;
+  const totalSteps = 5;
 
   if (!hydrated) {
     return (
@@ -129,14 +150,15 @@ export default function OnboardingPage() {
     const newSet = createSet(trimmedName);
     const newVocab = parsedWords.map((word) => ({
       id: generateId(),
-      en: word.en,
+      en: word.target,
       phonetic: word.phonetic,
-      pl: word.pl,
+      pl: word.native,
       category: trimmedName,
       setIds: [newSet.id],
       difficulty: word.difficulty,
       created_at: new Date(),
       source: 'manual' as const,
+      languagePair: activePair.id,
     }));
 
     addVocabulary(newVocab);
@@ -172,6 +194,61 @@ export default function OnboardingPage() {
             {t.stepLabel(stepIndex, totalSteps)}
           </div>
         </header>
+
+        {step === 'pair' && (
+          <section className="space-y-6">
+            <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                    {t.choosePair}
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {t.choosePairDesc}
+                  </p>
+                </div>
+                <Sparkles className="text-primary-600" size={20} />
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-3">
+                {LEARNING_PAIRS.map((pair) => {
+                  const isSelected = pair.id === settings.learning.pairId;
+                  const label = language === 'en' ? pair.label.en : pair.label.pl;
+                  const uiLabel = getLanguageLabel(pair.uiLanguage, language);
+                  const aiLabel = getLanguageLabel(pair.feedbackLanguage, language);
+
+                  return (
+                    <button
+                      key={pair.id}
+                      onClick={() => setLearningPair(pair.id)}
+                      className={cn(
+                        'rounded-2xl border p-4 text-left transition-all',
+                        isSelected
+                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/40 shadow-lg'
+                          : 'border-slate-200 dark:border-slate-700 hover:border-primary-300'
+                      )}
+                    >
+                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        {label}
+                      </div>
+                      <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                        UI: {uiLabel} • AI: {aiLabel}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p className="text-xs text-slate-500">{t.choosePairHint}</p>
+            </div>
+
+            <div className="flex justify-end">
+              <Button size="lg" onClick={() => setStep('skin')}>
+                {t.choosePairAction}
+              </Button>
+            </div>
+          </section>
+        )}
 
         {step === 'skin' && (
           <section className="space-y-6">
@@ -223,7 +300,10 @@ export default function OnboardingPage() {
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {t.addFirstSetDesc}{' '}
-                    <span className="font-medium">{t.formatHint}</span>.
+                    <span className="font-medium">
+                      {t.formatHint(`${examplePair.target} - ${examplePair.native}`)}
+                    </span>
+                    .
                   </p>
                 </div>
                 <Sparkles className="text-primary-600" size={20} />
@@ -249,7 +329,9 @@ export default function OnboardingPage() {
                   <textarea
                     value={rawWords}
                     onChange={(e) => setRawWords(e.target.value)}
-                    placeholder={t.wordsPlaceholder}
+                    placeholder={t.wordsPlaceholder(
+                      `${examplePair.target} - ${examplePair.native}`
+                    )}
                     rows={4}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />

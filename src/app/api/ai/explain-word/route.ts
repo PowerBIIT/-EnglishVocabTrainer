@@ -12,7 +12,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { word } = await request.json();
+    const {
+      word,
+      targetLanguage = 'en',
+      nativeLanguage = 'pl',
+      feedbackLanguage = nativeLanguage,
+    } = await request.json();
 
     if (!word) {
       return NextResponse.json(
@@ -22,7 +27,12 @@ export async function POST(request: NextRequest) {
     }
 
     const gemini = new GeminiService(apiKey);
-    const prompt = AI_PROMPTS.explainWord(word);
+    const prompt = AI_PROMPTS.explainWord(
+      word,
+      targetLanguage,
+      nativeLanguage,
+      feedbackLanguage
+    );
 
     const response = await gemini.generate(prompt, {
       temperature: 0.7,

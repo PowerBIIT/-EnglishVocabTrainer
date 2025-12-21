@@ -18,6 +18,7 @@ import {
 } from '@/types';
 import { applyMissionReward, createDefaultState, ensureDailyMission, hydrateAppState } from '@/lib/appState';
 import { generateId, getLevelProgress } from '@/lib/utils';
+import { getLearningPair, getTargetText } from '@/lib/languages';
 
 const defaultState = createDefaultState();
 
@@ -29,12 +30,14 @@ interface VocabStore {
 
   // Vocabulary
   vocabulary: VocabularyItem[];
+  getActiveVocabulary: () => VocabularyItem[];
   addVocabulary: (items: VocabularyItem[]) => void;
   removeVocabulary: (ids: string[]) => void;
   updateVocabulary: (id: string, updates: Partial<VocabularyItem>) => void;
 
   // Sets
   sets: StudySet[];
+  getActiveSets: () => StudySet[];
   createSet: (name: string) => StudySet;
   renameSet: (id: string, name: string) => void;
   deleteSet: (id: string) => void;
@@ -67,6 +70,7 @@ interface VocabStore {
     category: K,
     updates: Partial<AppSettings[K]>
   ) => void;
+  setLearningPair: (pairId: AppSettings['learning']['pairId']) => void;
 
   // Stats
   stats: UserStats;
@@ -114,6 +118,11 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
   setReady: (ready) => set(() => ({ isReady: ready })),
 
       // Vocabulary actions
+      getActiveVocabulary: () => {
+        const state = get();
+        const pairId = state.settings.learning.pairId;
+        return state.vocabulary.filter((item) => (item.languagePair ?? pairId) === pairId);
+      },
       addVocabulary: (items) =>
         set((state) => ({
           vocabulary: [
@@ -121,6 +130,7 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
             ...items.map((item) => ({
               ...item,
               setIds: item.setIds ?? [],
+              languagePair: item.languagePair ?? state.settings.learning.pairId,
             })),
           ],
         })),
@@ -141,6 +151,11 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
         })),
 
       // Set actions
+      getActiveSets: () => {
+        const state = get();
+        const pairId = state.settings.learning.pairId;
+        return state.sets.filter((set) => (set.languagePair ?? pairId) === pairId);
+      },
       createSet: (name) => {
         const trimmed = name.trim() || 'Nowy zestaw';
         const existingNames = new Set(
@@ -158,6 +173,7 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
           id: generateId(),
           name: finalName,
           createdAt: new Date(),
+          languagePair: get().settings.learning.pairId,
         };
 
         set((state) => ({
@@ -292,10 +308,12 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
 
       getNextReviewWords: (count) => {
         const state = get();
+        const pairId = state.settings.learning.pairId;
         const now = new Date();
 
         // Get words due for review or new words
         const dueWords = state.vocabulary.filter((v) => {
+          if ((v.languagePair ?? pairId) !== pairId) return false;
           const progress = state.progress[v.id];
           if (!progress) return true; // New word
           return new Date(progress.next_review) <= now;
@@ -316,7 +334,7 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
                 return accA - accB;
               })
             : state.settings.session.wordOrder === 'alphabetical'
-            ? dueWords.sort((a, b) => a.en.localeCompare(b.en))
+            ? dueWords.sort((a, b) => getTargetText(a).localeCompare(getTargetText(b)))
             : dueWords.sort(() => Math.random() - 0.5);
 
         return count === 'all' ? sorted : sorted.slice(0, count);
@@ -360,7 +378,8 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
 
       getNextPronunciationWords: (count, focusMode, targetPhoneme, setId) => {
         const state = get();
-        let words = [...state.vocabulary];
+        const pairId = state.settings.learning.pairId;
+        let words = state.vocabulary.filter((word) => (word.languagePair ?? pairId) === pairId);
 
         if (setId === 'unassigned') {
           words = words.filter((word) => (word.setIds ?? []).length === 0);
@@ -410,7 +429,7 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
               };
               const pattern = phonemePatterns[targetPhoneme];
               if (pattern) {
-                words = words.filter((w) => pattern.test(w.en));
+                words = words.filter((w) => pattern.test(getTargetText(w)));
               }
             }
             break;
@@ -529,7 +548,9 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
 
       getWeakPronunciationWords: (limit = 10) => {
         const state = get();
+        const pairId = state.settings.learning.pairId;
         return state.vocabulary
+          .filter((word) => (word.languagePair ?? pairId) === pairId)
           .filter((w) => {
             const prog = state.progress[w.id];
             return prog && prog.pronunciation_attempts > 0 && prog.avg_pronunciation_score < 7;
@@ -553,6 +574,28 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
             },
           },
         })),
+      setLearningPair: (pairId) =>
+        set((state) => {
+          const pair = getLearningPair(pairId);
+          return {
+            settings: {
+              ...state.settings,
+              learning: {
+                nativeLanguage: pair.native,
+                targetLanguage: pair.target,
+                pairId: pair.id,
+              },
+              general: {
+                ...state.settings.general,
+                language: pair.uiLanguage,
+              },
+              ai: {
+                ...state.settings.ai,
+                feedbackLanguage: pair.feedbackLanguage,
+              },
+            },
+          };
+        }),
 
       // Stats actions
       addXp: (amount) =>
@@ -724,12 +767,15 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
 
       // Utility functions
       getCategories: () => {
-        const categories = new Set(get().vocabulary.map((v) => v.category));
+        const words = get().getActiveVocabulary();
+        const categories = new Set(words.map((v) => v.category));
         return Array.from(categories);
       },
 
       getVocabularyByCategory: (category) => {
-        return get().vocabulary.filter((v) => v.category === category);
+        return get()
+          .getActiveVocabulary()
+          .filter((v) => v.category === category);
       },
 
       getCategorySummary: () => {
@@ -737,7 +783,9 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
         const categories = state.getCategories();
 
         return categories.map((name) => {
-          const words = state.vocabulary.filter((v) => v.category === name);
+          const words = state
+            .getActiveVocabulary()
+            .filter((v) => v.category === name);
           const masteredWords = words.filter(
             (w) => state.progress[w.id]?.status === 'mastered'
           ).length;

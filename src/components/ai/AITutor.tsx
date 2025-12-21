@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button';
 import { useVocabStore } from '@/lib/store';
 import { cn, speak } from '@/lib/utils';
 import { useLanguage } from '@/lib/i18n';
+import { getLanguageLabel, getLearningPair, getSpeechLocale } from '@/lib/languages';
 
 interface Message {
   id: string;
@@ -26,8 +27,8 @@ interface Message {
 
 const tutorCopy = {
   pl: {
-    welcomeMessage:
-      'Cześć! Jestem Eva, Twój asystent do nauki angielskiego.\n\nMogę Ci pomóc w następujących tematach:\n• Wyjaśnienie słówek krok po kroku\n• Wymowa i akcent\n• Wskazówki do nauki\n• Pytania o gramatykę\n\nO co chcesz zapytać?',
+    welcomeMessage: (targetLabel: string) =>
+      `Cześć! Jestem Eva, Twój asystent do nauki ${targetLabel.toLowerCase()}.\n\nMogę Ci pomóc w następujących tematach:\n• Wyjaśnienie słówek krok po kroku\n• Wymowa i akcent\n• Wskazówki do nauki\n• Pytania o gramatykę\n\nO co chcesz zapytać?`,
     quickActions: [
       { icon: Lightbulb, label: 'Porada dnia', prompt: 'Daj mi poradę jak lepiej uczyć się słówek' },
       { icon: BookOpen, label: 'Wyjaśnij słówko', prompt: 'Wyjaśnij mi słówko: ' },
@@ -43,7 +44,7 @@ const tutorCopy = {
     openTitle: 'Otwórz asystenta AI',
     headerTitle: 'Eva - AI Tutor',
     headerSubtitle: 'Twój asystent do nauki',
-    speakTitle: 'Wymów angielskie słowa',
+    speakTitle: (targetLabel: string) => `Wymów słowa w języku ${targetLabel.toLowerCase()}`,
     typing: 'Eva pisze...',
     quickActionsLabel: 'Szybkie akcje:',
     inputPlaceholder: 'Zapytaj o cokolwiek...',
@@ -51,8 +52,8 @@ const tutorCopy = {
       'Mam chwilowe problemy z połączeniem. Spróbuj ponownie za chwilę.\n\nUpewnij się, że klucz API jest skonfigurowany w .env.local.',
   },
   en: {
-    welcomeMessage:
-      'Hi! I am Eva, your English learning assistant.\n\nI can help with:\n• Explaining words step by step\n• Pronunciation and stress\n• Study tips\n• Grammar questions\n\nWhat would you like to ask?',
+    welcomeMessage: (targetLabel: string) =>
+      `Hi! I am Eva, your ${targetLabel} learning assistant.\n\nI can help with:\n• Explaining words step by step\n• Pronunciation and stress\n• Study tips\n• Grammar questions\n\nWhat would you like to ask?`,
     quickActions: [
       { icon: Lightbulb, label: 'Tip of the day', prompt: 'Give me a tip to learn vocabulary better' },
       { icon: BookOpen, label: 'Explain a word', prompt: 'Explain this word: ' },
@@ -68,7 +69,7 @@ const tutorCopy = {
     openTitle: 'Open AI tutor',
     headerTitle: 'Eva - AI Tutor',
     headerSubtitle: 'Your learning companion',
-    speakTitle: 'Speak the English words',
+    speakTitle: (targetLabel: string) => `Speak the ${targetLabel} words`,
     typing: 'Eva is typing...',
     quickActionsLabel: 'Quick actions:',
     inputPlaceholder: 'Ask anything...',
@@ -92,8 +93,10 @@ export function AITutor() {
   const language = useLanguage();
   const t = (tutorCopy[language] ?? tutorCopy.pl) as TutorCopy;
   const stats = useVocabStore((state) => state.stats);
-  const vocabulary = useVocabStore((state) => state.vocabulary);
+  const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
   const settings = useVocabStore((state) => state.settings);
+  const activePair = getLearningPair(settings.learning.pairId);
+  const targetLabel = getLanguageLabel(activePair.target, language);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -106,12 +109,12 @@ export function AITutor() {
         {
           id: '1',
           role: 'assistant',
-          content: t.welcomeMessage,
+          content: t.welcomeMessage(targetLabel),
           timestamp: new Date(),
         },
       ]);
     }
-  }, [isOpen, messages.length, t.welcomeMessage]);
+  }, [isOpen, messages.length, t, targetLabel]);
 
   const buildContext = () => {
     return `
@@ -145,6 +148,9 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
         body: JSON.stringify({
           message: messageText,
           context: buildContext(),
+          targetLanguage: activePair.target,
+          nativeLanguage: activePair.native,
+          feedbackLanguage: settings.ai.feedbackLanguage,
         }),
       });
 
@@ -186,12 +192,19 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
 
   const handleSpeakText = (text: string) => {
     if (!settings.general.sounds) return;
-    // Extract English words from the text and speak them
+    // Extract quoted words from the text and speak them
     const englishPattern = /"([^"]+)"/g;
     const matches = text.match(englishPattern);
     if (matches && matches.length > 0) {
       const word = matches[0].replace(/"/g, '');
-      speak(word);
+      speak(word, {
+        voice: settings.pronunciation.voice,
+        speed: settings.pronunciation.speed,
+        locale: getSpeechLocale(
+          settings.learning.targetLanguage,
+          settings.pronunciation.voice
+        ),
+      });
     }
   };
 
@@ -251,7 +264,7 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
                 <button
                   onClick={() => handleSpeakText(message.content)}
                   className="absolute -right-8 top-2 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-primary-600"
-                  title={t.speakTitle}
+                  title={t.speakTitle(targetLabel)}
                 >
                   <Volume2 size={16} />
                 </button>

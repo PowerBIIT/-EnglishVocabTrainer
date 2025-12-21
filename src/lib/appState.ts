@@ -1,4 +1,5 @@
 import { generateId, getLevelProgress } from '@/lib/utils';
+import { getLearningPair, normalizePairId } from '@/lib/languages';
 import type {
   AppSettings,
   DailyMission,
@@ -78,6 +79,11 @@ export const defaultSettings: AppSettings = {
     feedbackLanguage: 'pl',
     phoneticHints: true,
   },
+  learning: {
+    nativeLanguage: 'pl',
+    targetLanguage: 'en',
+    pairId: 'pl-en',
+  },
 };
 
 export const defaultStats: UserStats = {
@@ -151,15 +157,75 @@ const toDate = (value: Date | string | null | undefined) => {
 };
 
 export function hydrateAppState(raw: AppState): AppState {
+  const mergedSettings: AppSettings = {
+    ...defaultSettings,
+    ...raw.settings,
+    session: {
+      ...defaultSettings.session,
+      ...raw.settings?.session,
+    },
+    pronunciation: {
+      ...defaultSettings.pronunciation,
+      ...raw.settings?.pronunciation,
+    },
+    general: {
+      ...defaultSettings.general,
+      ...raw.settings?.general,
+    },
+    ai: {
+      ...defaultSettings.ai,
+      ...raw.settings?.ai,
+    },
+    learning: {
+      ...defaultSettings.learning,
+      ...raw.settings?.learning,
+    },
+  };
+
+  const normalizedPairId = normalizePairId(
+    mergedSettings.learning?.pairId,
+    mergedSettings.learning?.nativeLanguage,
+    mergedSettings.learning?.targetLanguage
+  );
+  const activePair = getLearningPair(normalizedPairId);
+
+  const generalLanguage =
+    mergedSettings.general.language === 'pl' || mergedSettings.general.language === 'en'
+      ? mergedSettings.general.language
+      : activePair.uiLanguage;
+
+  const feedbackLanguage = ['pl', 'en', 'de', 'uk'].includes(mergedSettings.ai.feedbackLanguage)
+    ? mergedSettings.ai.feedbackLanguage
+    : activePair.feedbackLanguage;
+
+  const settings: AppSettings = {
+    ...mergedSettings,
+    general: {
+      ...mergedSettings.general,
+      language: generalLanguage,
+    },
+    ai: {
+      ...mergedSettings.ai,
+      feedbackLanguage,
+    },
+    learning: {
+      nativeLanguage: activePair.native,
+      targetLanguage: activePair.target,
+      pairId: activePair.id,
+    },
+  };
+
   const vocabulary = raw.vocabulary.map((item) => ({
     ...item,
     created_at: toDate(item.created_at) ?? new Date(),
     setIds: item.setIds ?? [],
+    languagePair: item.languagePair ?? activePair.id,
   }));
 
   const sets = (raw.sets ?? []).map((set) => ({
     ...set,
     createdAt: toDate(set.createdAt) ?? new Date(),
+    languagePair: set.languagePair ?? activePair.id,
   }));
 
   const progress = Object.fromEntries(
@@ -193,6 +259,7 @@ export function hydrateAppState(raw: AppState): AppState {
     sets,
     progress,
     stats,
+    settings,
     dailyMission: ensureDailyMission(raw.dailyMission),
   };
 }

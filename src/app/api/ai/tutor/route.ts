@@ -12,7 +12,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { message, context } = await request.json();
+    const {
+      message,
+      context,
+      targetLanguage = 'en',
+      nativeLanguage = 'pl',
+      feedbackLanguage = nativeLanguage,
+    } = await request.json();
 
     if (!message) {
       return NextResponse.json(
@@ -22,7 +28,13 @@ export async function POST(request: NextRequest) {
     }
 
     const gemini = new GeminiService(apiKey);
-    const prompt = AI_PROMPTS.tutorChat(context || '', message);
+    const prompt = AI_PROMPTS.tutorChat(
+      context || '',
+      message,
+      targetLanguage,
+      nativeLanguage,
+      feedbackLanguage
+    );
 
     const response = await gemini.generate(prompt, {
       temperature: 0.8,

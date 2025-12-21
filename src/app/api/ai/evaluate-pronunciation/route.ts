@@ -14,6 +14,7 @@ interface EvaluationResult {
   tip: string;
   errorPhonemes?: string[];
   phonemeAnalysis?: PhonemeAnalysis[];
+  nativeInterference?: string;
   polishInterference?: string;
 }
 
@@ -29,7 +30,14 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { expected, phonetic, spoken } = await request.json();
+    const {
+      expected,
+      phonetic,
+      spoken,
+      nativeLanguage = 'pl',
+      targetLanguage = 'en',
+      feedbackLanguage = nativeLanguage,
+    } = await request.json();
 
     if (!expected || !spoken) {
       return NextResponse.json(
@@ -39,11 +47,14 @@ export async function POST(request: NextRequest) {
     }
 
     const gemini = new GeminiService(apiKey);
-    const prompt = AI_PROMPTS.evaluatePronunciation(
+    const prompt = AI_PROMPTS.evaluatePronunciation({
       expected,
-      phonetic || '',
-      spoken
-    );
+      phonetic: phonetic || '',
+      spoken,
+      nativeLanguage,
+      targetLanguage,
+      feedbackLanguage,
+    });
 
     console.log('Calling Gemini API for pronunciation evaluation...');
     console.log('Expected:', expected, '| Spoken:', spoken);
@@ -67,9 +78,14 @@ export async function POST(request: NextRequest) {
     result.score = Math.max(1, Math.min(10, Math.round(result.score)));
     result.correct = result.score >= 7;
 
-    console.log('Parsed result:', result);
+    const normalizedResult = {
+      ...result,
+      nativeInterference: result.nativeInterference ?? result.polishInterference,
+    };
 
-    return NextResponse.json(result);
+    console.log('Parsed result:', normalizedResult);
+
+    return NextResponse.json(normalizedResult);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Pronunciation evaluation error:', errorMessage);

@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GeminiService, AI_PROMPTS, parseAIResponse } from '@/lib/gemini';
 
 interface GeneratedWord {
-  en: string;
+  target: string;
   phonetic: string;
-  pl: string;
-  example_en?: string;
-  example_pl?: string;
+  native: string;
+  example_target?: string;
+  example_native?: string;
   difficulty: 'easy' | 'medium' | 'hard';
 }
 
@@ -27,7 +27,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { topic, count = 10, level = 'A2' } = await request.json();
+    const {
+      topic,
+      count = 10,
+      level = 'A2',
+      targetLanguage = 'en',
+      nativeLanguage = 'pl',
+    } = await request.json();
 
     if (!topic) {
       return NextResponse.json(
@@ -37,7 +43,13 @@ export async function POST(request: NextRequest) {
     }
 
     const gemini = new GeminiService(apiKey);
-    const prompt = AI_PROMPTS.generateWords(topic, count, level);
+    const prompt = AI_PROMPTS.generateWords(
+      topic,
+      count,
+      level,
+      targetLanguage,
+      nativeLanguage
+    );
 
     const response = await gemini.generate(prompt, {
       temperature: 0.8,

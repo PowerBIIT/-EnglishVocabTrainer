@@ -1,9 +1,11 @@
-import type { VocabularyItem } from '@/types';
-
-export type ParsedVocabularyWord = Pick<
-  VocabularyItem,
-  'en' | 'pl' | 'phonetic' | 'difficulty'
->;
+export interface ParsedVocabularyWord {
+  target: string;
+  native: string;
+  phonetic: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+  example_target?: string;
+  example_native?: string;
+}
 
 export const parseVocabularyInput = (text: string): ParsedVocabularyWord[] => {
   const words: ParsedVocabularyWord[] = [];
@@ -13,17 +15,17 @@ export const parseVocabularyInput = (text: string): ParsedVocabularyWord[] => {
     const match = part.match(/([^-=]+)[-=](.+)/);
     if (!match) continue;
 
-    const en = match[1].trim();
-    const pl = match[2].trim();
+    const target = match[1].trim();
+    const native = match[2].trim();
 
-    if (!en || !pl || en.length < 2 || pl.length < 2) {
+    if (!target || !native || target.length < 2 || native.length < 2) {
       continue;
     }
 
     words.push({
-      en,
-      pl,
-      phonetic: `/${en.toLowerCase()}/`,
+      target,
+      native,
+      phonetic: `/${target.toLowerCase()}/`,
       difficulty: 'medium',
     });
   }

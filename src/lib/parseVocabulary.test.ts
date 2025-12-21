@@ -7,9 +7,9 @@ describe('parseVocabularyInput', () => {
     const result = parseVocabularyInput(input);
 
     expect(result).toHaveLength(3);
-    expect(result[0]).toMatchObject({ en: 'apple', pl: 'jabłko' });
-    expect(result[1]).toMatchObject({ en: 'pear', pl: 'gruszka' });
-    expect(result[2]).toMatchObject({ en: 'plum', pl: 'śliwka' });
+    expect(result[0]).toMatchObject({ target: 'apple', native: 'jabłko' });
+    expect(result[1]).toMatchObject({ target: 'pear', native: 'gruszka' });
+    expect(result[2]).toMatchObject({ target: 'plum', native: 'śliwka' });
   });
 
   it('ignores invalid rows', () => {
@@ -17,6 +17,6 @@ describe('parseVocabularyInput', () => {
     const result = parseVocabularyInput(input);
 
     expect(result).toHaveLength(1);
-    expect(result[0].en).toBe('ok');
+    expect(result[0].target).toBe('ok');
   });
 });

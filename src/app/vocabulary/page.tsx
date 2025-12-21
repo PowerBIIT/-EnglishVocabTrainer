@@ -19,6 +19,12 @@ import { VocabularyItem } from '@/types';
 import { cn, speak } from '@/lib/utils';
 import { getCategoryLabel } from '@/lib/categories';
 import { useLanguage } from '@/lib/i18n';
+import {
+  getNativeText,
+  getSpeechLocale,
+  getTargetExample,
+  getTargetText,
+} from '@/lib/languages';
 
 const vocabularyCopy = {
   pl: {
@@ -97,11 +103,11 @@ export default function VocabularyPage() {
   const [bulkSetTarget, setBulkSetTarget] = useState(NEW_SET_OPTION);
   const [bulkSetName, setBulkSetName] = useState('');
 
-  const vocabulary = useVocabStore((state) => state.vocabulary);
+  const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
   const progress = useVocabStore((state) => state.progress);
   const settings = useVocabStore((state) => state.settings);
   const removeVocabulary = useVocabStore((state) => state.removeVocabulary);
-  const sets = useVocabStore((state) => state.sets);
+  const sets = useVocabStore((state) => state.getActiveSets());
   const createSet = useVocabStore((state) => state.createSet);
   const replaceWordsSet = useVocabStore((state) => state.replaceWordsSet);
 
@@ -148,8 +154,8 @@ export default function VocabularyPage() {
   // Filter vocabulary
   const filteredVocabulary = wordsInSet.filter((word) => {
     const matchesSearch =
-      word.en.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      word.pl.toLowerCase().includes(searchQuery.toLowerCase());
+      getTargetText(word).toLowerCase().includes(searchQuery.toLowerCase()) ||
+      getNativeText(word).toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory =
       selectedCategory === 'all' || word.category === selectedCategory;
     return matchesSearch && matchesCategory;
@@ -202,6 +208,10 @@ export default function VocabularyPage() {
       await speak(word, {
         voice: settings.pronunciation.voice,
         speed: settings.pronunciation.speed,
+        locale: getSpeechLocale(
+          settings.learning.targetLanguage,
+          settings.pronunciation.voice
+        ),
       });
     } catch (error) {
       console.error('TTS error:', error);
@@ -532,14 +542,14 @@ export default function VocabularyPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="font-medium text-slate-800 dark:text-slate-100">
-                          {word.en}
+                          {getTargetText(word)}
                         </p>
                         <span className="text-xs text-slate-400 font-mono">
                           {word.phonetic}
                         </span>
                       </div>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {word.pl}
+                        {getNativeText(word)}
                       </p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {(word.setIds ?? []).length === 0 ? (
@@ -557,9 +567,9 @@ export default function VocabularyPage() {
                           ))
                         )}
                       </div>
-                      {word.example_en && (
+                      {getTargetExample(word) && (
                         <p className="text-xs text-slate-400 mt-1 italic truncate">
-                          "{word.example_en}"
+                          "{getTargetExample(word)}"
                         </p>
                       )}
                     </div>
@@ -583,7 +593,7 @@ export default function VocabularyPage() {
                       </span>
 
                       <button
-                        onClick={(e) => handleSpeak(word.en, e)}
+                        onClick={(e) => handleSpeak(getTargetText(word), e)}
                         className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-primary-500"
                       >
                         <Volume2 size={18} />

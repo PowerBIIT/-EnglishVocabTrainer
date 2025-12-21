@@ -102,7 +102,7 @@ export default function HomePage() {
   const language = useLanguage();
   const t = (homeCopy[language] ?? homeCopy.pl) as HomeCopy;
   const stats = useVocabStore((state) => state.stats);
-  const vocabulary = useVocabStore((state) => state.vocabulary);
+  const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
   const progress = useVocabStore((state) => state.progress);
   const getCategorySummary = useVocabStore((state) => state.getCategorySummary);
   const getNextReviewWords = useVocabStore((state) => state.getNextReviewWords);
@@ -129,8 +129,8 @@ export default function HomePage() {
     return language === 'en' ? preset.descriptionEn ?? preset.description : preset.description;
   };
 
-  const masteredCount = Object.values(progress).filter(
-    (p) => p.status === 'mastered'
+  const masteredCount = vocabulary.filter(
+    (word) => progress[word.id]?.status === 'mastered'
   ).length;
 
   const overallMastery =
@@ -208,7 +208,7 @@ export default function HomePage() {
               <ProgressBar value={missionProgress} size="sm" className="mt-4" />
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <Link href="/flashcards">
-                  <Button variant="secondary" className="text-primary-700">
+                  <Button variant="secondary">
                     {missionButtonLabel}
                   </Button>
                 </Link>

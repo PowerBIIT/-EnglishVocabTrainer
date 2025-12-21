@@ -28,6 +28,12 @@ import { VocabularyItem, PronunciationFocusMode, PhonemeType, PronunciationAttem
 import { cn, speak, XP_ACTIONS } from '@/lib/utils';
 import { phonemeDrills } from '@/data/phonemeDrills';
 import { useLanguage } from '@/lib/i18n';
+import {
+  getLearningPair,
+  getNativeText,
+  getSpeechLocale,
+  getTargetText,
+} from '@/lib/languages';
 
 interface PronunciationResult {
   score: number;
@@ -35,7 +41,7 @@ interface PronunciationResult {
   tip?: string;
   recognized: string;
   errorPhonemes?: string[];
-  polishInterference?: string;
+  nativeInterference?: string;
 }
 
 type SessionState = 'setup' | 'practice' | 'complete';
@@ -81,7 +87,7 @@ const pronunciationCopy = {
     focusMode: 'Tryb ćwiczeń',
     selectPhoneme: 'Wybierz fonem',
     startSession: 'Rozpocznij sesję',
-    phonemeDrills: 'Ćwiczenia fonemów dla Polaków',
+    phonemeDrills: 'Ćwiczenia fonemów (angielski)',
     sessionComplete: 'Sesja zakończona!',
     averageScore: (score: number) => `Średnia ocena: ${score.toFixed(1)}/10`,
     wordsLabel: 'Słowa',
@@ -97,7 +103,7 @@ const pronunciationCopy = {
     aiAnalyzing: 'AI analizuje Twoją wymowę...',
     hintLabel: 'Wskazówka:',
     errorPhonemes: 'Problematyczne dźwięki:',
-    polishInterference: 'Wpływ polskiego:',
+    polishInterference: 'Wpływ języka ojczystego:',
     repeat: 'Powtórz',
     next: 'Dalej',
     finish: 'Zakończ',
@@ -161,7 +167,7 @@ const pronunciationCopy = {
     focusMode: 'Practice mode',
     selectPhoneme: 'Choose phoneme',
     startSession: 'Start session',
-    phonemeDrills: 'Phoneme drills for Polish speakers',
+    phonemeDrills: 'Phoneme drills (English)',
     sessionComplete: 'Session complete!',
     averageScore: (score: number) => `Average score: ${score.toFixed(1)}/10`,
     wordsLabel: 'Words',
@@ -177,7 +183,7 @@ const pronunciationCopy = {
     aiAnalyzing: 'AI is analyzing your pronunciation...',
     hintLabel: 'Tip:',
     errorPhonemes: 'Trouble sounds:',
-    polishInterference: 'Polish influence:',
+    polishInterference: 'Native language influence:',
     repeat: 'Repeat',
     next: 'Next',
     finish: 'Finish',
@@ -258,8 +264,8 @@ export default function PronunciationPage() {
 
   const settings = useVocabStore((state) => state.settings);
   const stats = useVocabStore((state) => state.stats);
-  const vocabulary = useVocabStore((state) => state.vocabulary);
-  const sets = useVocabStore((state) => state.sets);
+  const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
+  const sets = useVocabStore((state) => state.getActiveSets());
   const addXp = useVocabStore((state) => state.addXp);
   const addPronunciationAttempt = useVocabStore((state) => state.addPronunciationAttempt);
   const getNextPronunciationWords = useVocabStore((state) => state.getNextPronunciationWords);
@@ -269,9 +275,20 @@ export default function PronunciationPage() {
   const getWeakPronunciationWords = useVocabStore((state) => state.getWeakPronunciationWords);
   const updateDailyMissionProgress = useVocabStore((state) => state.updateDailyMissionProgress);
 
+  const activePair = useMemo(() => getLearningPair(settings.learning.pairId), [settings.learning.pairId]);
+  const isEnglishTarget = settings.learning.targetLanguage === 'en';
+  const enablePhonemeDrills = isEnglishTarget && settings.learning.nativeLanguage === 'pl';
+
   const currentWord = sessionWords[currentIndex];
   const progress = sessionWords.length > 0 ? ((currentIndex + 1) / sessionWords.length) * 100 : 0;
   const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+  const availableFocusModes = useMemo(
+    () =>
+      (Object.keys(FOCUS_MODE_ICONS) as PronunciationFocusMode[]).filter(
+        (mode) => enablePhonemeDrills || mode !== 'phoneme_specific'
+      ),
+    [enablePhonemeDrills]
+  );
 
   const setCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -317,6 +334,13 @@ export default function PronunciationPage() {
       setSelectedSetId('all');
     }
   }, [selectedSetId, sets]);
+
+  useEffect(() => {
+    if (!enablePhonemeDrills && selectedFocusMode === 'phoneme_specific') {
+      setSelectedFocusMode('random');
+      setSelectedPhoneme(undefined);
+    }
+  }, [enablePhonemeDrills, selectedFocusMode]);
 
   const startSession = () => {
     const words = getNextPronunciationWords(
@@ -370,9 +394,13 @@ export default function PronunciationPage() {
     if (!currentWord) return;
     if (!settings.general.sounds) return;
     try {
-      await speak(currentWord.en, {
+      await speak(getTargetText(currentWord), {
         voice: settings.pronunciation.voice,
         speed: settings.pronunciation.speed,
+        locale: getSpeechLocale(
+          settings.learning.targetLanguage,
+          settings.pronunciation.voice
+        ),
       });
     } catch (error) {
       console.error('TTS error:', error);
@@ -395,7 +423,10 @@ export default function PronunciationPage() {
     const recognition = new SpeechRecognitionApi();
 
     // Configuration
-    recognition.lang = 'en-US';
+    recognition.lang = getSpeechLocale(
+      settings.learning.targetLanguage,
+      settings.pronunciation.voice
+    );
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
     recognition.continuous = true; // Keep listening until we get a result
@@ -519,16 +550,19 @@ export default function PronunciationPage() {
     if (!currentWord) return;
     setIsProcessing(true);
     setRecordingStatus(t.status.aiSending);
-    console.log('Evaluating pronunciation:', spoken, 'for word:', currentWord.en);
+    console.log('Evaluating pronunciation:', spoken, 'for word:', getTargetText(currentWord));
 
     try {
       const response = await fetch('/api/ai/evaluate-pronunciation', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          expected: currentWord.en,
+          expected: getTargetText(currentWord),
           phonetic: currentWord.phonetic,
           spoken,
+          nativeLanguage: activePair.native,
+          targetLanguage: activePair.target,
+          feedbackLanguage: settings.ai.feedbackLanguage,
         }),
       });
 
@@ -559,7 +593,7 @@ export default function PronunciationPage() {
         tip: data.tip,
         recognized: spoken,
         errorPhonemes: data.errorPhonemes,
-        polishInterference: data.polishInterference,
+        nativeInterference: data.nativeInterference ?? data.polishInterference,
       };
 
       setResult(pronunciationResult);
@@ -573,7 +607,7 @@ export default function PronunciationPage() {
         timestamp: new Date(),
         score: data.score,
         recognizedText: spoken,
-        expectedWord: currentWord.en,
+        expectedWord: getTargetText(currentWord),
         errorPhonemes: data.errorPhonemes,
         aiTip: data.tip,
         phonemeType: selectedPhoneme,
@@ -600,7 +634,7 @@ export default function PronunciationPage() {
   const evaluateLocally = (spoken: string) => {
     if (!currentWord) return;
 
-    const expected = currentWord.en.toLowerCase().replace(/^(a |an |the )/i, '');
+    const expected = getTargetText(currentWord).toLowerCase().replace(/^(a |an |the )/i, '');
     const spokenClean = spoken.toLowerCase().replace(/^(a |an |the )/i, '');
 
     const similarity = calculateSimilarity(expected, spokenClean);
@@ -622,11 +656,13 @@ export default function PronunciationPage() {
       tip = t.localFeedback.needsWorkTip;
     }
 
-    if (expected.includes('th') && !spokenClean.includes('th')) {
-      tip = t.localFeedback.tipTh;
-    }
-    if (expected.includes('w') && spokenClean.replace('w', 'v') === expected.replace('w', 'v')) {
-      tip = t.localFeedback.tipW;
+    if (isEnglishTarget) {
+      if (expected.includes('th') && !spokenClean.includes('th')) {
+        tip = t.localFeedback.tipTh;
+      }
+      if (expected.includes('w') && spokenClean.replace('w', 'v') === expected.replace('w', 'v')) {
+        tip = t.localFeedback.tipW;
+      }
     }
 
     setResult({ score, feedback, tip, recognized: spoken });
@@ -638,7 +674,7 @@ export default function PronunciationPage() {
       timestamp: new Date(),
       score,
       recognizedText: spoken,
-      expectedWord: currentWord.en,
+      expectedWord: getTargetText(currentWord),
       phonemeType: selectedPhoneme,
     };
     addPronunciationAttempt(attempt);
@@ -850,7 +886,7 @@ export default function PronunciationPage() {
               {t.focusMode}
             </h3>
             <div className="space-y-2">
-              {(Object.keys(FOCUS_MODE_ICONS) as PronunciationFocusMode[]).map((mode) => {
+              {availableFocusModes.map((mode) => {
                 const { label, desc } = focusModes[mode];
                 const Icon = FOCUS_MODE_ICONS[mode];
                 const isDisabled = mode === 'weak_words' && weakWordsCount === 0;
@@ -890,7 +926,7 @@ export default function PronunciationPage() {
         </Card>
 
         {/* Phoneme selection (if phoneme_specific) */}
-        {selectedFocusMode === 'phoneme_specific' && (
+        {enablePhonemeDrills && selectedFocusMode === 'phoneme_specific' && (
           <Card>
             <CardContent className="p-4 space-y-3">
               <h3 className="font-semibold text-slate-800 dark:text-slate-100">
@@ -930,12 +966,14 @@ export default function PronunciationPage() {
         </Button>
 
         {/* Link to phoneme drills */}
-        <Link href="/pronunciation/drills">
-          <Button variant="secondary" className="w-full">
-            <BookOpen size={18} className="mr-2" />
-            {t.phonemeDrills}
-          </Button>
-        </Link>
+        {enablePhonemeDrills && (
+          <Link href="/pronunciation/drills">
+            <Button variant="secondary" className="w-full">
+              <BookOpen size={18} className="mr-2" />
+              {t.phonemeDrills}
+            </Button>
+          </Link>
+        )}
       </div>
     );
   }
@@ -1034,10 +1072,10 @@ export default function PronunciationPage() {
       <Card variant="elevated">
         <CardContent className="p-6 text-center space-y-4">
           <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
-            {currentWord.en}
+            {getTargetText(currentWord)}
           </h2>
           <p className="text-lg text-slate-500 font-mono">{currentWord.phonetic}</p>
-          <p className="text-slate-600 dark:text-slate-400">{currentWord.pl}</p>
+          <p className="text-slate-600 dark:text-slate-400">{getNativeText(currentWord)}</p>
 
           <button
             onClick={handleSpeak}
@@ -1132,9 +1170,9 @@ export default function PronunciationPage() {
                     ))}
                   </div>
                 )}
-                {result.polishInterference && (
+                {result.nativeInterference && (
                   <p className="text-xs text-amber-600 dark:text-amber-400">
-                    {t.polishInterference} {result.polishInterference}
+                    {t.polishInterference} {result.nativeInterference}
                   </p>
                 )}
                 {result.recognized && (

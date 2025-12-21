@@ -1,3 +1,5 @@
+import type { FeedbackLanguage, NativeLanguage, TargetLanguage } from '@/types';
+
 // Gemini API Service Layer
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
@@ -120,141 +122,170 @@ export class GeminiService {
 }
 
 // AI Prompts for different functions
+const LANGUAGE_NAMES: Record<FeedbackLanguage, string> = {
+  pl: 'Polish',
+  en: 'English',
+  de: 'German',
+  uk: 'Ukrainian',
+};
+
+const getLanguageName = (code: FeedbackLanguage | NativeLanguage | TargetLanguage) =>
+  LANGUAGE_NAMES[code as FeedbackLanguage] ?? code.toUpperCase();
+
 export const AI_PROMPTS = {
-  evaluatePronunciation: (expected: string, phonetic: string, spoken: string) => `
-Jesteś ekspertem fonetyki angielskiej oceniającym wymowę POLSKIEGO ucznia.
+  evaluatePronunciation: ({
+    expected,
+    phonetic,
+    spoken,
+    nativeLanguage,
+    targetLanguage,
+    feedbackLanguage,
+  }: {
+    expected: string;
+    phonetic: string;
+    spoken: string;
+    nativeLanguage: NativeLanguage;
+    targetLanguage: TargetLanguage;
+    feedbackLanguage: FeedbackLanguage;
+  }) => `
+You are a pronunciation coach. The learner's native language is ${getLanguageName(nativeLanguage)}.
+They are practicing ${getLanguageName(targetLanguage)} pronunciation.
 
-Słówko do wymówienia: "${expected}"
-Transkrypcja IPA: "${phonetic}"
-Uczeń powiedział (rozpoznane przez STT): "${spoken}"
+Target word: "${expected}"
+IPA (if available): "${phonetic}"
+Recognized speech: "${spoken}"
 
-ZADANIE: Przeprowadź szczegółową analizę fonetyczną.
+TASK: Provide a concise, practical pronunciation assessment.
 
-TYPOWE BŁĘDY POLAKÓW - szukaj ich aktywnie:
-1. /θ/ (th bezdźwięczne) - Polacy wymawiają jako "t" lub "f" (think → tink/fink)
-2. /ð/ (th dźwięczne) - Polacy wymawiają jako "d" lub "v" (this → dis/vis)
-3. /w/ - Polacy wymawiają jako "v" (water → vater, wine → vine)
-4. /r/ - Polacy używają r drżącego zamiast angielskiego retroflex
-5. /ə/ (schwa) - Polacy wymawiają pełne samogłoski zamiast zredukowanej szwy
-6. /ɪ/ vs /iː/ - Polacy nie rozróżniają ship/sheep
-7. /ʊ/ vs /uː/ - Polacy nie rozróżniają full/fool
-8. /ŋ/ - Polacy dodają twarde "g" (singing → singing-g)
-9. Końcowe zbitki spółgłosek (-sts, -sks) - Polacy upraszczają lub dodają samogłoskę
+Scoring (1-10):
+- 9-10: Near-native
+- 7-8: Good, minor issues
+- 5-6: Understandable but with clear mistakes
+- 3-4: Hard to understand
+- 1-2: Not understandable
 
-OCENA (1-10):
-- 9-10: Wymowa natywna lub prawie natywna
-- 7-8: Dobra wymowa, drobne błędy nie wpływające na zrozumienie
-- 5-6: Zrozumiała, ale z wyraźnymi błędami
-- 3-4: Trudna do zrozumienia
-- 1-2: Niezrozumiała
-
-Odpowiedz TYLKO w formacie JSON (bez markdown, bez \`\`\`):
+Respond ONLY in JSON (no markdown):
 {
   "score": <1-10>,
-  "correct": <true jeśli score >= 7>,
-  "feedback": "<feedback po polsku, max 2 zdania, zachęcający ton>",
-  "tip": "<KONKRETNA wskazówka JAK poprawić, np. 'Przy th włóż język między zęby i wydmuchuj powietrze'>",
-  "errorPhonemes": ["lista błędnych fonemów, np. 'th', 'w', 'schwa'"],
+  "correct": <true if score >= 7>,
+  "feedback": "<short feedback in ${getLanguageName(feedbackLanguage)}, max 2 sentences, encouraging tone>",
+  "tip": "<one concrete tip on how to improve>",
+  "errorPhonemes": ["list of problematic phonemes or sounds, if any"],
   "phonemeAnalysis": [
-    {"phoneme": "<fonem IPA>", "correct": <true/false>, "issue": "<opis problemu jeśli błąd>"}
+    {"phoneme": "<IPA phoneme>", "correct": <true/false>, "issue": "<issue description if incorrect>"}
   ],
-  "polishInterference": "<który polski nawyk spowodował błąd, jeśli wykryto>"
+  "nativeInterference": "<optional: note about native language influence if detected>"
 }`,
 
-  generateWords: (topic: string, count: number, level: string) => `
-Wygeneruj ${count} słówek angielskich na temat: ${topic}
-Poziom: ${level} (A1/A2/B1/B2)
+  generateWords: (
+    topic: string,
+    count: number,
+    level: string,
+    targetLanguage: TargetLanguage,
+    nativeLanguage: NativeLanguage
+  ) => `
+Generate ${count} ${getLanguageName(targetLanguage)} vocabulary items about: ${topic}
+Level: ${level} (A1/A2/B1/B2)
+Provide translations in ${getLanguageName(nativeLanguage)}.
 
-Dla każdego słówka podaj:
-- en: słówko/fraza angielska
-- phonetic: transkrypcja IPA (poprawna!)
-- pl: polskie tłumaczenie
-- example_en: krótkie przykładowe zdanie po angielsku
-- example_pl: tłumaczenie zdania
+For each item return:
+- target: word/phrase in ${getLanguageName(targetLanguage)}
+- phonetic: IPA for the target word (if unsure, return an empty string)
+- native: translation in ${getLanguageName(nativeLanguage)}
+- example_target: short example sentence in ${getLanguageName(targetLanguage)}
+- example_native: translation of the example sentence
 - difficulty: easy/medium/hard
 
-Odpowiedz TYLKO w formacie JSON (bez markdown, bez \`\`\`):
+Respond ONLY in JSON (no markdown):
 {
   "topic": "${topic}",
   "level": "${level}",
   "words": [
     {
-      "en": "...",
-      "phonetic": "/.../"  ,
-      "pl": "...",
-      "example_en": "...",
-      "example_pl": "...",
+      "target": "...",
+      "phonetic": "/.../",
+      "native": "...",
+      "example_target": "...",
+      "example_native": "...",
       "difficulty": "easy|medium|hard"
     }
   ]
 }`,
 
-  parseText: (userInput: string) => `
-Użytkownik wpisał słówka w różnym formacie. Sparsuj je i ustrukturyzuj.
+  parseText: (
+    userInput: string,
+    targetLanguage: TargetLanguage,
+    nativeLanguage: NativeLanguage
+  ) => `
+The user entered vocabulary in mixed formats. Parse and structure it.
 
-Wejście użytkownika:
+User input:
 "${userInput}"
 
-Rozpoznaj słówka angielskie i ich polskie tłumaczenia.
-Wygeneruj poprawną transkrypcję fonetyczną IPA dla każdego słówka.
+Identify ${getLanguageName(targetLanguage)} words/phrases and their ${getLanguageName(nativeLanguage)} translations.
+Generate IPA for the ${getLanguageName(targetLanguage)} words (if unsure, use an empty string).
 
-Odpowiedz TYLKO w formacie JSON (bez markdown, bez \`\`\`):
+Respond ONLY in JSON (no markdown):
 {
   "words": [
-    {"en": "...", "phonetic": "/.../" , "pl": "...", "difficulty": "easy|medium|hard"}
+    {"target": "...", "phonetic": "/.../", "native": "...", "difficulty": "easy|medium|hard"}
   ],
-  "category_suggestion": "sugerowana kategoria",
-  "parse_errors": ["lista słów których nie udało się sparsować"]
+  "category_suggestion": "suggested category",
+  "parse_errors": ["list of items that could not be parsed"]
 }`,
 
-  extractFromImage: () => `
-Jesteś asystentem do nauki angielskiego. Przeanalizuj zdjęcie notatek ucznia i wyciągnij wszystkie słówka angielskie z tłumaczeniami.
+  extractFromImage: (targetLanguage: TargetLanguage, nativeLanguage: NativeLanguage) => `
+You are a vocabulary extraction assistant. Analyze the image of notes and extract vocabulary pairs.
 
-Dla każdego słówka zwróć:
-- en: słówko angielskie
-- phonetic: transkrypcja IPA (jeśli jest na zdjęciu, użyj jej; jeśli nie - wygeneruj poprawną)
-- pl: polskie tłumaczenie
+Return ${getLanguageName(targetLanguage)} words/phrases and their ${getLanguageName(nativeLanguage)} translations.
+Generate IPA for the ${getLanguageName(targetLanguage)} words (if unsure, use an empty string).
 
-Odpowiedz TYLKO w formacie JSON (bez markdown, bez \`\`\`):
+Respond ONLY in JSON (no markdown):
 {
-  "category_suggestion": "sugerowana nazwa kategorii na podstawie słówek",
+  "category_suggestion": "suggested category name based on the words",
   "words": [
-    {"en": "...", "phonetic": "/.../" , "pl": "...", "difficulty": "easy|medium|hard"}
+    {"target": "...", "phonetic": "/.../", "native": "...", "difficulty": "easy|medium|hard"}
   ],
-  "notes": "dodatkowe uwagi jeśli coś było nieczytelne"
+  "notes": "optional notes if something was unclear"
 }`,
 
-  tutorChat: (context: string, userMessage: string) => `
-Jesteś przyjaznym AI tutorem do nauki angielskiego dla polskich uczniów (poziom A1-B2).
-Nazywasz się "Eva" (English Vocabulary Assistant).
+  tutorChat: (
+    context: string,
+    userMessage: string,
+    targetLanguage: TargetLanguage,
+    nativeLanguage: NativeLanguage,
+    feedbackLanguage: FeedbackLanguage
+  ) => `
+You are a friendly AI tutor helping someone learn ${getLanguageName(targetLanguage)}.
+The learner's native language is ${getLanguageName(nativeLanguage)}.
+Respond in ${getLanguageName(feedbackLanguage)} and avoid emojis.
+Use examples in ${getLanguageName(targetLanguage)} when helpful.
+If explaining a word, include IPA and a short example.
 
-Kontekst ucznia:
+Learner context:
 ${context}
 
-Wiadomość ucznia: "${userMessage}"
+User message: "${userMessage}"
 
-Zasady:
-1. Odpowiadaj po polsku, ale używaj angielskich przykładów
-2. Bądź zachęcający i cierpliwy
-3. Jeśli uczeń pyta o słówko, podaj wymowę IPA i przykład użycia
-4. Możesz proponować ćwiczenia lub quizy
-5. Koryguj błędy delikatnie
-6. Używaj emoji dla lepszego UX
+Reply naturally like a helpful teacher.`,
 
-Odpowiedz naturalnie, jak pomocny nauczyciel.`,
+  explainWord: (
+    word: string,
+    targetLanguage: TargetLanguage,
+    nativeLanguage: NativeLanguage,
+    feedbackLanguage: FeedbackLanguage
+  ) => `
+Explain the following ${getLanguageName(targetLanguage)} word or phrase: "${word}"
 
-  explainWord: (word: string) => `
-Wyjaśnij szczegółowo słówko angielskie: "${word}"
+Provide:
+1. IPA pronunciation
+2. Meanings with translations into ${getLanguageName(nativeLanguage)}
+3. 3 example sentences in ${getLanguageName(targetLanguage)} with translations
+4. Synonyms (if applicable)
+5. Common mistakes (if applicable)
+6. A short memory tip
 
-Podaj:
-1. Wymowę IPA
-2. Wszystkie znaczenia z tłumaczeniem
-3. 3 przykłady użycia (z tłumaczeniem)
-4. Synonimy
-5. Typowe błędy Polaków
-6. Wskazówkę do zapamiętania
-
-Odpowiedz po polsku w przyjaznym tonie, używaj emoji.`,
+Respond in ${getLanguageName(feedbackLanguage)}. Do not use emojis.`,
 };
 
 // Helper to safely parse JSON from AI response

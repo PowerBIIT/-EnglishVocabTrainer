@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GeminiService, AI_PROMPTS, parseAIResponse } from '@/lib/gemini';
 
 interface ParsedWord {
-  en: string;
+  target: string;
   phonetic: string;
-  pl: string;
+  native: string;
   difficulty: 'easy' | 'medium' | 'hard';
 }
 
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { text } = await request.json();
+    const { text, targetLanguage = 'en', nativeLanguage = 'pl' } = await request.json();
 
     if (!text) {
       return NextResponse.json(
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     }
 
     const gemini = new GeminiService(apiKey);
-    const prompt = AI_PROMPTS.parseText(text);
+    const prompt = AI_PROMPTS.parseText(text, targetLanguage, nativeLanguage);
 
     const response = await gemini.generate(prompt, {
       temperature: 0.3,

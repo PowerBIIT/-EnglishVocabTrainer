@@ -77,9 +77,9 @@ export default function FlashcardsPage() {
   const [selectedSetId, setSelectedSetId] = useState<'all' | 'unassigned' | string>('all');
   const [sessionWords, setSessionWords] = useState<typeof vocabulary>([]);
 
-  const vocabulary = useVocabStore((state) => state.vocabulary);
+  const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
   const settings = useVocabStore((state) => state.settings);
-  const sets = useVocabStore((state) => state.sets);
+  const sets = useVocabStore((state) => state.getActiveSets());
   const getNextReviewWords = useVocabStore((state) => state.getNextReviewWords);
   const updateStreak = useVocabStore((state) => state.updateStreak);
   const incrementSessionCount = useVocabStore((state) => state.incrementSessionCount);

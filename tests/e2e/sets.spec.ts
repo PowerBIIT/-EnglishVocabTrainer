@@ -43,8 +43,8 @@ const login = async (
   await expect(page.getByText('Twoja dzisiejsza przygoda')).toBeVisible();
 };
 
-test('tworzy zestaw z czatu i filtruje w quizie', async ({ page }) => {
-  const email = `e2e+${Date.now()}@local.test`;
+test('tworzy zestaw z czatu i filtruje w quizie', async ({ page }, testInfo) => {
+  const email = `e2e+${Date.now()}-${testInfo.project.name}-${testInfo.workerIndex}@local.test`;
   await login(page, email);
 
   await page.route('**/api/ai/parse-text', async (route) => {
@@ -54,10 +54,10 @@ test('tworzy zestaw z czatu i filtruje w quizie', async ({ page }) => {
       body: JSON.stringify({
         category_suggestion: 'Klasowka',
         words: [
-          { en: 'apple', phonetic: '/apple/', pl: 'jablko', difficulty: 'easy' },
-          { en: 'banana', phonetic: '/banana/', pl: 'banan', difficulty: 'easy' },
-          { en: 'carrot', phonetic: '/carrot/', pl: 'marchew', difficulty: 'easy' },
-          { en: 'pear', phonetic: '/pear/', pl: 'gruszka', difficulty: 'easy' },
+          { target: 'apple', phonetic: '/apple/', native: 'jablko', difficulty: 'easy' },
+          { target: 'banana', phonetic: '/banana/', native: 'banan', difficulty: 'easy' },
+          { target: 'carrot', phonetic: '/carrot/', native: 'marchew', difficulty: 'easy' },
+          { target: 'pear', phonetic: '/pear/', native: 'gruszka', difficulty: 'easy' },
         ],
       }),
     });
@@ -99,8 +99,8 @@ test('tworzy zestaw z czatu i filtruje w quizie', async ({ page }) => {
   ).toBeVisible();
 });
 
-test('usuwa zestaw i pozostawia slowka bez przypisania', async ({ page }) => {
-  const email = `e2e+${Date.now()}@local.test`;
+test('usuwa zestaw i pozostawia slowka bez przypisania', async ({ page }, testInfo) => {
+  const email = `e2e+${Date.now()}-${testInfo.project.name}-${testInfo.workerIndex}@local.test`;
   await login(page, email);
 
   await page.route('**/api/ai/parse-text', async (route) => {
@@ -110,10 +110,10 @@ test('usuwa zestaw i pozostawia slowka bez przypisania', async ({ page }) => {
       body: JSON.stringify({
         category_suggestion: 'Chemia',
         words: [
-          { en: 'acid', phonetic: '/acid/', pl: 'kwas', difficulty: 'easy' },
-          { en: 'base', phonetic: '/base/', pl: 'zasada', difficulty: 'easy' },
-          { en: 'salt', phonetic: '/salt/', pl: 'sol', difficulty: 'easy' },
-          { en: 'water', phonetic: '/water/', pl: 'woda', difficulty: 'easy' },
+          { target: 'acid', phonetic: '/acid/', native: 'kwas', difficulty: 'easy' },
+          { target: 'base', phonetic: '/base/', native: 'zasada', difficulty: 'easy' },
+          { target: 'salt', phonetic: '/salt/', native: 'sol', difficulty: 'easy' },
+          { target: 'water', phonetic: '/water/', native: 'woda', difficulty: 'easy' },
         ],
       }),
     });

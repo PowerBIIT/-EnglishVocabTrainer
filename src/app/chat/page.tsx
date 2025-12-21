@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import {
   ArrowLeft,
   Send,
@@ -15,11 +15,12 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { useVocabStore, useHydration } from '@/lib/store';
-import { VocabularyItem } from '@/types';
+import { LearningPairId, VocabularyItem } from '@/types';
 import { cn, formatDate, generateId } from '@/lib/utils';
 import { getCategoryLabel } from '@/lib/categories';
 import { parseVocabularyInput } from '@/lib/parseVocabulary';
 import { useLanguage } from '@/lib/i18n';
+import { getLanguageLabel, getLearningPair, LEARNING_PAIR_SAMPLES } from '@/lib/languages';
 
 interface Message {
   id: string;
@@ -30,20 +31,54 @@ interface Message {
 }
 
 interface ParsedWord {
-  en: string;
+  target: string;
   phonetic: string;
-  pl: string;
+  native: string;
   difficulty?: 'easy' | 'medium' | 'hard';
-  example_en?: string;
-  example_pl?: string;
+  example_target?: string;
+  example_native?: string;
   selected: boolean;
 }
+
+const normalizeParsedWord = (
+  word: Partial<ParsedWord> & {
+    en?: string;
+    pl?: string;
+    example_en?: string;
+    example_pl?: string;
+  }
+): Omit<ParsedWord, 'selected'> => ({
+  target: word.target ?? word.en ?? '',
+  native: word.native ?? word.pl ?? '',
+  phonetic: word.phonetic ?? '',
+  difficulty: word.difficulty ?? 'medium',
+  example_target: word.example_target ?? word.example_en,
+  example_native: word.example_native ?? word.example_pl,
+});
+
+const FALLBACK_WORDS: Record<LearningPairId, Omit<ParsedWord, 'selected'>[]> = {
+  'pl-en': [
+    { target: 'example', phonetic: '/ɪɡˈzɑːmpl/', native: 'przykład' },
+    { target: 'word', phonetic: '/wɜːd/', native: 'słowo' },
+    { target: 'learn', phonetic: '/lɜːn/', native: 'uczyć się' },
+  ],
+  'de-en': [
+    { target: 'example', phonetic: '/ɪɡˈzɑːmpl/', native: 'Beispiel' },
+    { target: 'word', phonetic: '/wɜːd/', native: 'Wort' },
+    { target: 'learn', phonetic: '/lɜːn/', native: 'lernen' },
+  ],
+  'uk-pl': [
+    { target: 'przykład', phonetic: '', native: 'приклад' },
+    { target: 'słowo', phonetic: '', native: 'слово' },
+    { target: 'uczyć się', phonetic: '', native: 'вчитися' },
+  ],
+};
 
 const chatCopy = {
   pl: {
     loading: 'Ładowanie...',
-    welcomeMessage:
-      'Witaj! Jestem Twoim asystentem AI do nauki słówek. Mogę:\n\n• Dodać słówka, które wpiszesz (np. "breakfast - śniadanie")\n• Wygenerować słówka na temat (np. "Wygeneruj 10 słówek o sporcie")\n• Wyciągnąć słówka ze zdjęcia notatek\n• Pokazać statystyki Twojej biblioteki\n\nJak mogę Ci pomóc?',
+    welcomeMessage: (example: string) =>
+      `Witaj! Jestem Twoim asystentem AI do nauki słówek. Mogę:\n\n• Dodać słówka, które wpiszesz (np. "${example}")\n• Wygenerować słówka na temat (np. "Wygeneruj 10 słówek o sporcie")\n• Wyciągnąć słówka ze zdjęcia notatek\n• Pokazać statystyki Twojej biblioteki\n\nJak mogę Ci pomóc?`,
     defaultCategory: 'Moje słówka',
     defaultSetLabel: 'Nowy zestaw',
     defaultTopic: 'ogólne',
@@ -65,8 +100,8 @@ const chatCopy = {
     imageUploaded: (fileName: string) => `Przesłano zdjęcie: ${fileName}`,
     imageFound: (count: number, notes?: string) =>
       `Znalazłem **${count}** słówek na zdjęciu.\n\n${notes ? `Uwagi: ${notes}\n\n` : ''}Zaznacz te, które chcesz dodać:`,
-    imageNoWords:
-      'Nie udało się rozpoznać słówek na zdjęciu. Upewnij się, że notatki są czytelne i zawierają słówka angielskie z tłumaczeniami.',
+    imageNoWords: (target: string, native: string) =>
+      `Nie udało się rozpoznać słówek na zdjęciu. Upewnij się, że notatki są czytelne i zawierają słówka ${target.toLowerCase()} z tłumaczeniami ${native.toLowerCase()}.`,
     imageError:
       'Nie udało się przetworzyć zdjęcia. Upewnij się, że klucz API jest skonfigurowany w .env.local.',
     fileReadError: 'Nie udało się wczytać pliku.',
@@ -95,8 +130,8 @@ const chatCopy = {
   },
   en: {
     loading: 'Loading...',
-    welcomeMessage:
-      'Hi! I am your AI vocabulary assistant. I can:\n\n• Add words you type (e.g. "breakfast - śniadanie")\n• Generate words by topic (e.g. "Generate 10 words about sports")\n• Extract words from a photo of notes\n• Show stats from your library\n\nHow can I help?',
+    welcomeMessage: (example: string) =>
+      `Hi! I am your AI vocabulary assistant. I can:\n\n• Add words you type (e.g. "${example}")\n• Generate words by topic (e.g. "Generate 10 words about sports")\n• Extract words from a photo of notes\n• Show stats from your library\n\nHow can I help?`,
     defaultCategory: 'My words',
     defaultSetLabel: 'New set',
     defaultTopic: 'general',
@@ -117,8 +152,8 @@ const chatCopy = {
     imageUploaded: (fileName: string) => `Uploaded image: ${fileName}`,
     imageFound: (count: number, notes?: string) =>
       `Found **${count}** words in the image.\n\n${notes ? `Notes: ${notes}\n\n` : ''}Select the ones you want to add:`,
-    imageNoWords:
-      'Could not recognize words in the image. Make sure your notes are readable and include English words with translations.',
+    imageNoWords: (target: string, native: string) =>
+      `Could not recognize words in the image. Make sure your notes are readable and include ${target.toLowerCase()} words with ${native.toLowerCase()} translations.`,
     imageError:
       'Could not process the image. Make sure GEMINI_API_KEY is configured in .env.local.',
     fileReadError: 'Could not read the file.',
@@ -154,12 +189,18 @@ export default function ChatPage() {
   const hydrated = useHydration();
   const language = useLanguage();
   const t = (chatCopy[language] ?? chatCopy.pl) as ChatCopy;
+  const settings = useVocabStore((state) => state.settings);
+  const activePair = useMemo(() => getLearningPair(settings.learning.pairId), [settings.learning.pairId]);
+  const targetLabel = getLanguageLabel(activePair.target, language);
+  const nativeLabel = getLanguageLabel(activePair.native, language);
+  const examplePair = LEARNING_PAIR_SAMPLES[activePair.id] ?? { target: 'word', native: 'translation' };
+  const welcomeMessage = t.welcomeMessage(`${examplePair.target} - ${examplePair.native}`);
   const dateLocale = language === 'en' ? 'en-US' : 'pl-PL';
   const [messages, setMessages] = useState<Message[]>(() => [
     {
       id: '1',
       role: 'assistant',
-      content: t.welcomeMessage,
+      content: welcomeMessage,
       timestamp: new Date(),
     },
   ]);
@@ -174,11 +215,11 @@ export default function ChatPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const vocabulary = useVocabStore((state) => state.vocabulary);
+  const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
   const addVocabulary = useVocabStore((state) => state.addVocabulary);
   const getCategories = useVocabStore((state) => state.getCategories);
   const createSet = useVocabStore((state) => state.createSet);
-  const sets = useVocabStore((state) => state.sets);
+  const sets = useVocabStore((state) => state.getActiveSets());
 
   const categories = getCategories();
 
@@ -310,7 +351,13 @@ export default function ChatPage() {
       const response = await fetch('/api/ai/generate-words', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic, count, level }),
+        body: JSON.stringify({
+          topic,
+          count,
+          level,
+          targetLanguage: activePair.target,
+          nativeLanguage: activePair.native,
+        }),
       });
 
       if (!response.ok) {
@@ -322,7 +369,7 @@ export default function ChatPage() {
       if (data.words && data.words.length > 0) {
         setParsedWords(
           data.words.map((w: ParsedWord) => ({
-            ...w,
+            ...normalizeParsedWord(w),
             selected: true,
           }))
         );
@@ -346,11 +393,12 @@ export default function ChatPage() {
 
   const generateWordsLocal = async (count: number, topic: string) => {
     // Fallback mock data
-    const fallbackWords: ParsedWord[] = [
-      { en: 'example', phonetic: '/ɪɡˈzɑːmpl/', pl: 'przykład', selected: true },
-      { en: 'word', phonetic: '/wɜːd/', pl: 'słowo', selected: true },
-      { en: 'learn', phonetic: '/lɜːn/', pl: 'uczyć się', selected: true },
-    ];
+    const fallbackWords = (FALLBACK_WORDS[activePair.id] ?? FALLBACK_WORDS['pl-en']).map(
+      (word) => ({
+        ...word,
+        selected: true,
+      })
+    );
 
     setParsedWords(fallbackWords.slice(0, count));
     setSuggestedCategory(topic);
@@ -372,13 +420,22 @@ export default function ChatPage() {
         const response = await fetch('/api/ai/parse-text', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text }),
+          body: JSON.stringify({
+            text,
+            targetLanguage: activePair.target,
+            nativeLanguage: activePair.native,
+          }),
         });
 
         if (response.ok) {
           const data = await response.json();
           if (data.words && data.words.length > 0) {
-            setParsedWords(data.words.map((w: ParsedWord) => ({ ...w, selected: true })));
+            setParsedWords(
+              data.words.map((w: ParsedWord) => ({
+                ...normalizeParsedWord(w),
+                selected: true,
+              }))
+            );
             const category = data.category_suggestion || t.defaultCategory;
             setSuggestedCategory(category);
             setSuggestedSetName(buildSetName(category));
@@ -434,6 +491,8 @@ export default function ChatPage() {
             body: JSON.stringify({
               imageBase64: base64,
               mimeType: file.type,
+              targetLanguage: activePair.target,
+              nativeLanguage: activePair.native,
             }),
           });
 
@@ -444,7 +503,12 @@ export default function ChatPage() {
           const data = await response.json();
 
           if (data.words && data.words.length > 0) {
-            setParsedWords(data.words.map((w: ParsedWord) => ({ ...w, selected: true })));
+            setParsedWords(
+              data.words.map((w: ParsedWord) => ({
+                ...normalizeParsedWord(w),
+                selected: true,
+              }))
+            );
             const category = data.category_suggestion || t.imageCategoryFallback;
             setSuggestedCategory(category);
             setSuggestedSetName(buildSetName(category));
@@ -454,7 +518,7 @@ export default function ChatPage() {
               t.imageFound(data.words.length, data.notes)
             );
           } else {
-            addAssistantMessage(t.imageNoWords);
+            addAssistantMessage(t.imageNoWords(targetLabel, nativeLabel));
           }
         } catch (error) {
           console.error('Image extraction error:', error);
@@ -506,16 +570,17 @@ export default function ChatPage() {
 
     const newVocab: VocabularyItem[] = selectedWords.map((w) => ({
       id: generateId(),
-      en: w.en,
+      en: w.target,
       phonetic: w.phonetic,
-      pl: w.pl,
+      pl: w.native,
       category: suggestedCategory || t.defaultCategory,
       setIds: [targetSetId],
-      example_en: w.example_en,
-      example_pl: w.example_pl,
+      example_en: w.example_target,
+      example_pl: w.example_native,
       difficulty: w.difficulty || 'medium',
       created_at: new Date(),
       source: 'ai_generated' as const,
+      languagePair: activePair.id,
     }));
 
     addVocabulary(newVocab);
@@ -662,15 +727,15 @@ export default function ChatPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-slate-800 dark:text-slate-100">
-                        {word.en}{' '}
+                        {word.target}{' '}
                         <span className="text-slate-500 font-normal text-sm">
                           {word.phonetic}
                         </span>
                       </p>
-                      <p className="text-sm text-slate-500 truncate">{word.pl}</p>
-                      {word.example_en && (
+                      <p className="text-sm text-slate-500 truncate">{word.native}</p>
+                      {word.example_target && (
                         <p className="text-xs text-slate-400 italic mt-1 truncate">
-                          "{word.example_en}"
+                          "{word.example_target}"
                         </p>
                       )}
                     </div>

@@ -21,6 +21,7 @@ import { PhonemeType, PhonemeDrill } from '@/types';
 import { cn, speak, XP_ACTIONS } from '@/lib/utils';
 import { phonemeDrills } from '@/data/phonemeDrills';
 import { useLanguage } from '@/lib/i18n';
+import { getLearningPair, getSpeechLocale } from '@/lib/languages';
 
 type DrillState = 'select' | 'learn' | 'practice' | 'complete';
 
@@ -64,6 +65,10 @@ const drillsCopy = {
     repeatExercise: 'Powtórz ćwiczenie',
     backToPronunciation: 'Wróć do treningu wymowy',
     recognitionUnsupported: 'Twoja przeglądarka nie obsługuje rozpoznawania mowy. Spróbuj w Chrome.',
+    notAvailableTitle: 'Ćwiczenia fonemów są dostępne tylko dla profilu Polski → Angielski.',
+    notAvailableDesc:
+      'Zmień profil nauki w ustawieniach, aby korzystać z tych ćwiczeń.',
+    backToTraining: 'Wróć do treningu wymowy',
   },
   en: {
     loading: 'Loading...',
@@ -98,6 +103,10 @@ const drillsCopy = {
     repeatExercise: 'Repeat exercise',
     backToPronunciation: 'Back to pronunciation training',
     recognitionUnsupported: 'Your browser does not support speech recognition. Try Chrome.',
+    notAvailableTitle: 'Phoneme drills are available only for the Polish → English profile.',
+    notAvailableDesc:
+      'Switch the learning profile in settings to use these drills.',
+    backToTraining: 'Back to pronunciation training',
   },
 } as const;
 
@@ -146,6 +155,8 @@ export default function PhonemeDrillsPage() {
   const stats = useVocabStore((state) => state.stats);
   const addXp = useVocabStore((state) => state.addXp);
   const updatePhonemeMastery = useVocabStore((state) => state.updatePhonemeMastery);
+  const activePair = getLearningPair(settings.learning.pairId);
+  const isAvailable = activePair.native === 'pl' && activePair.target === 'en';
 
   const getDrillName = (drill: PhonemeDrill) =>
     language === 'en' ? drill.nameEn : drill.namePl;
@@ -170,6 +181,10 @@ export default function PhonemeDrillsPage() {
       await speak(text, {
         voice: settings.pronunciation.voice,
         speed: settings.pronunciation.speed,
+        locale: getSpeechLocale(
+          settings.learning.targetLanguage,
+          settings.pronunciation.voice
+        ),
       });
     } catch (error) {
       console.error('TTS error:', error);
@@ -185,7 +200,10 @@ export default function PhonemeDrillsPage() {
     }
 
     const recognition = new SpeechRecognitionApi();
-    recognition.lang = 'en-US';
+    recognition.lang = getSpeechLocale(
+      settings.learning.targetLanguage,
+      settings.pronunciation.voice
+    );
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
@@ -297,6 +315,29 @@ export default function PhonemeDrillsPage() {
     return (
       <div className="p-4 flex items-center justify-center min-h-screen">
         <p className="text-slate-500">{t.loading}</p>
+      </div>
+    );
+  }
+
+  if (!isAvailable) {
+    return (
+      <div className="p-4 flex items-center justify-center min-h-screen">
+        <Card className="max-w-lg w-full">
+          <CardContent className="p-6 space-y-4 text-center">
+            <div className="mx-auto w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-900 flex items-center justify-center">
+              <Info className="text-amber-500" size={28} />
+            </div>
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+              {t.notAvailableTitle}
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t.notAvailableDesc}
+            </p>
+            <Link href="/pronunciation">
+              <Button>{t.backToTraining}</Button>
+            </Link>
+          </CardContent>
+        </Card>
       </div>
     );
   }

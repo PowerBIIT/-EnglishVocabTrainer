@@ -9,10 +9,18 @@ import { cn, speak } from '@/lib/utils';
 import { useVocabStore } from '@/lib/store';
 import { getCategoryLabel } from '@/lib/categories';
 import { useLanguage } from '@/lib/i18n';
+import {
+  getNativeExample,
+  getNativeText,
+  getSpeechLocale,
+  getTargetExample,
+  getTargetText,
+} from '@/lib/languages';
 
 const flashcardCopy = {
   pl: {
     tapToReveal: 'Kliknij, aby zobaczyć tłumaczenie',
+    progressLabel: (current: number, total: number) => `${current} z ${total}`,
     easy: 'Łatwe',
     medium: 'Średnie',
     hard: 'Trudne',
@@ -22,6 +30,7 @@ const flashcardCopy = {
   },
   en: {
     tapToReveal: 'Tap to reveal the translation',
+    progressLabel: (current: number, total: number) => `${current} of ${total}`,
     easy: 'Easy',
     medium: 'Medium',
     hard: 'Hard',
@@ -51,9 +60,13 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
     e.stopPropagation();
     if (!settings.general.sounds) return;
     try {
-      await speak(item.en, {
+      await speak(getTargetText(item), {
         voice: settings.pronunciation.voice,
         speed: settings.pronunciation.speed,
+        locale: getSpeechLocale(
+          settings.learning.targetLanguage,
+          settings.pronunciation.voice
+        ),
       });
     } catch (error) {
       console.error('TTS error:', error);
@@ -105,7 +118,7 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
 
             <div className="text-center space-y-4">
               <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
-                {item.en}
+                {getTargetText(item)}
               </h2>
               <p className="text-lg text-slate-500 dark:text-slate-400 font-mono">
                 {item.phonetic}
@@ -133,17 +146,17 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
 
             <div className="text-center space-y-4">
               <h2 className="text-2xl font-bold text-primary-700 dark:text-primary-300">
-                {item.pl}
+                {getNativeText(item)}
               </h2>
 
-              {item.example_en && (
+              {getTargetExample(item) && (
                 <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded-xl">
                   <p className="text-slate-700 dark:text-slate-300 italic">
-                    "{item.example_en}"
+                    "{getTargetExample(item)}"
                   </p>
-                  {item.example_pl && (
+                  {getNativeExample(item) && (
                     <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">
-                      "{item.example_pl}"
+                      "{getNativeExample(item)}"
                     </p>
                   )}
                 </div>
@@ -222,6 +235,8 @@ interface FlashcardSessionProps {
 export function FlashcardSession({ words, onComplete }: FlashcardSessionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [repeatQueue, setRepeatQueue] = useState<VocabularyItem[]>([]);
+  const language = useLanguage();
+  const t = (flashcardCopy[language] ?? flashcardCopy.pl) as FlashcardCopy;
   const processFlashcardAction = useVocabStore((state) => state.processFlashcardAction);
   const addXp = useVocabStore((state) => state.addXp);
   const updateDailyMissionProgress = useVocabStore((state) => state.updateDailyMissionProgress);
@@ -257,9 +272,7 @@ export function FlashcardSession({ words, onComplete }: FlashcardSessionProps) {
       {/* Progress bar */}
       <div className="mb-6">
         <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2">
-          <span>
-            {currentIndex + 1} z {allWords.length}
-          </span>
+          <span>{t.progressLabel(currentIndex + 1, allWords.length)}</span>
           <span>{Math.round(progress)}%</span>
         </div>
         <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
@@ -276,16 +289,16 @@ export function FlashcardSession({ words, onComplete }: FlashcardSessionProps) {
       <div className="flex justify-center gap-8 mt-8 text-slate-400 dark:text-slate-500 text-sm">
         <div className="flex items-center gap-1">
           <ChevronLeft size={16} />
-          Powtórz
+          {t.repeat}
         </div>
         <div className="flex items-center gap-1">
-          Trudne
+          {t.difficult}
           <span className="rotate-90">
             <ChevronRight size={16} />
           </span>
         </div>
         <div className="flex items-center gap-1">
-          Umiem
+          {t.know}
           <ChevronRight size={16} />
         </div>
       </div>

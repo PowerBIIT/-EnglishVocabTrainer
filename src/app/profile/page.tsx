@@ -32,6 +32,7 @@ import { mascotSkins } from '@/data/mascotSkins';
 import { MascotSkinCard } from '@/components/mascot/MascotSkinCard';
 import { BADGES, cn, getLevelProgress } from '@/lib/utils';
 import { getMissionCopy } from '@/lib/missions';
+import { getLanguageLabel, getLearningPair, LEARNING_PAIRS } from '@/lib/languages';
 
 const badgeIcons = {
   flame: Flame,
@@ -164,6 +165,11 @@ const profileCopy = {
     saving: 'Zapisywanie...',
     saved: 'Zapisano',
     saveError: 'Błąd zapisu',
+    learningProfile: 'Profil nauki',
+    learningProfileDesc:
+      'Wybierz parę językową. Zmiana ustawia język interfejsu oraz feedbacku AI.',
+    learningProfileHint:
+      'Zmiana profilu nie usuwa danych, tylko filtruje zestawy i słówka.',
     sessionSettings: 'Ustawienia sesji',
     quizQuestions: 'Pytań w quizie',
     flashcardsPerSession: 'Fiszek w sesji',
@@ -210,6 +216,8 @@ const profileCopy = {
     aiFeedbackLanguage: 'Język feedbacku AI',
     languagePolish: 'Polski',
     languageEnglish: 'English',
+    languageGerman: 'Niemiecki',
+    languageUkrainian: 'Ukraiński',
     aiPhoneticHints: 'Wskazówki fonetyczne',
     aiPhoneticHintsDesc: 'Pokazuj porady dotyczące wymowy',
     account: 'Konto',
@@ -253,6 +261,11 @@ const profileCopy = {
     saving: 'Saving...',
     saved: 'Saved',
     saveError: 'Save failed',
+    learningProfile: 'Learning profile',
+    learningProfileDesc:
+      'Choose your language pair. This sets the interface language and AI feedback.',
+    learningProfileHint:
+      'Changing the profile does not delete data; it filters sets and words.',
     sessionSettings: 'Session settings',
     quizQuestions: 'Quiz questions',
     flashcardsPerSession: 'Flashcards per session',
@@ -299,6 +312,8 @@ const profileCopy = {
     aiFeedbackLanguage: 'AI feedback language',
     languagePolish: 'Polish',
     languageEnglish: 'English',
+    languageGerman: 'German',
+    languageUkrainian: 'Ukrainian',
     aiPhoneticHints: 'Phonetic hints',
     aiPhoneticHintsDesc: 'Show pronunciation tips',
     account: 'Account',
@@ -328,13 +343,14 @@ export default function ProfilePage() {
   const settings = useVocabStore((state) => state.settings);
   const updateSettings = useVocabStore((state) => state.updateSettings);
   const stats = useVocabStore((state) => state.stats);
-  const vocabulary = useVocabStore((state) => state.vocabulary);
-  const sets = useVocabStore((state) => state.sets);
+  const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
+  const sets = useVocabStore((state) => state.getActiveSets());
   const createSet = useVocabStore((state) => state.createSet);
   const renameSet = useVocabStore((state) => state.renameSet);
   const deleteSet = useVocabStore((state) => state.deleteSet);
   const progress = useVocabStore((state) => state.progress);
   const dailyMission = useVocabStore((state) => state.dailyMission);
+  const setLearningPair = useVocabStore((state) => state.setLearningPair);
   const [newSetName, setNewSetName] = useState('');
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [editingSetName, setEditingSetName] = useState('');
@@ -461,7 +477,9 @@ export default function ProfilePage() {
     if (!preset) return badge.description;
     return language === 'en' ? preset.descriptionEn ?? preset.description : preset.description;
   };
-  const masteredCount = Object.values(progress).filter((p) => p.status === 'mastered').length;
+  const masteredCount = vocabulary.filter(
+    (word) => progress[word.id]?.status === 'mastered'
+  ).length;
 
   const missionProgress = Math.min(
     100,
@@ -480,6 +498,7 @@ export default function ProfilePage() {
       ? t.saveError
       : '';
   const languagePreview = t.languagePreview;
+  const activePair = getLearningPair(settings.learning.pairId);
 
   const setCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -594,7 +613,7 @@ export default function ProfilePage() {
             <ProgressBar value={missionProgress} size="sm" className="mt-4" />
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <Link href={missionRoute.href}>
-                  <Button variant="secondary" className="text-primary-700">
+                  <Button variant="secondary">
                     {dailyMission.completed ? t.missionContinue : t.missionStart} •{' '}
                     {missionRoute.label}
                   </Button>
@@ -831,6 +850,53 @@ export default function ProfilePage() {
             {saveStatusLabel}
           </div>
         )}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Compass size={20} className="text-primary-500" />
+              <div>
+                <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                  {t.learningProfile}
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {t.learningProfileDesc}
+                </p>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid gap-3 md:grid-cols-3">
+              {LEARNING_PAIRS.map((pair) => {
+                const isSelected = pair.id === activePair.id;
+                const label = language === 'en' ? pair.label.en : pair.label.pl;
+                const uiLabel = getLanguageLabel(pair.uiLanguage, language);
+                const aiLabel = getLanguageLabel(pair.feedbackLanguage, language);
+
+                return (
+                  <button
+                    key={pair.id}
+                    onClick={() => setLearningPair(pair.id)}
+                    className={cn(
+                      'rounded-2xl border p-4 text-left transition-all',
+                      isSelected
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/40 shadow-lg'
+                        : 'border-slate-200 dark:border-slate-700 hover:border-primary-300'
+                    )}
+                  >
+                    <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      {label}
+                    </div>
+                    <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                      UI: {uiLabel} • AI: {aiLabel}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-slate-500">{t.learningProfileHint}</p>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -1076,8 +1142,14 @@ export default function ProfilePage() {
                 options={[
                   { value: 'pl', label: t.languagePolish },
                   { value: 'en', label: t.languageEnglish },
+                  { value: 'de', label: t.languageGerman },
+                  { value: 'uk', label: t.languageUkrainian },
                 ]}
-                onChange={(v) => updateSettings('ai', { feedbackLanguage: v as 'pl' | 'en' })}
+                onChange={(v) =>
+                  updateSettings('ai', {
+                    feedbackLanguage: v as 'pl' | 'en' | 'de' | 'uk',
+                  })
+                }
               />
             </SettingRow>
 

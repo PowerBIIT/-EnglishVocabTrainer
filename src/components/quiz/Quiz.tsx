@@ -9,13 +9,21 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { cn, shuffleArray, speak, XP_ACTIONS } from '@/lib/utils';
 import { useVocabStore } from '@/lib/store';
 import { useLanguage } from '@/lib/i18n';
+import {
+  getLanguageLabel,
+  getLearningPair,
+  getNativeText,
+  getSpeechLocale,
+  getTargetText,
+} from '@/lib/languages';
 
 const quizCopy = {
   pl: {
-    choosePl: 'Wybierz polskie tłumaczenie',
-    chooseEn: 'Wybierz angielskie tłumaczenie',
-    typeEn: 'Wpisz angielskie tłumaczenie',
-    listenAndChoose: 'Posłuchaj i wybierz słówko',
+    chooseTranslation: (label: string) => `Wybierz tłumaczenie ${label.toLowerCase()}`,
+    typeTranslation: (label: string) =>
+      `Wpisz tłumaczenie w języku ${label.toLowerCase()}`,
+    listenAndChoose: (target: string, native: string) =>
+      `Odsłuchaj słowo (${target.toLowerCase()}) i wybierz tłumaczenie ${native.toLowerCase()}`,
     typeAnswer: 'Wpisz odpowiedź...',
     check: 'Sprawdź',
     correctAnswer: 'Poprawna odpowiedź',
@@ -32,10 +40,10 @@ const quizCopy = {
     yourAnswer: (answer: string) => `Twoja odpowiedź: ${answer || '(brak)'}`,
   },
   en: {
-    choosePl: 'Choose the Polish translation',
-    chooseEn: 'Choose the English translation',
-    typeEn: 'Type the English translation',
-    listenAndChoose: 'Listen and choose the word',
+    chooseTranslation: (label: string) => `Choose the ${label} translation`,
+    typeTranslation: (label: string) => `Type the ${label} translation`,
+    listenAndChoose: (target: string, native: string) =>
+      `Listen to a ${target} word and choose the ${native} translation`,
     typeAnswer: 'Type your answer...',
     check: 'Check',
     correctAnswer: 'Correct answer',
@@ -78,9 +86,14 @@ function QuizQuestion({
   const settings = useVocabStore((state) => state.settings);
   const language = useLanguage();
   const t = (quizCopy[language] ?? quizCopy.pl) as QuizCopy;
+  const learning = useVocabStore((state) => state.settings.learning);
+  const activePair = getLearningPair(learning.pairId);
+  const targetLabel = getLanguageLabel(activePair.target, language);
+  const nativeLabel = getLanguageLabel(activePair.native, language);
 
-  const correctAnswer = mode === 'en_to_pl' || mode === 'listening' ? word.pl : word.en;
-  const questionText = mode === 'en_to_pl' ? word.en : word.pl;
+  const correctAnswer =
+    mode === 'en_to_pl' || mode === 'listening' ? getNativeText(word) : getTargetText(word);
+  const questionText = mode === 'en_to_pl' ? getTargetText(word) : getNativeText(word);
   const isTyping = mode === 'typing';
 
   const handleTimeUp = useCallback(() => {
@@ -112,12 +125,22 @@ function QuizQuestion({
   // Auto-play for listening mode
   useEffect(() => {
     if (mode === 'listening' && settings.general.sounds) {
-      speak(word.en, {
+      speak(getTargetText(word), {
         voice: settings.pronunciation.voice,
         speed: settings.pronunciation.speed,
+        locale: getSpeechLocale(
+          settings.learning.targetLanguage,
+          settings.pronunciation.voice
+        ),
       });
     }
-  }, [mode, settings.general.sounds, settings.pronunciation, word.en]);
+  }, [
+    mode,
+    settings.general.sounds,
+    settings.learning.targetLanguage,
+    settings.pronunciation,
+    word,
+  ]);
 
   const handleSelectAnswer = (answer: string) => {
     if (showResult) return;
@@ -140,9 +163,13 @@ function QuizQuestion({
 
   const handleSpeak = () => {
     if (!settings.general.sounds) return;
-    speak(word.en, {
+    speak(getTargetText(word), {
       voice: settings.pronunciation.voice,
       speed: settings.pronunciation.speed,
+      locale: getSpeechLocale(
+        settings.learning.targetLanguage,
+        settings.pronunciation.voice
+      ),
     });
   };
 
@@ -188,12 +215,12 @@ function QuizQuestion({
 
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {mode === 'en_to_pl'
-              ? t.choosePl
+              ? t.chooseTranslation(nativeLabel)
               : mode === 'pl_to_en'
-              ? t.chooseEn
+              ? t.chooseTranslation(targetLabel)
               : mode === 'typing'
-              ? t.typeEn
-              : t.listenAndChoose}
+              ? t.typeTranslation(targetLabel)
+              : t.listenAndChoose(targetLabel, nativeLabel)}
           </p>
         </div>
 
@@ -300,13 +327,13 @@ export function QuizSession({ words, mode, onComplete }: QuizSessionProps) {
 
     const correctAnswer =
       currentMode === 'en_to_pl' || currentMode === 'listening'
-        ? currentWord.pl
-        : currentWord.en;
+        ? getNativeText(currentWord)
+        : getTargetText(currentWord);
 
     const allAnswers =
       currentMode === 'en_to_pl' || currentMode === 'listening'
-        ? words.map((w) => w.pl)
-        : words.map((w) => w.en);
+        ? words.map((w) => getNativeText(w))
+        : words.map((w) => getTargetText(w));
 
     const distractors = shuffleArray(
       allAnswers.filter((a) => a !== correctAnswer)
@@ -480,10 +507,10 @@ export function QuizResults({ results, words, onRetry, onClose }: QuizResultsPro
               <div className="flex justify-between items-start">
                 <div>
                   <p className="font-medium text-slate-800 dark:text-slate-100">
-                    {item!.word.en}
+                    {getTargetText(item!.word)}
                   </p>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {item!.word.pl}
+                    {getNativeText(item!.word)}
                   </p>
                 </div>
                 <div className="text-right">

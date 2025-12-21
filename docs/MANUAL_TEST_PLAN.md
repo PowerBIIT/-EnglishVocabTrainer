@@ -21,6 +21,7 @@
 
 ### 2.2 Przygotowanie danych
 - [ ] Użyj nowego konta lub wyczyść dane w bazie (np. `docker compose down -v`)
+- [ ] Ustaw profil nauki na PL → EN (domyślny), jeśli nie testujesz innej pary
 - [ ] Dodaj min. 20 słówek w co najmniej 2 zestawach/kategoriach
 - [ ] Przygotuj zdjęcie z notatkami (opcjonalnie)
 
@@ -42,9 +43,10 @@
 |------|-------|---------------------|
 | 1 | Pierwsze logowanie | Użytkownik trafia na `/onboarding` |
 | 2 | Spróbuj wejść na `/` | Przekierowanie na onboarding |
-| 3 | Wybierz skina | Przejście do kroku dodania zestawu |
-| 4 | Wpisz nazwę zestawu i min. 3 słówka | Aktywny przycisk "Przejdź do misji" |
-| 5 | Ukończ misję startową | Onboarding kończy się i następuje redirect na `/` |
+| 3 | Wybierz parę językową | Zapis profilu nauki, przejście do wyboru skina |
+| 4 | Wybierz skina | Przejście do kroku dodania zestawu |
+| 5 | Wpisz nazwę zestawu i min. 3 słówka | Aktywny przycisk "Przejdź do misji" |
+| 6 | Ukończ misję startową | Onboarding kończy się i następuje redirect na `/` |
 
 #### TC-AUTH-003: Wybór skina mascota
 | Krok | Akcja | Oczekiwany rezultat |
@@ -64,6 +66,14 @@
 |------|-------|---------------------|
 | 1 | Wejdź do profilu | Widoczny przycisk wylogowania |
 | 2 | Kliknij "Wyloguj" | Powrót na `/login` |
+
+#### TC-AUTH-006: Profil nauki i filtrowanie danych
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Wejdź do profilu (sekcja Ustawienia) | Widoczna karta "Profil nauki" |
+| 2 | Wybierz inną parę językową | Zmiana zapisana, UI przełącza język |
+| 3 | Przejdź do `/vocabulary` | Widoczne tylko zestawy i słówka z aktywnej pary |
+| 4 | Wróć do profilu i wybierz poprzednią parę | Poprzednie słówka/zestawy wracają bez utraty danych |
 
 ### 3.1 Dashboard (Strona główna)
 
@@ -106,8 +116,8 @@
 #### TC-FLASH-002: Odkrywanie fiszki
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
-| 1 | Wyświetl fiszkę | Widoczne: słówko EN + fonetyka |
-| 2 | Kliknij na fiszkę | Animacja obrotu, widoczne tłumaczenie PL |
+| 1 | Wyświetl fiszkę | Widoczne: słówko w języku docelowym + fonetyka (jeśli dostępna) |
+| 2 | Kliknij na fiszkę | Animacja obrotu, widoczne tłumaczenie w języku ojczystym |
 | 3 | Kliknij ponownie | Powrót do przodu fiszki |
 
 #### TC-FLASH-003: Akcje na fiszce
@@ -144,25 +154,25 @@
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
 | 1 | Przejdź do `/quiz` | Ekran wyboru trybu |
-| 2 | Wybierz "EN → PL" | Tryb zaznaczony |
-| 3 | Wybierz "PL → EN" | Tryb zmieniony |
+| 2 | Wybierz tryb "docelowy → ojczysty" | Tryb zaznaczony |
+| 3 | Wybierz tryb "ojczysty → docelowy" | Tryb zmieniony |
 | 4 | Wybierz "Wpisywanie" | Tryb zmieniony |
 | 5 | Wybierz "Słuchanie" | Tryb zmieniony |
 | 6 | Wybierz "Mieszany" | Tryb zmieniony |
 
-#### TC-QUIZ-002: Quiz EN → PL
+#### TC-QUIZ-002: Quiz docelowy → ojczysty
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
-| 1 | Wybierz tryb "EN → PL", rozpocznij | Pytanie z 4 odpowiedziami |
-| 2 | Słówko angielskie widoczne | Z fonetyką IPA |
+| 1 | Wybierz tryb "docelowy → ojczysty", rozpocznij | Pytanie z 4 odpowiedziami |
+| 2 | Słówko w języku docelowym widoczne | Z fonetyką (jeśli dostępna) |
 | 3 | Kliknij poprawną odpowiedź | Zielone podświetlenie, poprawna odpowiedź |
 | 4 | Kliknij błędną odpowiedź | Czerwone podświetlenie, poprawna pokazana |
 
-#### TC-QUIZ-003: Quiz PL → EN
+#### TC-QUIZ-003: Quiz ojczysty → docelowy
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
-| 1 | Wybierz tryb "PL → EN", rozpocznij | Słówko polskie widoczne |
-| 2 | Odpowiedzi w języku angielskim | 4 opcje angielskie |
+| 1 | Wybierz tryb "ojczysty → docelowy", rozpocznij | Słówko w języku ojczystym widoczne |
+| 2 | Odpowiedzi w języku docelowym | 4 opcje w języku docelowym |
 
 #### TC-QUIZ-004: Quiz - tryb wpisywania
 | Krok | Akcja | Oczekiwany rezultat |
@@ -209,7 +219,7 @@
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
 | 1 | Przejdź do `/pronunciation` | Słówko wyświetlone |
-| 2 | Sprawdź elementy | Słówko EN, fonetyka, tłumaczenie PL |
+| 2 | Sprawdź elementy | Słówko w języku docelowym, fonetyka (jeśli dostępna), tłumaczenie w języku ojczystym |
 | 3 | Sprawdź pasek postępu | "1 z 10" widoczne |
 
 #### TC-PRON-002: Odsłuchanie wymowy wzorcowej
@@ -230,7 +240,7 @@
 |------|-------|---------------------|
 | 1 | Po nagraniu | Ocena 1-10 wyświetlona |
 | 2 | Sprawdź gwiazdki | 1-3 gwiazdki odpowiednio |
-| 3 | Sprawdź feedback | Komentarz po polsku |
+| 3 | Sprawdź feedback | Komentarz w języku feedbacku AI |
 | 4 | Sprawdź wskazówkę | Tip fonetyczny (jeśli wynik < 8) |
 
 #### TC-PRON-005: Powtórzenie próby
@@ -255,6 +265,13 @@
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
 | 1 | Otwórz w przeglądarce bez Web Speech API | Alert z informacją |
+
+#### TC-PRON-009: Dostępność ćwiczeń fonemów
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Ustaw profil PL → EN | Kafelek/odsyłacz do ćwiczeń fonemów widoczny |
+| 2 | Ustaw profil DE → EN lub UK → PL | Kafelek/odsyłacz ukryty |
+| 3 | Wejdź bezpośrednio na `/pronunciation/drills` | Informacja o niedostępności + przycisk powrotu |
 
 ---
 
