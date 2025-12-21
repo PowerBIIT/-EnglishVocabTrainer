@@ -18,11 +18,77 @@ import { useVocabStore, useHydration } from '@/lib/store';
 import { VocabularyItem } from '@/types';
 import { cn, speak } from '@/lib/utils';
 import { getCategoryLabel } from '@/lib/categories';
+import { useLanguage } from '@/lib/i18n';
+
+const vocabularyCopy = {
+  pl: {
+    loading: 'Ładowanie...',
+    title: 'Moje słówka',
+    summary: (words: number, categories: number) => `${words} słówek w ${categories} kategoriach`,
+    cancel: 'Anuluj',
+    select: 'Wybierz',
+    moveSelected: 'Przenieś zaznaczone słówka do zestawu',
+    targetSet: 'Zestaw docelowy',
+    createNewSet: 'Utwórz nowy zestaw',
+    unassigned: 'Bez zestawu',
+    newSetName: 'Nazwa nowego zestawu',
+    newSetPlaceholder: 'Np. Klasówka z biologii',
+    move: (count: number) => `Przenieś (${count})`,
+    searchPlaceholder: 'Szukaj słówek...',
+    sets: 'Zestawy',
+    allSets: (count: number) => `Wszystkie zestawy (${count})`,
+    categories: 'Kategorie',
+    allCategories: 'Wszystkie kategorie',
+    mastered: 'Opanowane',
+    learning: 'W trakcie',
+    newWords: 'Nowe',
+    setFallback: 'Zestaw',
+    difficultyEasy: 'Łatwe',
+    difficultyMedium: 'Średnie',
+    difficultyHard: 'Trudne',
+    emptySearch: 'Nie znaleziono słówek',
+    emptyCategory: 'Brak słówek w tej kategorii',
+    deleteConfirm: (count: number) => `Czy na pewno chcesz usunąć ${count} słówek?`,
+  },
+  en: {
+    loading: 'Loading...',
+    title: 'My vocabulary',
+    summary: (words: number, categories: number) => `${words} words across ${categories} categories`,
+    cancel: 'Cancel',
+    select: 'Select',
+    moveSelected: 'Move selected words to a set',
+    targetSet: 'Target set',
+    createNewSet: 'Create new set',
+    unassigned: 'Unassigned',
+    newSetName: 'New set name',
+    newSetPlaceholder: 'e.g. Biology test',
+    move: (count: number) => `Move (${count})`,
+    searchPlaceholder: 'Search words...',
+    sets: 'Sets',
+    allSets: (count: number) => `All sets (${count})`,
+    categories: 'Categories',
+    allCategories: 'All categories',
+    mastered: 'Mastered',
+    learning: 'Learning',
+    newWords: 'New',
+    setFallback: 'Set',
+    difficultyEasy: 'Easy',
+    difficultyMedium: 'Medium',
+    difficultyHard: 'Hard',
+    emptySearch: 'No words found',
+    emptyCategory: 'No words in this category',
+    deleteConfirm: (count: number) => `Are you sure you want to delete ${count} words?`,
+  },
+} as const;
+
+type VocabularyCopy = typeof vocabularyCopy.pl;
 
 export default function VocabularyPage() {
   const NEW_SET_OPTION = '__new__';
   const UNASSIGNED_OPTION = '__unassigned__';
   const hydrated = useHydration();
+  const language = useLanguage();
+  const t = (vocabularyCopy[language] ?? vocabularyCopy.pl) as VocabularyCopy;
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
   const [selectedSetFilter, setSelectedSetFilter] = useState<'all' | 'unassigned' | string>('all');
@@ -155,7 +221,7 @@ export default function VocabularyPage() {
   const handleDelete = () => {
     if (selectedItems.size === 0) return;
 
-    if (confirm(`Czy na pewno chcesz usunąć ${selectedItems.size} słówek?`)) {
+    if (confirm(t.deleteConfirm(selectedItems.size))) {
       removeVocabulary(Array.from(selectedItems));
       setSelectedItems(new Set());
       setIsSelecting(false);
@@ -213,7 +279,7 @@ export default function VocabularyPage() {
   if (!hydrated) {
     return (
       <div className="p-4 flex items-center justify-center min-h-screen">
-        <p className="text-slate-500">Ładowanie...</p>
+        <p className="text-slate-500">{t.loading}</p>
       </div>
     );
   }
@@ -229,10 +295,10 @@ export default function VocabularyPage() {
         </Link>
         <div className="flex-1">
           <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-            Moje słówka
+            {t.title}
           </h1>
           <p className="text-sm text-slate-500">
-            {vocabulary.length} słówek w {categories.length} kategoriach
+            {t.summary(vocabulary.length, categories.length)}
           </p>
         </div>
         {isSelecting ? (
@@ -245,7 +311,7 @@ export default function VocabularyPage() {
                 setSelectedItems(new Set());
               }}
             >
-              Anuluj
+              {t.cancel}
             </Button>
             <Button
               variant="danger"
@@ -259,7 +325,7 @@ export default function VocabularyPage() {
           </div>
         ) : (
           <Button variant="ghost" size="sm" onClick={handleStartSelecting}>
-            Wybierz
+            {t.select}
           </Button>
         )}
       </div>
@@ -268,18 +334,18 @@ export default function VocabularyPage() {
         <Card>
           <CardContent className="p-4 space-y-3">
             <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
-              Przenieś zaznaczone słówka do zestawu
+              {t.moveSelected}
             </div>
             <div className="flex flex-col gap-3 md:flex-row md:items-end">
               <div className="flex-1 space-y-1">
-                <label className="text-xs text-slate-500">Zestaw docelowy</label>
+                <label className="text-xs text-slate-500">{t.targetSet}</label>
                 <select
                   value={bulkSetTarget}
                   onChange={(e) => setBulkSetTarget(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                 >
-                  <option value={NEW_SET_OPTION}>Utwórz nowy zestaw</option>
-                  <option value={UNASSIGNED_OPTION}>Bez zestawu</option>
+                  <option value={NEW_SET_OPTION}>{t.createNewSet}</option>
+                  <option value={UNASSIGNED_OPTION}>{t.unassigned}</option>
                   {sets.map((set) => (
                     <option key={set.id} value={set.id}>
                       {set.name}
@@ -289,12 +355,12 @@ export default function VocabularyPage() {
               </div>
               {bulkSetTarget === NEW_SET_OPTION && (
                 <div className="flex-1 space-y-1">
-                  <label className="text-xs text-slate-500">Nazwa nowego zestawu</label>
+                  <label className="text-xs text-slate-500">{t.newSetName}</label>
                   <input
                     type="text"
                     value={bulkSetName}
                     onChange={(e) => setBulkSetName(e.target.value)}
-                    placeholder="Np. Klasówka z biologii"
+                    placeholder={t.newSetPlaceholder}
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
@@ -307,7 +373,7 @@ export default function VocabularyPage() {
                   (bulkSetTarget === NEW_SET_OPTION && !bulkSetName.trim())
                 }
               >
-                Przenieś ({selectedItems.size})
+                {t.move(selectedItems.size)}
               </Button>
             </div>
           </CardContent>
@@ -324,14 +390,14 @@ export default function VocabularyPage() {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Szukaj słówek..."
+          placeholder={t.searchPlaceholder}
           className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
         />
       </div>
 
       {/* Set filter */}
       <div className="space-y-2">
-        <p className="text-xs uppercase tracking-wide text-slate-400">Zestawy</p>
+        <p className="text-xs uppercase tracking-wide text-slate-400">{t.sets}</p>
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
           <button
             onClick={() => setSelectedSetFilter('all')}
@@ -342,7 +408,7 @@ export default function VocabularyPage() {
                 : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
             )}
           >
-            Wszystkie zestawy ({vocabulary.length})
+            {t.allSets(vocabulary.length)}
           </button>
           <button
             onClick={() => setSelectedSetFilter('unassigned')}
@@ -353,7 +419,7 @@ export default function VocabularyPage() {
                 : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
             )}
           >
-            Bez zestawu ({unassignedCount})
+            {t.unassigned} ({unassignedCount})
           </button>
           {sets.map((set) => (
             <button
@@ -374,7 +440,7 @@ export default function VocabularyPage() {
 
       {/* Category filter */}
       <div className="space-y-2">
-        <p className="text-xs uppercase tracking-wide text-slate-400">Kategorie</p>
+        <p className="text-xs uppercase tracking-wide text-slate-400">{t.categories}</p>
         <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4">
           <button
             onClick={() => setSelectedCategory('all')}
@@ -385,7 +451,7 @@ export default function VocabularyPage() {
                 : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
             )}
           >
-            Wszystkie kategorie
+            {t.allCategories}
           </button>
           {categories.map((cat) => (
             <button
@@ -398,7 +464,7 @@ export default function VocabularyPage() {
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
               )}
             >
-              {getCategoryLabel(cat)}
+              {getCategoryLabel(cat, language)}
             </button>
           ))}
         </div>
@@ -408,15 +474,15 @@ export default function VocabularyPage() {
       <div className="flex gap-4 text-xs text-slate-500">
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full bg-success-500" />
-          Opanowane
+          {t.mastered}
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full bg-amber-500" />
-          W trakcie
+          {t.learning}
         </div>
         <div className="flex items-center gap-1">
           <div className="w-2 h-2 rounded-full bg-slate-300" />
-          Nowe
+          {t.newWords}
         </div>
       </div>
 
@@ -425,7 +491,7 @@ export default function VocabularyPage() {
         <div key={category} className="space-y-2">
           <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400">
             <BookOpen size={16} />
-            {getCategoryLabel(category)} ({words.length})
+            {getCategoryLabel(category, language)} ({words.length})
           </div>
 
           {words.map((word) => {
@@ -478,7 +544,7 @@ export default function VocabularyPage() {
                       <div className="mt-2 flex flex-wrap gap-2">
                         {(word.setIds ?? []).length === 0 ? (
                           <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-700 text-slate-500">
-                            Bez zestawu
+                            {t.unassigned}
                           </span>
                         ) : (
                           (word.setIds ?? []).map((setId) => (
@@ -486,7 +552,7 @@ export default function VocabularyPage() {
                               key={setId}
                               className="px-2 py-0.5 rounded-full text-xs bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300"
                             >
-                              {setNameById[setId] || 'Zestaw'}
+                              {setNameById[setId] || t.setFallback}
                             </span>
                           ))
                         )}
@@ -510,10 +576,10 @@ export default function VocabularyPage() {
                         )}
                       >
                         {word.difficulty === 'easy'
-                          ? 'Łatwe'
+                          ? t.difficultyEasy
                           : word.difficulty === 'medium'
-                          ? 'Średnie'
-                          : 'Trudne'}
+                          ? t.difficultyMedium
+                          : t.difficultyHard}
                       </span>
 
                       <button
@@ -536,8 +602,8 @@ export default function VocabularyPage() {
           <BookOpen size={48} className="mx-auto text-slate-300 mb-4" />
           <p className="text-slate-500">
             {searchQuery
-              ? 'Nie znaleziono słówek'
-              : 'Brak słówek w tej kategorii'}
+              ? t.emptySearch
+              : t.emptyCategory}
           </p>
         </div>
       )}

@@ -27,9 +27,11 @@ import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { CircularProgress, ProgressBar } from '@/components/ui/ProgressBar';
 import { useHydration, useVocabStore } from '@/lib/store';
+import { useLanguage } from '@/lib/i18n';
 import { mascotSkins } from '@/data/mascotSkins';
 import { MascotSkinCard } from '@/components/mascot/MascotSkinCard';
-import { cn, getLevelProgress } from '@/lib/utils';
+import { BADGES, cn, getLevelProgress } from '@/lib/utils';
+import { getMissionCopy } from '@/lib/missions';
 
 const badgeIcons = {
   flame: Flame,
@@ -110,18 +112,217 @@ function SettingRow({ label, description, children }: SettingRowProps) {
   );
 }
 
-const missionRoutes: Record<string, { href: string; label: string }> = {
-  flashcards: { href: '/flashcards', label: 'Fiszki' },
-  quiz: { href: '/quiz', label: 'Quiz' },
-  pronunciation: { href: '/pronunciation', label: 'Wymowa' },
-  mixed: { href: '/flashcards', label: 'Tryb mieszany' },
-};
+const missionRoutes = {
+  pl: {
+    flashcards: { href: '/flashcards', label: 'Fiszki' },
+    quiz: { href: '/quiz', label: 'Quiz' },
+    pronunciation: { href: '/pronunciation', label: 'Wymowa' },
+    mixed: { href: '/flashcards', label: 'Tryb mieszany' },
+  },
+  en: {
+    flashcards: { href: '/flashcards', label: 'Flashcards' },
+    quiz: { href: '/quiz', label: 'Quiz' },
+    pronunciation: { href: '/pronunciation', label: 'Pronunciation' },
+    mixed: { href: '/flashcards', label: 'Mixed mode' },
+  },
+} as const;
+
+const profileCopy = {
+  pl: {
+    loading: 'Ładowanie...',
+    profileLabel: 'Profil',
+    userFallback: 'Użytkownik',
+    emailFallback: 'Brak e-maila',
+    logout: 'Wyloguj',
+    dailyMission: 'Misja dzienna',
+    missionStart: 'Start',
+    missionContinue: 'Kontynuuj',
+    keepStreak: (days: number) => `Utrzymaj serię: ${days} dni`,
+    levelTitle: 'Twój poziom',
+    levelLabel: (level: number) => `Poziom ${level}`,
+    progressToNext: 'Postęp do następnego poziomu',
+    masteredWords: 'Opanowane słówka',
+    all: 'Wszystkie',
+    allWords: 'Wszystkie słówka',
+    collection: 'Kolekcja',
+    collectionDesc: 'Twoje odznaki i skiny rozwijają się razem z postępem.',
+    badges: 'Odznaki',
+    badgesEmpty: 'Pierwsze odznaki pojawią się po ukończeniu misji.',
+    skins: 'Skiny przewodnika',
+    setsTitle: 'Zestawy słówek',
+    newSetPlaceholder: 'Nowy zestaw (np. Klasówka z biologii)',
+    addSet: 'Dodaj zestaw',
+    noSets: 'Brak zestawów. Dodaj pierwszy, aby szybciej wybierać słówka do testów.',
+    wordsCount: (count: number) => `${count} słówek`,
+    save: 'Zapisz',
+    cancel: 'Anuluj',
+    edit: 'Edytuj',
+    delete: 'Usuń',
+    unassigned: (count: number) => `Bez zestawu: ${count} słówek`,
+    settingsTitle: 'Ustawienia',
+    settingsDesc: 'Zmiany zapisują się automatycznie, ale możesz też wymusić zapis.',
+    saving: 'Zapisywanie...',
+    saved: 'Zapisano',
+    saveError: 'Błąd zapisu',
+    sessionSettings: 'Ustawienia sesji',
+    quizQuestions: 'Pytań w quizie',
+    flashcardsPerSession: 'Fiszek w sesji',
+    timeLimit: 'Limit czasu',
+    timeLimitDesc: 'Na odpowiedź w quizie',
+    none: 'Brak',
+    seconds: (value: number) => `${value} sekund`,
+    wordOrder: 'Kolejność słówek',
+    wordOrderRandom: 'Losowa',
+    wordOrderAlphabetical: 'Alfabetyczna',
+    wordOrderHardest: 'Najtrudniejsze',
+    repeatMistakes: 'Powtórki błędnych',
+    repeatMistakesDesc: 'Powtarzaj błędne odpowiedzi',
+    pronunciationSettings: 'Ustawienia wymowy',
+    voice: 'Głos',
+    voiceBritish: 'Brytyjski',
+    voiceAmerican: 'Amerykański',
+    voiceAustralian: 'Australijski',
+    speechSpeed: 'Prędkość mowy',
+    speedSlow: 'Wolna',
+    speedNormal: 'Normalna',
+    speedFast: 'Szybka',
+    autoPlay: 'Auto-odtwarzanie',
+    autoPlayDesc: 'Automatycznie odtwarzaj wymowę',
+    passingScore: 'Próg zaliczenia',
+    passingScoreDesc: 'Minimalna ocena wymowy',
+    adaptiveDifficulty: 'Adaptacyjna trudność',
+    adaptiveDifficultyDesc: 'Dostosuj trudność do poziomu',
+    phonemeHints: 'Wskazówki fonemowe',
+    phonemeHintsDesc: 'Pokaż porady o pozycji ust',
+    appearanceSound: 'Wygląd i dźwięk',
+    languageLabel: 'Język interfejsu',
+    languagePreview: 'Etykiety: Start, Słówka, Wymowa, Czat, Profil.',
+    theme: 'Motyw',
+    themeLight: 'Jasny',
+    themeDark: 'Ciemny',
+    themeAuto: 'Automatyczny',
+    sounds: 'Dźwięki',
+    soundsDesc: 'Efekty dźwiękowe w aplikacji',
+    aiAssistant: 'Asystent AI',
+    aiFeedbackDetail: 'Szczegółowość feedbacku',
+    aiFeedbackShort: 'Krótki',
+    aiFeedbackDetailed: 'Szczegółowy',
+    aiFeedbackLanguage: 'Język feedbacku AI',
+    languagePolish: 'Polski',
+    languageEnglish: 'English',
+    aiPhoneticHints: 'Wskazówki fonetyczne',
+    aiPhoneticHintsDesc: 'Pokazuj porady dotyczące wymowy',
+    account: 'Konto',
+    signedInAs: 'Zalogowany jako',
+    deleteSetConfirm: (name: string) =>
+      `Usunąć zestaw "${name}"? Słówka pozostaną w bibliotece bez przypisanego zestawu.`,
+  },
+  en: {
+    loading: 'Loading...',
+    profileLabel: 'Profile',
+    userFallback: 'User',
+    emailFallback: 'No email',
+    logout: 'Log out',
+    dailyMission: 'Daily mission',
+    missionStart: 'Start',
+    missionContinue: 'Continue',
+    keepStreak: (days: number) => `Keep your streak: ${days} days`,
+    levelTitle: 'Your level',
+    levelLabel: (level: number) => `Level ${level}`,
+    progressToNext: 'Progress to next level',
+    masteredWords: 'Mastered words',
+    all: 'All',
+    allWords: 'All words',
+    collection: 'Collection',
+    collectionDesc: 'Your badges and skins grow with your progress.',
+    badges: 'Badges',
+    badgesEmpty: 'First badges will appear after you complete a mission.',
+    skins: 'Guide skins',
+    setsTitle: 'Word sets',
+    newSetPlaceholder: 'New set (e.g. Biology test)',
+    addSet: 'Add set',
+    noSets: 'No sets yet. Add one to quickly pick words for tests.',
+    wordsCount: (count: number) => `${count} words`,
+    save: 'Save',
+    cancel: 'Cancel',
+    edit: 'Edit',
+    delete: 'Delete',
+    unassigned: (count: number) => `Unassigned: ${count} words`,
+    settingsTitle: 'Settings',
+    settingsDesc: 'Changes are saved automatically, but you can also force a save.',
+    saving: 'Saving...',
+    saved: 'Saved',
+    saveError: 'Save failed',
+    sessionSettings: 'Session settings',
+    quizQuestions: 'Quiz questions',
+    flashcardsPerSession: 'Flashcards per session',
+    timeLimit: 'Time limit',
+    timeLimitDesc: 'Per quiz answer',
+    none: 'None',
+    seconds: (value: number) => `${value} seconds`,
+    wordOrder: 'Word order',
+    wordOrderRandom: 'Random',
+    wordOrderAlphabetical: 'Alphabetical',
+    wordOrderHardest: 'Hardest first',
+    repeatMistakes: 'Repeat mistakes',
+    repeatMistakesDesc: 'Repeat wrong answers',
+    pronunciationSettings: 'Pronunciation settings',
+    voice: 'Voice',
+    voiceBritish: 'British',
+    voiceAmerican: 'American',
+    voiceAustralian: 'Australian',
+    speechSpeed: 'Speech speed',
+    speedSlow: 'Slow',
+    speedNormal: 'Normal',
+    speedFast: 'Fast',
+    autoPlay: 'Auto-play',
+    autoPlayDesc: 'Automatically play pronunciation',
+    passingScore: 'Passing score',
+    passingScoreDesc: 'Minimum pronunciation score',
+    adaptiveDifficulty: 'Adaptive difficulty',
+    adaptiveDifficultyDesc: 'Adjust difficulty to level',
+    phonemeHints: 'Phoneme hints',
+    phonemeHintsDesc: 'Show mouth position tips',
+    appearanceSound: 'Appearance & sound',
+    languageLabel: 'Interface language',
+    languagePreview: 'Navigation: Home, Vocabulary, Pronunciation, Chat, Profile.',
+    theme: 'Theme',
+    themeLight: 'Light',
+    themeDark: 'Dark',
+    themeAuto: 'Auto',
+    sounds: 'Sounds',
+    soundsDesc: 'Sound effects in the app',
+    aiAssistant: 'AI assistant',
+    aiFeedbackDetail: 'Feedback detail',
+    aiFeedbackShort: 'Short',
+    aiFeedbackDetailed: 'Detailed',
+    aiFeedbackLanguage: 'AI feedback language',
+    languagePolish: 'Polish',
+    languageEnglish: 'English',
+    aiPhoneticHints: 'Phonetic hints',
+    aiPhoneticHintsDesc: 'Show pronunciation tips',
+    account: 'Account',
+    signedInAs: 'Signed in as',
+    deleteSetConfirm: (name: string) =>
+      `Delete set "${name}"? Words will stay in the library without a set.`,
+  },
+} as const;
+
+type ProfileCopy = typeof profileCopy.pl;
+
+const AUTO_SAVE_DEBOUNCE_MS = 900;
+const AUTO_SAVE_IDLE_DELAY_MS = 2200;
 
 export default function ProfilePage() {
   const hydrated = useHydration();
   const { data: session, update } = useSession();
+  const language = useLanguage();
+  const t = (profileCopy[language] ?? profileCopy.pl) as ProfileCopy;
   const [selectedSkin, setSelectedSkin] = useState('explorer');
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hasMountedRef = useRef(false);
+  const isManualSaveRef = useRef(false);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const settings = useVocabStore((state) => state.settings);
@@ -149,8 +350,36 @@ export default function ProfilePage() {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current);
       }
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
     };
   }, []);
+
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    if (isManualSaveRef.current) {
+      return;
+    }
+
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    setSaveState('saving');
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      setSaveState('saved');
+      autoSaveTimeoutRef.current = setTimeout(() => {
+        setSaveState('idle');
+      }, AUTO_SAVE_IDLE_DELAY_MS);
+    }, AUTO_SAVE_DEBOUNCE_MS);
+  }, [settings]);
 
   const handleSkinSelect = async (skinId: string) => {
     setSelectedSkin(skinId);
@@ -163,9 +392,14 @@ export default function ProfilePage() {
   };
 
   const handleSaveSettings = async () => {
+    isManualSaveRef.current = true;
     if (saveTimeoutRef.current) {
       clearTimeout(saveTimeoutRef.current);
       saveTimeoutRef.current = null;
+    }
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+      autoSaveTimeoutRef.current = null;
     }
 
     setSaveState('saving');
@@ -193,11 +427,13 @@ export default function ProfilePage() {
     } catch (error) {
       setSaveState('error');
       saveTimeoutRef.current = setTimeout(() => setSaveState('idle'), 3000);
+    } finally {
+      isManualSaveRef.current = false;
     }
   };
 
-  const userName = session?.user?.name || 'Użytkownik';
-  const userEmail = session?.user?.email || 'Brak e-maila';
+  const userName = session?.user?.name || t.userFallback;
+  const userEmail = session?.user?.email || t.emailFallback;
   const userInitials = useMemo(() => {
     const parts = userName.split(' ').filter(Boolean);
     if (parts.length === 0) return 'EV';
@@ -208,6 +444,23 @@ export default function ProfilePage() {
   }, [userName]);
 
   const levelProgress = getLevelProgress(stats.totalXp);
+
+  const badgePresets = BADGES as Record<
+    string,
+    { name: string; nameEn?: string; description: string; descriptionEn?: string }
+  >;
+
+  const getBadgeName = (badge: { id: string; name: string }) => {
+    const preset = badgePresets[badge.id];
+    if (!preset) return badge.name;
+    return language === 'en' ? preset.nameEn ?? preset.name : preset.name;
+  };
+
+  const getBadgeDescription = (badge: { id: string; description: string }) => {
+    const preset = badgePresets[badge.id];
+    if (!preset) return badge.description;
+    return language === 'en' ? preset.descriptionEn ?? preset.description : preset.description;
+  };
   const masteredCount = Object.values(progress).filter((p) => p.status === 'mastered').length;
 
   const missionProgress = Math.min(
@@ -215,15 +468,18 @@ export default function ProfilePage() {
     Math.round((dailyMission.progress / dailyMission.target) * 100)
   );
 
-  const missionRoute = missionRoutes[dailyMission.type] ?? missionRoutes.flashcards;
+  const missionRoute =
+    missionRoutes[language][dailyMission.type] ?? missionRoutes[language].flashcards;
+  const missionCopy = getMissionCopy(language, dailyMission.type);
   const saveStatusLabel =
     saveState === 'saving'
-      ? 'Zapisywanie...'
+      ? t.saving
       : saveState === 'saved'
-      ? 'Zapisano'
+      ? t.saved
       : saveState === 'error'
-      ? 'Błąd zapisu'
+      ? t.saveError
       : '';
+  const languagePreview = t.languagePreview;
 
   const setCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -269,9 +525,7 @@ export default function ProfilePage() {
   };
 
   const handleDeleteSet = (setId: string, name: string) => {
-    const confirmation = confirm(
-      `Usunąć zestaw "${name}"? Słówka pozostaną w bibliotece bez przypisanego zestawu.`
-    );
+    const confirmation = confirm(t.deleteSetConfirm(name));
     if (!confirmation) return;
     deleteSet(setId);
   };
@@ -279,7 +533,7 @@ export default function ProfilePage() {
   if (!hydrated) {
     return (
       <div className="p-4 flex items-center justify-center min-h-screen">
-        <p className="text-slate-500">Ładowanie...</p>
+        <p className="text-slate-500">{t.loading}</p>
       </div>
     );
   }
@@ -302,7 +556,7 @@ export default function ProfilePage() {
             )}
           </div>
           <div>
-            <p className="text-sm text-slate-500">Profil</p>
+            <p className="text-sm text-slate-500">{t.profileLabel}</p>
             <h1 className="font-display text-2xl text-slate-900 dark:text-white">
               {userName}
             </h1>
@@ -311,7 +565,7 @@ export default function ProfilePage() {
         </div>
         <Button variant="secondary" onClick={() => signOut({ callbackUrl: '/login' })}>
           <LogOut size={18} className="mr-2" />
-          Wyloguj
+          {t.logout}
         </Button>
       </header>
 
@@ -322,10 +576,10 @@ export default function ProfilePage() {
               <div>
                 <div className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-white/80">
                   <Compass size={14} />
-                  Misja dzienna
+                  {t.dailyMission}
                 </div>
-                <h2 className="mt-2 font-display text-2xl">{dailyMission.title}</h2>
-                <p className="text-sm text-white/80 mt-2">{dailyMission.description}</p>
+                <h2 className="mt-2 font-display text-2xl">{missionCopy.title}</h2>
+                <p className="text-sm text-white/80 mt-2">{missionCopy.description}</p>
               </div>
               <div className="text-right">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs">
@@ -338,13 +592,16 @@ export default function ProfilePage() {
               </div>
             </div>
             <ProgressBar value={missionProgress} size="sm" className="mt-4" />
-            <div className="mt-5 flex flex-wrap items-center gap-3">
-              <Link href={missionRoute.href}>
-                <Button variant="secondary" className="text-primary-700">
-                  {dailyMission.completed ? 'Kontynuuj' : 'Start'} • {missionRoute.label}
-                </Button>
-              </Link>
-              <span className="text-xs text-white/80">Utrzymaj serię: {stats.currentStreak} dni</span>
+              <div className="mt-5 flex flex-wrap items-center gap-3">
+                <Link href={missionRoute.href}>
+                  <Button variant="secondary" className="text-primary-700">
+                    {dailyMission.completed ? t.missionContinue : t.missionStart} •{' '}
+                    {missionRoute.label}
+                  </Button>
+                </Link>
+              <span className="text-xs text-white/80">
+                {t.keepStreak(stats.currentStreak)}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -353,9 +610,9 @@ export default function ProfilePage() {
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-wide text-slate-500">Twój poziom</p>
+                <p className="text-xs uppercase tracking-wide text-slate-500">{t.levelTitle}</p>
                 <p className="font-semibold text-slate-800 dark:text-slate-100">
-                  Level {levelProgress.level}
+                  {t.levelLabel(levelProgress.level)}
                 </p>
               </div>
               <div className="flex items-center gap-2 text-amber-500">
@@ -366,7 +623,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-4">
               <CircularProgress value={levelProgress.percentage} size={72} strokeWidth={6} />
               <div>
-                <p className="text-sm text-slate-500">Postęp do następnego poziomu</p>
+                <p className="text-sm text-slate-500">{t.progressToNext}</p>
                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                   {levelProgress.currentXp} / {levelProgress.nextLevelXp} XP
                 </p>
@@ -375,11 +632,11 @@ export default function ProfilePage() {
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-xl bg-slate-50 dark:bg-slate-800 p-3">
-                <p className="text-slate-500">Opanowane słówka</p>
+                <p className="text-slate-500">{t.masteredWords}</p>
                 <p className="font-semibold text-slate-800 dark:text-slate-100">{masteredCount}</p>
               </div>
               <div className="rounded-xl bg-slate-50 dark:bg-slate-800 p-3">
-                <p className="text-slate-500">Wszystkie słówka</p>
+                <p className="text-slate-500">{t.allWords}</p>
                 <p className="font-semibold text-slate-800 dark:text-slate-100">{vocabulary.length}</p>
               </div>
             </div>
@@ -391,16 +648,16 @@ export default function ProfilePage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <UserCircle size={20} className="text-primary-500" />
-            <h2 className="font-semibold text-slate-800 dark:text-slate-100">Kolekcja</h2>
+            <h2 className="font-semibold text-slate-800 dark:text-slate-100">{t.collection}</h2>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Twoje odznaki i skiny rozwijają się razem z postępem.
+            {t.collectionDesc}
           </p>
 
           <div className="space-y-3">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100">Odznaki</h3>
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100">{t.badges}</h3>
             {stats.badges.length > 0 ? (
               <div className="flex flex-wrap gap-3">
                 {stats.badges.map((badge) => {
@@ -409,25 +666,23 @@ export default function ProfilePage() {
                     <div
                       key={badge.id}
                       className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/40 rounded-xl"
-                      title={badge.description}
+                      title={getBadgeDescription(badge)}
                     >
                       <Icon size={18} className="text-amber-600" />
                       <span className="text-sm font-medium text-amber-700 dark:text-amber-200">
-                        {badge.name}
+                        {getBadgeName(badge)}
                       </span>
                     </div>
                   );
                 })}
               </div>
             ) : (
-              <p className="text-sm text-slate-500">
-                Pierwsze odznaki pojawią się po ukończeniu misji.
-              </p>
+              <p className="text-sm text-slate-500">{t.badgesEmpty}</p>
             )}
           </div>
 
           <div className="space-y-3">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100">Skiny przewodnika</h3>
+            <h3 className="font-semibold text-slate-800 dark:text-slate-100">{t.skins}</h3>
             <div className="grid gap-3 md:grid-cols-2">
               {mascotSkins.map((skin) => (
                 <MascotSkinCard
@@ -446,7 +701,7 @@ export default function ProfilePage() {
         <CardHeader>
           <div className="flex items-center gap-2">
             <Folder size={20} className="text-primary-500" />
-            <h2 className="font-semibold text-slate-800 dark:text-slate-100">Zestawy słówek</h2>
+            <h2 className="font-semibold text-slate-800 dark:text-slate-100">{t.setsTitle}</h2>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -455,18 +710,18 @@ export default function ProfilePage() {
               type="text"
               value={newSetName}
               onChange={(e) => setNewSetName(e.target.value)}
-              placeholder="Nowy zestaw (np. Klasówka z biologii)"
+              placeholder={t.newSetPlaceholder}
               className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
             <Button onClick={handleCreateSet} className="md:w-auto" disabled={!newSetName.trim()}>
               <Plus size={18} className="mr-2" />
-              Dodaj zestaw
+              {t.addSet}
             </Button>
           </div>
 
           {sets.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Brak zestawów. Dodaj pierwszy, aby szybciej wybierać słówka do testów.
+              {t.noSets}
             </p>
           ) : (
             <div className="space-y-3">
@@ -493,7 +748,7 @@ export default function ProfilePage() {
                           {set.name}
                         </p>
                       )}
-                      <p className="text-xs text-slate-500">{count} słówek</p>
+                      <p className="text-xs text-slate-500">{t.wordsCount(count)}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {isEditing ? (
@@ -504,10 +759,10 @@ export default function ProfilePage() {
                             onClick={handleSaveRename}
                             disabled={!editingSetName.trim()}
                           >
-                            Zapisz
+                            {t.save}
                           </Button>
                           <Button variant="ghost" size="sm" onClick={handleCancelRename}>
-                            Anuluj
+                            {t.cancel}
                           </Button>
                         </>
                       ) : (
@@ -518,7 +773,7 @@ export default function ProfilePage() {
                             onClick={() => handleStartRename(set.id, set.name)}
                           >
                             <Pencil size={16} className="mr-1" />
-                            Edytuj
+                            {t.edit}
                           </Button>
                           <Button
                             variant="danger"
@@ -526,7 +781,7 @@ export default function ProfilePage() {
                             onClick={() => handleDeleteSet(set.id, set.name)}
                           >
                             <Trash2 size={16} className="mr-1" />
-                            Usuń
+                            {t.delete}
                           </Button>
                         </>
                       )}
@@ -537,7 +792,7 @@ export default function ProfilePage() {
             </div>
           )}
           <p className="text-xs text-slate-500">
-            Bez zestawu: {unassignedCount} słówek
+            {t.unassigned(unassignedCount)}
           </p>
         </CardContent>
       </Card>
@@ -545,10 +800,8 @@ export default function ProfilePage() {
       <section id="settings" className="scroll-mt-24 space-y-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="font-semibold text-slate-800 dark:text-slate-100">Ustawienia</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Zmiany zapisują się automatycznie, ale możesz też wymusić zapis.
-            </p>
+            <h2 className="font-semibold text-slate-800 dark:text-slate-100">{t.settingsTitle}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t.settingsDesc}</p>
           </div>
           <div className="flex items-center gap-3">
             {saveStatusLabel && (
@@ -569,19 +822,26 @@ export default function ProfilePage() {
               onClick={handleSaveSettings}
               disabled={saveState === 'saving'}
             >
-              {saveState === 'saving' ? 'Zapisywanie...' : 'Zapisz'}
+              {saveState === 'saving' ? t.saving : t.save}
             </Button>
           </div>
         </div>
+        {saveStatusLabel && (
+          <div className="fixed right-4 top-[calc(1rem+env(safe-area-inset-top))] md:top-6 z-50 rounded-full bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 shadow-lg">
+            {saveStatusLabel}
+          </div>
+        )}
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
               <Target size={20} className="text-primary-500" />
-              <h2 className="font-semibold text-slate-800 dark:text-slate-100">Ustawienia sesji</h2>
+              <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                {t.sessionSettings}
+              </h2>
             </div>
           </CardHeader>
           <CardContent className="divide-y divide-slate-100 dark:divide-slate-700">
-            <SettingRow label="Pytań w quizie">
+            <SettingRow label={t.quizQuestions}>
               <Select
                 value={settings.session.quizQuestionCount}
                 options={[
@@ -589,7 +849,7 @@ export default function ProfilePage() {
                   { value: 10, label: '10' },
                   { value: 15, label: '15' },
                   { value: 20, label: '20' },
-                  { value: 'all', label: 'Wszystkie' },
+                  { value: 'all', label: t.all },
                 ]}
                 onChange={(v) =>
                   updateSettings('session', {
@@ -599,7 +859,7 @@ export default function ProfilePage() {
               />
             </SettingRow>
 
-            <SettingRow label="Fiszek w sesji">
+            <SettingRow label={t.flashcardsPerSession}>
               <Select
                 value={settings.session.flashcardCount}
                 options={[
@@ -607,7 +867,7 @@ export default function ProfilePage() {
                   { value: 10, label: '10' },
                   { value: 15, label: '15' },
                   { value: 20, label: '20' },
-                  { value: 'all', label: 'Wszystkie' },
+                  { value: 'all', label: t.all },
                 ]}
                 onChange={(v) =>
                   updateSettings('session', {
@@ -617,15 +877,15 @@ export default function ProfilePage() {
               />
             </SettingRow>
 
-            <SettingRow label="Limit czasu" description="Na odpowiedź w quizie">
+            <SettingRow label={t.timeLimit} description={t.timeLimitDesc}>
               <Select
                 value={settings.session.timeLimit ?? 'none'}
                 options={[
-                  { value: 'none', label: 'Brak' },
-                  { value: 5, label: '5 sekund' },
-                  { value: 10, label: '10 sekund' },
-                  { value: 15, label: '15 sekund' },
-                  { value: 30, label: '30 sekund' },
+                  { value: 'none', label: t.none },
+                  { value: 5, label: t.seconds(5) },
+                  { value: 10, label: t.seconds(10) },
+                  { value: 15, label: t.seconds(15) },
+                  { value: 30, label: t.seconds(30) },
                 ]}
                 onChange={(v) =>
                   updateSettings('session', {
@@ -635,13 +895,13 @@ export default function ProfilePage() {
               />
             </SettingRow>
 
-            <SettingRow label="Kolejność słówek">
+            <SettingRow label={t.wordOrder}>
               <Select
                 value={settings.session.wordOrder}
                 options={[
-                  { value: 'random', label: 'Losowa' },
-                  { value: 'alphabetical', label: 'Alfabetyczna' },
-                  { value: 'hardest_first', label: 'Najtrudniejsze' },
+                  { value: 'random', label: t.wordOrderRandom },
+                  { value: 'alphabetical', label: t.wordOrderAlphabetical },
+                  { value: 'hardest_first', label: t.wordOrderHardest },
                 ]}
                 onChange={(v) =>
                   updateSettings('session', {
@@ -651,7 +911,7 @@ export default function ProfilePage() {
               />
             </SettingRow>
 
-            <SettingRow label="Powtórki błędnych" description="Powtarzaj błędne odpowiedzi">
+            <SettingRow label={t.repeatMistakes} description={t.repeatMistakesDesc}>
               <Toggle
                 checked={settings.session.repeatMistakes}
                 onChange={(v) => updateSettings('session', { repeatMistakes: v })}
@@ -664,17 +924,19 @@ export default function ProfilePage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Volume2 size={20} className="text-primary-500" />
-              <h2 className="font-semibold text-slate-800 dark:text-slate-100">Ustawienia wymowy</h2>
+              <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                {t.pronunciationSettings}
+              </h2>
             </div>
           </CardHeader>
           <CardContent className="divide-y divide-slate-100 dark:divide-slate-700">
-            <SettingRow label="Głos">
+            <SettingRow label={t.voice}>
               <Select
                 value={settings.pronunciation.voice}
                 options={[
-                  { value: 'british', label: 'Brytyjski' },
-                  { value: 'american', label: 'Amerykański' },
-                  { value: 'australian', label: 'Australijski' },
+                  { value: 'british', label: t.voiceBritish },
+                  { value: 'american', label: t.voiceAmerican },
+                  { value: 'australian', label: t.voiceAustralian },
                 ]}
                 onChange={(v) =>
                   updateSettings('pronunciation', {
@@ -684,13 +946,13 @@ export default function ProfilePage() {
               />
             </SettingRow>
 
-            <SettingRow label="Prędkość mowy">
+            <SettingRow label={t.speechSpeed}>
               <Select
                 value={settings.pronunciation.speed}
                 options={[
-                  { value: 0.7, label: 'Wolna' },
-                  { value: 1, label: 'Normalna' },
-                  { value: 1.2, label: 'Szybka' },
+                  { value: 0.7, label: t.speedSlow },
+                  { value: 1, label: t.speedNormal },
+                  { value: 1.2, label: t.speedFast },
                 ]}
                 onChange={(v) =>
                   updateSettings('pronunciation', {
@@ -700,14 +962,14 @@ export default function ProfilePage() {
               />
             </SettingRow>
 
-            <SettingRow label="Auto-odtwarzanie" description="Automatycznie odtwarzaj wymowę">
+            <SettingRow label={t.autoPlay} description={t.autoPlayDesc}>
               <Toggle
                 checked={settings.pronunciation.autoPlay}
                 onChange={(v) => updateSettings('pronunciation', { autoPlay: v })}
               />
             </SettingRow>
 
-            <SettingRow label="Próg zaliczenia" description="Minimalna ocena wymowy">
+            <SettingRow label={t.passingScore} description={t.passingScoreDesc}>
               <Select
                 value={settings.pronunciation.passingScore}
                 options={[
@@ -724,14 +986,14 @@ export default function ProfilePage() {
               />
             </SettingRow>
 
-            <SettingRow label="Adaptacyjna trudność" description="Dostosuj trudność do poziomu">
+            <SettingRow label={t.adaptiveDifficulty} description={t.adaptiveDifficultyDesc}>
               <Toggle
                 checked={settings.pronunciation.adaptiveDifficulty}
                 onChange={(v) => updateSettings('pronunciation', { adaptiveDifficulty: v })}
               />
             </SettingRow>
 
-            <SettingRow label="Wskazówki fonemowe" description="Pokaż porady o pozycji ust">
+            <SettingRow label={t.phonemeHints} description={t.phonemeHintsDesc}>
               <Toggle
                 checked={settings.pronunciation.showPhonemeHints}
                 onChange={(v) => updateSettings('pronunciation', { showPhonemeHints: v })}
@@ -744,37 +1006,39 @@ export default function ProfilePage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Palette size={20} className="text-primary-500" />
-              <h2 className="font-semibold text-slate-800 dark:text-slate-100">Wygląd i dźwięk</h2>
+              <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                {t.appearanceSound}
+              </h2>
             </div>
           </CardHeader>
           <CardContent className="divide-y divide-slate-100 dark:divide-slate-700">
             <SettingRow
-              label="Język interfejsu"
-              description="Zmienia etykiety nawigacji i język dokumentu."
+              label={t.languageLabel}
+              description={languagePreview}
             >
               <Select
                 value={settings.general.language}
                 options={[
-                  { value: 'pl', label: 'Polski' },
-                  { value: 'en', label: 'English' },
+                  { value: 'pl', label: t.languagePolish },
+                  { value: 'en', label: t.languageEnglish },
                 ]}
                 onChange={(v) => updateSettings('general', { language: v as 'pl' | 'en' })}
               />
             </SettingRow>
 
-            <SettingRow label="Motyw">
+            <SettingRow label={t.theme}>
               <Select
                 value={settings.general.theme}
                 options={[
-                  { value: 'light', label: 'Jasny' },
-                  { value: 'dark', label: 'Ciemny' },
-                  { value: 'auto', label: 'Automatyczny' },
+                  { value: 'light', label: t.themeLight },
+                  { value: 'dark', label: t.themeDark },
+                  { value: 'auto', label: t.themeAuto },
                 ]}
                 onChange={(v) => updateSettings('general', { theme: v as 'light' | 'dark' | 'auto' })}
               />
             </SettingRow>
 
-            <SettingRow label="Dźwięki" description="Efekty dźwiękowe w aplikacji">
+            <SettingRow label={t.sounds} description={t.soundsDesc}>
               <Toggle
                 checked={settings.general.sounds}
                 onChange={(v) => updateSettings('general', { sounds: v })}
@@ -787,16 +1051,16 @@ export default function ProfilePage() {
           <CardHeader>
             <div className="flex items-center gap-2">
               <Wand2 size={20} className="text-primary-500" />
-              <h2 className="font-semibold text-slate-800 dark:text-slate-100">Asystent AI</h2>
+              <h2 className="font-semibold text-slate-800 dark:text-slate-100">{t.aiAssistant}</h2>
             </div>
           </CardHeader>
           <CardContent className="divide-y divide-slate-100 dark:divide-slate-700">
-            <SettingRow label="Szczegółowość feedbacku">
+            <SettingRow label={t.aiFeedbackDetail}>
               <Select
                 value={settings.ai.feedbackDetail}
                 options={[
-                  { value: 'short', label: 'Krótki' },
-                  { value: 'detailed', label: 'Szczegółowy' },
+                  { value: 'short', label: t.aiFeedbackShort },
+                  { value: 'detailed', label: t.aiFeedbackDetailed },
                 ]}
                 onChange={(v) =>
                   updateSettings('ai', {
@@ -806,18 +1070,18 @@ export default function ProfilePage() {
               />
             </SettingRow>
 
-            <SettingRow label="Język feedbacku AI">
+            <SettingRow label={t.aiFeedbackLanguage}>
               <Select
                 value={settings.ai.feedbackLanguage}
                 options={[
-                  { value: 'pl', label: 'Polski' },
-                  { value: 'en', label: 'English' },
+                  { value: 'pl', label: t.languagePolish },
+                  { value: 'en', label: t.languageEnglish },
                 ]}
                 onChange={(v) => updateSettings('ai', { feedbackLanguage: v as 'pl' | 'en' })}
               />
             </SettingRow>
 
-            <SettingRow label="Wskazówki fonetyczne" description="Pokazuj porady dotyczące wymowy">
+            <SettingRow label={t.aiPhoneticHints} description={t.aiPhoneticHintsDesc}>
               <Toggle
                 checked={settings.ai.phoneticHints}
                 onChange={(v) => updateSettings('ai', { phoneticHints: v })}
@@ -828,19 +1092,19 @@ export default function ProfilePage() {
       </section>
 
       <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <ShieldCheck size={20} className="text-primary-500" />
-            <h2 className="font-semibold text-slate-800 dark:text-slate-100">Konto</h2>
-          </div>
-        </CardHeader>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <ShieldCheck size={20} className="text-primary-500" />
+              <h2 className="font-semibold text-slate-800 dark:text-slate-100">{t.account}</h2>
+            </div>
+          </CardHeader>
         <CardContent className="flex items-center justify-between">
           <div>
-            <p className="text-xs text-slate-500">Zalogowany jako</p>
+            <p className="text-xs text-slate-500">{t.signedInAs}</p>
             <p className="font-medium text-slate-800 dark:text-slate-100">{userEmail}</p>
           </div>
           <Button variant="secondary" onClick={() => signOut({ callbackUrl: '/login' })}>
-            Wyloguj
+            {t.logout}
           </Button>
         </CardContent>
       </Card>

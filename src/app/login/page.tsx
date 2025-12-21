@@ -6,10 +6,44 @@ import { signIn, useSession } from 'next-auth/react';
 import { Compass, ShieldCheck, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MascotAvatar } from '@/components/mascot/MascotAvatar';
+import { useLanguage } from '@/lib/i18n';
+
+const loginCopy = {
+  pl: {
+    tagline: 'Nowy dzień, nowa misja',
+    description: 'Zaloguj się przez Google i kontynuuj przygodę z nowoczesną nauką słówek.',
+    signInGoogle: 'Zaloguj się przez Google',
+    noGuest: 'Bez trybu gościa, dane zawsze zsynchronizowane.',
+    testLoginTitle: 'Logowanie testowe (E2E)',
+    testEmailPlaceholder: 'Email testowy',
+    testPasswordPlaceholder: 'Hasło testowe',
+    testLoginError: 'Nieprawidłowe dane testowe.',
+    testLoginButton: 'Zaloguj testowo',
+    guideLabel: 'Twój przewodnik',
+    guideNote: 'Wybierz swój styl w onboardingu',
+  },
+  en: {
+    tagline: 'New day, new mission',
+    description: 'Sign in with Google and continue your modern vocab journey.',
+    signInGoogle: 'Sign in with Google',
+    noGuest: 'No guest mode, your data is always synced.',
+    testLoginTitle: 'Test login (E2E)',
+    testEmailPlaceholder: 'Test email',
+    testPasswordPlaceholder: 'Test password',
+    testLoginError: 'Invalid test credentials.',
+    testLoginButton: 'Sign in (test)',
+    guideLabel: 'Your guide',
+    guideNote: 'Choose your style in onboarding',
+  },
+} as const;
+
+type LoginCopy = typeof loginCopy.pl;
 
 export default function LoginPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const language = useLanguage();
+  const t = (loginCopy[language] ?? loginCopy.pl) as LoginCopy;
   const isE2E = process.env.NEXT_PUBLIC_E2E_TEST === 'true';
   const [e2eEmail, setE2eEmail] = useState('');
   const [e2ePassword, setE2ePassword] = useState('');
@@ -31,7 +65,7 @@ export default function LoginPage() {
     });
 
     if (result?.error) {
-      setE2eError('Nieprawidłowe dane testowe.');
+      setE2eError(t.testLoginError);
       return;
     }
 
@@ -44,13 +78,13 @@ export default function LoginPage() {
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/60 px-4 py-2 text-sm text-slate-600 dark:text-slate-300 shadow">
             <Compass size={18} className="text-primary-600" />
-            Nowy dzień, nowa misja
+            {t.tagline}
           </div>
           <h1 className="font-display text-4xl md:text-5xl text-slate-900 dark:text-white">
             English Vocab Trainer
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-300">
-            Zaloguj się przez Google i kontynuuj przygodę z nowoczesną nauką słówek.
+            {t.description}
           </p>
           <div className="space-y-3">
             <Button
@@ -58,24 +92,24 @@ export default function LoginPage() {
               className="w-full"
               onClick={() => signIn('google', { callbackUrl: '/' })}
             >
-              Zaloguj się przez Google
+              {t.signInGoogle}
             </Button>
             <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
               <ShieldCheck size={16} className="text-primary-600" />
-              Bez trybu gościa, dane zawsze zsynchronizowane.
+              {t.noGuest}
             </div>
           </div>
           {isE2E && (
             <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-4 space-y-3">
               <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                Logowanie testowe (E2E)
+                {t.testLoginTitle}
               </p>
               <input
                 data-testid="e2e-email"
                 type="email"
                 value={e2eEmail}
                 onChange={(e) => setE2eEmail(e.target.value)}
-                placeholder="Email testowy"
+                placeholder={t.testEmailPlaceholder}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
               <input
@@ -83,7 +117,7 @@ export default function LoginPage() {
                 type="password"
                 value={e2ePassword}
                 onChange={(e) => setE2ePassword(e.target.value)}
-                placeholder="Hasło testowe"
+                placeholder={t.testPasswordPlaceholder}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
               {e2eError && (
@@ -96,7 +130,7 @@ export default function LoginPage() {
                 onClick={handleE2ELogin}
                 disabled={!e2eEmail.trim() || !e2ePassword.trim()}
               >
-                Zaloguj testowo
+                {t.testLoginButton}
               </Button>
             </div>
           )}
@@ -106,8 +140,10 @@ export default function LoginPage() {
           <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/40 p-6 shadow-xl">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
-                <p className="text-sm text-slate-500 dark:text-slate-400">Twój przewodnik</p>
-                <p className="font-semibold text-slate-800 dark:text-slate-100">Wybierz swój styl w onboardingu</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">{t.guideLabel}</p>
+                <p className="font-semibold text-slate-800 dark:text-slate-100">
+                  {t.guideNote}
+                </p>
               </div>
               <Sparkles className="text-amber-500" size={20} />
             </div>

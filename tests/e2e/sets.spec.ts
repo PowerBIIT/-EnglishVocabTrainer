@@ -69,14 +69,14 @@ test('tworzy zestaw z czatu i filtruje w quizie', async ({ page }) => {
   );
   await page.keyboard.press('Enter');
 
-  await expect(page.getByText(/Zaznacz/)).toBeVisible();
+  await expect(page.getByText(/Zaznacz/).last()).toBeVisible();
   await page.getByPlaceholder('Nazwa zestawu').fill('Biologia - kartkowka');
   await page.getByRole('button', { name: /Dodaj/ }).click();
   await expect(page.getByText(/Dodano/).last()).toBeVisible();
 
   await page.getByPlaceholder(/Wpisz/).fill('plum - sliwka, peach - brzoskwinia');
   await page.keyboard.press('Enter');
-  await expect(page.getByText(/Zaznacz/)).toBeVisible();
+  await expect(page.getByText(/Zaznacz/).last()).toBeVisible();
   await page.getByTestId('set-selector').selectOption({ label: 'Biologia - kartkowka' });
   await page.getByRole('button', { name: /Dodaj/ }).click();
   await expect(page.getByText(/Dodano/).last()).toBeVisible();

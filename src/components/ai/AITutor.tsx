@@ -15,6 +15,7 @@ import {
 import { Button } from '@/components/ui/Button';
 import { useVocabStore } from '@/lib/store';
 import { cn, speak } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n';
 
 interface Message {
   id: string;
@@ -23,11 +24,60 @@ interface Message {
   timestamp: Date;
 }
 
-const QUICK_ACTIONS = [
-  { icon: Lightbulb, label: 'Porada dnia', prompt: 'Daj mi poradę jak lepiej uczyć się słówek' },
-  { icon: BookOpen, label: 'Wyjaśnij słówko', prompt: 'Wyjaśnij mi słówko: ' },
-  { icon: HelpCircle, label: 'Jak wymówić?', prompt: 'Jak poprawnie wymówić słówko: ' },
-];
+const tutorCopy = {
+  pl: {
+    welcomeMessage:
+      'Cześć! Jestem Eva, Twój asystent do nauki angielskiego.\n\nMogę Ci pomóc w następujących tematach:\n• Wyjaśnienie słówek krok po kroku\n• Wymowa i akcent\n• Wskazówki do nauki\n• Pytania o gramatykę\n\nO co chcesz zapytać?',
+    quickActions: [
+      { icon: Lightbulb, label: 'Porada dnia', prompt: 'Daj mi poradę jak lepiej uczyć się słówek' },
+      { icon: BookOpen, label: 'Wyjaśnij słówko', prompt: 'Wyjaśnij mi słówko: ' },
+      { icon: HelpCircle, label: 'Jak wymówić?', prompt: 'Jak poprawnie wymówić słówko: ' },
+    ],
+    contextLabels: {
+      level: 'Poziom użytkownika',
+      xp: 'Łączne XP',
+      vocabulary: 'Słówka w bibliotece',
+      streak: 'Aktualna seria',
+    },
+    streakSuffix: 'dni',
+    openTitle: 'Otwórz asystenta AI',
+    headerTitle: 'Eva - AI Tutor',
+    headerSubtitle: 'Twój asystent do nauki',
+    speakTitle: 'Wymów angielskie słowa',
+    typing: 'Eva pisze...',
+    quickActionsLabel: 'Szybkie akcje:',
+    inputPlaceholder: 'Zapytaj o cokolwiek...',
+    errorMessage:
+      'Mam chwilowe problemy z połączeniem. Spróbuj ponownie za chwilę.\n\nUpewnij się, że klucz API jest skonfigurowany w .env.local.',
+  },
+  en: {
+    welcomeMessage:
+      'Hi! I am Eva, your English learning assistant.\n\nI can help with:\n• Explaining words step by step\n• Pronunciation and stress\n• Study tips\n• Grammar questions\n\nWhat would you like to ask?',
+    quickActions: [
+      { icon: Lightbulb, label: 'Tip of the day', prompt: 'Give me a tip to learn vocabulary better' },
+      { icon: BookOpen, label: 'Explain a word', prompt: 'Explain this word: ' },
+      { icon: HelpCircle, label: 'How to pronounce?', prompt: 'How do I pronounce the word: ' },
+    ],
+    contextLabels: {
+      level: 'User level',
+      xp: 'Total XP',
+      vocabulary: 'Words in library',
+      streak: 'Current streak',
+    },
+    streakSuffix: 'days',
+    openTitle: 'Open AI tutor',
+    headerTitle: 'Eva - AI Tutor',
+    headerSubtitle: 'Your learning companion',
+    speakTitle: 'Speak the English words',
+    typing: 'Eva is typing...',
+    quickActionsLabel: 'Quick actions:',
+    inputPlaceholder: 'Ask anything...',
+    errorMessage:
+      'I am having connection issues. Please try again in a moment.\n\nMake sure the API key is configured in .env.local.',
+  },
+} as const;
+
+type TutorCopy = typeof tutorCopy.pl;
 
 export function AITutor() {
   const [isOpen, setIsOpen] = useState(false);
@@ -39,6 +89,8 @@ export function AITutor() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const language = useLanguage();
+  const t = (tutorCopy[language] ?? tutorCopy.pl) as TutorCopy;
   const stats = useVocabStore((state) => state.stats);
   const vocabulary = useVocabStore((state) => state.vocabulary);
   const settings = useVocabStore((state) => state.settings);
@@ -54,19 +106,19 @@ export function AITutor() {
         {
           id: '1',
           role: 'assistant',
-          content: `Cześć! Jestem Eva, Twój asystent do nauki angielskiego.\n\nMogę Ci pomóc w następujących tematach:\n• Wyjaśnienie słówek krok po kroku\n• Wymowa i akcent\n• Wskazówki do nauki\n• Pytania o gramatykę\n\nO co chcesz zapytać?`,
+          content: t.welcomeMessage,
           timestamp: new Date(),
         },
       ]);
     }
-  }, [isOpen, messages.length]);
+  }, [isOpen, messages.length, t.welcomeMessage]);
 
   const buildContext = () => {
     return `
-Poziom użytkownika: ${stats.level}
-Łączne XP: ${stats.totalXp}
-Słówka w bibliotece: ${vocabulary.length}
-Aktualna seria: ${stats.currentStreak} dni
+${t.contextLabels.level}: ${stats.level}
+${t.contextLabels.xp}: ${stats.totalXp}
+${t.contextLabels.vocabulary}: ${vocabulary.length}
+${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
     `.trim();
   };
 
@@ -114,8 +166,7 @@ Aktualna seria: ${stats.currentStreak} dni
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content:
-          'Mam chwilowe problemy z połączeniem. Spróbuj ponownie za chwilę.\n\nUpewnij się, że klucz API jest skonfigurowany w .env.local.',
+        content: t.errorMessage,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -149,7 +200,7 @@ Aktualna seria: ${stats.currentStreak} dni
       <button
         onClick={() => setIsOpen(true)}
         className="fixed bottom-[calc(7rem+env(safe-area-inset-bottom))] right-4 md:bottom-8 md:right-6 w-14 h-14 rounded-full bg-gradient-to-br from-primary-500 to-amber-400 text-white shadow-lg hover:shadow-xl transition-all hover:scale-110 flex items-center justify-center z-50"
-        title="Otwórz asystenta AI"
+        title={t.openTitle}
       >
         <Sparkles size={24} />
       </button>
@@ -165,8 +216,8 @@ Aktualna seria: ${stats.currentStreak} dni
             <Sparkles size={20} />
           </div>
           <div>
-            <h3 className="font-semibold">Eva - AI Tutor</h3>
-            <p className="text-xs text-white/80">Twój asystent do nauki</p>
+            <h3 className="font-semibold">{t.headerTitle}</h3>
+            <p className="text-xs text-white/80">{t.headerSubtitle}</p>
           </div>
         </div>
         <button
@@ -200,7 +251,7 @@ Aktualna seria: ${stats.currentStreak} dni
                 <button
                   onClick={() => handleSpeakText(message.content)}
                   className="absolute -right-8 top-2 p-1 opacity-0 group-hover:opacity-100 transition-opacity text-slate-400 hover:text-primary-600"
-                  title="Wymów angielskie słowa"
+                  title={t.speakTitle}
                 >
                   <Volume2 size={16} />
                 </button>
@@ -214,7 +265,7 @@ Aktualna seria: ${stats.currentStreak} dni
             <div className="bg-slate-100 dark:bg-slate-700 rounded-2xl rounded-bl-md px-4 py-3">
               <div className="flex items-center gap-2">
                 <Loader2 size={16} className="animate-spin text-primary-500" />
-                <span className="text-sm text-slate-500">Eva pisze...</span>
+                <span className="text-sm text-slate-500">{t.typing}</span>
               </div>
             </div>
           </div>
@@ -223,9 +274,9 @@ Aktualna seria: ${stats.currentStreak} dni
         {/* Quick Actions */}
         {showQuickActions && messages.length <= 1 && (
           <div className="space-y-2">
-            <p className="text-xs text-slate-500 text-center">Szybkie akcje:</p>
+            <p className="text-xs text-slate-500 text-center">{t.quickActionsLabel}</p>
             <div className="flex flex-wrap gap-2 justify-center">
-              {QUICK_ACTIONS.map((action, index) => (
+              {t.quickActions.map((action, index) => (
                 <button
                   key={index}
                   onClick={() =>
@@ -256,7 +307,7 @@ Aktualna seria: ${stats.currentStreak} dni
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Zapytaj o cokolwiek..."
+            placeholder={t.inputPlaceholder}
             className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             disabled={isLoading}
           />

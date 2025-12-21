@@ -226,9 +226,13 @@ export interface PhonemeDrill {
   nameEn: string;               // "voiceless th"
   namePl: string;               // "bezdźwięczne th"
   polishEquivalent?: string;    // closest Polish sound if any
-  commonMistake: string;        // what Poles typically say instead
-  instructionPl: string;        // how to make the sound
-  mouthTip: string;             // position of tongue, lips
+  polishEquivalentEn?: string;  // description in English
+  commonMistake: string;        // Polish explanation
+  commonMistakeEn: string;      // English explanation
+  instructionPl: string;        // how to make the sound (PL)
+  instructionEn: string;        // how to make the sound (EN)
+  mouthTip: string;             // position of tongue, lips (PL)
+  mouthTipEn: string;           // position of tongue, lips (EN)
   minimalPairs: MinimalPair[];  // pairs to practice
   practiceWords: DrillWord[];   // words to practice
   difficulty: 'easy' | 'medium' | 'hard';

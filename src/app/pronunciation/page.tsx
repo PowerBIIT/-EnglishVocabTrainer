@@ -27,6 +27,7 @@ import { useVocabStore, useHydration } from '@/lib/store';
 import { VocabularyItem, PronunciationFocusMode, PhonemeType, PronunciationAttempt } from '@/types';
 import { cn, speak, XP_ACTIONS } from '@/lib/utils';
 import { phonemeDrills } from '@/data/phonemeDrills';
+import { useLanguage } from '@/lib/i18n';
 
 interface PronunciationResult {
   score: number;
@@ -39,21 +40,204 @@ interface PronunciationResult {
 
 type SessionState = 'setup' | 'practice' | 'complete';
 
-const FOCUS_MODE_LABELS: Record<
-  PronunciationFocusMode,
-  { label: string; icon: LucideIcon; desc: string }
-> = {
-  random: { label: 'Losowe', icon: Shuffle, desc: 'Losowe słowa z Twojego słownika' },
-  weak_words: { label: 'Słabe słowa', icon: TrendingDown, desc: 'Słowa z niską oceną wymowy' },
-  new_words: { label: 'Nowe słowa', icon: Sparkles, desc: 'Słowa bez ćwiczenia wymowy' },
-  phoneme_specific: { label: 'Konkretny fonem', icon: Target, desc: 'Ćwicz wybrany dźwięk' },
-  review: { label: 'Powtórka', icon: RotateCcw, desc: 'Słowa wymagające powtórki' },
+const FOCUS_MODE_ICONS: Record<PronunciationFocusMode, LucideIcon> = {
+  random: Shuffle,
+  weak_words: TrendingDown,
+  new_words: Sparkles,
+  phoneme_specific: Target,
+  review: RotateCcw,
 };
+
+const focusModeCopy = {
+  pl: {
+    random: { label: 'Losowe', desc: 'Losowe słowa z Twojego słownika' },
+    weak_words: { label: 'Słabe słowa', desc: 'Słowa z niską oceną wymowy' },
+    new_words: { label: 'Nowe słowa', desc: 'Słowa bez ćwiczenia wymowy' },
+    phoneme_specific: { label: 'Konkretny fonem', desc: 'Ćwicz wybrany dźwięk' },
+    review: { label: 'Powtórka', desc: 'Słowa wymagające powtórki' },
+  },
+  en: {
+    random: { label: 'Random', desc: 'Random words from your library' },
+    weak_words: { label: 'Weak words', desc: 'Words with low pronunciation scores' },
+    new_words: { label: 'New words', desc: 'Words without pronunciation practice' },
+    phoneme_specific: { label: 'Specific phoneme', desc: 'Practice a selected sound' },
+    review: { label: 'Review', desc: 'Words that need review' },
+  },
+} as const;
+
+const pronunciationCopy = {
+  pl: {
+    loading: 'Ładowanie...',
+    title: 'Trening wymowy',
+    setupSubtitle: 'Skonfiguruj sesję',
+    statsStreak: 'Streak',
+    statsAverage: 'Średnia',
+    statsSessions: 'Sesje',
+    progressLabel: (current: number, total: number) => `${current} z ${total}`,
+    sessionLength: 'Długość sesji',
+    setLabel: 'Zestaw',
+    allSets: (count: number) => `Wszystkie (${count})`,
+    unassigned: (count: number) => `Bez zestawu (${count})`,
+    focusMode: 'Tryb ćwiczeń',
+    selectPhoneme: 'Wybierz fonem',
+    startSession: 'Rozpocznij sesję',
+    phonemeDrills: 'Ćwiczenia fonemów dla Polaków',
+    sessionComplete: 'Sesja zakończona!',
+    averageScore: (score: number) => `Średnia ocena: ${score.toFixed(1)}/10`,
+    wordsLabel: 'Słowa',
+    goodPronunciation: 'Dobra wymowa',
+    xpEarned: 'XP zdobyte',
+    pronunciationStreak: 'Streak wymowy',
+    newSession: 'Nowa sesja',
+    backToMenu: 'Wróć do menu',
+    listenPronunciation: 'Posłuchaj wymowy',
+    recordingPromptIdle: 'Kliknij mikrofon i powiedz słowo.',
+    recordingPromptActive: 'Słucham... Powiedz słowo.',
+    recognizedLabel: (text: string) => `Rozpoznano: "${text}"`,
+    aiAnalyzing: 'AI analizuje Twoją wymowę...',
+    hintLabel: 'Wskazówka:',
+    errorPhonemes: 'Problematyczne dźwięki:',
+    polishInterference: 'Wpływ polskiego:',
+    repeat: 'Powtórz',
+    next: 'Dalej',
+    finish: 'Zakończ',
+    sessionAverageLabel: 'Średnia ocena sesji:',
+    noWordsAlert: 'Brak słów spełniających kryteria. Spróbuj innego trybu.',
+    recognitionUnsupported:
+      'Przeglądarka nie obsługuje rozpoznawania mowy. Użyj Chrome lub Edge.',
+    status: {
+      startingMic: 'Uruchamiam mikrofon...',
+      micActive: 'Mikrofon aktywny - mów teraz.',
+      recording: 'Nagrywam - powiedz słowo...',
+      hearing: 'Słyszę Cię, mów dalej...',
+      processing: 'Przetwarzam...',
+      recognized: (text: string, confidence: number) =>
+        `Rozpoznano: "${text}" (${confidence}%)`,
+      recognizing: (text: string) => `Rozpoznaje: "${text}"...`,
+      noMatch: 'Nie rozpoznano słowa. Spróbuj mówić wyraźniej.',
+      errorMessages: {
+        'no-speech': 'Nie wykryto mowy. Sprawdź czy mikrofon działa i mów głośno.',
+        'audio-capture': 'Nie można uzyskać dostępu do mikrofonu. Sprawdź czy jest podłączony.',
+        'not-allowed':
+          'Brak uprawnień do mikrofonu. Kliknij ikonę blokady w pasku adresu i zezwól.',
+        network: 'Błąd sieci. Rozpoznawanie wymaga internetu (używa serwerów Google).',
+        aborted: 'Nagrywanie przerwane.',
+        'service-not-allowed': 'Usługa rozpoznawania mowy niedostępna.',
+      },
+      errorFallback: (error: string) => `Błąd: ${error}`,
+      noResultSpeech: 'Nie udało się rozpoznać. Spróbuj mówić wolniej i wyraźniej.',
+      noResultSound:
+        'Nie wykryto dźwięku. Sprawdź: 1) Czy mikrofon nie jest wyciszony 2) Czy Chrome używa właściwego mikrofonu (chrome://settings/content/microphone)',
+      startFailed: 'Nie udało się uruchomić rozpoznawania mowy',
+      aiSending: 'Wysyłam do AI...',
+      aiFallback: 'Używam lokalnej oceny...',
+      aiInvalid: 'Nieprawidłowa odpowiedź API',
+      aiDone: 'Analiza gotowa.',
+    },
+    localFeedback: {
+      excellent: 'Doskonale! Wymowa praktycznie perfekcyjna!',
+      good: 'Bardzo dobrze! Drobne niedociągnięcia.',
+      goodTip: 'Posłuchaj jeszcze raz wzorcowej wymowy.',
+      ok: 'Nieźle, ale można lepiej.',
+      okTip: 'Zwróć uwagę na akcent i wyraźność.',
+      needsWork: 'Wymaga więcej ćwiczeń.',
+      needsWorkTip: 'Posłuchaj wzorca i spróbuj powtórzyć sylaba po sylabie.',
+      tipTh: 'Dźwięk "th" - włóż język między zęby i wydmuchuj powietrze.',
+      tipW: 'Dźwięk "w" - zaokrąglij usta jak do "u", nie wymawiaj jak "v".',
+    },
+  },
+  en: {
+    loading: 'Loading...',
+    title: 'Pronunciation training',
+    setupSubtitle: 'Configure session',
+    statsStreak: 'Streak',
+    statsAverage: 'Average',
+    statsSessions: 'Sessions',
+    progressLabel: (current: number, total: number) => `${current} of ${total}`,
+    sessionLength: 'Session length',
+    setLabel: 'Set',
+    allSets: (count: number) => `All (${count})`,
+    unassigned: (count: number) => `Unassigned (${count})`,
+    focusMode: 'Practice mode',
+    selectPhoneme: 'Choose phoneme',
+    startSession: 'Start session',
+    phonemeDrills: 'Phoneme drills for Polish speakers',
+    sessionComplete: 'Session complete!',
+    averageScore: (score: number) => `Average score: ${score.toFixed(1)}/10`,
+    wordsLabel: 'Words',
+    goodPronunciation: 'Good pronunciations',
+    xpEarned: 'XP earned',
+    pronunciationStreak: 'Pronunciation streak',
+    newSession: 'New session',
+    backToMenu: 'Back to menu',
+    listenPronunciation: 'Listen to pronunciation',
+    recordingPromptIdle: 'Click the microphone and say the word.',
+    recordingPromptActive: 'Listening... Say the word.',
+    recognizedLabel: (text: string) => `Recognized: "${text}"`,
+    aiAnalyzing: 'AI is analyzing your pronunciation...',
+    hintLabel: 'Tip:',
+    errorPhonemes: 'Trouble sounds:',
+    polishInterference: 'Polish influence:',
+    repeat: 'Repeat',
+    next: 'Next',
+    finish: 'Finish',
+    sessionAverageLabel: 'Session average score:',
+    noWordsAlert: 'No words match the criteria. Try another mode.',
+    recognitionUnsupported:
+      'Speech recognition is not supported. Use Chrome or Edge.',
+    status: {
+      startingMic: 'Starting microphone...',
+      micActive: 'Microphone active - speak now.',
+      recording: 'Recording - say the word...',
+      hearing: 'I can hear you, keep speaking...',
+      processing: 'Processing...',
+      recognized: (text: string, confidence: number) =>
+        `Recognized: "${text}" (${confidence}%)`,
+      recognizing: (text: string) => `Recognizing: "${text}"...`,
+      noMatch: 'Word not recognized. Try speaking more clearly.',
+      errorMessages: {
+        'no-speech': 'No speech detected. Check your microphone and speak loudly.',
+        'audio-capture': 'Cannot access the microphone. Check if it is connected.',
+        'not-allowed':
+          'Microphone permission denied. Click the lock icon in the address bar and allow it.',
+        network:
+          'Network error. Recognition requires internet (Google servers).',
+        aborted: 'Recording aborted.',
+        'service-not-allowed': 'Speech recognition service is not available.',
+      },
+      errorFallback: (error: string) => `Error: ${error}`,
+      noResultSpeech: 'Could not recognize. Try speaking slower and clearer.',
+      noResultSound:
+        'No sound detected. Check: 1) Microphone not muted 2) Chrome uses the correct microphone (chrome://settings/content/microphone)',
+      startFailed: 'Could not start speech recognition',
+      aiSending: 'Sending to AI...',
+      aiFallback: 'Using local evaluation...',
+      aiInvalid: 'Invalid API response',
+      aiDone: 'Analysis ready.',
+    },
+    localFeedback: {
+      excellent: 'Excellent! Pronunciation is nearly perfect!',
+      good: 'Very good! Minor issues.',
+      goodTip: 'Listen to the reference pronunciation once more.',
+      ok: 'Not bad, but it can be better.',
+      okTip: 'Pay attention to stress and clarity.',
+      needsWork: 'Needs more practice.',
+      needsWorkTip: 'Listen to the model and repeat syllable by syllable.',
+      tipTh: 'Sound "th": place your tongue between your teeth and blow air.',
+      tipW: 'Sound "w": round your lips like "u", do not pronounce as "v".',
+    },
+  },
+} as const;
+
+type PronunciationCopy = typeof pronunciationCopy.pl;
 
 const SESSION_LENGTHS = [5, 10, 15, 20] as const;
 
 export default function PronunciationPage() {
   const hydrated = useHydration();
+  const language = useLanguage();
+  const t = (pronunciationCopy[language] ?? pronunciationCopy.pl) as PronunciationCopy;
+  const focusModes = focusModeCopy[language] ?? focusModeCopy.pl;
   const [sessionState, setSessionState] = useState<SessionState>('setup');
   const [isRecording, setIsRecording] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -142,7 +326,7 @@ export default function PronunciationPage() {
       selectedSetId === 'all' ? undefined : selectedSetId
     );
     if (words.length === 0) {
-      alert('Brak słów spełniających kryteria. Spróbuj innego trybu.');
+      alert(t.noWordsAlert);
       return;
     }
     setSessionWords(words);
@@ -199,14 +383,14 @@ export default function PronunciationPage() {
     const SpeechRecognitionApi = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognitionApi) {
-      setRecordingStatus('Przeglądarka nie obsługuje rozpoznawania mowy. Użyj Chrome lub Edge.');
+      setRecordingStatus(t.recognitionUnsupported);
       return;
     }
 
     // Reset states
     setResult(null);
     setRecognizedText('');
-    setRecordingStatus('Uruchamiam mikrofon...');
+    setRecordingStatus(t.status.startingMic);
 
     const recognition = new SpeechRecognitionApi();
 
@@ -225,13 +409,13 @@ export default function PronunciationPage() {
       hasResult = false;
       hasSpeechStarted = false;
       setIsRecording(true);
-      setRecordingStatus('Mikrofon aktywny - mów teraz.');
+      setRecordingStatus(t.status.micActive);
     };
 
     // Audio capture started (microphone is working)
     recognition.onaudiostart = () => {
       console.log('[STT] Audio capture started');
-      setRecordingStatus('Nagrywam - powiedz słowo...');
+      setRecordingStatus(t.status.recording);
     };
 
     // Sound detected (any sound, not necessarily speech)
@@ -243,14 +427,14 @@ export default function PronunciationPage() {
     recognition.onspeechstart = () => {
       console.log('[STT] Speech detected');
       hasSpeechStarted = true;
-      setRecordingStatus('Słyszę Cię, mów dalej...');
+      setRecordingStatus(t.status.hearing);
     };
 
     // Speech ended
     recognition.onspeechend = () => {
       console.log('[STT] Speech ended');
       if (!hasResult) {
-        setRecordingStatus('Przetwarzam...');
+        setRecordingStatus(t.status.processing);
       }
     };
 
@@ -267,21 +451,22 @@ export default function PronunciationPage() {
       if (isFinal) {
         hasResult = true;
         setRecognizedText(transcript);
-        setRecordingStatus(`Rozpoznano: "${transcript}" (${(confidence * 100).toFixed(0)}%)`);
+        const confidencePercent = Math.round(confidence * 100);
+        setRecordingStatus(t.status.recognized(transcript, confidencePercent));
         setIsRecording(false);
         // Stop recognition after getting result
         recognition.stop();
         evaluatePronunciation(transcript.toLowerCase());
       } else {
         // Show interim result while speaking
-        setRecordingStatus(`Rozpoznaje: "${transcript}"...`);
+        setRecordingStatus(t.status.recognizing(transcript));
       }
     };
 
     // No match found
     recognition.onnomatch = () => {
       console.log('[STT] No match - speech not recognized');
-      setRecordingStatus('Nie rozpoznano słowa. Spróbuj mówić wyraźniej.');
+      setRecordingStatus(t.status.noMatch);
     };
 
     // Error occurred
@@ -290,16 +475,9 @@ export default function PronunciationPage() {
       setIsRecording(false);
       hasResult = true;
 
-      const errorMessages: Record<string, string> = {
-        'no-speech': 'Nie wykryto mowy. Sprawdź czy mikrofon działa i mów głośno.',
-        'audio-capture': 'Nie można uzyskać dostępu do mikrofonu. Sprawdź czy jest podłączony.',
-        'not-allowed': 'Brak uprawnień do mikrofonu. Kliknij ikonę blokady w pasku adresu i zezwól.',
-        'network': 'Błąd sieci. Rozpoznawanie wymaga internetu (używa serwerów Google).',
-        'aborted': 'Nagrywanie przerwane.',
-        'service-not-allowed': 'Usługa rozpoznawania mowy niedostępna.',
-      };
+      const errorMessages: Record<string, string> = t.status.errorMessages;
 
-      setRecordingStatus(errorMessages[event.error] || `Błąd: ${event.error}`);
+      setRecordingStatus(errorMessages[event.error] || t.status.errorFallback(event.error));
     };
 
     // Recognition ended
@@ -309,10 +487,10 @@ export default function PronunciationPage() {
 
       if (!hasResult) {
         if (hasSpeechStarted) {
-          setRecordingStatus('Nie udało się rozpoznać. Spróbuj mówić wolniej i wyraźniej.');
+          setRecordingStatus(t.status.noResultSpeech);
         } else {
           // No speech was detected at all - likely microphone issue
-          setRecordingStatus('Nie wykryto dźwięku. Sprawdź: 1) Czy mikrofon nie jest wyciszony 2) Czy Chrome używa właściwego mikrofonu (chrome://settings/content/microphone)');
+          setRecordingStatus(t.status.noResultSound);
           console.log('[STT] TIP: Check microphone at chrome://settings/content/microphone');
         }
       }
@@ -325,7 +503,7 @@ export default function PronunciationPage() {
       console.log('[STT] Recognition.start() called');
     } catch (error) {
       console.error('[STT] Failed to start:', error);
-      setRecordingStatus('Nie udało się uruchomić rozpoznawania mowy');
+      setRecordingStatus(t.status.startFailed);
       setIsRecording(false);
     }
   };
@@ -340,7 +518,7 @@ export default function PronunciationPage() {
   const evaluatePronunciation = async (spoken: string) => {
     if (!currentWord) return;
     setIsProcessing(true);
-    setRecordingStatus('Wysyłam do AI...');
+    setRecordingStatus(t.status.aiSending);
     console.log('Evaluating pronunciation:', spoken, 'for word:', currentWord.en);
 
     try {
@@ -360,7 +538,7 @@ export default function PronunciationPage() {
       // If API returned fallback flag or error, use local evaluation
       if (data.fallback || data.error) {
         console.log('API fallback triggered:', data.error || 'No API key');
-        setRecordingStatus('Używam lokalnej oceny...');
+        setRecordingStatus(t.status.aiFallback);
         evaluateLocally(spoken);
         return;
       }
@@ -368,12 +546,12 @@ export default function PronunciationPage() {
       // Validate response has required fields
       if (typeof data.score !== 'number' || !data.feedback) {
         console.warn('Invalid API response structure:', data);
-        setRecordingStatus('Nieprawidłowa odpowiedź API');
+        setRecordingStatus(t.status.aiInvalid);
         evaluateLocally(spoken);
         return;
       }
 
-      setRecordingStatus('Analiza gotowa.');
+      setRecordingStatus(t.status.aiDone);
 
       const pronunciationResult: PronunciationResult = {
         score: data.score,
@@ -432,23 +610,23 @@ export default function PronunciationPage() {
     let tip = '';
 
     if (score >= 9) {
-      feedback = 'Doskonale! Wymowa praktycznie perfekcyjna!';
+      feedback = t.localFeedback.excellent;
     } else if (score >= 7) {
-      feedback = 'Bardzo dobrze! Drobne niedociągnięcia.';
-      tip = 'Posłuchaj jeszcze raz wzorcowej wymowy.';
+      feedback = t.localFeedback.good;
+      tip = t.localFeedback.goodTip;
     } else if (score >= 5) {
-      feedback = 'Nieźle, ale można lepiej.';
-      tip = 'Zwróć uwagę na akcent i wyraźność.';
+      feedback = t.localFeedback.ok;
+      tip = t.localFeedback.okTip;
     } else {
-      feedback = 'Wymaga więcej ćwiczeń.';
-      tip = 'Posłuchaj wzorca i spróbuj powtórzyć sylaba po sylabie.';
+      feedback = t.localFeedback.needsWork;
+      tip = t.localFeedback.needsWorkTip;
     }
 
     if (expected.includes('th') && !spokenClean.includes('th')) {
-      tip = 'Dźwięk "th" - włóż język między zęby i wydmuchuj powietrze.';
+      tip = t.localFeedback.tipTh;
     }
     if (expected.includes('w') && spokenClean.replace('w', 'v') === expected.replace('w', 'v')) {
-      tip = 'Dźwięk "w" - zaokrąglij usta jak do "u", nie wymawiaj jak "v".';
+      tip = t.localFeedback.tipW;
     }
 
     setResult({ score, feedback, tip, recognized: spoken });
@@ -542,7 +720,7 @@ export default function PronunciationPage() {
   if (!hydrated) {
     return (
       <div className="p-4 flex items-center justify-center min-h-screen">
-        <p className="text-slate-500">Ładowanie...</p>
+        <p className="text-slate-500">{t.loading}</p>
       </div>
     );
   }
@@ -560,9 +738,9 @@ export default function PronunciationPage() {
           </Link>
           <div className="flex-1">
             <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-              Trening wymowy
+              {t.title}
             </h1>
-            <p className="text-sm text-slate-500">Skonfiguruj sesję</p>
+            <p className="text-sm text-slate-500">{t.setupSubtitle}</p>
           </div>
         </div>
 
@@ -573,21 +751,21 @@ export default function PronunciationPage() {
               <Flame size={18} />
               <span className="font-bold">{stats.pronunciationStreak || 0}</span>
             </div>
-            <p className="text-xs text-slate-500">Streak</p>
+            <p className="text-xs text-slate-500">{t.statsStreak}</p>
           </Card>
           <Card className="p-3 text-center">
             <div className="flex items-center justify-center gap-1 text-primary-500 mb-1">
               <BarChart3 size={18} />
               <span className="font-bold">{(stats.averagePronunciationScore || 0).toFixed(1)}</span>
             </div>
-            <p className="text-xs text-slate-500">Średnia</p>
+            <p className="text-xs text-slate-500">{t.statsAverage}</p>
           </Card>
           <Card className="p-3 text-center">
             <div className="flex items-center justify-center gap-1 text-success-500 mb-1">
               <BookOpen size={18} />
               <span className="font-bold">{stats.totalPronunciationSessions || 0}</span>
             </div>
-            <p className="text-xs text-slate-500">Sesje</p>
+            <p className="text-xs text-slate-500">{t.statsSessions}</p>
           </Card>
         </div>
 
@@ -596,7 +774,7 @@ export default function PronunciationPage() {
           <CardContent className="p-4 space-y-3">
             <h3 className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <Settings size={18} />
-              Długość sesji
+              {t.sessionLength}
             </h3>
             <div className="grid grid-cols-4 gap-2">
               {SESSION_LENGTHS.map((len) => (
@@ -621,7 +799,7 @@ export default function PronunciationPage() {
           <CardContent className="p-4 space-y-3">
             <h3 className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <BookOpen size={18} />
-              Zestaw
+              {t.setLabel}
             </h3>
             <div className="flex flex-wrap gap-2">
               <button
@@ -632,8 +810,8 @@ export default function PronunciationPage() {
                     ? 'bg-primary-500 text-white'
                     : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                 )}
-              >
-                Wszystkie ({vocabulary.length})
+                >
+                {t.allSets(vocabulary.length)}
               </button>
               <button
                 onClick={() => setSelectedSetId('unassigned')}
@@ -643,8 +821,8 @@ export default function PronunciationPage() {
                     ? 'bg-primary-500 text-white'
                     : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                 )}
-              >
-                Bez zestawu ({unassignedCount})
+                >
+                {t.unassigned(unassignedCount)}
               </button>
               {sets.map((set) => (
                 <button
@@ -669,11 +847,12 @@ export default function PronunciationPage() {
           <CardContent className="p-4 space-y-3">
             <h3 className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <Target size={18} />
-              Tryb ćwiczeń
+              {t.focusMode}
             </h3>
             <div className="space-y-2">
-              {(Object.keys(FOCUS_MODE_LABELS) as PronunciationFocusMode[]).map((mode) => {
-                const { label, icon: Icon, desc } = FOCUS_MODE_LABELS[mode];
+              {(Object.keys(FOCUS_MODE_ICONS) as PronunciationFocusMode[]).map((mode) => {
+                const { label, desc } = focusModes[mode];
+                const Icon = FOCUS_MODE_ICONS[mode];
                 const isDisabled = mode === 'weak_words' && weakWordsCount === 0;
                 return (
                   <button
@@ -714,7 +893,9 @@ export default function PronunciationPage() {
         {selectedFocusMode === 'phoneme_specific' && (
           <Card>
             <CardContent className="p-4 space-y-3">
-              <h3 className="font-semibold text-slate-800 dark:text-slate-100">Wybierz fonem</h3>
+              <h3 className="font-semibold text-slate-800 dark:text-slate-100">
+                {t.selectPhoneme}
+              </h3>
               <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
                 {phonemeDrills.map((drill) => (
                   <button
@@ -728,7 +909,9 @@ export default function PronunciationPage() {
                     )}
                   >
                     <p className="font-mono text-lg">{drill.phonemeSymbol}</p>
-                    <p className="text-xs text-slate-500">{drill.namePl}</p>
+                    <p className="text-xs text-slate-500">
+                      {language === 'en' ? drill.nameEn : drill.namePl}
+                    </p>
                   </button>
                 ))}
               </div>
@@ -743,14 +926,14 @@ export default function PronunciationPage() {
           disabled={selectedFocusMode === 'phoneme_specific' && !selectedPhoneme}
         >
           <Mic size={24} className="mr-2" />
-          Rozpocznij sesję
+          {t.startSession}
         </Button>
 
         {/* Link to phoneme drills */}
         <Link href="/pronunciation/drills">
           <Button variant="secondary" className="w-full">
             <BookOpen size={18} className="mr-2" />
-            Ćwiczenia fonemów dla Polaków
+            {t.phonemeDrills}
           </Button>
         </Link>
       </div>
@@ -766,35 +949,35 @@ export default function PronunciationPage() {
             <Mic size={32} className="text-primary-600" />
           </div>
           <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-            Sesja zakończona!
+            {t.sessionComplete}
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mb-4">
-            Średnia ocena: {avgScore.toFixed(1)}/10
+            {t.averageScore(avgScore)}
           </p>
           <div className="flex justify-center gap-2 mb-6">{getScoreStars(avgScore)}</div>
 
           {/* Session stats */}
           <div className="grid grid-cols-2 gap-4 mb-6 text-left">
             <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
-              <p className="text-sm text-slate-500">Słowa</p>
+              <p className="text-sm text-slate-500">{t.wordsLabel}</p>
               <p className="text-xl font-bold text-slate-800 dark:text-slate-100">
                 {sessionWords.length}
               </p>
             </div>
             <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
-              <p className="text-sm text-slate-500">Dobra wymowa</p>
+              <p className="text-sm text-slate-500">{t.goodPronunciation}</p>
               <p className="text-xl font-bold text-success-500">
                 {scores.filter((s) => s >= 8).length}
               </p>
             </div>
             <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
-              <p className="text-sm text-slate-500">XP zdobyte</p>
+              <p className="text-sm text-slate-500">{t.xpEarned}</p>
               <p className="text-xl font-bold text-primary-500">
                 +{scores.filter((s) => s >= 8).length * XP_ACTIONS.pronunciation_good}
               </p>
             </div>
             <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
-              <p className="text-sm text-slate-500">Streak wymowy</p>
+              <p className="text-sm text-slate-500">{t.pronunciationStreak}</p>
               <p className="text-xl font-bold text-amber-500 flex items-center gap-1">
                 <Flame size={20} />
                 {stats.pronunciationStreak}
@@ -803,10 +986,10 @@ export default function PronunciationPage() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <Button onClick={() => setSessionState('setup')}>Nowa sesja</Button>
+            <Button onClick={() => setSessionState('setup')}>{t.newSession}</Button>
             <Link href="/">
               <Button variant="secondary" className="w-full">
-                Wróć do menu
+                {t.backToMenu}
               </Button>
             </Link>
           </div>
@@ -819,7 +1002,7 @@ export default function PronunciationPage() {
   if (!currentWord) {
     return (
       <div className="p-4 flex items-center justify-center min-h-screen">
-        <p className="text-slate-500">Ładowanie...</p>
+        <p className="text-slate-500">{t.loading}</p>
       </div>
     );
   }
@@ -836,10 +1019,10 @@ export default function PronunciationPage() {
         </button>
         <div className="flex-1">
           <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-            Trening wymowy
+            {t.title}
           </h1>
           <p className="text-sm text-slate-500">
-            {currentIndex + 1} z {sessionWords.length} • {FOCUS_MODE_LABELS[selectedFocusMode].label}
+            {t.progressLabel(currentIndex + 1, sessionWords.length)} • {focusModes[selectedFocusMode].label}
           </p>
         </div>
       </div>
@@ -861,7 +1044,7 @@ export default function PronunciationPage() {
             className="mx-auto flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors"
           >
             <Volume2 size={20} />
-            Posłuchaj wymowy
+            {t.listenPronunciation}
           </button>
         </CardContent>
       </Card>
@@ -872,7 +1055,7 @@ export default function PronunciationPage() {
           {!result ? (
             <div className="text-center space-y-4">
               <p className="text-slate-600 dark:text-slate-400">
-                {isRecording ? 'Słucham... Powiedz słowo.' : 'Kliknij mikrofon i powiedz słowo.'}
+                {isRecording ? t.recordingPromptActive : t.recordingPromptIdle}
               </p>
 
               <button
@@ -902,7 +1085,7 @@ export default function PronunciationPage() {
               {recognizedText && !isProcessing && (
                 <div className="p-3 bg-success-50 dark:bg-success-900/30 rounded-lg">
                   <p className="text-sm text-success-700 dark:text-success-300">
-                    Rozpoznano: <span className="font-bold">"{recognizedText}"</span>
+                    {t.recognizedLabel(recognizedText)}
                   </p>
                 </div>
               )}
@@ -915,7 +1098,7 @@ export default function PronunciationPage() {
                     <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                   </div>
                   <p className="text-sm text-primary-600 dark:text-primary-400">
-                    AI analizuje Twoją wymowę...
+                    {t.aiAnalyzing}
                   </p>
                 </div>
               )}
@@ -933,12 +1116,12 @@ export default function PronunciationPage() {
                 <p className="text-slate-800 dark:text-slate-100">{result.feedback}</p>
                 {result.tip && (
                   <p className="text-sm text-primary-600 dark:text-primary-400">
-                    Wskazówka: {result.tip}
+                    {t.hintLabel} {result.tip}
                   </p>
                 )}
                 {result.errorPhonemes && result.errorPhonemes.length > 0 && (
                   <div className="flex flex-wrap gap-2">
-                    <span className="text-xs text-slate-500">Problematyczne dźwięki:</span>
+                    <span className="text-xs text-slate-500">{t.errorPhonemes}</span>
                     {result.errorPhonemes.map((phoneme, i) => (
                       <span
                         key={i}
@@ -951,21 +1134,23 @@ export default function PronunciationPage() {
                 )}
                 {result.polishInterference && (
                   <p className="text-xs text-amber-600 dark:text-amber-400">
-                    Wpływ polskiego: {result.polishInterference}
+                    {t.polishInterference} {result.polishInterference}
                   </p>
                 )}
                 {result.recognized && (
-                  <p className="text-sm text-slate-500">Rozpoznano: "{result.recognized}"</p>
+                  <p className="text-sm text-slate-500">
+                    {t.recognizedLabel(result.recognized)}
+                  </p>
                 )}
               </div>
 
               <div className="flex gap-3">
                 <Button variant="secondary" onClick={handleRetry} className="flex-1">
                   <RotateCcw size={18} className="mr-2" />
-                  Powtórz
+                  {t.repeat}
                 </Button>
                 <Button onClick={handleNext} className="flex-1">
-                  {currentIndex + 1 < sessionWords.length ? 'Dalej' : 'Zakończ'}
+                  {currentIndex + 1 < sessionWords.length ? t.next : t.finish}
                   <ChevronRight size={18} className="ml-2" />
                 </Button>
               </div>
@@ -979,7 +1164,7 @@ export default function PronunciationPage() {
         <Card className="bg-slate-50 dark:bg-slate-800">
           <CardContent className="p-4">
             <div className="flex justify-between text-sm">
-              <span className="text-slate-600 dark:text-slate-400">Średnia ocena sesji:</span>
+              <span className="text-slate-600 dark:text-slate-400">{t.sessionAverageLabel}</span>
               <span className={cn('font-semibold', getScoreColor(avgScore))}>
                 {avgScore.toFixed(1)}/10
               </span>

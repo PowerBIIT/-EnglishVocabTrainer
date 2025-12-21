@@ -1,6 +1,7 @@
 import { MascotSkin } from '@/data/mascotSkins';
 import { MascotAvatar } from '@/components/mascot/MascotAvatar';
 import { cn } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n';
 
 interface MascotSkinCardProps {
   skin: MascotSkin;
@@ -9,6 +10,10 @@ interface MascotSkinCardProps {
 }
 
 export function MascotSkinCard({ skin, selected = false, onSelect }: MascotSkinCardProps) {
+  const language = useLanguage();
+  const name = language === 'en' ? skin.nameEn : skin.name;
+  const description = language === 'en' ? skin.descriptionEn : skin.description;
+
   return (
     <button
       type="button"
@@ -24,10 +29,10 @@ export function MascotSkinCard({ skin, selected = false, onSelect }: MascotSkinC
         <MascotAvatar skinId={skin.id} size={72} className="shrink-0" />
         <div>
           <p className="text-base font-semibold text-slate-800 dark:text-slate-100">
-            {skin.name}
+            {name}
           </p>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {skin.description}
+            {description}
           </p>
         </div>
       </div>

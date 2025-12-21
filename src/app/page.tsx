@@ -19,8 +19,10 @@ import { Button } from '@/components/ui/Button';
 import { ProgressBar, CircularProgress } from '@/components/ui/ProgressBar';
 import { MascotAvatar } from '@/components/mascot/MascotAvatar';
 import { useVocabStore, useHydration } from '@/lib/store';
-import { getLevelProgress } from '@/lib/utils';
+import { useLanguage } from '@/lib/i18n';
+import { BADGES, getLevelProgress } from '@/lib/utils';
 import { getCategoryLabel } from '@/lib/categories';
+import { getMissionCopy } from '@/lib/missions';
 
 const badgeIcons = {
   flame: Flame,
@@ -31,9 +33,74 @@ const badgeIcons = {
   trophy: Trophy,
 };
 
+const homeCopy = {
+  pl: {
+    loading: 'Ładowanie...',
+    greeting: (name: string) => `Witaj, ${name}`,
+    todayAdventure: 'Twoja dzisiejsza przygoda',
+    streak: (days: number) => `Seria ${days}`,
+    dailyMission: 'Misja dnia',
+    missionContinue: 'Kontynuuj naukę',
+    missionStart: 'Start misji',
+    dueWords: (count: number) => `Do powtórki: ${count} słówek`,
+    flashcards: 'Fiszki',
+    flashcardsDesc: 'Szybki sprint 3 min',
+    quiz: 'Quiz',
+    quizDesc: 'Wyzwanie na czas',
+    pronunciation: 'Wymowa',
+    pronunciationDesc: 'Trening głosu',
+    guide: 'Twój przewodnik',
+    adventureMode: 'Tryb przygody',
+    guideNote: 'Dzisiaj celem jest utrzymanie tempa. Wybierz misję i zdobądź nagrodę.',
+    levelLabel: (level: number) => `Poziom ${level}`,
+    progressToNext: 'Postęp do następnego poziomu',
+    progressByCategory: 'Postęp według kategorii',
+    overallProgress: 'Ogólny postęp',
+    totalWords: 'Wszystkich słówek',
+    mastered: 'Opanowanych',
+    longestStreak: 'Najdłuższa seria',
+    sessionsCompleted: 'Sesji ukończonych',
+    badges: 'Twoje odznaki',
+    defaultName: 'Odkrywco',
+  },
+  en: {
+    loading: 'Loading...',
+    greeting: (name: string) => `Welcome, ${name}`,
+    todayAdventure: "Today's adventure",
+    streak: (days: number) => `Streak ${days}`,
+    dailyMission: 'Daily mission',
+    missionContinue: 'Continue learning',
+    missionStart: 'Start mission',
+    dueWords: (count: number) => `Due: ${count} words`,
+    flashcards: 'Flashcards',
+    flashcardsDesc: 'Quick 3‑min sprint',
+    quiz: 'Quiz',
+    quizDesc: 'Time challenge',
+    pronunciation: 'Pronunciation',
+    pronunciationDesc: 'Voice training',
+    guide: 'Your guide',
+    adventureMode: 'Adventure mode',
+    guideNote: 'Today the goal is to keep momentum. Pick a mission and earn a reward.',
+    levelLabel: (level: number) => `Level ${level}`,
+    progressToNext: 'Progress to next level',
+    progressByCategory: 'Progress by category',
+    overallProgress: 'Overall progress',
+    totalWords: 'Total words',
+    mastered: 'Mastered',
+    longestStreak: 'Longest streak',
+    sessionsCompleted: 'Sessions completed',
+    badges: 'Your badges',
+    defaultName: 'Explorer',
+  },
+} as const;
+
+type HomeCopy = typeof homeCopy.pl;
+
 export default function HomePage() {
   const hydrated = useHydration();
   const { data: session } = useSession();
+  const language = useLanguage();
+  const t = (homeCopy[language] ?? homeCopy.pl) as HomeCopy;
   const stats = useVocabStore((state) => state.stats);
   const vocabulary = useVocabStore((state) => state.vocabulary);
   const progress = useVocabStore((state) => state.progress);
@@ -44,6 +111,23 @@ export default function HomePage() {
   const categorySummary = getCategorySummary();
   const dueWords = getNextReviewWords('all');
   const levelProgress = getLevelProgress(stats.totalXp);
+
+  const badgePresets = BADGES as Record<
+    string,
+    { name: string; nameEn?: string; description: string; descriptionEn?: string }
+  >;
+
+  const getBadgeName = (badge: { id: string; name: string }) => {
+    const preset = badgePresets[badge.id];
+    if (!preset) return badge.name;
+    return language === 'en' ? preset.nameEn ?? preset.name : preset.name;
+  };
+
+  const getBadgeDescription = (badge: { id: string; description: string }) => {
+    const preset = badgePresets[badge.id];
+    if (!preset) return badge.description;
+    return language === 'en' ? preset.descriptionEn ?? preset.description : preset.description;
+  };
 
   const masteredCount = Object.values(progress).filter(
     (p) => p.status === 'mastered'
@@ -60,16 +144,17 @@ export default function HomePage() {
   );
 
   const missionButtonLabel = dailyMission.completed
-    ? 'Kontynuuj naukę'
-    : 'Start misji';
+    ? t.missionContinue
+    : t.missionStart;
 
-  const userName = session?.user?.name?.split(' ')[0] || 'Odkrywco';
+  const userName = session?.user?.name?.split(' ')[0] || t.defaultName;
   const mascotSkin = session?.user?.mascotSkin || 'explorer';
+  const missionCopy = getMissionCopy(language, dailyMission.type);
 
   if (!hydrated) {
     return (
       <div className="p-4 flex items-center justify-center min-h-screen">
-        <p className="text-slate-500">Ładowanie...</p>
+        <p className="text-slate-500">{t.loading}</p>
       </div>
     );
   }
@@ -80,15 +165,15 @@ export default function HomePage() {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
-              <p className="text-sm text-slate-500">Witaj, {userName}</p>
+              <p className="text-sm text-slate-500">{t.greeting(userName)}</p>
               <h1 className="font-display text-3xl text-slate-900 dark:text-white">
-                Twoja dzisiejsza przygoda
+                {t.todayAdventure}
               </h1>
             </div>
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-1 text-amber-500">
                 <Flame size={18} />
-                <span className="font-semibold">Seria {stats.currentStreak}</span>
+                <span className="font-semibold">{t.streak(stats.currentStreak)}</span>
               </div>
               <div className="flex items-center gap-1 text-amber-600">
                 <Star size={18} />
@@ -103,11 +188,11 @@ export default function HomePage() {
                 <div>
                   <div className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-white/80">
                     <Compass size={14} />
-                    Misja dnia
+                    {t.dailyMission}
                   </div>
-                  <h2 className="mt-2 font-display text-2xl">{dailyMission.title}</h2>
+                  <h2 className="mt-2 font-display text-2xl">{missionCopy.title}</h2>
                   <p className="text-sm text-white/80 mt-2">
-                    {dailyMission.description}
+                    {missionCopy.description}
                   </p>
                 </div>
                 <div className="text-right">
@@ -128,7 +213,7 @@ export default function HomePage() {
                   </Button>
                 </Link>
                 <span className="text-xs text-white/80">
-                  Do powtórki: {dueWords.length} słówek
+                  {t.dueWords(dueWords.length)}
                 </span>
               </div>
             </CardContent>
@@ -142,8 +227,10 @@ export default function HomePage() {
                     <BookOpen size={22} />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800 dark:text-slate-100">Fiszki</p>
-                    <p className="text-sm text-slate-500">Szybki sprint 3 min</p>
+                    <p className="font-semibold text-slate-800 dark:text-slate-100">
+                      {t.flashcards}
+                    </p>
+                    <p className="text-sm text-slate-500">{t.flashcardsDesc}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -155,8 +242,10 @@ export default function HomePage() {
                     <Target size={22} />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800 dark:text-slate-100">Quiz</p>
-                    <p className="text-sm text-slate-500">Wyzwanie na czas</p>
+                    <p className="font-semibold text-slate-800 dark:text-slate-100">
+                      {t.quiz}
+                    </p>
+                    <p className="text-sm text-slate-500">{t.quizDesc}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -168,8 +257,10 @@ export default function HomePage() {
                     <Mic size={22} />
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800 dark:text-slate-100">Wymowa</p>
-                    <p className="text-sm text-slate-500">Trening głosu</p>
+                    <p className="font-semibold text-slate-800 dark:text-slate-100">
+                      {t.pronunciation}
+                    </p>
+                    <p className="text-sm text-slate-500">{t.pronunciationDesc}</p>
                   </div>
                 </CardContent>
               </Card>
@@ -182,16 +273,16 @@ export default function HomePage() {
             <CardContent className="p-6 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-slate-500">Twój przewodnik</p>
+                  <p className="text-xs uppercase tracking-wide text-slate-500">{t.guide}</p>
                   <p className="font-semibold text-slate-800 dark:text-slate-100">{userName}</p>
                 </div>
-                <span className="text-xs text-primary-600">Tryb przygody</span>
+                <span className="text-xs text-primary-600">{t.adventureMode}</span>
               </div>
               <div className="flex justify-center">
                 <MascotAvatar skinId={mascotSkin} size={160} />
               </div>
               <div className="rounded-2xl bg-primary-50 dark:bg-primary-900/30 p-4 text-sm text-primary-700 dark:text-primary-200">
-                Dzisiaj celem jest utrzymanie tempa. Wybierz misję i zdobądź nagrodę.
+                {t.guideNote}
               </div>
             </CardContent>
           </Card>
@@ -201,8 +292,9 @@ export default function HomePage() {
               <CircularProgress value={levelProgress.percentage} size={72} strokeWidth={6} />
               <div>
                 <p className="font-semibold text-slate-800 dark:text-slate-100">
-                  Poziom {levelProgress.level}
+                  {t.levelLabel(levelProgress.level)}
                 </p>
+                <p className="text-sm text-slate-500">{t.progressToNext}</p>
                 <p className="text-sm text-slate-500">
                   {levelProgress.currentXp} / {levelProgress.nextLevelXp} XP
                 </p>
@@ -218,7 +310,7 @@ export default function HomePage() {
           <div className="flex items-center gap-2">
             <TrendingUp size={20} className="text-primary-600" />
             <h2 className="font-semibold text-slate-800 dark:text-slate-100">
-              Postęp według kategorii
+              {t.progressByCategory}
             </h2>
           </div>
         </CardHeader>
@@ -227,7 +319,7 @@ export default function HomePage() {
             <div key={cat.name} className="space-y-1">
               <div className="flex justify-between text-sm">
                 <span className="text-slate-700 dark:text-slate-300">
-                  {getCategoryLabel(cat.name)}
+                  {getCategoryLabel(cat.name, language)}
                 </span>
                 <span className="text-slate-500 dark:text-slate-400">
                   {cat.masteredWords}/{cat.totalWords}
@@ -250,7 +342,7 @@ export default function HomePage() {
           <div className="pt-4 border-t border-slate-100 dark:border-slate-700">
             <div className="flex justify-between items-center">
               <span className="font-medium text-slate-800 dark:text-slate-100">
-                Ogólny postęp
+                {t.overallProgress}
               </span>
               <span className="text-lg font-bold text-primary-600 dark:text-primary-400">
                 {overallMastery}%
@@ -266,7 +358,7 @@ export default function HomePage() {
             <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">
               {vocabulary.length}
             </p>
-            <p className="text-xs text-slate-500">Wszystkich słówek</p>
+            <p className="text-xs text-slate-500">{t.totalWords}</p>
           </CardContent>
         </Card>
         <Card>
@@ -274,7 +366,7 @@ export default function HomePage() {
             <p className="text-2xl font-bold text-success-600 dark:text-success-400">
               {masteredCount}
             </p>
-            <p className="text-xs text-slate-500">Opanowanych</p>
+            <p className="text-xs text-slate-500">{t.mastered}</p>
           </CardContent>
         </Card>
         <Card>
@@ -282,7 +374,7 @@ export default function HomePage() {
             <p className="text-2xl font-bold text-amber-500">
               {stats.longestStreak}
             </p>
-            <p className="text-xs text-slate-500">Najdłuższa seria</p>
+            <p className="text-xs text-slate-500">{t.longestStreak}</p>
           </CardContent>
         </Card>
         <Card>
@@ -290,7 +382,7 @@ export default function HomePage() {
             <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {stats.totalSessionsCompleted}
             </p>
-            <p className="text-xs text-slate-500">Sesji ukończonych</p>
+            <p className="text-xs text-slate-500">{t.sessionsCompleted}</p>
           </CardContent>
         </Card>
       </div>
@@ -301,7 +393,7 @@ export default function HomePage() {
             <div className="flex items-center gap-2">
               <Zap size={20} className="text-amber-500" />
               <h2 className="font-semibold text-slate-800 dark:text-slate-100">
-                Twoje odznaki
+                {t.badges}
               </h2>
             </div>
           </CardHeader>
@@ -313,11 +405,11 @@ export default function HomePage() {
                   <div
                     key={badge.id}
                     className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/40 rounded-xl"
-                    title={badge.description}
+                    title={getBadgeDescription(badge)}
                   >
                     <Icon size={18} className="text-amber-600" />
                     <span className="text-sm font-medium text-amber-700 dark:text-amber-200">
-                      {badge.name}
+                      {getBadgeName(badge)}
                     </span>
                   </div>
                 );

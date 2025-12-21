@@ -438,7 +438,10 @@
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
 | 1 | Ustaw język na "English" | Etykiety nawigacji po angielsku |
-| 2 | Ustaw język na "Polski" | Etykiety nawigacji po polsku |
+| 2 | Wejdź na `/chat` | Nagłówek i placeholder w języku angielskim |
+| 3 | Wejdź na `/pronunciation` | Tytuł, przyciski i opisy po angielsku |
+| 4 | Wejdź na `/pronunciation/drills` | Tytuły i przyciski po angielsku |
+| 5 | Ustaw język na "Polski" | UI wraca do języka polskiego |
 
 #### TC-SET-008: Motyw
 | Krok | Akcja | Oczekiwany rezultat |
@@ -453,7 +456,13 @@
 | 1 | Wyłącz "Dźwięki" | Brak TTS po kliknięciu głośnika |
 | 2 | Włącz "Dźwięki" | TTS odtwarzany |
 
-#### TC-SET-010: Persistencja ustawień
+#### TC-SET-010: Auto-zapis ustawień
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Zmień dowolne ustawienie | Status "Zapisywanie..." |
+| 2 | Odczekaj ok. 1-2 sekundy | Status "Zapisano" |
+
+#### TC-SET-011: Persistencja ustawień
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
 | 1 | Zmień kilka ustawień | Zapisane |

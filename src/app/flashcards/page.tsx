@@ -9,11 +9,69 @@ import { FlashcardSession } from '@/components/flashcard/Flashcard';
 import { useVocabStore, useHydration } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { getCategoryLabel } from '@/lib/categories';
+import { useLanguage } from '@/lib/i18n';
 
 type SessionState = 'setup' | 'active' | 'complete';
 
+const flashcardsCopy = {
+  pl: {
+    loading: 'Ładowanie...',
+    title: 'Fiszki',
+    subtitle: 'Wybierz zestaw lub kategorię i zacznij naukę',
+    setTitle: 'Zestaw',
+    categoryTitle: 'Kategoria',
+    all: 'Wszystkie',
+    unassigned: 'Bez zestawu',
+    sessionSettings: 'Ustawienia sesji',
+    change: 'Zmień',
+    flashcardCount: 'Liczba fiszek',
+    wordOrder: 'Kolejność',
+    orderRandom: 'Losowa',
+    orderAlphabetical: 'Alfabetyczna',
+    orderHardest: 'Najtrudniejsze',
+    startSession: 'Rozpocznij sesję',
+    tipTitle: 'Wskazówka',
+    tipText:
+      'Przeciągaj fiszki w prawo (umiem), w lewo (powtórz) lub w górę (trudne), aby szybciej się uczyć.',
+    completeTitle: 'Gratulacje!',
+    completeDesc: (count: number) => `Ukończyłeś sesję z ${count} fiszkami!`,
+    newSession: 'Nowa sesja',
+    goToQuiz: 'Przejdź do quizu',
+    backToMenu: 'Wróć do menu',
+  },
+  en: {
+    loading: 'Loading...',
+    title: 'Flashcards',
+    subtitle: 'Pick a set or category and start learning',
+    setTitle: 'Set',
+    categoryTitle: 'Category',
+    all: 'All',
+    unassigned: 'Unassigned',
+    sessionSettings: 'Session settings',
+    change: 'Change',
+    flashcardCount: 'Flashcards',
+    wordOrder: 'Order',
+    orderRandom: 'Random',
+    orderAlphabetical: 'Alphabetical',
+    orderHardest: 'Hardest first',
+    startSession: 'Start session',
+    tipTitle: 'Tip',
+    tipText:
+      'Swipe right (I know), left (repeat), or up (hard) to learn faster.',
+    completeTitle: 'Great job!',
+    completeDesc: (count: number) => `You finished a session with ${count} flashcards!`,
+    newSession: 'New session',
+    goToQuiz: 'Go to quiz',
+    backToMenu: 'Back to menu',
+  },
+} as const;
+
+type FlashcardsCopy = typeof flashcardsCopy.pl;
+
 export default function FlashcardsPage() {
   const hydrated = useHydration();
+  const language = useLanguage();
+  const t = (flashcardsCopy[language] ?? flashcardsCopy.pl) as FlashcardsCopy;
   const [sessionState, setSessionState] = useState<SessionState>('setup');
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
   const [selectedSetId, setSelectedSetId] = useState<'all' | 'unassigned' | string>('all');
@@ -93,7 +151,7 @@ export default function FlashcardsPage() {
   if (!hydrated) {
     return (
       <div className="p-4 flex items-center justify-center min-h-screen">
-        <p className="text-slate-500">Ładowanie...</p>
+        <p className="text-slate-500">{t.loading}</p>
       </div>
     );
   }
@@ -135,7 +193,7 @@ export default function FlashcardsPage() {
             <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
           </button>
           <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            Fiszki
+            {t.title}
           </h1>
         </div>
 
@@ -152,23 +210,23 @@ export default function FlashcardsPage() {
             <Check size={32} className="text-success-600" />
           </div>
           <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-            Gratulacje!
+            {t.completeTitle}
           </h2>
           <p className="text-slate-600 dark:text-slate-400 mb-6">
-            Ukończyłeś sesję z {sessionWords.length} fiszkami!
+            {t.completeDesc(sessionWords.length)}
           </p>
           <div className="flex flex-col gap-3">
             <Button onClick={() => setSessionState('setup')}>
-              Nowa sesja
+              {t.newSession}
             </Button>
             <Link href="/quiz">
               <Button variant="secondary" className="w-full">
-                Przejdź do quizu
+                {t.goToQuiz}
               </Button>
             </Link>
             <Link href="/">
               <Button variant="ghost" className="w-full">
-                Wróć do menu
+                {t.backToMenu}
               </Button>
             </Link>
           </div>
@@ -188,10 +246,10 @@ export default function FlashcardsPage() {
         </Link>
         <div>
           <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-            Fiszki
+            {t.title}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Wybierz zestaw lub kategorię i zacznij naukę
+            {t.subtitle}
           </p>
         </div>
       </div>
@@ -201,7 +259,7 @@ export default function FlashcardsPage() {
         <CardContent className="p-4 space-y-4">
           <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
             <Filter size={18} />
-            <span className="text-sm font-medium">Zestaw</span>
+            <span className="text-sm font-medium">{t.setTitle}</span>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -214,7 +272,7 @@ export default function FlashcardsPage() {
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
               )}
             >
-              Wszystkie ({vocabulary.length})
+              {t.all} ({vocabulary.length})
             </button>
             <button
               onClick={() => setSelectedSetId('unassigned')}
@@ -225,7 +283,7 @@ export default function FlashcardsPage() {
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
               )}
             >
-              Bez zestawu ({unassignedCount})
+              {t.unassigned} ({unassignedCount})
             </button>
             {sets.map((set) => (
               <button
@@ -250,7 +308,7 @@ export default function FlashcardsPage() {
         <CardContent className="p-4 space-y-4">
           <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
             <Filter size={18} />
-            <span className="text-sm font-medium">Kategoria</span>
+            <span className="text-sm font-medium">{t.categoryTitle}</span>
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -263,7 +321,7 @@ export default function FlashcardsPage() {
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
               )}
             >
-              Wszystkie ({filteredVocabularyCount})
+              {t.all} ({filteredVocabularyCount})
             </button>
             {categories.map((cat) => {
               const count = categoryCounts[cat] ?? 0;
@@ -278,7 +336,7 @@ export default function FlashcardsPage() {
                       : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                   )}
                 >
-                  {getCategoryLabel(cat)} ({count})
+                  {getCategoryLabel(cat, language)} ({count})
                 </button>
               );
             })}
@@ -293,31 +351,31 @@ export default function FlashcardsPage() {
             <div className="flex items-center gap-2">
               <BookOpen size={20} className="text-primary-500" />
               <span className="font-medium text-slate-800 dark:text-slate-100">
-                Ustawienia sesji
+                {t.sessionSettings}
               </span>
             </div>
             <Link href="/profile#settings" className="text-sm text-primary-500">
-              Zmień
+              {t.change}
             </Link>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-xl">
-              <p className="text-slate-500 dark:text-slate-400">Liczba fiszek</p>
+              <p className="text-slate-500 dark:text-slate-400">{t.flashcardCount}</p>
               <p className="font-semibold text-slate-800 dark:text-slate-100">
                 {settings.session.flashcardCount === 'all'
-                  ? 'Wszystkie'
+                  ? t.all
                   : settings.session.flashcardCount}
               </p>
             </div>
             <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-xl">
-              <p className="text-slate-500 dark:text-slate-400">Kolejność</p>
+              <p className="text-slate-500 dark:text-slate-400">{t.wordOrder}</p>
               <p className="font-semibold text-slate-800 dark:text-slate-100">
                 {settings.session.wordOrder === 'random'
-                  ? 'Losowa'
+                  ? t.orderRandom
                   : settings.session.wordOrder === 'alphabetical'
-                  ? 'Alfabetyczna'
-                  : 'Najtrudniejsze'}
+                  ? t.orderAlphabetical
+                  : t.orderHardest}
               </p>
             </div>
           </div>
@@ -327,15 +385,14 @@ export default function FlashcardsPage() {
       {/* Start button */}
       <Button onClick={startSession} size="lg" className="w-full">
         <Shuffle size={20} className="mr-2" />
-        Rozpocznij sesję
+        {t.startSession}
       </Button>
 
       {/* Tips */}
       <Card className="bg-primary-50 dark:bg-primary-900 border-0">
         <CardContent className="p-4">
           <p className="text-sm text-primary-700 dark:text-primary-300">
-            <strong>Wskazówka:</strong> Przeciągaj fiszki w prawo (umiem),
-            w lewo (powtórz) lub w górę (trudne), aby szybciej się uczyć.
+            <strong>{t.tipTitle}:</strong> {t.tipText}
           </p>
         </CardContent>
       </Card>

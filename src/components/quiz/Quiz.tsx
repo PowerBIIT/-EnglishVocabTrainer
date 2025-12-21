@@ -8,6 +8,52 @@ import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { cn, shuffleArray, speak, XP_ACTIONS } from '@/lib/utils';
 import { useVocabStore } from '@/lib/store';
+import { useLanguage } from '@/lib/i18n';
+
+const quizCopy = {
+  pl: {
+    choosePl: 'Wybierz polskie tłumaczenie',
+    chooseEn: 'Wybierz angielskie tłumaczenie',
+    typeEn: 'Wpisz angielskie tłumaczenie',
+    listenAndChoose: 'Posłuchaj i wybierz słówko',
+    typeAnswer: 'Wpisz odpowiedź...',
+    check: 'Sprawdź',
+    correctAnswer: 'Poprawna odpowiedź',
+    questionLabel: (current: number, total: number) => `Pytanie ${current} z ${total}`,
+    correctCount: (count: number) => `${count} poprawnych`,
+    wrongCount: (count: number) => `${count} błędnych`,
+    perfect: 'Perfekcyjnie!',
+    allCorrect: 'Wszystkie odpowiedzi poprawne!',
+    score: (value: number) => `Wynik: ${value}%`,
+    scoreDetails: (correct: number, total: number) => `${correct} z ${total} poprawnych odpowiedzi`,
+    finish: 'Zakończ',
+    retryWrong: 'Powtórz błędne',
+    review: 'Do powtórki:',
+    yourAnswer: (answer: string) => `Twoja odpowiedź: ${answer || '(brak)'}`,
+  },
+  en: {
+    choosePl: 'Choose the Polish translation',
+    chooseEn: 'Choose the English translation',
+    typeEn: 'Type the English translation',
+    listenAndChoose: 'Listen and choose the word',
+    typeAnswer: 'Type your answer...',
+    check: 'Check',
+    correctAnswer: 'Correct answer',
+    questionLabel: (current: number, total: number) => `Question ${current} of ${total}`,
+    correctCount: (count: number) => `${count} correct`,
+    wrongCount: (count: number) => `${count} wrong`,
+    perfect: 'Perfect!',
+    allCorrect: 'All answers correct!',
+    score: (value: number) => `Score: ${value}%`,
+    scoreDetails: (correct: number, total: number) => `${correct} of ${total} correct`,
+    finish: 'Finish',
+    retryWrong: 'Retry wrong',
+    review: 'Review:',
+    yourAnswer: (answer: string) => `Your answer: ${answer || '(none)'}`,
+  },
+} as const;
+
+type QuizCopy = typeof quizCopy.pl;
 
 interface QuizQuestionProps {
   word: VocabularyItem;
@@ -30,6 +76,8 @@ function QuizQuestion({
   const [timeLeft, setTimeLeft] = useState(timeLimit);
   const [startTime] = useState(Date.now());
   const settings = useVocabStore((state) => state.settings);
+  const language = useLanguage();
+  const t = (quizCopy[language] ?? quizCopy.pl) as QuizCopy;
 
   const correctAnswer = mode === 'en_to_pl' || mode === 'listening' ? word.pl : word.en;
   const questionText = mode === 'en_to_pl' ? word.en : word.pl;
@@ -140,12 +188,12 @@ function QuizQuestion({
 
           <p className="text-sm text-slate-500 dark:text-slate-400">
             {mode === 'en_to_pl'
-              ? 'Wybierz polskie tłumaczenie'
+              ? t.choosePl
               : mode === 'pl_to_en'
-              ? 'Wybierz angielskie tłumaczenie'
+              ? t.chooseEn
               : mode === 'typing'
-              ? 'Wpisz angielskie tłumaczenie'
-              : 'Posłuchaj i wybierz słówko'}
+              ? t.typeEn
+              : t.listenAndChoose}
           </p>
         </div>
 
@@ -157,7 +205,7 @@ function QuizQuestion({
               value={typedAnswer}
               onChange={(e) => setTypedAnswer(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleTypedSubmit()}
-              placeholder="Wpisz odpowiedź..."
+              placeholder={t.typeAnswer}
               disabled={showResult}
               className={cn(
                 'w-full px-4 py-3 rounded-xl border-2 text-lg',
@@ -173,7 +221,7 @@ function QuizQuestion({
             />
             {!showResult && (
               <Button onClick={handleTypedSubmit} className="w-full" size="lg">
-                Sprawdź
+                {t.check}
               </Button>
             )}
           </div>
@@ -217,7 +265,7 @@ function QuizQuestion({
         {showResult && selectedAnswer !== correctAnswer && (
           <div className="p-4 bg-success-50 dark:bg-success-900 rounded-xl">
             <p className="text-sm text-success-700 dark:text-success-300">
-              Poprawna odpowiedź: <strong>{correctAnswer}</strong>
+              {t.correctAnswer}: <strong>{correctAnswer}</strong>
             </p>
           </div>
         )}
@@ -237,6 +285,8 @@ export function QuizSession({ words, mode, onComplete }: QuizSessionProps) {
   const [results, setResults] = useState<QuizResult[]>([]);
   const [currentMode, setCurrentMode] = useState<QuizMode>(mode);
   const settings = useVocabStore((state) => state.settings);
+  const language = useLanguage();
+  const t = (quizCopy[language] ?? quizCopy.pl) as QuizCopy;
   const updateProgress = useVocabStore((state) => state.updateProgress);
   const addXp = useVocabStore((state) => state.addXp);
   const updateDailyMissionProgress = useVocabStore((state) => state.updateDailyMissionProgress);
@@ -321,9 +371,7 @@ export function QuizSession({ words, mode, onComplete }: QuizSessionProps) {
       {/* Progress */}
       <div>
         <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2">
-          <span>
-            Pytanie {currentIndex + 1} z {words.length}
-          </span>
+          <span>{t.questionLabel(currentIndex + 1, words.length)}</span>
           <span>{Math.round(progress)}%</span>
         </div>
         <ProgressBar value={progress} />
@@ -343,11 +391,11 @@ export function QuizSession({ words, mode, onComplete }: QuizSessionProps) {
       <div className="flex justify-center gap-4 text-sm">
         <span className="text-success-600 dark:text-success-400">
           <Check size={16} className="inline mr-1" />
-          {results.filter((r) => r.correct).length} poprawnych
+          {t.correctCount(results.filter((r) => r.correct).length)}
         </span>
         <span className="text-error-600 dark:text-error-400">
           <X size={16} className="inline mr-1" />
-          {results.filter((r) => !r.correct).length} błędnych
+          {t.wrongCount(results.filter((r) => !r.correct).length)}
         </span>
       </div>
     </div>
@@ -365,6 +413,8 @@ export function QuizResults({ results, words, onRetry, onClose }: QuizResultsPro
   const correctCount = results.filter((r) => r.correct).length;
   const percentage = Math.round((correctCount / results.length) * 100);
   const isPerfect = percentage === 100;
+  const language = useLanguage();
+  const t = (quizCopy[language] ?? quizCopy.pl) as QuizCopy;
 
   const wrongAnswers = results
     .filter((r) => !r.correct)
@@ -381,10 +431,10 @@ export function QuizResults({ results, words, onRetry, onClose }: QuizResultsPro
           <div className="space-y-4">
             <Trophy size={64} className="mx-auto text-amber-500" />
             <h2 className="text-2xl font-bold text-success-600 dark:text-success-400">
-              Perfekcyjnie!
+              {t.perfect}
             </h2>
             <p className="text-slate-600 dark:text-slate-400">
-              Wszystkie odpowiedzi poprawne!
+              {t.allCorrect}
             </p>
           </div>
         ) : (
@@ -401,20 +451,20 @@ export function QuizResults({ results, words, onRetry, onClose }: QuizResultsPro
               )}
             />
             <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
-              Wynik: {percentage}%
+              {t.score(percentage)}
             </h2>
             <p className="text-slate-600 dark:text-slate-400">
-              {correctCount} z {results.length} poprawnych odpowiedzi
+              {t.scoreDetails(correctCount, results.length)}
             </p>
           </div>
         )}
 
         <div className="flex justify-center gap-4 mt-6">
           <Button variant="secondary" onClick={onClose}>
-            Zakończ
+            {t.finish}
           </Button>
           {wrongAnswers.length > 0 && (
-            <Button onClick={onRetry}>Powtórz błędne</Button>
+            <Button onClick={onRetry}>{t.retryWrong}</Button>
           )}
         </div>
       </Card>
@@ -423,7 +473,7 @@ export function QuizResults({ results, words, onRetry, onClose }: QuizResultsPro
       {wrongAnswers.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            Do powtórki:
+            {t.review}
           </h3>
           {wrongAnswers.map((item) => (
             <Card key={item!.questionId} className="p-4">
@@ -438,7 +488,7 @@ export function QuizResults({ results, words, onRetry, onClose }: QuizResultsPro
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-error-500">
-                    Twoja odpowiedź: {item!.userAnswer || '(brak)'}
+                    {t.yourAnswer(item!.userAnswer)}
                   </p>
                 </div>
               </div>

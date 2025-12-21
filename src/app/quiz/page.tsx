@@ -10,50 +10,123 @@ import { useVocabStore, useHydration } from '@/lib/store';
 import { VocabularyItem, QuizMode, QuizResult } from '@/types';
 import { cn, shuffleArray } from '@/lib/utils';
 import { getCategoryLabel } from '@/lib/categories';
+import { useLanguage } from '@/lib/i18n';
 
 type SessionState = 'setup' | 'active' | 'results';
+type QuizModeOption = {
+  id: QuizMode;
+  label: string;
+  icon: JSX.Element;
+  description: string;
+};
 
-const quizModes: { id: QuizMode; label: string; icon: React.ReactNode; description: string }[] = [
-  {
-    id: 'en_to_pl',
-    label: 'EN → PL',
-    icon: <Target size={24} />,
-    description: 'Słówko angielskie, wybierz polskie',
+const quizPageCopy = {
+  pl: {
+    loading: 'Ładowanie...',
+    title: 'Quiz',
+    subtitle: 'Wybierz zestaw i sprawdź swoją wiedzę',
+    modeTitle: 'Tryb quizu',
+    setTitle: 'Zestaw',
+    categoryTitle: 'Kategoria',
+    all: 'Wszystkie',
+    unassigned: 'Bez zestawu',
+    change: 'Zmień',
+    startQuiz: 'Rozpocznij quiz',
+    quizResults: 'Wyniki quizu',
+    quizWithMode: (label: string) => `Quiz - ${label}`,
+    needFourWords: 'Potrzebujesz minimum 4 słówek aby rozpocząć quiz!',
+    needFourWrong: 'Potrzebujesz minimum 4 błędnych odpowiedzi aby powtórzyć!',
+    questionsLabel: (count: number | 'all') =>
+      `${count === 'all' ? 'Wszystkie' : count} pytań`,
+    modeEnToPl: 'EN → PL',
+    modeEnToPlDesc: 'Słówko angielskie, wybierz polskie',
+    modePlToEn: 'PL → EN',
+    modePlToEnDesc: 'Słówko polskie, wybierz angielskie',
+    modeTyping: 'Wpisywanie',
+    modeTypingDesc: 'Wpisz angielskie tłumaczenie',
+    modeListening: 'Słuchanie',
+    modeListeningDesc: 'Odsłuchaj i wybierz słówko',
+    modeMixed: 'Mieszany',
+    modeMixedDesc: 'Losowo wszystkie tryby',
   },
-  {
-    id: 'pl_to_en',
-    label: 'PL → EN',
-    icon: <Target size={24} className="rotate-180" />,
-    description: 'Słówko polskie, wybierz angielskie',
+  en: {
+    loading: 'Loading...',
+    title: 'Quiz',
+    subtitle: 'Pick a set and test your knowledge',
+    modeTitle: 'Quiz mode',
+    setTitle: 'Set',
+    categoryTitle: 'Category',
+    all: 'All',
+    unassigned: 'Unassigned',
+    change: 'Change',
+    startQuiz: 'Start quiz',
+    quizResults: 'Quiz results',
+    quizWithMode: (label: string) => `Quiz - ${label}`,
+    needFourWords: 'You need at least 4 words to start the quiz.',
+    needFourWrong: 'You need at least 4 wrong answers to retry.',
+    questionsLabel: (count: number | 'all') =>
+      `${count === 'all' ? 'All' : count} questions`,
+    modeEnToPl: 'EN → PL',
+    modeEnToPlDesc: 'English word, choose the Polish translation',
+    modePlToEn: 'PL → EN',
+    modePlToEnDesc: 'Polish word, choose the English translation',
+    modeTyping: 'Typing',
+    modeTypingDesc: 'Type the English translation',
+    modeListening: 'Listening',
+    modeListeningDesc: 'Listen and choose the word',
+    modeMixed: 'Mixed',
+    modeMixedDesc: 'Random all modes',
   },
-  {
-    id: 'typing',
-    label: 'Wpisywanie',
-    icon: <Keyboard size={24} />,
-    description: 'Wpisz angielskie tłumaczenie',
-  },
-  {
-    id: 'listening',
-    label: 'Słuchanie',
-    icon: <Volume2 size={24} />,
-    description: 'Odsłuchaj i wybierz słówko',
-  },
-  {
-    id: 'mixed',
-    label: 'Mieszany',
-    icon: <Shuffle size={24} />,
-    description: 'Losowo wszystkie tryby',
-  },
-];
+} as const;
+
+type QuizPageCopy = typeof quizPageCopy.pl;
 
 export default function QuizPage() {
   const hydrated = useHydration();
+  const language = useLanguage();
+  const t = (quizPageCopy[language] ?? quizPageCopy.pl) as QuizPageCopy;
   const [sessionState, setSessionState] = useState<SessionState>('setup');
   const [selectedMode, setSelectedMode] = useState<QuizMode>('en_to_pl');
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
   const [selectedSetId, setSelectedSetId] = useState<'all' | 'unassigned' | string>('all');
   const [sessionWords, setSessionWords] = useState<VocabularyItem[]>([]);
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
+
+  const quizModes = useMemo<QuizModeOption[]>(
+    () => [
+      {
+        id: 'en_to_pl',
+        label: t.modeEnToPl,
+        icon: <Target size={24} />,
+        description: t.modeEnToPlDesc,
+      },
+      {
+        id: 'pl_to_en',
+        label: t.modePlToEn,
+        icon: <Target size={24} className="rotate-180" />,
+        description: t.modePlToEnDesc,
+      },
+      {
+        id: 'typing',
+        label: t.modeTyping,
+        icon: <Keyboard size={24} />,
+        description: t.modeTypingDesc,
+      },
+      {
+        id: 'listening',
+        label: t.modeListening,
+        icon: <Volume2 size={24} />,
+        description: t.modeListeningDesc,
+      },
+      {
+        id: 'mixed',
+        label: t.modeMixed,
+        icon: <Shuffle size={24} />,
+        description: t.modeMixedDesc,
+      },
+    ],
+    [t]
+  );
 
   const vocabulary = useVocabStore((state) => state.vocabulary);
   const settings = useVocabStore((state) => state.settings);
@@ -129,7 +202,7 @@ export default function QuizPage() {
   if (!hydrated) {
     return (
       <div className="p-4 flex items-center justify-center min-h-screen">
-        <p className="text-slate-500">Ładowanie...</p>
+        <p className="text-slate-500">{t.loading}</p>
       </div>
     );
   }
@@ -155,7 +228,7 @@ export default function QuizPage() {
     );
 
     if (finalWords.length < 4) {
-      alert('Potrzebujesz minimum 4 słówek aby rozpocząć quiz!');
+      alert(t.needFourWords);
       return;
     }
 
@@ -180,7 +253,7 @@ export default function QuizPage() {
       setQuizResults([]);
       setSessionState('active');
     } else {
-      alert('Potrzebujesz minimum 4 błędnych odpowiedzi aby powtórzyć!');
+      alert(t.needFourWrong);
     }
   };
 
@@ -195,7 +268,7 @@ export default function QuizPage() {
             <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
           </button>
           <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            Quiz - {quizModes.find((m) => m.id === selectedMode)?.label}
+            {t.quizWithMode(quizModes.find((m) => m.id === selectedMode)?.label ?? '')}
           </h1>
         </div>
 
@@ -219,7 +292,7 @@ export default function QuizPage() {
             <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
           </button>
           <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-            Wyniki quizu
+            {t.quizResults}
           </h1>
         </div>
 
@@ -244,10 +317,10 @@ export default function QuizPage() {
         </Link>
         <div>
           <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-            Quiz
+            {t.title}
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Wybierz zestaw i sprawdź swoją wiedzę
+            {t.subtitle}
           </p>
         </div>
       </div>
@@ -256,7 +329,7 @@ export default function QuizPage() {
       <Card>
         <CardContent className="p-4 space-y-4">
           <h3 className="font-medium text-slate-800 dark:text-slate-100">
-            Tryb quizu
+            {t.modeTitle}
           </h3>
           <div className="grid gap-2">
             {quizModes.map((mode) => (
@@ -298,7 +371,7 @@ export default function QuizPage() {
       <Card>
         <CardContent className="p-4 space-y-4">
           <h3 className="font-medium text-slate-800 dark:text-slate-100">
-            Zestaw
+            {t.setTitle}
           </h3>
           <div className="flex flex-wrap gap-2">
             <button
@@ -310,7 +383,7 @@ export default function QuizPage() {
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
               )}
             >
-              Wszystkie ({vocabulary.length})
+              {t.all} ({vocabulary.length})
             </button>
             <button
               onClick={() => setSelectedSetId('unassigned')}
@@ -321,7 +394,7 @@ export default function QuizPage() {
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
               )}
             >
-              Bez zestawu ({unassignedCount})
+              {t.unassigned} ({unassignedCount})
             </button>
             {sets.map((set) => (
               <button
@@ -345,7 +418,7 @@ export default function QuizPage() {
       <Card>
         <CardContent className="p-4 space-y-4">
           <h3 className="font-medium text-slate-800 dark:text-slate-100">
-            Kategoria
+            {t.categoryTitle}
           </h3>
           <div className="flex flex-wrap gap-2">
             <button
@@ -357,7 +430,7 @@ export default function QuizPage() {
                   : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
               )}
             >
-              Wszystkie ({filteredVocabularyCount})
+              {t.all} ({filteredVocabularyCount})
             </button>
             {categories.map((cat) => (
               <button
@@ -370,7 +443,7 @@ export default function QuizPage() {
                     : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
                 )}
               >
-                {getCategoryLabel(cat)} ({categoryCounts[cat] ?? 0})
+                {getCategoryLabel(cat, language)} ({categoryCounts[cat] ?? 0})
               </button>
             ))}
           </div>
@@ -385,10 +458,7 @@ export default function QuizPage() {
               <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
                 <Target size={16} />
                 <span>
-                  {settings.session.quizQuestionCount === 'all'
-                    ? 'Wszystkie'
-                    : settings.session.quizQuestionCount}{' '}
-                  pytań
+                  {t.questionsLabel(settings.session.quizQuestionCount)}
                 </span>
               </div>
               {settings.session.timeLimit && (
@@ -399,7 +469,7 @@ export default function QuizPage() {
               )}
             </div>
             <Link href="/profile#settings" className="text-sm text-primary-500">
-              Zmień
+              {t.change}
             </Link>
           </div>
         </CardContent>
@@ -408,7 +478,7 @@ export default function QuizPage() {
       {/* Start button */}
       <Button onClick={startQuiz} size="lg" className="w-full">
         <Target size={20} className="mr-2" />
-        Rozpocznij quiz
+        {t.startQuiz}
       </Button>
     </div>
   );

@@ -19,6 +19,7 @@ import { VocabularyItem } from '@/types';
 import { cn, formatDate, generateId } from '@/lib/utils';
 import { getCategoryLabel } from '@/lib/categories';
 import { parseVocabularyInput } from '@/lib/parseVocabulary';
+import { useLanguage } from '@/lib/i18n';
 
 interface Message {
   id: string;
@@ -38,15 +39,127 @@ interface ParsedWord {
   selected: boolean;
 }
 
+const chatCopy = {
+  pl: {
+    loading: 'Ładowanie...',
+    welcomeMessage:
+      'Witaj! Jestem Twoim asystentem AI do nauki słówek. Mogę:\n\n• Dodać słówka, które wpiszesz (np. "breakfast - śniadanie")\n• Wygenerować słówka na temat (np. "Wygeneruj 10 słówek o sporcie")\n• Wyciągnąć słówka ze zdjęcia notatek\n• Pokazać statystyki Twojej biblioteki\n\nJak mogę Ci pomóc?',
+    defaultCategory: 'Moje słówka',
+    defaultSetLabel: 'Nowy zestaw',
+    defaultTopic: 'ogólne',
+    imageCategoryFallback: 'Ze zdjęcia',
+    statsIntro: (wordCount: number, categoryCount: number) =>
+      `Masz łącznie **${wordCount}** słówek w **${categoryCount}** kategoriach:\n\n`,
+    statsLine: (label: string, count: number) => `• ${label}: ${count} słówek`,
+    statsOutro: 'Chcesz dodać więcej słówek?',
+    generatedWords: (count: number, topic: string, level: string) =>
+      `Wygenerowałem **${count}** słówek na temat "${topic}" (poziom ${level}).\n\nZaznacz te, które chcesz dodać do biblioteki:`,
+    generatedFallback: (count: number, total: number) =>
+      `Użyłem lokalnych danych (brak klucza API).\n\nZnalazłem ${Math.min(count, total)} przykładowych słówek. Skonfiguruj GEMINI_API_KEY w .env.local dla pełnej funkcjonalności.`,
+    foundWordsWithPhonetics: (count: number) =>
+      `Znalazłem **${count}** słówek. Dodałem poprawne transkrypcje fonetyczne.\n\nZaznacz te, które chcesz dodać:`,
+    foundWords: (count: number) =>
+      `Znalazłem **${count}** słówek. Zaznacz te, które chcesz dodać:`,
+    parseHelp:
+      'Nie rozpoznałem słówek. Spróbuj wpisać w formacie:\n\n• `słowo - tłumaczenie`\n• `word1 - translation1, word2 - translation2`\n\nLub napisz: **"Wygeneruj 10 słówek o [temat]"**',
+    imageUploaded: (fileName: string) => `Przesłano zdjęcie: ${fileName}`,
+    imageFound: (count: number, notes?: string) =>
+      `Znalazłem **${count}** słówek na zdjęciu.\n\n${notes ? `Uwagi: ${notes}\n\n` : ''}Zaznacz te, które chcesz dodać:`,
+    imageNoWords:
+      'Nie udało się rozpoznać słówek na zdjęciu. Upewnij się, że notatki są czytelne i zawierają słówka angielskie z tłumaczeniami.',
+    imageError:
+      'Nie udało się przetworzyć zdjęcia. Upewnij się, że klucz API jest skonfigurowany w .env.local.',
+    fileReadError: 'Nie udało się wczytać pliku.',
+    addedWords: (count: number, setName: string, category: string) =>
+      `Dodano **${count}** słówek do zestawu "${setName}" w kategorii "${category}".\n\nCo jeszcze mogę dla Ciebie zrobić?`,
+    setLabel: 'Zestaw:',
+    newSetOption: 'Utwórz nowy zestaw',
+    setNameLabel: 'Nazwa:',
+    setNamePlaceholder: 'Nazwa zestawu',
+    categoryLabel: 'Kategoria:',
+    categoryPlaceholder: 'Nazwa kategorii',
+    cancel: 'Anuluj',
+    add: (count: number) => `Dodaj (${count})`,
+    processing: 'Przetwarzam...',
+    quickActionsLabel: 'Szybkie akcje:',
+    quickActions: [
+      { label: 'Podróże', prompt: 'Wygeneruj 10 słówek o podróżowaniu' },
+      { label: 'Jedzenie', prompt: 'Wygeneruj 10 słówek o jedzeniu' },
+      { label: 'Praca', prompt: 'Wygeneruj 10 słówek o pracy' },
+      { label: 'Statystyki', prompt: 'Ile mam słówek?' },
+    ],
+    imageButtonTitle: 'Wczytaj zdjęcie notatek',
+    inputPlaceholder: 'Wpisz słówka lub zapytaj...',
+    assistantTitle: 'Asystent AI',
+    assistantSubtitle: 'Powered by Gemini',
+  },
+  en: {
+    loading: 'Loading...',
+    welcomeMessage:
+      'Hi! I am your AI vocabulary assistant. I can:\n\n• Add words you type (e.g. "breakfast - śniadanie")\n• Generate words by topic (e.g. "Generate 10 words about sports")\n• Extract words from a photo of notes\n• Show stats from your library\n\nHow can I help?',
+    defaultCategory: 'My words',
+    defaultSetLabel: 'New set',
+    defaultTopic: 'general',
+    imageCategoryFallback: 'From photo',
+    statsIntro: (wordCount: number, categoryCount: number) =>
+      `You have **${wordCount}** words across **${categoryCount}** categories:\n\n`,
+    statsLine: (label: string, count: number) => `• ${label}: ${count} words`,
+    statsOutro: 'Want to add more words?',
+    generatedWords: (count: number, topic: string, level: string) =>
+      `I generated **${count}** words about "${topic}" (level ${level}).\n\nSelect the ones you want to add to your library:`,
+    generatedFallback: (count: number, total: number) =>
+      `I used local data (no API key).\n\nFound ${Math.min(count, total)} sample words. Configure GEMINI_API_KEY in .env.local for full functionality.`,
+    foundWordsWithPhonetics: (count: number) =>
+      `I found **${count}** words. Added correct phonetics.\n\nSelect the ones you want to add:`,
+    foundWords: (count: number) => `I found **${count}** words. Select the ones you want to add:`,
+    parseHelp:
+      'I could not recognize words. Try a format like:\n\n• `word - translation`\n• `word1 - translation1, word2 - translation2`\n\nOr type: **"Generate 10 words about [topic]"**',
+    imageUploaded: (fileName: string) => `Uploaded image: ${fileName}`,
+    imageFound: (count: number, notes?: string) =>
+      `Found **${count}** words in the image.\n\n${notes ? `Notes: ${notes}\n\n` : ''}Select the ones you want to add:`,
+    imageNoWords:
+      'Could not recognize words in the image. Make sure your notes are readable and include English words with translations.',
+    imageError:
+      'Could not process the image. Make sure GEMINI_API_KEY is configured in .env.local.',
+    fileReadError: 'Could not read the file.',
+    addedWords: (count: number, setName: string, category: string) =>
+      `Added **${count}** words to set "${setName}" in category "${category}".\n\nWhat else can I do for you?`,
+    setLabel: 'Set:',
+    newSetOption: 'Create new set',
+    setNameLabel: 'Name:',
+    setNamePlaceholder: 'Set name',
+    categoryLabel: 'Category:',
+    categoryPlaceholder: 'Category name',
+    cancel: 'Cancel',
+    add: (count: number) => `Add (${count})`,
+    processing: 'Working...',
+    quickActionsLabel: 'Quick actions:',
+    quickActions: [
+      { label: 'Travel', prompt: 'Generate 10 words about travel' },
+      { label: 'Food', prompt: 'Generate 10 words about food' },
+      { label: 'Work', prompt: 'Generate 10 words about work' },
+      { label: 'Stats', prompt: 'How many words do I have?' },
+    ],
+    imageButtonTitle: 'Upload notes photo',
+    inputPlaceholder: 'Type words or ask...',
+    assistantTitle: 'AI Assistant',
+    assistantSubtitle: 'Powered by Gemini',
+  },
+} as const;
+
+type ChatCopy = typeof chatCopy.pl;
+
 export default function ChatPage() {
   const NEW_SET_OPTION = '__new__';
   const hydrated = useHydration();
-  const [messages, setMessages] = useState<Message[]>([
+  const language = useLanguage();
+  const t = (chatCopy[language] ?? chatCopy.pl) as ChatCopy;
+  const dateLocale = language === 'en' ? 'en-US' : 'pl-PL';
+  const [messages, setMessages] = useState<Message[]>(() => [
     {
       id: '1',
       role: 'assistant',
-      content:
-        'Witaj! Jestem Twoim asystentem AI do nauki słówek. Mogę:\n\n• Dodać słówka, które wpiszesz (np. \"breakfast - śniadanie\")\n• Wygenerować słówka na temat (np. \"Wygeneruj 10 słówek o sporcie\")\n• Wyciągnąć słówka ze zdjęcia notatek\n• Pokazać statystyki Twojej biblioteki\n\nJak mogę Ci pomóc?',
+      content: t.welcomeMessage,
       timestamp: new Date(),
     },
   ]);
@@ -83,7 +196,7 @@ export default function ChatPage() {
   if (!hydrated) {
     return (
       <div className="p-4 flex items-center justify-center min-h-screen">
-        <p className="text-slate-500">Ładowanie...</p>
+        <p className="text-slate-500">{t.loading}</p>
       </div>
     );
   }
@@ -102,8 +215,8 @@ export default function ChatPage() {
 
   const buildSetName = (base?: string) => {
     const trimmed = base?.trim();
-    const label = trimmed && trimmed.length > 0 ? trimmed : 'Nowy zestaw';
-    return `${label} (${formatDate(new Date())})`;
+    const label = trimmed && trimmed.length > 0 ? trimmed : t.defaultSetLabel;
+    return `${label} (${formatDate(new Date(), dateLocale)})`;
   };
 
   const handleSend = async () => {
@@ -127,21 +240,36 @@ export default function ChatPage() {
 
   const processMessage = async (text: string) => {
     const lowerText = text.toLowerCase();
+    const generationKeywords = ['wygeneruj', 'generate', 'podaj', 'create', 'give me'];
+    const statsKeywords = [
+      'ile mam',
+      'statystyki',
+      'pokaż słówka',
+      'pokaz slowka',
+      'moje słówka',
+      'moje slowka',
+      'how many',
+      'stats',
+      'show words',
+      'my words',
+      'vocabulary',
+    ];
 
     // Check for generation request
-    if (lowerText.includes('wygeneruj') || lowerText.includes('generate') || lowerText.includes('podaj')) {
+    if (generationKeywords.some((keyword) => lowerText.includes(keyword))) {
       const match = text.match(/(\d+)\s+słów/i) || text.match(/(\d+)\s+word/i);
       const count = match ? parseInt(match[1]) : 10;
 
       // Extract topic - more flexible matching
       const topicPatterns = [
         /o\s+([^\d]+?)(?:\s+poziom|\s+level|\s*$)/i,
-        /about\s+(\w+)/i,
-        /temat[:\s]+(\w+)/i,
-        /na temat\s+(.+?)(?:\s+poziom|\s*$)/i,
+        /na temat\s+(.+?)(?:\s+poziom|\s+level|\s*$)/i,
+        /temat[:\s]+(.+?)(?:\s+poziom|\s+level|\s*$)/i,
+        /about\s+(.+?)(?:\s+level|\s*$)/i,
+        /topic[:\s]+(.+?)(?:\s+level|\s*$)/i,
       ];
 
-      let topic = 'general';
+      let topic: string = t.defaultTopic;
       for (const pattern of topicPatterns) {
         const topicMatch = text.match(pattern);
         if (topicMatch) {
@@ -159,19 +287,16 @@ export default function ChatPage() {
     }
 
     // Check for stats request
-    if (
-      lowerText.includes('ile mam') ||
-      lowerText.includes('statystyki') ||
-      lowerText.includes('pokaż słówka') ||
-      lowerText.includes('moje słówka')
-    ) {
+    if (statsKeywords.some((keyword) => lowerText.includes(keyword))) {
+      const summaryIntro = t.statsIntro(vocabulary.length, categories.length);
+      const categoryLines = categories
+        .map((cat) => {
+          const count = vocabulary.filter((v) => v.category === cat).length;
+          return t.statsLine(getCategoryLabel(cat, language), count);
+        })
+        .join('\n');
       addAssistantMessage(
-        `Masz łącznie **${vocabulary.length}** słówek w **${categories.length}** kategoriach:\n\n${categories
-          .map((cat) => {
-            const count = vocabulary.filter((v) => v.category === cat).length;
-            return `• ${getCategoryLabel(cat)}: ${count} słówek`;
-          })
-          .join('\n')}\n\nChcesz dodać więcej słówek?`
+        `${summaryIntro}${categoryLines}\n\n${t.statsOutro}`
       );
       return;
     }
@@ -207,7 +332,7 @@ export default function ChatPage() {
         setSelectedSetOption(NEW_SET_OPTION);
 
         addAssistantMessage(
-          `Wygenerowałem **${data.words.length}** słówek na temat \"${topic}\" (poziom ${level}).\n\nZaznacz te, które chcesz dodać do biblioteki:`
+          t.generatedWords(data.words.length, topic, level)
         );
       } else {
         throw new Error('No words generated');
@@ -233,7 +358,7 @@ export default function ChatPage() {
     setSelectedSetOption(NEW_SET_OPTION);
 
     addAssistantMessage(
-      `Użyłem lokalnych danych (brak klucza API).\n\nZnalazłem ${Math.min(count, fallbackWords.length)} przykładowych słówek. Skonfiguruj GEMINI_API_KEY w .env.local dla pełnej funkcjonalności.`
+      t.generatedFallback(count, fallbackWords.length)
     );
   };
 
@@ -254,12 +379,12 @@ export default function ChatPage() {
           const data = await response.json();
           if (data.words && data.words.length > 0) {
             setParsedWords(data.words.map((w: ParsedWord) => ({ ...w, selected: true })));
-            const category = data.category_suggestion || 'Moje słówka';
+            const category = data.category_suggestion || t.defaultCategory;
             setSuggestedCategory(category);
             setSuggestedSetName(buildSetName(category));
             setSelectedSetOption(NEW_SET_OPTION);
             addAssistantMessage(
-              `Znalazłem **${data.words.length}** słówek. Dodałem poprawne transkrypcje fonetyczne.\n\nZaznacz te, które chcesz dodać:`
+              t.foundWordsWithPhonetics(data.words.length)
             );
             return;
           }
@@ -270,16 +395,12 @@ export default function ChatPage() {
 
       // Fallback to local parsing
       setParsedWords(localWords.map((w) => ({ ...w, selected: true })));
-      setSuggestedCategory('Moje słówka');
-      setSuggestedSetName(buildSetName('Moje słówka'));
+      setSuggestedCategory(t.defaultCategory);
+      setSuggestedSetName(buildSetName(t.defaultCategory));
       setSelectedSetOption(NEW_SET_OPTION);
-      addAssistantMessage(
-        `Znalazłem **${localWords.length}** słówek. Zaznacz te, które chcesz dodać:`
-      );
+      addAssistantMessage(t.foundWords(localWords.length));
     } else {
-      addAssistantMessage(
-        'Nie rozpoznałem słówek. Spróbuj wpisać w formacie:\n\n• `słowo - tłumaczenie`\n• `word1 - translation1, word2 - translation2`\n\nLub napisz: **\"Wygeneruj 10 słówek o [temat]\"**'
-      );
+      addAssistantMessage(t.parseHelp);
     }
   };
 
@@ -295,7 +416,7 @@ export default function ChatPage() {
       {
         id: generateId(),
         role: 'user',
-        content: `Przesłano zdjęcie: ${file.name}`,
+        content: t.imageUploaded(file.name),
         timestamp: new Date(),
       },
     ]);
@@ -324,24 +445,20 @@ export default function ChatPage() {
 
           if (data.words && data.words.length > 0) {
             setParsedWords(data.words.map((w: ParsedWord) => ({ ...w, selected: true })));
-            const category = data.category_suggestion || 'Ze zdjęcia';
+            const category = data.category_suggestion || t.imageCategoryFallback;
             setSuggestedCategory(category);
             setSuggestedSetName(buildSetName(category));
             setSelectedSetOption(NEW_SET_OPTION);
 
             addAssistantMessage(
-              `Znalazłem **${data.words.length}** słówek na zdjęciu.\n\n${data.notes ? `Uwagi: ${data.notes}\n\n` : ''}Zaznacz te, które chcesz dodać:`
+              t.imageFound(data.words.length, data.notes)
             );
           } else {
-            addAssistantMessage(
-              'Nie udało się rozpoznać słówek na zdjęciu. Upewnij się, że notatki są czytelne i zawierają słówka angielskie z tłumaczeniami.'
-            );
+            addAssistantMessage(t.imageNoWords);
           }
         } catch (error) {
           console.error('Image extraction error:', error);
-          addAssistantMessage(
-            'Nie udało się przetworzyć zdjęcia. Upewnij się, że klucz API jest skonfigurowany w .env.local.'
-          );
+          addAssistantMessage(t.imageError);
         }
 
         setIsProcessing(false);
@@ -350,7 +467,7 @@ export default function ChatPage() {
       reader.readAsDataURL(file);
     } catch (error) {
       console.error('File read error:', error);
-      addAssistantMessage('Nie udało się wczytać pliku.');
+      addAssistantMessage(t.fileReadError);
       setIsProcessing(false);
     }
 
@@ -381,7 +498,7 @@ export default function ChatPage() {
       targetSetName = existingSet.name;
     } else {
       const setLabel =
-        suggestedSetName.trim() || buildSetName(suggestedCategory || 'Nowy zestaw');
+        suggestedSetName.trim() || buildSetName(suggestedCategory || t.defaultSetLabel);
       const newSet = createSet(setLabel);
       targetSetId = newSet.id;
       targetSetName = newSet.name;
@@ -392,7 +509,7 @@ export default function ChatPage() {
       en: w.en,
       phonetic: w.phonetic,
       pl: w.pl,
-      category: suggestedCategory || 'Moje słówka',
+      category: suggestedCategory || t.defaultCategory,
       setIds: [targetSetId],
       example_en: w.example_en,
       example_pl: w.example_pl,
@@ -408,7 +525,11 @@ export default function ChatPage() {
     setSelectedSetOption(NEW_SET_OPTION);
 
     addAssistantMessage(
-      `Dodano **${selectedWords.length}** słówek do zestawu \"${targetSetName}\" w kategorii \"${suggestedCategory || 'Moje słówka'}\".\n\nCo jeszcze mogę dla Ciebie zrobić?`
+      t.addedWords(
+        selectedWords.length,
+        targetSetName,
+        suggestedCategory || t.defaultCategory
+      )
     );
   };
 
@@ -435,9 +556,9 @@ export default function ChatPage() {
             </div>
             <div>
               <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                Asystent AI
+                {t.assistantTitle}
               </h1>
-              <p className="text-xs text-slate-500">Powered by Gemini</p>
+              <p className="text-xs text-slate-500">{t.assistantSubtitle}</p>
             </div>
           </div>
         </div>
@@ -473,7 +594,7 @@ export default function ChatPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-3">
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-400 min-w-[80px]">
-                    Zestaw:
+                    {t.setLabel}
                   </p>
                   <select
                     data-testid="set-selector"
@@ -481,7 +602,7 @@ export default function ChatPage() {
                     onChange={(e) => setSelectedSetOption(e.target.value)}
                     className="text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 flex-1"
                   >
-                    <option value={NEW_SET_OPTION}>Utwórz nowy zestaw</option>
+                    <option value={NEW_SET_OPTION}>{t.newSetOption}</option>
                     {sets.map((set) => (
                       <option key={set.id} value={set.id}>
                         {set.name}
@@ -492,27 +613,27 @@ export default function ChatPage() {
                 {selectedSetOption === NEW_SET_OPTION && (
                   <div className="flex items-center gap-3">
                     <p className="text-sm font-medium text-slate-600 dark:text-slate-400 min-w-[80px]">
-                      Nazwa:
+                      {t.setNameLabel}
                     </p>
                     <input
                       type="text"
                       value={suggestedSetName}
                       onChange={(e) => setSuggestedSetName(e.target.value)}
                       className="text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 flex-1"
-                      placeholder="Nazwa zestawu"
+                      placeholder={t.setNamePlaceholder}
                     />
                   </div>
                 )}
                 <div className="flex items-center gap-3">
                   <p className="text-sm font-medium text-slate-600 dark:text-slate-400 min-w-[80px]">
-                    Kategoria:
+                    {t.categoryLabel}
                   </p>
                   <input
                     type="text"
                     value={suggestedCategory}
                     onChange={(e) => setSuggestedCategory(e.target.value)}
                     className="text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 flex-1"
-                    placeholder="Nazwa kategorii"
+                    placeholder={t.categoryPlaceholder}
                   />
                 </div>
               </div>
@@ -560,11 +681,11 @@ export default function ChatPage() {
               <div className="flex gap-3">
                 <Button variant="secondary" onClick={cancelWords} className="flex-1">
                   <X size={18} className="mr-2" />
-                  Anuluj
+                  {t.cancel}
                 </Button>
                 <Button onClick={addSelectedWords} className="flex-1">
                   <Plus size={18} className="mr-2" />
-                  Dodaj ({parsedWords.filter((w) => w.selected).length})
+                  {t.add(parsedWords.filter((w) => w.selected).length)}
                 </Button>
               </div>
             </CardContent>
@@ -575,7 +696,7 @@ export default function ChatPage() {
           <div className="flex justify-start">
             <div className="bg-slate-100 dark:bg-slate-700 rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-2">
               <Loader2 size={20} className="animate-spin text-primary-500" />
-              <span className="text-sm text-slate-500">Przetwarzam...</span>
+              <span className="text-sm text-slate-500">{t.processing}</span>
             </div>
           </div>
         )}
@@ -588,30 +709,23 @@ export default function ChatPage() {
         <div className="max-w-3xl mx-auto">
           {/* Quick actions */}
           <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
-            <button
-              onClick={() => setInput('Wygeneruj 10 słówek o podróżowaniu')}
-              className="flex-shrink-0 px-3 py-1.5 bg-primary-50 dark:bg-primary-900 text-primary-600 dark:text-primary-400 rounded-full text-sm hover:bg-primary-100"
-            >
-              Podróże
-            </button>
-            <button
-              onClick={() => setInput('Wygeneruj 10 słówek o jedzeniu')}
-              className="flex-shrink-0 px-3 py-1.5 bg-primary-50 dark:bg-primary-900 text-primary-600 dark:text-primary-400 rounded-full text-sm hover:bg-primary-100"
-            >
-              Jedzenie
-            </button>
-            <button
-              onClick={() => setInput('Wygeneruj 10 słówek o pracy')}
-              className="flex-shrink-0 px-3 py-1.5 bg-primary-50 dark:bg-primary-900 text-primary-600 dark:text-primary-400 rounded-full text-sm hover:bg-primary-100"
-            >
-              Praca
-            </button>
-            <button
-              onClick={() => setInput('Ile mam słówek?')}
-              className="flex-shrink-0 px-3 py-1.5 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded-full text-sm hover:bg-slate-200"
-            >
-              Statystyki
-            </button>
+            {t.quickActions.map((action, index) => {
+              const isSecondary = index === t.quickActions.length - 1;
+              return (
+                <button
+                  key={action.label}
+                  onClick={() => setInput(action.prompt)}
+                  className={cn(
+                    'flex-shrink-0 px-3 py-1.5 rounded-full text-sm',
+                    isSecondary
+                      ? 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-200'
+                      : 'bg-primary-50 dark:bg-primary-900 text-primary-600 dark:text-primary-400 hover:bg-primary-100'
+                  )}
+                >
+                  {action.label}
+                </button>
+              );
+            })}
           </div>
 
           <div className="flex gap-2">
@@ -627,7 +741,7 @@ export default function ChatPage() {
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing}
               className="p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
-              title="Wczytaj zdjęcie notatek"
+              title={t.imageButtonTitle}
             >
               <ImageIcon size={20} />
             </button>
@@ -638,7 +752,7 @@ export default function ChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-              placeholder="Wpisz słówka lub zapytaj..."
+              placeholder={t.inputPlaceholder}
               className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               disabled={isProcessing}
             />

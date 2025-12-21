@@ -17,8 +17,8 @@ export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 }
 
-export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat('pl-PL', {
+export function formatDate(date: Date, locale: string = 'pl-PL'): string {
+  return new Intl.DateTimeFormat(locale, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -122,37 +122,49 @@ export const BADGES = {
   streak_7: {
     id: 'streak_7',
     name: 'Seria 7 dni',
+    nameEn: '7-day streak',
     description: 'Tydzień nauki bez przerwy!',
+    descriptionEn: 'A full week of learning without a break!',
     icon: 'flame',
   },
   streak_30: {
     id: 'streak_30',
     name: 'Seria 30 dni',
+    nameEn: '30-day streak',
     description: 'Miesiąc codziennej nauki!',
+    descriptionEn: 'A month of daily learning!',
     icon: 'sparkles',
   },
   perfectionist: {
     id: 'perfectionist',
     name: 'Perfekcjonista',
+    nameEn: 'Perfectionist',
     description: '100% w quizie (min. 10 pytań)',
+    descriptionEn: '100% in a quiz (min. 10 questions)',
     icon: 'target',
   },
   speaker: {
     id: 'speaker',
     name: 'Mówca',
+    nameEn: 'Speaker',
     description: '10 słówek z wymową > 9/10',
+    descriptionEn: '10 words with pronunciation > 9/10',
     icon: 'mic',
   },
   collector_100: {
     id: 'collector_100',
     name: 'Kolekcjoner',
+    nameEn: 'Collector',
     description: '100 słówek w bibliotece',
+    descriptionEn: '100 words in your library',
     icon: 'book-open',
   },
   category_master: {
     id: 'category_master',
     name: 'Mistrz kategorii',
+    nameEn: 'Category master',
     description: '100% opanowania kategorii',
+    descriptionEn: '100% mastery of a category',
     icon: 'trophy',
   },
 } as const;

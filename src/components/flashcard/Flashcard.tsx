@@ -8,6 +8,30 @@ import { Button } from '@/components/ui/Button';
 import { cn, speak } from '@/lib/utils';
 import { useVocabStore } from '@/lib/store';
 import { getCategoryLabel } from '@/lib/categories';
+import { useLanguage } from '@/lib/i18n';
+
+const flashcardCopy = {
+  pl: {
+    tapToReveal: 'Kliknij, aby zobaczyć tłumaczenie',
+    easy: 'Łatwe',
+    medium: 'Średnie',
+    hard: 'Trudne',
+    repeat: 'Powtórz',
+    difficult: 'Trudne',
+    know: 'Umiem',
+  },
+  en: {
+    tapToReveal: 'Tap to reveal the translation',
+    easy: 'Easy',
+    medium: 'Medium',
+    hard: 'Hard',
+    repeat: 'Repeat',
+    difficult: 'Hard',
+    know: 'I know',
+  },
+} as const;
+
+type FlashcardCopy = typeof flashcardCopy.pl;
 
 interface FlashcardProps {
   item: VocabularyItem;
@@ -20,6 +44,8 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
   const [isAnimating, setIsAnimating] = useState(false);
   const [animationClass, setAnimationClass] = useState('');
   const settings = useVocabStore((state) => state.settings);
+  const language = useLanguage();
+  const t = (flashcardCopy[language] ?? flashcardCopy.pl) as FlashcardCopy;
 
   const handleSpeak = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -87,7 +113,7 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
             </div>
 
             <p className="absolute bottom-6 text-sm text-slate-400 dark:text-slate-500">
-              Kliknij, aby zobaczyć tłumaczenie
+              {t.tapToReveal}
             </p>
           </Card>
 
@@ -137,13 +163,13 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
                 )}
               >
                 {item.difficulty === 'easy'
-                  ? 'Łatwe'
+                  ? t.easy
                   : item.difficulty === 'medium'
-                  ? 'Średnie'
-                  : 'Trudne'}
+                  ? t.medium
+                  : t.hard}
               </span>
               <span className="px-2 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-300">
-                {getCategoryLabel(item.category)}
+                {getCategoryLabel(item.category, language)}
               </span>
             </div>
           </Card>
@@ -160,7 +186,7 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
             className="flex items-center gap-2"
           >
             <X size={20} />
-            Powtórz
+            {t.repeat}
           </Button>
 
           <Button
@@ -170,7 +196,7 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
             className="flex items-center gap-2"
           >
             <AlertTriangle size={20} />
-            Trudne
+            {t.difficult}
           </Button>
 
           <Button
@@ -180,7 +206,7 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
             className="flex items-center gap-2"
           >
             <Check size={20} />
-            Umiem
+            {t.know}
           </Button>
         </div>
       )}
