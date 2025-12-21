@@ -1,18 +1,32 @@
 import type { Metadata } from 'next';
-import { Fredoka, Plus_Jakarta_Sans } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { Navigation } from '@/components/layout/Navigation';
 import { ClientLayout } from '@/components/layout/ClientLayout';
 import { Providers } from '@/app/providers';
 
-const sans = Plus_Jakarta_Sans({
-  subsets: ['latin'],
+const sans = localFont({
+  src: [
+    {
+      path: '../fonts/PlusJakartaSans-latin-var.woff2',
+      weight: '200 800',
+      style: 'normal',
+    },
+  ],
   variable: '--font-sans',
+  display: 'swap',
 });
 
-const display = Fredoka({
-  subsets: ['latin'],
+const display = localFont({
+  src: [
+    {
+      path: '../fonts/Fredoka-latin-var.woff2',
+      weight: '300 700',
+      style: 'normal',
+    },
+  ],
   variable: '--font-display',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {

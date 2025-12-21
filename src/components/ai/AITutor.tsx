@@ -41,6 +41,7 @@ export function AITutor() {
 
   const stats = useVocabStore((state) => state.stats);
   const vocabulary = useVocabStore((state) => state.vocabulary);
+  const settings = useVocabStore((state) => state.settings);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -133,6 +134,7 @@ Aktualna seria: ${stats.currentStreak} dni
   };
 
   const handleSpeakText = (text: string) => {
+    if (!settings.general.sounds) return;
     // Extract English words from the text and speak them
     const englishPattern = /"([^"]+)"/g;
     const matches = text.match(englishPattern);

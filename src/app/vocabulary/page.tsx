@@ -131,6 +131,7 @@ export default function VocabularyPage() {
 
   const handleSpeak = async (word: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!settings.general.sounds) return;
     try {
       await speak(word, {
         voice: settings.pronunciation.voice,

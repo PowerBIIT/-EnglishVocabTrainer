@@ -184,6 +184,7 @@ export default function PronunciationPage() {
 
   const handleSpeak = async () => {
     if (!currentWord) return;
+    if (!settings.general.sounds) return;
     try {
       await speak(currentWord.en, {
         voice: settings.pronunciation.voice,

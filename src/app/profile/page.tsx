@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
@@ -121,6 +121,8 @@ export default function ProfilePage() {
   const hydrated = useHydration();
   const { data: session, update } = useSession();
   const [selectedSkin, setSelectedSkin] = useState('explorer');
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   const settings = useVocabStore((state) => state.settings);
   const updateSettings = useVocabStore((state) => state.updateSettings);
@@ -142,6 +144,14 @@ export default function ProfilePage() {
     }
   }, [session?.user?.mascotSkin]);
 
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleSkinSelect = async (skinId: string) => {
     setSelectedSkin(skinId);
     await fetch('/api/user/profile', {
@@ -150,6 +160,40 @@ export default function ProfilePage() {
       body: JSON.stringify({ mascotSkin: skinId }),
     });
     await update({ mascotSkin: skinId });
+  };
+
+  const handleSaveSettings = async () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = null;
+    }
+
+    setSaveState('saving');
+    const state = useVocabStore.getState();
+    const payload = {
+      vocabulary: state.vocabulary,
+      sets: state.sets,
+      progress: state.progress,
+      settings: state.settings,
+      stats: state.stats,
+      dailyMission: state.dailyMission,
+    };
+
+    try {
+      const response = await fetch('/api/user/state', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: payload }),
+      });
+      if (!response.ok) {
+        throw new Error('Save failed');
+      }
+      setSaveState('saved');
+      saveTimeoutRef.current = setTimeout(() => setSaveState('idle'), 2000);
+    } catch (error) {
+      setSaveState('error');
+      saveTimeoutRef.current = setTimeout(() => setSaveState('idle'), 3000);
+    }
   };
 
   const userName = session?.user?.name || 'Użytkownik';
@@ -172,6 +216,14 @@ export default function ProfilePage() {
   );
 
   const missionRoute = missionRoutes[dailyMission.type] ?? missionRoutes.flashcards;
+  const saveStatusLabel =
+    saveState === 'saving'
+      ? 'Zapisywanie...'
+      : saveState === 'saved'
+      ? 'Zapisano'
+      : saveState === 'error'
+      ? 'Błąd zapisu'
+      : '';
 
   const setCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -491,6 +543,36 @@ export default function ProfilePage() {
       </Card>
 
       <section id="settings" className="scroll-mt-24 space-y-6">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h2 className="font-semibold text-slate-800 dark:text-slate-100">Ustawienia</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              Zmiany zapisują się automatycznie, ale możesz też wymusić zapis.
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            {saveStatusLabel && (
+              <span
+                aria-live="polite"
+                className={cn(
+                  'text-xs font-medium',
+                  saveState === 'saved' && 'text-success-600',
+                  saveState === 'error' && 'text-error-600',
+                  saveState === 'saving' && 'text-slate-500'
+                )}
+              >
+                {saveStatusLabel}
+              </span>
+            )}
+            <Button
+              variant="secondary"
+              onClick={handleSaveSettings}
+              disabled={saveState === 'saving'}
+            >
+              {saveState === 'saving' ? 'Zapisywanie...' : 'Zapisz'}
+            </Button>
+          </div>
+        </div>
         <Card>
           <CardHeader>
             <div className="flex items-center gap-2">
@@ -666,7 +748,10 @@ export default function ProfilePage() {
             </div>
           </CardHeader>
           <CardContent className="divide-y divide-slate-100 dark:divide-slate-700">
-            <SettingRow label="Język interfejsu">
+            <SettingRow
+              label="Język interfejsu"
+              description="Zmienia etykiety nawigacji i język dokumentu."
+            >
               <Select
                 value={settings.general.language}
                 options={[

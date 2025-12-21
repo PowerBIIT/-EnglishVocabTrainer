@@ -2,11 +2,15 @@
 
 import { SessionProvider } from 'next-auth/react';
 import { SyncProvider } from '@/components/layout/SyncProvider';
+import { SettingsEffects } from '@/components/layout/SettingsEffects';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <SyncProvider>{children}</SyncProvider>
+      <SyncProvider>
+        <SettingsEffects />
+        {children}
+      </SyncProvider>
     </SessionProvider>
   );
 }

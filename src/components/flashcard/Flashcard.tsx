@@ -23,6 +23,7 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
 
   const handleSpeak = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!settings.general.sounds) return;
     try {
       await speak(item.en, {
         voice: settings.pronunciation.voice,

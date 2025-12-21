@@ -90,7 +90,7 @@ test('tworzy zestaw z czatu i filtruje w quizie', async ({ page }) => {
   await expect(setRow.getByText(/8 s..wek/)).toBeVisible();
   await expect(setRow).toBeVisible();
 
-  await page.getByRole('link', { name: 'Home' }).click();
+  await page.getByRole('link', { name: 'Start', exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.getByRole('link', { name: 'Quiz' }).click();
   await expect(page).toHaveURL(/\/quiz/);
@@ -140,7 +140,7 @@ test('usuwa zestaw i pozostawia slowka bez przypisania', async ({ page }) => {
   await setRow.getByRole('button', { name: /Usu/ }).click();
   await expect(setRow).toHaveCount(0);
 
-  await page.getByRole('link', { name: 'Home' }).click();
+  await page.getByRole('link', { name: 'Start', exact: true }).click();
   await expect(page).toHaveURL(/\/$/);
   await page.getByRole('link', { name: 'Quiz' }).click();
   await expect(page).toHaveURL(/\/quiz/);

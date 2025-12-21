@@ -56,6 +56,7 @@ export default function PhonemeDrillsPage() {
   const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
   const handleSpeak = async (text: string) => {
+    if (!settings.general.sounds) return;
     try {
       await speak(text, {
         voice: settings.pronunciation.voice,

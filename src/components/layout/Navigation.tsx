@@ -4,17 +4,37 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, BookOpen, Mic, MessageCircle, UserCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useVocabStore } from '@/lib/store';
+
+const navLabels = {
+  pl: {
+    home: 'Start',
+    vocabulary: 'Słówka',
+    pronunciation: 'Wymowa',
+    chat: 'Czat',
+    profile: 'Profil',
+  },
+  en: {
+    home: 'Home',
+    vocabulary: 'Vocabulary',
+    pronunciation: 'Pronunciation',
+    chat: 'Chat',
+    profile: 'Profile',
+  },
+} as const;
 
 const navItems = [
-  { href: '/', icon: Home, label: 'Home' },
-  { href: '/vocabulary', icon: BookOpen, label: 'Słówka' },
-  { href: '/pronunciation', icon: Mic, label: 'Wymowa' },
-  { href: '/chat', icon: MessageCircle, label: 'Czat' },
-  { href: '/profile', icon: UserCircle, label: 'Profil' },
-];
+  { href: '/', icon: Home, key: 'home' },
+  { href: '/vocabulary', icon: BookOpen, key: 'vocabulary' },
+  { href: '/pronunciation', icon: Mic, key: 'pronunciation' },
+  { href: '/chat', icon: MessageCircle, key: 'chat' },
+  { href: '/profile', icon: UserCircle, key: 'profile' },
+] as const;
 
 export function Navigation() {
   const pathname = usePathname();
+  const language = useVocabStore((state) => state.settings.general.language);
+  const labels = navLabels[language] ?? navLabels.pl;
 
   if (pathname === '/login' || pathname === '/onboarding') {
     return null;
@@ -31,8 +51,9 @@ export function Navigation() {
             <span className="text-xs text-slate-500">Trainer</span>
           </div>
           <ul className="flex justify-around items-center h-[calc(4rem+env(safe-area-inset-bottom))] md:h-auto md:flex-col md:gap-3 md:mt-4 w-full">
-            {navItems.map(({ href, icon: Icon, label }) => {
+            {navItems.map(({ href, icon: Icon, key }) => {
               const isActive = pathname === href;
+              const label = labels[key];
               return (
                 <li key={href}>
                   <Link

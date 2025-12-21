@@ -427,7 +427,33 @@
 | 2 | Włącz "Auto-odtwarzanie" | Toggle niebieski |
 | 3 | Sprawdź w fiszce | Wymowa automatyczna |
 
-#### TC-SET-006: Persistencja ustawień
+#### TC-SET-006: Zapis ręczny ustawień
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Zmień dowolne ustawienie | Widoczna zmiana |
+| 2 | Kliknij "Zapisz" | Status "Zapisywanie..." |
+| 3 | Poczekaj 1-2 sekundy | Status "Zapisano" |
+
+#### TC-SET-007: Język interfejsu
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Ustaw język na "English" | Etykiety nawigacji po angielsku |
+| 2 | Ustaw język na "Polski" | Etykiety nawigacji po polsku |
+
+#### TC-SET-008: Motyw
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Ustaw motyw na "Ciemny" | Aplikacja w trybie ciemnym |
+| 2 | Ustaw motyw na "Jasny" | Aplikacja w trybie jasnym |
+| 3 | Ustaw motyw na "Automatyczny" | Motyw zgodny z ustawieniem systemu |
+
+#### TC-SET-009: Dźwięki globalne
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Wyłącz "Dźwięki" | Brak TTS po kliknięciu głośnika |
+| 2 | Włącz "Dźwięki" | TTS odtwarzany |
+
+#### TC-SET-010: Persistencja ustawień
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
 | 1 | Zmień kilka ustawień | Zapisane |

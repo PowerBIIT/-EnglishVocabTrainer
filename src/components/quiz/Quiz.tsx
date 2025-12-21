@@ -63,13 +63,13 @@ function QuizQuestion({
 
   // Auto-play for listening mode
   useEffect(() => {
-    if (mode === 'listening') {
+    if (mode === 'listening' && settings.general.sounds) {
       speak(word.en, {
         voice: settings.pronunciation.voice,
         speed: settings.pronunciation.speed,
       });
     }
-  }, [mode, word.en, settings.pronunciation]);
+  }, [mode, settings.general.sounds, settings.pronunciation, word.en]);
 
   const handleSelectAnswer = (answer: string) => {
     if (showResult) return;
@@ -91,6 +91,7 @@ function QuizQuestion({
   };
 
   const handleSpeak = () => {
+    if (!settings.general.sounds) return;
     speak(word.en, {
       voice: settings.pronunciation.voice,
       speed: settings.pronunciation.speed,
