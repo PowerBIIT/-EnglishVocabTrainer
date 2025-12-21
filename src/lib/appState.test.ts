@@ -15,6 +15,7 @@ describe('hydrateAppState', () => {
           difficulty: 'easy',
           created_at: new Date().toISOString() as unknown as Date,
           source: 'manual',
+          languagePair: 'pl-en',
         },
       ],
       sets: [
@@ -22,6 +23,7 @@ describe('hydrateAppState', () => {
           id: 'set-1',
           name: 'Klasowka',
           createdAt: new Date().toISOString() as unknown as Date,
+          languagePair: 'pl-en',
         },
       ],
       progress: {},

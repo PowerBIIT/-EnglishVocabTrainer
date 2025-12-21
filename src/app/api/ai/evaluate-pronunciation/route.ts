@@ -15,7 +15,6 @@ interface EvaluationResult {
   errorPhonemes?: string[];
   phonemeAnalysis?: PhonemeAnalysis[];
   nativeInterference?: string;
-  polishInterference?: string;
 }
 
 export async function POST(request: NextRequest) {
@@ -78,14 +77,9 @@ export async function POST(request: NextRequest) {
     result.score = Math.max(1, Math.min(10, Math.round(result.score)));
     result.correct = result.score >= 7;
 
-    const normalizedResult = {
-      ...result,
-      nativeInterference: result.nativeInterference ?? result.polishInterference,
-    };
+    console.log('Parsed result:', result);
 
-    console.log('Parsed result:', normalizedResult);
-
-    return NextResponse.json(normalizedResult);
+    return NextResponse.json(result);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Pronunciation evaluation error:', errorMessage);

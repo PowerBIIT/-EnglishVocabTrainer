@@ -12,6 +12,7 @@ const seedVocabulary = [
     created_at: new Date(),
     source: 'manual' as const,
     setIds: [],
+    languagePair: 'pl-en',
   },
   {
     id: 'v2',
@@ -23,6 +24,7 @@ const seedVocabulary = [
     created_at: new Date(),
     source: 'manual' as const,
     setIds: [],
+    languagePair: 'pl-en',
   },
 ];
 

@@ -93,17 +93,8 @@ export const buildPairId = (
   target: TargetLanguage
 ): LearningPairId => `${native}-${target}` as LearningPairId;
 
-export const normalizePairId = (
-  pairId?: string,
-  native?: string,
-  target?: string
-): LearningPairId => {
-  if (isLearningPairId(pairId)) {
-    return pairId;
-  }
-  const built = native && target ? buildPairId(native as NativeLanguage, target as TargetLanguage) : undefined;
-  return isLearningPairId(built) ? built : DEFAULT_PAIR_ID;
-};
+export const normalizePairId = (pairId?: string): LearningPairId =>
+  isLearningPairId(pairId) ? pairId : DEFAULT_PAIR_ID;
 
 export const getLanguageLabel = (language: LanguageCode, uiLanguage: AppLanguage) =>
   LANGUAGE_LABELS[uiLanguage]?.[language] ?? language.toUpperCase();

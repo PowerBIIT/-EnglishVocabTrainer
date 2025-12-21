@@ -22,14 +22,14 @@ export interface VocabularyItem {
   difficulty: 'easy' | 'medium' | 'hard';
   created_at: Date;
   source: 'manual' | 'photo' | 'ai_generated' | 'preset';
-  languagePair?: LearningPairId;
+  languagePair: LearningPairId;
 }
 
 export interface StudySet {
   id: string;
   name: string;
   createdAt: Date;
-  languagePair?: LearningPairId;
+  languagePair: LearningPairId;
 }
 
 // Pronunciation attempt history

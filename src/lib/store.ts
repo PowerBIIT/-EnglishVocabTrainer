@@ -121,7 +121,7 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
       getActiveVocabulary: () => {
         const state = get();
         const pairId = state.settings.learning.pairId;
-        return state.vocabulary.filter((item) => (item.languagePair ?? pairId) === pairId);
+        return state.vocabulary.filter((item) => item.languagePair === pairId);
       },
       addVocabulary: (items) =>
         set((state) => ({
@@ -130,7 +130,6 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
             ...items.map((item) => ({
               ...item,
               setIds: item.setIds ?? [],
-              languagePair: item.languagePair ?? state.settings.learning.pairId,
             })),
           ],
         })),
@@ -154,7 +153,7 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
       getActiveSets: () => {
         const state = get();
         const pairId = state.settings.learning.pairId;
-        return state.sets.filter((set) => (set.languagePair ?? pairId) === pairId);
+        return state.sets.filter((set) => set.languagePair === pairId);
       },
       createSet: (name) => {
         const trimmed = name.trim() || 'Nowy zestaw';
@@ -313,7 +312,7 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
 
         // Get words due for review or new words
         const dueWords = state.vocabulary.filter((v) => {
-          if ((v.languagePair ?? pairId) !== pairId) return false;
+          if (v.languagePair !== pairId) return false;
           const progress = state.progress[v.id];
           if (!progress) return true; // New word
           return new Date(progress.next_review) <= now;
@@ -379,7 +378,7 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
       getNextPronunciationWords: (count, focusMode, targetPhoneme, setId) => {
         const state = get();
         const pairId = state.settings.learning.pairId;
-        let words = state.vocabulary.filter((word) => (word.languagePair ?? pairId) === pairId);
+        let words = state.vocabulary.filter((word) => word.languagePair === pairId);
 
         if (setId === 'unassigned') {
           words = words.filter((word) => (word.setIds ?? []).length === 0);
@@ -550,7 +549,7 @@ export const useVocabStore = create<VocabStore>()((set, get) => ({
         const state = get();
         const pairId = state.settings.learning.pairId;
         return state.vocabulary
-          .filter((word) => (word.languagePair ?? pairId) === pairId)
+          .filter((word) => word.languagePair === pairId)
           .filter((w) => {
             const prog = state.progress[w.id];
             return prog && prog.pronunciation_attempts > 0 && prog.avg_pronunciation_score < 7;

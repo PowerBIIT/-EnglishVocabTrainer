@@ -183,9 +183,7 @@ export function hydrateAppState(raw: AppState): AppState {
   };
 
   const normalizedPairId = normalizePairId(
-    mergedSettings.learning?.pairId,
-    mergedSettings.learning?.nativeLanguage,
-    mergedSettings.learning?.targetLanguage
+    mergedSettings.learning?.pairId
   );
   const activePair = getLearningPair(normalizedPairId);
 
@@ -219,13 +217,11 @@ export function hydrateAppState(raw: AppState): AppState {
     ...item,
     created_at: toDate(item.created_at) ?? new Date(),
     setIds: item.setIds ?? [],
-    languagePair: item.languagePair ?? activePair.id,
   }));
 
   const sets = (raw.sets ?? []).map((set) => ({
     ...set,
     createdAt: toDate(set.createdAt) ?? new Date(),
-    languagePair: set.languagePair ?? activePair.id,
   }));
 
   const progress = Object.fromEntries(

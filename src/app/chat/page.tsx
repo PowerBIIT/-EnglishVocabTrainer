@@ -41,19 +41,14 @@ interface ParsedWord {
 }
 
 const normalizeParsedWord = (
-  word: Partial<ParsedWord> & {
-    en?: string;
-    pl?: string;
-    example_en?: string;
-    example_pl?: string;
-  }
+  word: Partial<ParsedWord>
 ): Omit<ParsedWord, 'selected'> => ({
-  target: word.target ?? word.en ?? '',
-  native: word.native ?? word.pl ?? '',
+  target: word.target ?? '',
+  native: word.native ?? '',
   phonetic: word.phonetic ?? '',
   difficulty: word.difficulty ?? 'medium',
-  example_target: word.example_target ?? word.example_en,
-  example_native: word.example_native ?? word.example_pl,
+  example_target: word.example_target,
+  example_native: word.example_native,
 });
 
 const FALLBACK_WORDS: Record<LearningPairId, Omit<ParsedWord, 'selected'>[]> = {

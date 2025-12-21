@@ -593,7 +593,7 @@ export default function PronunciationPage() {
         tip: data.tip,
         recognized: spoken,
         errorPhonemes: data.errorPhonemes,
-        nativeInterference: data.nativeInterference ?? data.polishInterference,
+        nativeInterference: data.nativeInterference,
       };
 
       setResult(pronunciationResult);
