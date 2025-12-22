@@ -49,5 +49,5 @@ test('smoke: core pages load', async ({ page }, testInfo) => {
   await expect(page.getByPlaceholder('Введи слова або запитай...')).toBeVisible();
 
   await page.goto('/profile');
-  await expect(page.getByText('Профіль')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Профіль навчання' })).toBeVisible();
 });
