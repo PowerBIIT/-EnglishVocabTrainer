@@ -32,6 +32,7 @@ export default async function AdminPage() {
     prisma.userPlan.groupBy({
       by: ['plan', 'accessStatus'],
       _count: { _all: true },
+      orderBy: [{ plan: 'asc' }, { accessStatus: 'asc' }],
     }),
     prisma.globalUsage.findUnique({
       where: {
