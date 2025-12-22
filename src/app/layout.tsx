@@ -4,6 +4,7 @@ import './globals.css';
 import { Navigation } from '@/components/layout/Navigation';
 import { ClientLayout } from '@/components/layout/ClientLayout';
 import { Providers } from '@/app/providers';
+import { AuthGate } from '@/components/layout/AuthGate';
 
 const sans = localFont({
   src: [
@@ -43,13 +44,15 @@ export default function RootLayout({
     <html lang="uk" suppressHydrationWarning>
       <body className={`${sans.variable} ${display.variable} font-sans antialiased`}>
         <Providers>
-          <div className="min-h-screen">
-            <Navigation />
-            <main className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-10 md:pl-24">
-              {children}
-            </main>
-            <ClientLayout />
-          </div>
+          <ClientLayout />
+          <AuthGate>
+            <div className="min-h-screen">
+              <Navigation />
+              <main className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-10 md:pl-24">
+                {children}
+              </main>
+            </div>
+          </AuthGate>
         </Providers>
       </body>
     </html>
