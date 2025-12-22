@@ -5,7 +5,7 @@
 - PRD: https://evt-prd-pl-44b1.azurewebsites.net
 
 ## Pipeline behavior
-- UAT deploy: push to `main` -> lint, unit, e2e -> build -> reset DB -> deploy -> restart -> health check.
+- UAT deploy: push to `main` (excluding doc-only changes) -> lint, unit, e2e -> build -> reset DB -> deploy -> restart -> health check.
 - PRD deploy: manual `Deploy PRD` workflow -> lint, unit, build -> migrate status -> deploy -> restart -> health check.
 - PRD never resets data.
 
