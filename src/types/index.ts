@@ -1,6 +1,6 @@
 export type NativeLanguage = 'pl' | 'de' | 'uk';
-export type TargetLanguage = 'en' | 'pl';
-export type LearningPairId = 'pl-en' | 'de-en' | 'uk-pl';
+export type TargetLanguage = 'en' | 'pl' | 'de';
+export type LearningPairId = 'uk-pl' | 'uk-en' | 'uk-de' | 'pl-en' | 'de-en';
 export type FeedbackLanguage = 'pl' | 'en' | 'de' | 'uk';
 
 export interface LearningSettings {
@@ -125,7 +125,7 @@ export interface PronunciationSettings {
 
 // General settings
 export interface GeneralSettings {
-  language: 'pl' | 'en';
+  language: 'pl' | 'en' | 'uk';
   theme: 'light' | 'dark' | 'auto';
   sounds: boolean;
   notifications: boolean;

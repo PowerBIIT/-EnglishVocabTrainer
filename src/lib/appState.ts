@@ -68,7 +68,7 @@ export const defaultSettings: AppSettings = {
     showPhonemeHints: true,
   },
   general: {
-    language: 'pl',
+    language: 'uk',
     theme: 'auto',
     sounds: true,
     notifications: false,
@@ -76,13 +76,13 @@ export const defaultSettings: AppSettings = {
   },
   ai: {
     feedbackDetail: 'detailed',
-    feedbackLanguage: 'pl',
+    feedbackLanguage: 'uk',
     phoneticHints: true,
   },
   learning: {
-    nativeLanguage: 'pl',
-    targetLanguage: 'en',
-    pairId: 'pl-en',
+    nativeLanguage: 'uk',
+    targetLanguage: 'pl',
+    pairId: 'uk-pl',
   },
 };
 
@@ -188,7 +188,9 @@ export function hydrateAppState(raw: AppState): AppState {
   const activePair = getLearningPair(normalizedPairId);
 
   const generalLanguage =
-    mergedSettings.general.language === 'pl' || mergedSettings.general.language === 'en'
+    mergedSettings.general.language === 'pl' ||
+    mergedSettings.general.language === 'en' ||
+    mergedSettings.general.language === 'uk'
       ? mergedSettings.general.language
       : activePair.uiLanguage;
 

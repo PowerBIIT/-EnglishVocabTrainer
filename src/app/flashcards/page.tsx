@@ -64,6 +64,31 @@ const flashcardsCopy = {
     goToQuiz: 'Go to quiz',
     backToMenu: 'Back to menu',
   },
+  uk: {
+    loading: 'Завантаження...',
+    title: 'Флешкарти',
+    subtitle: 'Обери набір або категорію та почни навчання',
+    setTitle: 'Набір',
+    categoryTitle: 'Категорія',
+    all: 'Усі',
+    unassigned: 'Без набору',
+    sessionSettings: 'Налаштування сесії',
+    change: 'Змінити',
+    flashcardCount: 'Кількість флешкарт',
+    wordOrder: 'Порядок',
+    orderRandom: 'Випадковий',
+    orderAlphabetical: 'Алфавітний',
+    orderHardest: 'Найскладніші',
+    startSession: 'Почати сесію',
+    tipTitle: 'Порада',
+    tipText:
+      'Проведи картку вправо (знаю), вліво (повторити) або вгору (складне), щоб вчитися швидше.',
+    completeTitle: 'Чудово!',
+    completeDesc: (count: number) => `Ти завершив сесію з ${count} флешкартами!`,
+    newSession: 'Нова сесія',
+    goToQuiz: 'Перейти до квізу',
+    backToMenu: 'Повернутися до меню',
+  },
 } as const;
 
 type FlashcardsCopy = typeof flashcardsCopy.pl;

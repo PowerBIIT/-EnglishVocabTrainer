@@ -6,10 +6,12 @@ import { signIn, useSession } from 'next-auth/react';
 import { Compass, ShieldCheck, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MascotAvatar } from '@/components/mascot/MascotAvatar';
-import { useLanguage } from '@/lib/i18n';
+import { useLanguage, isAppLanguage } from '@/lib/i18n';
+import { useHydration, useVocabStore } from '@/lib/store';
 
 const loginCopy = {
   pl: {
+    loading: 'Ładowanie...',
     tagline: 'Nowy dzień, nowa misja',
     description: 'Zaloguj się przez Google i kontynuuj przygodę z nowoczesną nauką słówek.',
     signInGoogle: 'Zaloguj się przez Google',
@@ -21,8 +23,10 @@ const loginCopy = {
     testLoginButton: 'Zaloguj testowo',
     guideLabel: 'Twój przewodnik',
     guideNote: 'Wybierz swój styl w onboardingu',
+    languageLabel: 'Język',
   },
   en: {
+    loading: 'Loading...',
     tagline: 'New day, new mission',
     description: 'Sign in with Google and continue your modern vocab journey.',
     signInGoogle: 'Sign in with Google',
@@ -34,15 +38,60 @@ const loginCopy = {
     testLoginButton: 'Sign in (test)',
     guideLabel: 'Your guide',
     guideNote: 'Choose your style in onboarding',
+    languageLabel: 'Language',
+  },
+  uk: {
+    loading: 'Завантаження...',
+    tagline: 'Новий день, нова місія',
+    description: 'Увійди через Google і продовжуй сучасну пригоду зі словами.',
+    signInGoogle: 'Увійти через Google',
+    noGuest: 'Без гостьового режиму, дані завжди синхронізовані.',
+    testLoginTitle: 'Тестовий вхід (E2E)',
+    testEmailPlaceholder: 'Тестовий email',
+    testPasswordPlaceholder: 'Тестовий пароль',
+    testLoginError: 'Невірні тестові дані.',
+    testLoginButton: 'Увійти (тест)',
+    guideLabel: 'Твій провідник',
+    guideNote: 'Обери стиль у онбордингу',
+    languageLabel: 'Мова',
   },
 } as const;
 
 type LoginCopy = typeof loginCopy.pl;
 
+const languageOptions = [
+  {
+    id: 'uk',
+    label: 'UA',
+    name: 'Українська',
+    flagStyle: {
+      background: 'linear-gradient(180deg, #0057b7 0%, #0057b7 50%, #ffd700 50%, #ffd700 100%)',
+    },
+  },
+  {
+    id: 'pl',
+    label: 'PL',
+    name: 'Polski',
+    flagStyle: {
+      background: 'linear-gradient(180deg, #ffffff 0%, #ffffff 50%, #dc143c 50%, #dc143c 100%)',
+    },
+  },
+  {
+    id: 'en',
+    label: 'EN',
+    name: 'English',
+    flagStyle: {
+      background: 'linear-gradient(90deg, #00247d 0%, #00247d 33%, #ffffff 33%, #ffffff 66%, #cf142b 66%, #cf142b 100%)',
+    },
+  },
+] as const;
+
 export default function LoginPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const hydrated = useHydration();
   const language = useLanguage();
+  const updateSettings = useVocabStore((state) => state.updateSettings);
   const t = (loginCopy[language] ?? loginCopy.pl) as LoginCopy;
   const isE2E = process.env.NEXT_PUBLIC_E2E_TEST === 'true';
   const [e2eEmail, setE2eEmail] = useState('');
@@ -54,6 +103,18 @@ export default function LoginPage() {
     const destination = session?.user?.onboardingComplete ? '/' : '/onboarding';
     router.replace(destination);
   }, [router, session?.user?.onboardingComplete, status]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    try {
+      const storedLanguage = window.localStorage.getItem('uiLanguage');
+      if (storedLanguage && isAppLanguage(storedLanguage) && storedLanguage !== language) {
+        updateSettings('general', { language: storedLanguage });
+      }
+    } catch (error) {
+      console.warn('Unable to read stored language preference.', error);
+    }
+  }, [hydrated, language, updateSettings]);
 
   const handleE2ELogin = async () => {
     setE2eError('');
@@ -72,13 +133,62 @@ export default function LoginPage() {
     router.replace(result?.url ?? '/');
   };
 
+  if (!hydrated) {
+    return (
+      <div className="p-4 flex items-center justify-center min-h-screen">
+        <p className="text-slate-500">{t.loading}</p>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-3xl grid gap-10 md:grid-cols-[1.1fr_0.9fr] items-center">
         <div className="space-y-6">
-          <div className="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/60 px-4 py-2 text-sm text-slate-600 dark:text-slate-300 shadow">
-            <Compass size={18} className="text-primary-600" />
-            {t.tagline}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/60 px-4 py-2 text-sm text-slate-600 dark:text-slate-300 shadow">
+              <Compass size={18} className="text-primary-600" />
+              {t.tagline}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs uppercase tracking-wide text-slate-400">
+                {t.languageLabel}
+              </span>
+              <div className="flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/60 p-1 shadow">
+                {languageOptions.map((option) => {
+                  const isActive = option.id === language;
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => {
+                        updateSettings('general', { language: option.id });
+                        try {
+                          window.localStorage.setItem('uiLanguage', option.id);
+                          window.localStorage.setItem('pendingLanguage', option.id);
+                        } catch (error) {
+                          console.warn('Unable to store language preference.', error);
+                        }
+                      }}
+                      aria-label={option.name}
+                      aria-pressed={isActive}
+                      title={option.name}
+                      className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold transition ${
+                        isActive
+                          ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100'
+                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'
+                      }`}
+                    >
+                      <span
+                        className="h-3.5 w-5 rounded-sm border border-slate-200 dark:border-slate-700"
+                        style={option.flagStyle}
+                      />
+                      <span>{option.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
           <h1 className="font-display text-4xl md:text-5xl text-slate-900 dark:text-white">
             English Vocab Trainer

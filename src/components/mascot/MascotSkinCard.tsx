@@ -11,8 +11,13 @@ interface MascotSkinCardProps {
 
 export function MascotSkinCard({ skin, selected = false, onSelect }: MascotSkinCardProps) {
   const language = useLanguage();
-  const name = language === 'en' ? skin.nameEn : skin.name;
-  const description = language === 'en' ? skin.descriptionEn : skin.description;
+  const name = language === 'en' ? skin.nameEn : language === 'uk' ? skin.nameUk : skin.name;
+  const description =
+    language === 'en'
+      ? skin.descriptionEn
+      : language === 'uk'
+      ? skin.descriptionUk
+      : skin.description;
 
   return (
     <button

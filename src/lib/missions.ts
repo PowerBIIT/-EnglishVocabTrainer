@@ -38,6 +38,24 @@ const missionCopy = {
       description: 'Earn 6 progress points in any mode.',
     },
   },
+  uk: {
+    flashcards: {
+      title: 'Швидкий ривок із флешкартами',
+      description: 'Познач 5 карток як "Знаю".',
+    },
+    quiz: {
+      title: 'Точний квіз',
+      description: 'Дай 5 правильних відповідей.',
+    },
+    pronunciation: {
+      title: 'Чітка вимова',
+      description: 'Отримай 4 вдалі спроби вимови.',
+    },
+    mixed: {
+      title: 'Змішана місія',
+      description: 'Набери 6 прогресів у будь-якому режимі.',
+    },
+  },
 } as const;
 
 export const getMissionCopy = (language: AppLanguage, type: DailyMission['type']) =>

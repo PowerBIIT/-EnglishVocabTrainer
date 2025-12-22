@@ -14,6 +14,7 @@ interface GenerateResult {
   topic: string;
   level: string;
   words: GeneratedWord[];
+  error?: 'UNSAFE_TOPIC' | 'NEEDS_CLARIFICATION';
 }
 
 export async function POST(request: NextRequest) {
@@ -57,6 +58,20 @@ export async function POST(request: NextRequest) {
     });
 
     const result = parseAIResponse<GenerateResult>(response);
+
+    if (result.error === 'UNSAFE_TOPIC') {
+      return NextResponse.json(
+        { error: 'unsafe_topic' },
+        { status: 400 }
+      );
+    }
+
+    if (result.error === 'NEEDS_CLARIFICATION') {
+      return NextResponse.json(
+        { error: 'needs_clarification' },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json(result);
   } catch (error) {

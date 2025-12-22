@@ -132,6 +132,13 @@ const LANGUAGE_NAMES: Record<FeedbackLanguage, string> = {
 const getLanguageName = (code: FeedbackLanguage | NativeLanguage | TargetLanguage) =>
   LANGUAGE_NAMES[code as FeedbackLanguage] ?? code.toUpperCase();
 
+const SAFETY_RULES = `
+Safety rules (applies to all outputs):
+- This app is for learners aged 11-13. Keep content school-appropriate and neutral.
+- Do NOT include content about sex/sexual content, nudity, violence, weapons, crime, drugs, alcohol, gambling, self-harm, suicide, hate speech, or extremist ideology.
+- If the request is unsafe or asks for non-language-learning content, refuse briefly and suggest a safe topic.
+`.trim();
+
 export const AI_PROMPTS = {
   evaluatePronunciation: ({
     expected,
@@ -184,7 +191,10 @@ Respond ONLY in JSON (no markdown):
     targetLanguage: TargetLanguage,
     nativeLanguage: NativeLanguage
   ) => `
-Generate ${count} ${getLanguageName(targetLanguage)} vocabulary items about: ${topic}
+${SAFETY_RULES}
+
+Generate EXACTLY ${count} ${getLanguageName(targetLanguage)} vocabulary items about the topic below.
+Topic description (may be in any language): "${topic}"
 Level: ${level} (A1/A2/B1/B2)
 Provide translations in ${getLanguageName(nativeLanguage)}.
 
@@ -195,6 +205,31 @@ For each item return:
 - example_target: short example sentence in ${getLanguageName(targetLanguage)}
 - example_native: translation of the example sentence
 - difficulty: easy/medium/hard
+
+Constraints:
+- Use only safe, everyday vocabulary appropriate for ages 11-13.
+- Interpret the topic even if it is written in a different language; still generate in ${getLanguageName(targetLanguage)}.
+- If the topic is a school subject or profession (e.g., accounting), include common people, documents, actions, and places from that domain.
+- Keep the vocabulary practical and classroom-appropriate; avoid rare jargon.
+- No duplicates.
+- Prefer 1-3 word phrases, avoid long sentences in "target".
+- Ensure "target" is in ${getLanguageName(targetLanguage)} and "native" is in ${getLanguageName(nativeLanguage)}.
+
+If the topic is unsafe, respond with:
+{
+  "topic": "${topic}",
+  "level": "${level}",
+  "words": [],
+  "error": "UNSAFE_TOPIC"
+}
+
+If the topic is too vague/unclear, respond with:
+{
+  "topic": "${topic}",
+  "level": "${level}",
+  "words": [],
+  "error": "NEEDS_CLARIFICATION"
+}
 
 Respond ONLY in JSON (no markdown):
 {
@@ -218,6 +253,7 @@ Respond ONLY in JSON (no markdown):
     nativeLanguage: NativeLanguage
   ) => `
 The user entered vocabulary in mixed formats. Parse and structure it.
+Do NOT invent words. Only extract pairs clearly present in the input.
 
 User input:
 "${userInput}"
@@ -236,6 +272,7 @@ Respond ONLY in JSON (no markdown):
 
   extractFromImage: (targetLanguage: TargetLanguage, nativeLanguage: NativeLanguage) => `
 You are a vocabulary extraction assistant. Analyze the image of notes and extract vocabulary pairs.
+Do NOT invent words. Only extract what is clearly visible.
 
 Return ${getLanguageName(targetLanguage)} words/phrases and their ${getLanguageName(nativeLanguage)} translations.
 Generate IPA for the ${getLanguageName(targetLanguage)} words (if unsure, use an empty string).
@@ -261,6 +298,8 @@ The learner's native language is ${getLanguageName(nativeLanguage)}.
 Respond in ${getLanguageName(feedbackLanguage)} and avoid emojis.
 Use examples in ${getLanguageName(targetLanguage)} when helpful.
 If explaining a word, include IPA and a short example.
+${SAFETY_RULES}
+If the user asks for unsafe or non-educational content, refuse briefly and suggest a safe language-learning topic.
 
 Learner context:
 ${context}
@@ -276,6 +315,8 @@ Reply naturally like a helpful teacher.`,
     feedbackLanguage: FeedbackLanguage
   ) => `
 Explain the following ${getLanguageName(targetLanguage)} word or phrase: "${word}"
+${SAFETY_RULES}
+If the word is unsafe/inappropriate, do not explain it. Provide a brief refusal and suggest a safe alternative word.
 
 Provide:
 1. IPA pronunciation

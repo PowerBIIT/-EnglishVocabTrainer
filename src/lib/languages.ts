@@ -15,19 +15,59 @@ export interface LearningPair {
   target: TargetLanguage;
   uiLanguage: AppLanguage;
   feedbackLanguage: FeedbackLanguage;
-  label: { pl: string; en: string };
+  label: Record<AppLanguage, string>;
 }
 
-export const DEFAULT_PAIR_ID: LearningPairId = 'pl-en';
+export const DEFAULT_PAIR_ID: LearningPairId = 'uk-pl';
 
 export const LEARNING_PAIRS: LearningPair[] = [
+  {
+    id: 'uk-pl',
+    native: 'uk',
+    target: 'pl',
+    uiLanguage: 'uk',
+    feedbackLanguage: 'uk',
+    label: {
+      pl: 'Ukraiński → Polski',
+      en: 'Ukrainian → Polish',
+      uk: 'Українська → Польська',
+    },
+  },
+  {
+    id: 'uk-en',
+    native: 'uk',
+    target: 'en',
+    uiLanguage: 'uk',
+    feedbackLanguage: 'uk',
+    label: {
+      pl: 'Ukraiński → Angielski',
+      en: 'Ukrainian → English',
+      uk: 'Українська → Англійська',
+    },
+  },
+  {
+    id: 'uk-de',
+    native: 'uk',
+    target: 'de',
+    uiLanguage: 'uk',
+    feedbackLanguage: 'uk',
+    label: {
+      pl: 'Ukraiński → Niemiecki',
+      en: 'Ukrainian → German',
+      uk: 'Українська → Німецька',
+    },
+  },
   {
     id: 'pl-en',
     native: 'pl',
     target: 'en',
     uiLanguage: 'pl',
     feedbackLanguage: 'pl',
-    label: { pl: 'Polski → Angielski', en: 'Polish → English' },
+    label: {
+      pl: 'Polski → Angielski',
+      en: 'Polish → English',
+      uk: 'Польська → Англійська',
+    },
   },
   {
     id: 'de-en',
@@ -35,15 +75,11 @@ export const LEARNING_PAIRS: LearningPair[] = [
     target: 'en',
     uiLanguage: 'en',
     feedbackLanguage: 'de',
-    label: { pl: 'Niemiecki → Angielski', en: 'German → English' },
-  },
-  {
-    id: 'uk-pl',
-    native: 'uk',
-    target: 'pl',
-    uiLanguage: 'pl',
-    feedbackLanguage: 'uk',
-    label: { pl: 'Ukraiński → Polski', en: 'Ukrainian → Polish' },
+    label: {
+      pl: 'Niemiecki → Angielski',
+      en: 'German → English',
+      uk: 'Німецька → Англійська',
+    },
   },
 ];
 
@@ -51,9 +87,11 @@ export const LEARNING_PAIR_SAMPLES: Record<
   LearningPairId,
   { target: string; native: string }
 > = {
+  'uk-pl': { target: 'śniadanie', native: 'сніданок' },
+  'uk-en': { target: 'breakfast', native: 'сніданок' },
+  'uk-de': { target: 'Frühstück', native: 'сніданок' },
   'pl-en': { target: 'breakfast', native: 'śniadanie' },
   'de-en': { target: 'school', native: 'Schule' },
-  'uk-pl': { target: 'śniadanie', native: 'сніданок' },
 };
 
 const LANGUAGE_LABELS: Record<AppLanguage, Record<LanguageCode, string>> = {
@@ -69,6 +107,12 @@ const LANGUAGE_LABELS: Record<AppLanguage, Record<LanguageCode, string>> = {
     de: 'German',
     uk: 'Ukrainian',
   },
+  uk: {
+    pl: 'Польська',
+    en: 'Англійська',
+    de: 'Німецька',
+    uk: 'Українська',
+  },
 };
 
 const LANGUAGE_LOCALES: Record<LanguageCode, string> = {
@@ -81,11 +125,14 @@ const LANGUAGE_LOCALES: Record<LanguageCode, string> = {
 export const isLearningPairId = (value?: string): value is LearningPairId =>
   Boolean(value && LEARNING_PAIRS.some((pair) => pair.id === value));
 
+const defaultPair =
+  LEARNING_PAIRS.find((pair) => pair.id === DEFAULT_PAIR_ID) ?? LEARNING_PAIRS[0];
+
 export const getLearningPair = (pairId?: string): LearningPair => {
   if (isLearningPairId(pairId)) {
-    return LEARNING_PAIRS.find((pair) => pair.id === pairId) ?? LEARNING_PAIRS[0];
+    return LEARNING_PAIRS.find((pair) => pair.id === pairId) ?? defaultPair;
   }
-  return LEARNING_PAIRS[0];
+  return defaultPair;
 };
 
 export const buildPairId = (

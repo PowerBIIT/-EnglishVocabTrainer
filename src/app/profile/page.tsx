@@ -126,6 +126,12 @@ const missionRoutes = {
     pronunciation: { href: '/pronunciation', label: 'Pronunciation' },
     mixed: { href: '/flashcards', label: 'Mixed mode' },
   },
+  uk: {
+    flashcards: { href: '/flashcards', label: 'Флешкарти' },
+    quiz: { href: '/quiz', label: 'Квіз' },
+    pronunciation: { href: '/pronunciation', label: 'Вимова' },
+    mixed: { href: '/flashcards', label: 'Змішаний режим' },
+  },
 } as const;
 
 const profileCopy = {
@@ -321,6 +327,102 @@ const profileCopy = {
     deleteSetConfirm: (name: string) =>
       `Delete set "${name}"? Words will stay in the library without a set.`,
   },
+  uk: {
+    loading: 'Завантаження...',
+    profileLabel: 'Профіль',
+    userFallback: 'Користувач',
+    emailFallback: 'Немає e-mail',
+    logout: 'Вийти',
+    dailyMission: 'Місія дня',
+    missionStart: 'Старт',
+    missionContinue: 'Продовжити',
+    keepStreak: (days: number) => `Утримай серію: ${days} днів`,
+    levelTitle: 'Твій рівень',
+    levelLabel: (level: number) => `Рівень ${level}`,
+    progressToNext: 'Прогрес до наступного рівня',
+    masteredWords: 'Вивчені слова',
+    all: 'Усі',
+    allWords: 'Усі слова',
+    collection: 'Колекція',
+    collectionDesc: 'Твої відзнаки та скіни зростають разом із прогресом.',
+    badges: 'Відзнаки',
+    badgesEmpty: "Перші відзнаки з'являться після виконання місії.",
+    skins: 'Скіни провідника',
+    setsTitle: 'Набори слів',
+    newSetPlaceholder: 'Новий набір (напр. Контрольна з біології)',
+    addSet: 'Додати набір',
+    noSets: 'Немає наборів. Додай перший, щоб швидше обирати слова для тестів.',
+    wordsCount: (count: number) => `${count} слів`,
+    save: 'Зберегти',
+    cancel: 'Скасувати',
+    edit: 'Редагувати',
+    delete: 'Видалити',
+    unassigned: (count: number) => `Без набору: ${count} слів`,
+    settingsTitle: 'Налаштування',
+    settingsDesc: 'Зміни зберігаються автоматично, але можна також примусово зберегти.',
+    saving: 'Збереження...',
+    saved: 'Збережено',
+    saveError: 'Помилка збереження',
+    learningProfile: 'Профіль навчання',
+    learningProfileDesc:
+      'Обери мовну пару. Це встановлює мову інтерфейсу та фідбек AI.',
+    learningProfileHint:
+      'Зміна профілю не видаляє дані, лише фільтрує набори й слова.',
+    sessionSettings: 'Налаштування сесії',
+    quizQuestions: 'Питань у квізі',
+    flashcardsPerSession: 'Флешкарт у сесії',
+    timeLimit: 'Ліміт часу',
+    timeLimitDesc: 'На відповідь у квізі',
+    none: 'Немає',
+    seconds: (value: number) => `${value} секунд`,
+    wordOrder: 'Порядок слів',
+    wordOrderRandom: 'Випадковий',
+    wordOrderAlphabetical: 'Алфавітний',
+    wordOrderHardest: 'Найскладніші',
+    repeatMistakes: 'Повторювати помилки',
+    repeatMistakesDesc: 'Повторюй неправильні відповіді',
+    pronunciationSettings: 'Налаштування вимови',
+    voice: 'Голос',
+    voiceBritish: 'Британський',
+    voiceAmerican: 'Американський',
+    voiceAustralian: 'Австралійський',
+    speechSpeed: 'Швидкість мовлення',
+    speedSlow: 'Повільна',
+    speedNormal: 'Нормальна',
+    speedFast: 'Швидка',
+    autoPlay: 'Автовідтворення',
+    autoPlayDesc: 'Автоматично відтворювати вимову',
+    passingScore: 'Прохідний бал',
+    passingScoreDesc: 'Мінімальна оцінка вимови',
+    adaptiveDifficulty: 'Адаптивна складність',
+    adaptiveDifficultyDesc: 'Підлаштовує складність під рівень',
+    phonemeHints: 'Підказки фонемів',
+    phonemeHintsDesc: 'Показувати поради щодо позиції рота',
+    appearanceSound: 'Вигляд і звук',
+    languageLabel: 'Мова інтерфейсу',
+    languagePreview: 'Навігація: Старт, Слова, Вимова, Чат, Профіль.',
+    theme: 'Тема',
+    themeLight: 'Світла',
+    themeDark: 'Темна',
+    themeAuto: 'Авто',
+    sounds: 'Звуки',
+    soundsDesc: 'Звукові ефекти в застосунку',
+    aiAssistant: 'AI асистент',
+    aiFeedbackDetail: 'Детальність фідбеку',
+    aiFeedbackShort: 'Короткий',
+    aiFeedbackDetailed: 'Детальний',
+    aiFeedbackLanguage: 'Мова фідбеку AI',
+    languagePolish: 'Польська',
+    languageEnglish: 'Англійська',
+    languageGerman: 'Німецька',
+    languageUkrainian: 'Українська',
+    aiPhoneticHints: 'Фонетичні підказки',
+    aiPhoneticHintsDesc: 'Показувати поради з вимови',
+    account: 'Обліковий запис',
+    signedInAs: 'Увійшов як',
+    deleteSetConfirm: (name: string) =>
+      `Видалити набір "${name}"? Слова залишаться в бібліотеці без набору.`,
+  },
 } as const;
 
 type ProfileCopy = typeof profileCopy.pl;
@@ -463,19 +565,30 @@ export default function ProfilePage() {
 
   const badgePresets = BADGES as Record<
     string,
-    { name: string; nameEn?: string; description: string; descriptionEn?: string }
+    {
+      name: string;
+      nameEn?: string;
+      nameUk?: string;
+      description: string;
+      descriptionEn?: string;
+      descriptionUk?: string;
+    }
   >;
 
   const getBadgeName = (badge: { id: string; name: string }) => {
     const preset = badgePresets[badge.id];
     if (!preset) return badge.name;
-    return language === 'en' ? preset.nameEn ?? preset.name : preset.name;
+    if (language === 'en') return preset.nameEn ?? preset.name;
+    if (language === 'uk') return preset.nameUk ?? preset.name;
+    return preset.name;
   };
 
   const getBadgeDescription = (badge: { id: string; description: string }) => {
     const preset = badgePresets[badge.id];
     if (!preset) return badge.description;
-    return language === 'en' ? preset.descriptionEn ?? preset.description : preset.description;
+    if (language === 'en') return preset.descriptionEn ?? preset.description;
+    if (language === 'uk') return preset.descriptionUk ?? preset.description;
+    return preset.description;
   };
   const masteredCount = vocabulary.filter(
     (word) => progress[word.id]?.status === 'mastered'
@@ -868,7 +981,7 @@ export default function ProfilePage() {
             <div className="grid gap-3 md:grid-cols-3">
               {LEARNING_PAIRS.map((pair) => {
                 const isSelected = pair.id === activePair.id;
-                const label = language === 'en' ? pair.label.en : pair.label.pl;
+                const label = pair.label[language] ?? pair.label.pl;
                 const uiLabel = getLanguageLabel(pair.uiLanguage, language);
                 const aiLabel = getLanguageLabel(pair.feedbackLanguage, language);
 

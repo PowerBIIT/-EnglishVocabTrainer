@@ -76,6 +76,31 @@ const tutorCopy = {
     errorMessage:
       'I am having connection issues. Please try again in a moment.\n\nMake sure the API key is configured in .env.local.',
   },
+  uk: {
+    welcomeMessage: (targetLabel: string) =>
+      `Привіт! Я Ева, твій асистент для вивчення ${targetLabel.toLowerCase()}.\n\nМожу допомогти з:\n• Поясненням слів крок за кроком\n• Вимовою та наголосом\n• Порадами для навчання\n• Питаннями з граматики\n\nПро що хочеш запитати?`,
+    quickActions: [
+      { icon: Lightbulb, label: 'Порада дня', prompt: 'Дай пораду, як краще вчити слова' },
+      { icon: BookOpen, label: 'Поясни слово', prompt: 'Поясни слово: ' },
+      { icon: HelpCircle, label: 'Як вимовити?', prompt: 'Як правильно вимовити слово: ' },
+    ],
+    contextLabels: {
+      level: 'Рівень користувача',
+      xp: 'Загальний XP',
+      vocabulary: 'Слів у бібліотеці',
+      streak: 'Поточна серія',
+    },
+    streakSuffix: 'днів',
+    openTitle: 'Відкрити AI асистента',
+    headerTitle: 'Eva - AI Наставник',
+    headerSubtitle: 'Твій помічник у навчанні',
+    speakTitle: (targetLabel: string) => `Вимов слова ${targetLabel.toLowerCase()}`,
+    typing: 'Ева пише...',
+    quickActionsLabel: 'Швидкі дії:',
+    inputPlaceholder: 'Запитай про що завгодно...',
+    errorMessage:
+      'Маю тимчасові проблеми з підключенням. Спробуй ще раз трохи пізніше.\n\nПереконайся, що ключ API налаштовано в .env.local.',
+  },
 } as const;
 
 type TutorCopy = typeof tutorCopy.pl;

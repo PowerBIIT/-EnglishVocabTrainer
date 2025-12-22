@@ -7,6 +7,7 @@
 | Wersja aplikacji | 1.0 |
 | Data utworzenia | 2025-12-20 |
 | Środowisko testowe | Chrome 120+, Firefox 120+, Safari 17+, Edge 120+ |
+| Profile językowe | UK → PL, UK → EN, UK → DE, PL → EN, DE → EN |
 | Urządzenia | Desktop, Tablet, Mobile |
 
 ---
@@ -20,10 +21,11 @@
 - [ ] Głośniki/słuchawki (dla testów TTS)
 
 ### 2.2 Przygotowanie danych
-- [ ] Użyj nowego konta lub wyczyść dane w bazie (np. `docker compose down -v`)
-- [ ] Ustaw profil nauki na PL → EN (domyślny), jeśli nie testujesz innej pary
-- [ ] Dodaj min. 20 słówek w co najmniej 2 zestawach/kategoriach
+- [ ] Użyj nowego konta lub wyczyść dane w bazie (`docker compose down -v`, `docker compose up -d`, `npm run db:push`)
+- [ ] Wybierz aktywny profil nauki (UK → PL, UK → EN, UK → DE, PL → EN, DE → EN); dane są filtrowane per profil
+- [ ] Dodaj min. 20 słówek w co najmniej 2 zestawach/kategoriach (dla aktywnego profilu)
 - [ ] Przygotuj zdjęcie z notatkami (opcjonalnie)
+- [ ] Przygotuj plik z notatkami (TXT/PDF/DOCX/CSV, opcjonalnie)
 
 ---
 
@@ -43,10 +45,11 @@
 |------|-------|---------------------|
 | 1 | Pierwsze logowanie | Użytkownik trafia na `/onboarding` |
 | 2 | Spróbuj wejść na `/` | Przekierowanie na onboarding |
-| 3 | Wybierz parę językową | Zapis profilu nauki, przejście do wyboru skina |
-| 4 | Wybierz skina | Przejście do kroku dodania zestawu |
-| 5 | Wpisz nazwę zestawu i min. 3 słówka | Aktywny przycisk "Przejdź do misji" |
-| 6 | Ukończ misję startową | Onboarding kończy się i następuje redirect na `/` |
+| 3 | Sprawdź przełącznik języka w nagłówku | Domyślny język zgodny z regionem, w razie braku dopasowania ukraiński |
+| 4 | Wybierz parę językową | Zapis profilu nauki, przejście do wyboru skina |
+| 5 | Wybierz skina | Przejście do kroku dodania zestawu |
+| 6 | Użyj asystenta AI (tekst / foto / plik), dodaj min. 3 słówka, uzupełnij nazwę zestawu | Aktywny przycisk "Dodaj i przejdź dalej" |
+| 7 | Ukończ misję startową | Onboarding kończy się i następuje redirect na `/` |
 
 #### TC-AUTH-003: Wybór skina mascota
 | Krok | Akcja | Oczekiwany rezultat |
@@ -73,7 +76,8 @@
 | 1 | Wejdź do profilu (sekcja Ustawienia) | Widoczna karta "Profil nauki" |
 | 2 | Wybierz inną parę językową | Zmiana zapisana, UI przełącza język |
 | 3 | Przejdź do `/vocabulary` | Widoczne tylko zestawy i słówka z aktywnej pary |
-| 4 | Wróć do profilu i wybierz poprzednią parę | Poprzednie słówka/zestawy wracają bez utraty danych |
+| 4 | Przejdź do `/quiz`, `/flashcards`, `/pronunciation` | Zestawy i kategorie ograniczone do aktywnej pary |
+| 5 | Wróć do profilu i wybierz poprzednią parę | Poprzednie słówka/zestawy wracają bez utraty danych |
 
 ### 3.1 Dashboard (Strona główna)
 
@@ -218,9 +222,11 @@
 #### TC-PRON-001: Rozpoczęcie sesji wymowy
 | Krok | Akcja | Oczekiwany rezultat |
 |------|-------|---------------------|
-| 1 | Przejdź do `/pronunciation` | Słówko wyświetlone |
-| 2 | Sprawdź elementy | Słówko w języku docelowym, fonetyka (jeśli dostępna), tłumaczenie w języku ojczystym |
-| 3 | Sprawdź pasek postępu | "1 z 10" widoczne |
+| 1 | Przejdź do `/pronunciation` | Ekran konfiguracji sesji (długość, zestaw, tryb) |
+| 2 | Wybierz długość sesji, zestaw i tryb | Wybrane opcje zaznaczone |
+| 3 | Kliknij "Rozpocznij sesję" | Wyświetlone pierwsze słówko |
+| 4 | Sprawdź elementy | Słówko w języku docelowym, fonetyka (jeśli dostępna), tłumaczenie w języku ojczystym |
+| 5 | Sprawdź pasek postępu | "1 z X" widoczne |
 
 #### TC-PRON-002: Odsłuchanie wymowy wzorcowej
 | Krok | Akcja | Oczekiwany rezultat |
@@ -333,6 +339,22 @@
 | 2 | Sparsuj nowe słówka | Lista propozycji widoczna |
 | 3 | Wybierz zestaw z listy | Pole nazwy znika |
 | 4 | Kliknij "Dodaj" | Słówka przypisane do wybranego zestawu |
+
+#### TC-CHAT-009: Import słówek ze zdjęcia
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Kliknij ikonę zdjęcia w czacie | Otwiera się wybór pliku |
+| 2 | Wybierz zdjęcie z notatkami | AI parsuje słówka |
+| 3 | Sprawdź propozycje | Lista słówek z możliwością wyboru |
+| 4 | Dodaj słówka | Słówka trafiają do wybranego zestawu |
+
+#### TC-CHAT-010: Import słówek z pliku
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Kliknij ikonę pliku w czacie | Otwiera się wybór pliku |
+| 2 | Wybierz TXT/PDF/DOCX/CSV | AI parsuje słówka |
+| 3 | Sprawdź propozycje | Lista słówek z możliwością wyboru |
+| 4 | Dodaj słówka | Słówka trafiają do wybranego zestawu |
 
 ---
 
@@ -597,6 +619,13 @@
 | 1 | Przypisz słówka do zestawu | Słówka w zestawie |
 | 2 | Odśwież stronę | Przypisanie zachowane |
 | 3 | Usuń zestaw w profilu | Słówka przechodzą do "Bez zestawu" |
+
+#### TC-SYNC-003: Separacja danych wg profilu
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Dodaj słówko w profilu PL → EN | Słówko widoczne w bibliotece |
+| 2 | Zmień profil na DE → EN lub UK → PL | Słówko z PL → EN nie jest widoczne |
+| 3 | Wróć do profilu PL → EN | Słówko widoczne ponownie |
 
 ---
 

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { AITutor } from '@/components/ai/AITutor';
+import { useLanguage } from '@/lib/i18n';
 
 const PUBLIC_PATHS = new Set(['/login', '/onboarding']);
 
@@ -11,7 +12,12 @@ export function ClientLayout() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const language = useLanguage();
   const isPublic = PUBLIC_PATHS.has(pathname);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   useEffect(() => {
     if (isPublic || status === 'loading') {

@@ -108,6 +108,44 @@ const drillsCopy = {
       'Switch the learning profile in settings to use these drills.',
     backToTraining: 'Back to pronunciation training',
   },
+  uk: {
+    loading: 'Завантаження...',
+    title: 'Вправи фонемів',
+    subtitle: 'Складні звуки для носіїв польської',
+    intro:
+      'Ці вправи зосереджені на звуках, які найважчі для носіїв польської. Кожна вправа містить інструкції, як правильно вимовляти звук.',
+    learnTitle: 'Гід з вимови',
+    polishEquivalent: 'Польський відповідник:',
+    commonMistake: 'Поширена помилка:',
+    howTo: 'Як вимовляти:',
+    mouthPosition: 'Положення рота:',
+    minimalPairs: 'Мінімальні пари',
+    minimalPairsDesc: 'Послухай різницю між схожими словами:',
+    startPractice: 'Почати вправу',
+    practiceTitle: (symbol: string) => `${symbol} Вправа`,
+    progressLabel: (current: number, total: number) => `${current} з ${total}`,
+    positionLabel: (label: string) => `Позиція: ${label}`,
+    listenPronunciation: 'Прослухай вимову',
+    recordingActive: 'Говорю... Натисни, щоб зупинити',
+    recordingIdle: 'Натисни мікрофон і скажи слово',
+    hintLabel: 'Порада:',
+    recognized: (text: string) => `Розпізнано: "${text}"`,
+    repeat: 'Повторити',
+    next: 'Далі',
+    finish: 'Завершити',
+    completeTitle: 'Вправа завершена!',
+    averageScore: (score: number) => `Середня оцінка: ${score.toFixed(1)}/10`,
+    wordsLabel: 'Слова',
+    goodPronunciations: 'Добрі вимови',
+    chooseAnother: 'Обери інший фонем',
+    repeatExercise: 'Повторити вправу',
+    backToPronunciation: 'Повернутися до тренування вимови',
+    recognitionUnsupported: 'Твій браузер не підтримує розпізнавання мови. Спробуй Chrome.',
+    notAvailableTitle: 'Вправи фонемів доступні лише для профілю Польська → Англійська.',
+    notAvailableDesc:
+      'Зміни профіль навчання в налаштуваннях, щоб користуватися цими вправами.',
+    backToTraining: 'Повернутися до тренування вимови',
+  },
 } as const;
 
 type DrillsCopy = typeof drillsCopy.pl;
@@ -123,6 +161,11 @@ const DIFFICULTY_LABELS = {
     medium: 'Medium',
     hard: 'Hard',
   },
+  uk: {
+    easy: 'Легкий',
+    medium: 'Середній',
+    hard: 'Складний',
+  },
 } as const;
 
 const POSITION_LABELS = {
@@ -135,6 +178,11 @@ const POSITION_LABELS = {
     initial: 'beginning',
     medial: 'middle',
     final: 'end',
+  },
+  uk: {
+    initial: 'початок',
+    medial: 'середина',
+    final: 'кінець',
   },
 } as const;
 

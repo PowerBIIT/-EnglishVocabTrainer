@@ -38,6 +38,16 @@ const flashcardCopy = {
     difficult: 'Hard',
     know: 'I know',
   },
+  uk: {
+    tapToReveal: 'Натисни, щоб побачити переклад',
+    progressLabel: (current: number, total: number) => `${current} з ${total}`,
+    easy: 'Легке',
+    medium: 'Середнє',
+    hard: 'Складне',
+    repeat: 'Повторити',
+    difficult: 'Складне',
+    know: 'Знаю',
+  },
 } as const;
 
 type FlashcardCopy = typeof flashcardCopy.pl;

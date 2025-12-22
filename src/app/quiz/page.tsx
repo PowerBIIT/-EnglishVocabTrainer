@@ -84,6 +84,37 @@ const quizPageCopy = {
     modeMixed: 'Mixed',
     modeMixedDesc: 'Random all modes',
   },
+  uk: {
+    loading: 'Завантаження...',
+    title: 'Квіз',
+    subtitle: 'Обери набір і перевір свої знання',
+    modeTitle: 'Режим квізу',
+    setTitle: 'Набір',
+    categoryTitle: 'Категорія',
+    all: 'Усі',
+    unassigned: 'Без набору',
+    change: 'Змінити',
+    startQuiz: 'Почати квіз',
+    quizResults: 'Результати квізу',
+    quizWithMode: (label: string) => `Квіз - ${label}`,
+    needFourWords: 'Потрібно щонайменше 4 слова, щоб почати квіз!',
+    needFourWrong: 'Потрібно щонайменше 4 помилки, щоб повторити!',
+    questionsLabel: (count: number | 'all') =>
+      `${count === 'all' ? 'Усі' : count} запитань`,
+    modeTargetToNative: (target: string, native: string) => `${target} → ${native}`,
+    modeTargetToNativeDesc: (target: string, native: string) =>
+      `Слово ${target.toLowerCase()}, обери переклад ${native.toLowerCase()}`,
+    modeNativeToTarget: (native: string, target: string) => `${native} → ${target}`,
+    modeNativeToTargetDesc: (native: string, target: string) =>
+      `Слово ${native.toLowerCase()}, обери переклад ${target.toLowerCase()}`,
+    modeTyping: 'Введення',
+    modeTypingDesc: (target: string) => `Введи переклад мовою ${target.toLowerCase()}`,
+    modeListening: 'Слухання',
+    modeListeningDesc: (target: string, native: string) =>
+      `Прослухай слово (${target.toLowerCase()}) і обери переклад ${native.toLowerCase()}`,
+    modeMixed: 'Змішаний',
+    modeMixedDesc: 'Випадково всі режими',
+  },
 } as const;
 
 type QuizPageCopy = typeof quizPageCopy.pl;

@@ -59,6 +59,27 @@ const quizCopy = {
     review: 'Review:',
     yourAnswer: (answer: string) => `Your answer: ${answer || '(none)'}`,
   },
+  uk: {
+    chooseTranslation: (label: string) => `Обери переклад ${label.toLowerCase()}`,
+    typeTranslation: (label: string) =>
+      `Введи переклад мовою ${label.toLowerCase()}`,
+    listenAndChoose: (target: string, native: string) =>
+      `Прослухай слово (${target.toLowerCase()}) і обери переклад ${native.toLowerCase()}`,
+    typeAnswer: 'Введи відповідь...',
+    check: 'Перевірити',
+    correctAnswer: 'Правильна відповідь',
+    questionLabel: (current: number, total: number) => `Питання ${current} з ${total}`,
+    correctCount: (count: number) => `${count} правильних`,
+    wrongCount: (count: number) => `${count} помилкових`,
+    perfect: 'Ідеально!',
+    allCorrect: 'Усі відповіді правильні!',
+    score: (value: number) => `Результат: ${value}%`,
+    scoreDetails: (correct: number, total: number) => `${correct} з ${total} правильних відповідей`,
+    finish: 'Завершити',
+    retryWrong: 'Повторити помилки',
+    review: 'До повторення:',
+    yourAnswer: (answer: string) => `Твоя відповідь: ${answer || '(немає)'}`,
+  },
 } as const;
 
 type QuizCopy = typeof quizCopy.pl;

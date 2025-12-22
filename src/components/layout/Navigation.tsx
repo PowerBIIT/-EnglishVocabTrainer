@@ -8,6 +8,7 @@ import { useVocabStore } from '@/lib/store';
 
 const navLabels = {
   pl: {
+    brand: 'Trener',
     home: 'Start',
     vocabulary: 'Słówka',
     pronunciation: 'Wymowa',
@@ -15,11 +16,20 @@ const navLabels = {
     profile: 'Profil',
   },
   en: {
+    brand: 'Trainer',
     home: 'Home',
     vocabulary: 'Vocabulary',
     pronunciation: 'Pronunciation',
     chat: 'Chat',
     profile: 'Profile',
+  },
+  uk: {
+    brand: 'Тренер',
+    home: 'Старт',
+    vocabulary: 'Слова',
+    pronunciation: 'Вимова',
+    chat: 'Чат',
+    profile: 'Профіль',
   },
 } as const;
 
@@ -48,7 +58,7 @@ export function Navigation() {
             <div className="w-10 h-10 rounded-2xl bg-primary-100 dark:bg-primary-900 flex items-center justify-center font-display text-lg">
               EV
             </div>
-            <span className="text-xs text-slate-500">Trainer</span>
+            <span className="text-xs text-slate-500">{labels.brand}</span>
           </div>
           <ul className="flex justify-around items-center h-[calc(4rem+env(safe-area-inset-bottom))] md:h-auto md:flex-col md:gap-3 md:mt-4 w-full">
             {navItems.map(({ href, icon: Icon, key }) => {

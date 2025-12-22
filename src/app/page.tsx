@@ -92,6 +92,35 @@ const homeCopy = {
     badges: 'Your badges',
     defaultName: 'Explorer',
   },
+  uk: {
+    loading: 'Завантаження...',
+    greeting: (name: string) => `Вітаю, ${name}`,
+    todayAdventure: 'Твоя сьогоднішня пригода',
+    streak: (days: number) => `Серія ${days}`,
+    dailyMission: 'Місія дня',
+    missionContinue: 'Продовжити навчання',
+    missionStart: 'Почати місію',
+    dueWords: (count: number) => `До повторення: ${count} слів`,
+    flashcards: 'Флешкарти',
+    flashcardsDesc: 'Швидкий спринт на 3 хв',
+    quiz: 'Квіз',
+    quizDesc: 'Часовий виклик',
+    pronunciation: 'Вимова',
+    pronunciationDesc: 'Тренування голосу',
+    guide: 'Твій провідник',
+    adventureMode: 'Режим пригоди',
+    guideNote: 'Сьогодні мета — зберегти темп. Обери місію та здобудь нагороду.',
+    levelLabel: (level: number) => `Рівень ${level}`,
+    progressToNext: 'Прогрес до наступного рівня',
+    progressByCategory: 'Прогрес за категоріями',
+    overallProgress: 'Загальний прогрес',
+    totalWords: 'Усі слова',
+    mastered: 'Вивчені',
+    longestStreak: 'Найдовша серія',
+    sessionsCompleted: 'Сесій завершено',
+    badges: 'Твої відзнаки',
+    defaultName: 'Досліднику',
+  },
 } as const;
 
 type HomeCopy = typeof homeCopy.pl;
@@ -114,19 +143,30 @@ export default function HomePage() {
 
   const badgePresets = BADGES as Record<
     string,
-    { name: string; nameEn?: string; description: string; descriptionEn?: string }
+    {
+      name: string;
+      nameEn?: string;
+      nameUk?: string;
+      description: string;
+      descriptionEn?: string;
+      descriptionUk?: string;
+    }
   >;
 
   const getBadgeName = (badge: { id: string; name: string }) => {
     const preset = badgePresets[badge.id];
     if (!preset) return badge.name;
-    return language === 'en' ? preset.nameEn ?? preset.name : preset.name;
+    if (language === 'en') return preset.nameEn ?? preset.name;
+    if (language === 'uk') return preset.nameUk ?? preset.name;
+    return preset.name;
   };
 
   const getBadgeDescription = (badge: { id: string; description: string }) => {
     const preset = badgePresets[badge.id];
     if (!preset) return badge.description;
-    return language === 'en' ? preset.descriptionEn ?? preset.description : preset.description;
+    if (language === 'en') return preset.descriptionEn ?? preset.description;
+    if (language === 'uk') return preset.descriptionUk ?? preset.description;
+    return preset.description;
   };
 
   const masteredCount = vocabulary.filter(

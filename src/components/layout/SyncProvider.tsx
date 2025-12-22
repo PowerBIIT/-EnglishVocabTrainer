@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useVocabStore } from '@/lib/store';
+import { isAppLanguage } from '@/lib/i18n';
 import type { AppState } from '@/types';
 
 const SYNC_DEBOUNCE_MS = 800;
@@ -16,6 +17,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const hydrateFromServer = useVocabStore((state) => state.hydrateFromServer);
   const setReady = useVocabStore((state) => state.setReady);
   const isReady = useVocabStore((state) => state.isReady);
+  const updateSettings = useVocabStore((state) => state.updateSettings);
 
   const syncPayload = useVocabStore((state) => ({
     vocabulary: state.vocabulary,
@@ -48,6 +50,15 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
         }
 
         hydrateFromServer(payload.data as unknown as AppState);
+        try {
+          const pendingLanguage = window.localStorage.getItem('pendingLanguage');
+          if (pendingLanguage && isAppLanguage(pendingLanguage)) {
+            updateSettings('general', { language: pendingLanguage });
+          }
+          window.localStorage.removeItem('pendingLanguage');
+        } catch (error) {
+          console.warn('Unable to apply pending language preference.', error);
+        }
         hasLoadedRef.current = true;
       } catch (error) {
         if (!cancelled) {
