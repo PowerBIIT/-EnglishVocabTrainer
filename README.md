@@ -60,6 +60,7 @@ CI runs lint + typecheck + unit + e2e on PR and `main`.
 Azure deployment (UAT + PRD) is documented in `docs/DEPLOYMENT_AZURE.md`.
 `/api/health` returns build metadata (`APP_VERSION`, `APP_COMMIT_SHA`, `APP_BUILD_TIME`)
 for post-deploy verification.
+Ops runbook: `docs/RUNBOOK.md`.
 
 ## CI/CD
 - `CI`: `.github/workflows/ci.yml`

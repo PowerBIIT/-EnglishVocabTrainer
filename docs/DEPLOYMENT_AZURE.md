@@ -2,6 +2,20 @@
 
 This setup uses Azure App Service (Linux) + Azure Database for PostgreSQL Flexible Server and GitHub Actions.
 
+## Current project settings (this repo)
+
+- Region: `polandcentral`
+- Resource group: `evt-rg-pl`
+- App Service plan: `evt-plan-pl`
+- UAT web app: `evt-uat-pl-44b1` (`https://evt-uat-pl-44b1.azurewebsites.net`)
+- PRD web app: `evt-prd-pl-44b1` (`https://evt-prd-pl-44b1.azurewebsites.net`)
+- Postgres flexible server: `evt-pg-pl-44b1`
+- Databases: `evt_uat`, `evt_prd`
+
+Notes:
+- UAT database is reset on every deploy (see `.github/workflows/deploy-uat.yml`).
+- PRD never resets data; it verifies migrations with `prisma migrate status`.
+
 ## 1) Provision Azure resources
 
 Run the script with your preferred names (web app names must be globally unique).
