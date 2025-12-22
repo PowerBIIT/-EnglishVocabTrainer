@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { CheckCircle2, Flag, Sparkles } from 'lucide-react';
 import { mascotSkins } from '@/data/mascotSkins';
@@ -39,6 +39,7 @@ const onboardingCopy = {
   pl: {
     loading: 'Ładowanie...',
     onboardingLabel: 'Onboarding',
+    signOut: 'Wyloguj się',
     title: 'Start przygody',
     languageLabel: 'Język',
     stepLabel: (current: number, total: number) => `Krok ${current} z ${total}`,
@@ -69,6 +70,7 @@ const onboardingCopy = {
   en: {
     loading: 'Loading...',
     onboardingLabel: 'Onboarding',
+    signOut: 'Sign out',
     title: 'Start the adventure',
     languageLabel: 'Language',
     stepLabel: (current: number, total: number) => `Step ${current} of ${total}`,
@@ -99,6 +101,7 @@ const onboardingCopy = {
   uk: {
     loading: 'Завантаження...',
     onboardingLabel: 'Онбординг',
+    signOut: 'Вийти',
     title: 'Початок пригоди',
     languageLabel: 'Мова',
     stepLabel: (current: number, total: number) => `Крок ${current} з ${total}`,
@@ -293,6 +296,14 @@ export default function OnboardingPage() {
                 </button>
               </div>
             </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => signOut({ callbackUrl: '/login' })}
+            >
+              {t.signOut}
+            </Button>
           </div>
         </header>
 
