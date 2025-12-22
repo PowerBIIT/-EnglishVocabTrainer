@@ -31,15 +31,16 @@ Notes:
 App settings are injected at deploy time from GitHub environment secrets.
 The deploy workflow also sets the startup command to `npm start`.
 
-## 3) Initialize database schema (once per environment)
+## 3) Database migrations
 
-Because there are no migrations yet, use `db push` once:
+Migrations are applied inside App Service on startup:
 
-```bash
-DATABASE_URL="..." npx prisma db push
+```
+node scripts/ensure-migrations.js && npx prisma migrate deploy
 ```
 
-When you add migrations, switch to `npx prisma migrate deploy`.
+The helper script baselines existing databases (created via `db push`) by marking the initial
+migration as applied when tables already exist.
 
 Note: Azure PostgreSQL Flexible Server uses the admin user name as-is in the connection string
 (no `@server` suffix).
@@ -94,7 +95,29 @@ gh secret set GEMINI_API_KEY -b "<api-key>" -e uat
 gh secret set GEMINI_API_KEY -b "<api-key>" -e prd
 gh secret set DATABASE_URL -b "<database-url-uat>" -e uat
 gh secret set DATABASE_URL -b "<database-url-prd>" -e prd
+gh secret set ALLOWLIST_EMAILS -b "person@company.com, other@company.com" -e uat
+gh secret set ALLOWLIST_EMAILS -b "person@company.com, other@company.com" -e prd
+gh secret set ADMIN_EMAILS -b "admin@company.com" -e uat
+gh secret set ADMIN_EMAILS -b "admin@company.com" -e prd
+gh secret set MAX_ACTIVE_USERS -b "100" -e uat
+gh secret set MAX_ACTIVE_USERS -b "100" -e prd
+gh secret set FREE_AI_REQUESTS_PER_MONTH -b "60" -e uat
+gh secret set FREE_AI_REQUESTS_PER_MONTH -b "60" -e prd
+gh secret set FREE_AI_UNITS_PER_MONTH -b "120000" -e uat
+gh secret set FREE_AI_UNITS_PER_MONTH -b "120000" -e prd
+gh secret set PRO_AI_REQUESTS_PER_MONTH -b "600" -e uat
+gh secret set PRO_AI_REQUESTS_PER_MONTH -b "600" -e prd
+gh secret set PRO_AI_UNITS_PER_MONTH -b "1200000" -e uat
+gh secret set PRO_AI_UNITS_PER_MONTH -b "1200000" -e prd
+gh secret set GLOBAL_AI_REQUESTS_PER_MONTH -b "6000" -e uat
+gh secret set GLOBAL_AI_REQUESTS_PER_MONTH -b "6000" -e prd
+gh secret set GLOBAL_AI_UNITS_PER_MONTH -b "12000000" -e uat
+gh secret set GLOBAL_AI_UNITS_PER_MONTH -b "12000000" -e prd
 ```
+
+Notes:
+- Leave allowlist empty to allow all users.
+- `ADMIN_EMAILS` controls access to `/admin`.
 
 ## 5) Environments & approvals
 

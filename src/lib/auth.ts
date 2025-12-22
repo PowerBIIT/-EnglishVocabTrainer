@@ -2,7 +2,10 @@ import type { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import type { AccessStatus, Plan } from '@prisma/client';
 import { prisma } from '@/lib/db';
+import { ensureUserPlan } from '@/lib/userPlan';
+import { isAdminEmail } from '@/lib/access';
 
 const providers: NextAuthOptions['providers'] = [
   GoogleProvider({
@@ -60,6 +63,17 @@ export const authOptions: NextAuthOptions = {
         token.userId = user.id;
         token.onboardingComplete = (user as { onboardingComplete?: boolean }).onboardingComplete ?? false;
         token.mascotSkin = (user as { mascotSkin?: string }).mascotSkin ?? 'explorer';
+        token.email = user.email;
+
+        const plan = await ensureUserPlan(user.id, user.email);
+        token.plan = plan.plan;
+        token.accessStatus = plan.accessStatus;
+        token.isAdmin = isAdminEmail(user.email);
+      } else if (!token.plan && token.userId) {
+        const plan = await ensureUserPlan(token.userId, token.email ?? undefined);
+        token.plan = plan.plan;
+        token.accessStatus = plan.accessStatus;
+        token.isAdmin = isAdminEmail(token.email ?? undefined);
       }
 
       if (trigger === 'update' && session) {
@@ -68,6 +82,12 @@ export const authOptions: NextAuthOptions = {
         }
         if ((session as { mascotSkin?: string }).mascotSkin) {
           token.mascotSkin = (session as { mascotSkin?: string }).mascotSkin;
+        }
+        if ((session as { plan?: string }).plan) {
+          token.plan = (session as { plan?: string }).plan;
+        }
+        if ((session as { accessStatus?: string }).accessStatus) {
+          token.accessStatus = (session as { accessStatus?: string }).accessStatus;
         }
       }
 
@@ -78,6 +98,9 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.userId as string;
         session.user.onboardingComplete = Boolean(token.onboardingComplete);
         session.user.mascotSkin = (token.mascotSkin as string) || 'explorer';
+        session.user.plan = (token.plan as Plan) ?? 'FREE';
+        session.user.accessStatus = (token.accessStatus as AccessStatus) ?? 'ACTIVE';
+        session.user.isAdmin = Boolean(token.isAdmin);
       }
       return session;
     },

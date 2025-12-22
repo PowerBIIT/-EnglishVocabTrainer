@@ -40,6 +40,15 @@ Notes:
 - AI features need `GEMINI_API_KEY`.
 - Google login needs OAuth credentials. E2E uses a test login when `E2E_TEST=true`.
 
+## Access control & limits
+- Allowlist: `ALLOWLIST_EMAILS` (comma/space separated). If set, only listed emails are active.
+- Admins: `ADMIN_EMAILS` to access `/admin` dashboard.
+- Capacity: `MAX_ACTIVE_USERS` (over-capacity users are routed to `/waitlist`).
+- Per-plan AI limits (monthly): `FREE_AI_REQUESTS_PER_MONTH`, `FREE_AI_UNITS_PER_MONTH`,
+  `PRO_AI_REQUESTS_PER_MONTH`, `PRO_AI_UNITS_PER_MONTH`.
+- Global AI limits (monthly): `GLOBAL_AI_REQUESTS_PER_MONTH`, `GLOBAL_AI_UNITS_PER_MONTH`.
+- User plans live in `UserPlan` (default `FREE`); upgrade to `PRO` manually until Stripe is added.
+
 ## Testing
 - Unit tests: `npm run test:unit`
 - E2E tests: `npm run test:e2e`
@@ -56,5 +65,5 @@ Azure deployment (UAT + PRD) is documented in `docs/DEPLOYMENT_AZURE.md`.
 - `Deploy PRD`: `.github/workflows/deploy-prd.yml` (manual)
 
 ## Data model
-No migrations yet. Production uses `prisma db push` for now; switch to migrations when the schema
-stabilizes.
+Migrations are stored in `prisma/migrations`. Deployments run
+`node scripts/ensure-migrations.js` + `prisma migrate deploy` on startup.

@@ -1,4 +1,5 @@
 import { DefaultSession } from 'next-auth';
+import type { AccessStatus, Plan } from '@prisma/client';
 
 declare module 'next-auth' {
   interface Session {
@@ -6,6 +7,9 @@ declare module 'next-auth' {
       id: string;
       onboardingComplete: boolean;
       mascotSkin: string;
+      plan: Plan;
+      accessStatus: AccessStatus;
+      isAdmin: boolean;
     } & DefaultSession['user'];
   }
 }
@@ -15,5 +19,9 @@ declare module 'next-auth/jwt' {
     userId?: string;
     onboardingComplete?: boolean;
     mascotSkin?: string;
+    plan?: Plan;
+    accessStatus?: AccessStatus;
+    isAdmin?: boolean;
+    email?: string | null;
   }
 }

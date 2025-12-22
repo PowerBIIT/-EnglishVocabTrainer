@@ -86,6 +86,34 @@
 | 4 | Przejdź do `/quiz`, `/flashcards`, `/pronunciation` | Zestawy i kategorie ograniczone do aktywnej pary |
 | 5 | Wróć do profilu i wybierz poprzednią parę | Poprzednie słówka/zestawy wracają bez utraty danych |
 
+#### TC-AUTH-007: Lista oczekujących (MAX_ACTIVE_USERS)
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Ustaw `MAX_ACTIVE_USERS=1` i zaloguj się jako użytkownik A | Użytkownik A ma dostęp |
+| 2 | Zaloguj się jako użytkownik B | Użytkownik B trafia na `/waitlist` |
+| 3 | Odśwież stronę `/waitlist` | Status pozostaje na liście oczekujących |
+
+#### TC-AUTH-008: Allowlista emaili
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Ustaw `ALLOWLIST_EMAILS` na e-mail użytkownika A | Użytkownik A ma dostęp |
+| 2 | Zaloguj się jako użytkownik spoza listy | Użytkownik trafia na `/waitlist` |
+
+#### TC-ADMIN-001: Panel admina
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Ustaw `ADMIN_EMAILS` na e-mail użytkownika A | Użytkownik A widzi `/admin` |
+| 2 | Wejdź na `/admin` jako użytkownik A | Widoczne statystyki i limity |
+| 3 | Wejdź na `/admin` jako użytkownik bez uprawnień | Przekierowanie na `/` |
+
+#### TC-LIMIT-001: Limity AI (per-user i globalne)
+| Krok | Akcja | Oczekiwany rezultat |
+|------|-------|---------------------|
+| 1 | Ustaw `FREE_AI_REQUESTS_PER_MONTH=1` | Limit aktywny |
+| 2 | Wykonaj 2 żądania AI (np. generowanie słówek) | Drugie żądanie pokazuje komunikat o limicie i używa fallbacku |
+| 3 | Ustaw `GLOBAL_AI_REQUESTS_PER_MONTH=1` | Limit globalny aktywny |
+| 4 | Wykonaj 2 żądania AI z różnych kont | Drugie żądanie blokowane globalnie |
+
 ### 3.1 Dashboard (Strona główna)
 
 #### TC-DASH-001: Wyświetlanie statystyk początkowych

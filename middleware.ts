@@ -4,6 +4,7 @@ import { getToken } from 'next-auth/jwt';
 
 const PUBLIC_PATHS = ['/login'];
 const ONBOARDING_PATH = '/onboarding';
+const WAITLIST_PATH = '/waitlist';
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -25,6 +26,23 @@ export async function middleware(req: NextRequest) {
     const loginUrl = new URL('/login', req.url);
     loginUrl.searchParams.set('from', pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  const accessStatus = (token?.accessStatus as string | undefined) ?? 'ACTIVE';
+
+  if (accessStatus !== 'ACTIVE') {
+    if (pathname !== WAITLIST_PATH) {
+      return NextResponse.redirect(new URL(WAITLIST_PATH, req.url));
+    }
+    return NextResponse.next();
+  }
+
+  if (pathname === WAITLIST_PATH) {
+    return NextResponse.redirect(new URL('/', req.url));
+  }
+
+  if (pathname.startsWith('/admin') && !token?.isAdmin) {
+    return NextResponse.redirect(new URL('/', req.url));
   }
 
   const onboardingComplete = Boolean(token.onboardingComplete);

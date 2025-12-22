@@ -144,6 +144,8 @@ const pronunciationCopy = {
       startFailed: 'Nie udało się uruchomić rozpoznawania mowy',
       aiSending: 'Wysyłam do AI...',
       aiFallback: 'Używam lokalnej oceny...',
+      aiLimitReached: 'Limit AI wyczerpany. Używam lokalnej oceny...',
+      aiGlobalLimitReached: 'Globalny limit AI osiągnięty. Używam lokalnej oceny...',
       aiInvalid: 'Nieprawidłowa odpowiedź API',
       aiDone: 'Analiza gotowa.',
     },
@@ -225,6 +227,8 @@ const pronunciationCopy = {
       startFailed: 'Could not start speech recognition',
       aiSending: 'Sending to AI...',
       aiFallback: 'Using local evaluation...',
+      aiLimitReached: 'AI limit reached. Using local evaluation...',
+      aiGlobalLimitReached: 'Global AI limit reached. Using local evaluation...',
       aiInvalid: 'Invalid API response',
       aiDone: 'Analysis ready.',
     },
@@ -306,6 +310,8 @@ const pronunciationCopy = {
       startFailed: 'Не вдалося запустити розпізнавання мови',
       aiSending: 'Надсилаю в AI...',
       aiFallback: 'Використовую локальну оцінку...',
+      aiLimitReached: 'Ліміт AI вичерпано. Використовую локальну оцінку...',
+      aiGlobalLimitReached: 'Глобальний ліміт AI вичерпано. Використовую локальну оцінку...',
       aiInvalid: 'Некоректна відповідь API',
       aiDone: 'Аналіз готовий.',
     },
@@ -658,6 +664,16 @@ export default function PronunciationPage() {
       console.log('API response:', data);
 
       // If API returned fallback flag or error, use local evaluation
+      if (data.error === 'user_limit_reached') {
+        setRecordingStatus(t.status.aiLimitReached);
+        evaluateLocally(spoken);
+        return;
+      }
+      if (data.error === 'global_limit_reached') {
+        setRecordingStatus(t.status.aiGlobalLimitReached);
+        evaluateLocally(spoken);
+        return;
+      }
       if (data.fallback || data.error) {
         console.log('API fallback triggered:', data.error || 'No API key');
         setRecordingStatus(t.status.aiFallback);

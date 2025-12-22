@@ -9,7 +9,7 @@ import type { AppState } from '@/types';
 const SYNC_DEBOUNCE_MS = 800;
 
 export function SyncProvider({ children }: { children: React.ReactNode }) {
-  const { status } = useSession();
+  const { data: session, status } = useSession();
   const hasLoadedRef = useRef(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const lastPayloadRef = useRef<string>('');
@@ -29,8 +29,10 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   }));
 
   useEffect(() => {
-    if (status !== 'authenticated') {
+    if (status !== 'authenticated' || session?.user?.accessStatus !== 'ACTIVE') {
       if (status === 'unauthenticated') {
+        setReady(true);
+      } else if (status === 'authenticated') {
         setReady(true);
       }
       return;
@@ -72,10 +74,15 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [hydrateFromServer, setReady, status]);
+  }, [hydrateFromServer, setReady, session?.user?.accessStatus, status]);
 
   useEffect(() => {
-    if (status !== 'authenticated' || !isReady || !hasLoadedRef.current) {
+    if (
+      status !== 'authenticated' ||
+      session?.user?.accessStatus !== 'ACTIVE' ||
+      !isReady ||
+      !hasLoadedRef.current
+    ) {
       return;
     }
 
@@ -97,7 +104,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({ data: syncPayload }),
       }).catch(() => null);
     }, SYNC_DEBOUNCE_MS);
-  }, [isReady, status, syncPayload]);
+  }, [isReady, session?.user?.accessStatus, status, syncPayload]);
 
   useEffect(() => {
     return () => {

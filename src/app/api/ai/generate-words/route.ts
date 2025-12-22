@@ -9,6 +9,7 @@ import {
 } from '@/lib/apiLimits';
 import { normalizeNativeLanguage, normalizeTargetLanguage } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { enforceAiUsage } from '@/lib/aiAccess';
 
 interface GeneratedWord {
   target: string;
@@ -89,6 +90,16 @@ export async function POST(request: NextRequest) {
 
     const safeTargetLanguage = normalizeTargetLanguage(targetLanguage);
     const safeNativeLanguage = normalizeNativeLanguage(nativeLanguage);
+
+    const estimatedUnits = topicValue.length + requestedCount * 20;
+    const usage = await enforceAiUsage({
+      userId: session.user.id,
+      email: session.user.email,
+      units: estimatedUnits,
+    });
+    if (!usage.ok) {
+      return NextResponse.json(usage.body, { status: usage.status });
+    }
 
     const gemini = new GeminiService(apiKey);
     const prompt = AI_PROMPTS.generateWords(

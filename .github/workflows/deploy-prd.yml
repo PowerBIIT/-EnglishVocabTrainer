@@ -63,6 +63,15 @@ jobs:
                 GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
                 GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
                 DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+                ALLOWLIST_EMAILS="${{ secrets.ALLOWLIST_EMAILS }}" \
+                ADMIN_EMAILS="${{ secrets.ADMIN_EMAILS }}" \
+                MAX_ACTIVE_USERS="${{ secrets.MAX_ACTIVE_USERS }}" \
+                FREE_AI_REQUESTS_PER_MONTH="${{ secrets.FREE_AI_REQUESTS_PER_MONTH }}" \
+                FREE_AI_UNITS_PER_MONTH="${{ secrets.FREE_AI_UNITS_PER_MONTH }}" \
+                PRO_AI_REQUESTS_PER_MONTH="${{ secrets.PRO_AI_REQUESTS_PER_MONTH }}" \
+                PRO_AI_UNITS_PER_MONTH="${{ secrets.PRO_AI_UNITS_PER_MONTH }}" \
+                GLOBAL_AI_REQUESTS_PER_MONTH="${{ secrets.GLOBAL_AI_REQUESTS_PER_MONTH }}" \
+                GLOBAL_AI_UNITS_PER_MONTH="${{ secrets.GLOBAL_AI_UNITS_PER_MONTH }}" \
                 E2E_TEST=false \
                 NEXT_PUBLIC_E2E_TEST=false
 
@@ -73,7 +82,7 @@ jobs:
             az webapp config set \
               --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
               --name "${{ secrets.AZURE_WEBAPP_NAME_PRD }}" \
-              --startup-file "npm start"
+              --startup-file "bash -c \"node scripts/ensure-migrations.js && npx prisma migrate deploy && npm start\""
 
       - name: Prune dev dependencies
         run: npm prune --omit=dev
@@ -86,6 +95,7 @@ jobs:
           cp -R .next .deploy/
           cp -R node_modules .deploy/
           if [ -d prisma ]; then cp -R prisma .deploy/; fi
+          if [ -d scripts ]; then cp -R scripts .deploy/; fi
 
       - name: Deploy to Azure Web App (PRD)
         uses: azure/webapps-deploy@v3

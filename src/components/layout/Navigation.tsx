@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, Mic, MessageCircle, UserCircle } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { Home, BookOpen, Mic, MessageCircle, UserCircle, Shield } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useVocabStore } from '@/lib/store';
 
@@ -14,6 +15,7 @@ const navLabels = {
     pronunciation: 'Wymowa',
     chat: 'Czat',
     profile: 'Profil',
+    admin: 'Admin',
   },
   en: {
     brand: 'Trainer',
@@ -22,6 +24,7 @@ const navLabels = {
     pronunciation: 'Pronunciation',
     chat: 'Chat',
     profile: 'Profile',
+    admin: 'Admin',
   },
   uk: {
     brand: 'Тренер',
@@ -30,6 +33,7 @@ const navLabels = {
     pronunciation: 'Вимова',
     chat: 'Чат',
     profile: 'Профіль',
+    admin: 'Адмін',
   },
 } as const;
 
@@ -43,12 +47,18 @@ const navItems = [
 
 export function Navigation() {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const language = useVocabStore((state) => state.settings.general.language);
   const labels = navLabels[language] ?? navLabels.pl;
+  const isAdmin = Boolean(session?.user?.isAdmin);
 
-  if (pathname === '/login' || pathname === '/onboarding') {
+  if (pathname === '/login' || pathname === '/onboarding' || pathname === '/waitlist') {
     return null;
   }
+
+  const items = isAdmin
+    ? [...navItems, { href: '/admin', icon: Shield, key: 'admin' as const }]
+    : navItems;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 md:top-0 md:left-0 md:right-auto md:h-screen md:w-24 bg-white/90 dark:bg-slate-900/90 border-t md:border-t-0 md:border-r border-slate-200 dark:border-slate-700 backdrop-blur z-50 pb-[env(safe-area-inset-bottom)] md:pb-0">
@@ -61,7 +71,7 @@ export function Navigation() {
             <span className="text-xs text-slate-500">{labels.brand}</span>
           </div>
           <ul className="flex justify-around items-center h-[calc(4rem+env(safe-area-inset-bottom))] md:h-auto md:flex-col md:gap-3 md:mt-4 w-full">
-            {navItems.map(({ href, icon: Icon, key }) => {
+            {items.map(({ href, icon: Icon, key }) => {
               const isActive = pathname === href;
               const label = labels[key];
               return (

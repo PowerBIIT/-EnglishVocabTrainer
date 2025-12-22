@@ -5,6 +5,7 @@ import { AI_PROMPTS, GeminiService, parseAIResponse } from '@/lib/gemini';
 import { AI_RATE_LIMIT, MAX_AI_TEXT_CHARS, MAX_UPLOAD_SIZE_BYTES } from '@/lib/apiLimits';
 import { normalizeNativeLanguage, normalizeTargetLanguage } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { enforceAiUsage } from '@/lib/aiAccess';
 
 interface ExtractedWord {
   target: string;
@@ -142,6 +143,15 @@ export async function POST(request: NextRequest) {
     const notes = truncated
       ? `Input truncated to ${MAX_AI_TEXT_CHARS} characters.`
       : undefined;
+
+    const usage = await enforceAiUsage({
+      userId: session.user.id,
+      email: session.user.email,
+      units: safeText.length,
+    });
+    if (!usage.ok) {
+      return NextResponse.json(usage.body, { status: usage.status });
+    }
 
     const gemini = new GeminiService(apiKey);
     const prompt = AI_PROMPTS.parseText(safeText, targetLanguage, nativeLanguage);

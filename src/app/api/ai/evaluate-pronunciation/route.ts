@@ -9,6 +9,7 @@ import {
   normalizeTargetLanguage,
 } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { enforceAiUsage } from '@/lib/aiAccess';
 
 interface PhonemeAnalysis {
   phoneme: string;
@@ -85,6 +86,21 @@ export async function POST(request: NextRequest) {
       feedbackLanguage,
       safeNativeLanguage
     );
+
+    const usage = await enforceAiUsage({
+      userId: session.user.id,
+      email: session.user.email,
+      units:
+        expectedValue.length +
+        spokenValue.length +
+        (typeof phonetic === 'string' ? phonetic.length : 0),
+    });
+    if (!usage.ok) {
+      return NextResponse.json(
+        { ...usage.body, fallback: true },
+        { status: usage.status }
+      );
+    }
 
     const gemini = new GeminiService(apiKey);
     const prompt = AI_PROMPTS.evaluatePronunciation({

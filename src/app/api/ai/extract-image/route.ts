@@ -5,6 +5,7 @@ import { GeminiService, AI_PROMPTS, parseAIResponse } from '@/lib/gemini';
 import { AI_RATE_LIMIT, MAX_UPLOAD_SIZE_BYTES } from '@/lib/apiLimits';
 import { normalizeNativeLanguage, normalizeTargetLanguage } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { enforceAiUsage } from '@/lib/aiAccess';
 
 interface ExtractedWord {
   target: string;
@@ -71,6 +72,15 @@ export async function POST(request: NextRequest) {
         { error: 'Unsupported image format' },
         { status: 415 }
       );
+    }
+
+    const usage = await enforceAiUsage({
+      userId: session.user.id,
+      email: session.user.email,
+      units: Math.max(1, Math.ceil(file.size / 1024)),
+    });
+    if (!usage.ok) {
+      return NextResponse.json(usage.body, { status: usage.status });
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());

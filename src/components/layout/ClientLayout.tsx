@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { AITutor } from '@/components/ai/AITutor';
 import { useLanguage } from '@/lib/i18n';
 
-const PUBLIC_PATHS = new Set(['/login', '/onboarding']);
+const PUBLIC_PATHS = new Set(['/login', '/onboarding', '/waitlist']);
 
 export function ClientLayout() {
   const pathname = usePathname();
@@ -30,6 +30,16 @@ export function ClientLayout() {
       return;
     }
 
+    const accessStatus = session?.user?.accessStatus ?? 'ACTIVE';
+    if (accessStatus !== 'ACTIVE' && pathname !== '/waitlist') {
+      router.replace('/waitlist');
+      return;
+    }
+    if (accessStatus === 'ACTIVE' && pathname === '/waitlist') {
+      router.replace('/');
+      return;
+    }
+
     const onboardingComplete = Boolean(session?.user?.onboardingComplete);
     if (!onboardingComplete && pathname !== '/onboarding') {
       router.replace('/onboarding');
@@ -38,9 +48,16 @@ export function ClientLayout() {
     if (onboardingComplete && pathname === '/onboarding') {
       router.replace('/');
     }
-  }, [isPublic, pathname, router, session?.user?.onboardingComplete, status]);
+  }, [
+    isPublic,
+    pathname,
+    router,
+    session?.user?.accessStatus,
+    session?.user?.onboardingComplete,
+    status,
+  ]);
 
-  if (isPublic) {
+  if (isPublic || session?.user?.accessStatus !== 'ACTIVE') {
     return null;
   }
 

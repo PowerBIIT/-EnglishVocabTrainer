@@ -13,6 +13,7 @@ import {
   normalizeTargetLanguage,
 } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { enforceAiUsage } from '@/lib/aiAccess';
 
 export async function POST(request: NextRequest) {
   try {
@@ -67,6 +68,15 @@ export async function POST(request: NextRequest) {
       contextValue.length > MAX_AI_CONTEXT_CHARS
         ? contextValue.slice(-MAX_AI_CONTEXT_CHARS)
         : contextValue;
+
+    const usage = await enforceAiUsage({
+      userId: session.user.id,
+      email: session.user.email,
+      units: messageValue.length + safeContext.length,
+    });
+    if (!usage.ok) {
+      return NextResponse.json(usage.body, { status: usage.status });
+    }
 
     const gemini = new GeminiService(apiKey);
     const prompt = AI_PROMPTS.tutorChat(

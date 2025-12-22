@@ -50,6 +50,14 @@ const tutorCopy = {
     inputPlaceholder: 'Zapytaj o cokolwiek...',
     errorMessage:
       'Mam chwilowe problemy z połączeniem. Spróbuj ponownie za chwilę.\n\nUpewnij się, że klucz API jest skonfigurowany w .env.local.',
+    limitMessage:
+      'Wykorzystałeś limit AI na ten miesiąc. Spróbuj ponownie po odnowieniu limitu lub przejdź na plan Pro.',
+    globalLimitMessage:
+      'Globalny limit AI został osiągnięty. Spróbuj ponownie później.',
+    waitlistMessage:
+      'Twoje konto oczekuje na aktywację. AI będzie dostępne po przyznaniu dostępu.',
+    suspendedMessage:
+      'Twoje konto jest tymczasowo zawieszone. Skontaktuj się z administratorem.',
   },
   en: {
     welcomeMessage: (targetLabel: string) =>
@@ -75,6 +83,13 @@ const tutorCopy = {
     inputPlaceholder: 'Ask anything...',
     errorMessage:
       'I am having connection issues. Please try again in a moment.\n\nMake sure the API key is configured in .env.local.',
+    limitMessage:
+      'You have reached your monthly AI limit. Try again after the reset or upgrade to Pro.',
+    globalLimitMessage:
+      'The global AI budget has been reached. Please try again later.',
+    waitlistMessage:
+      'Your account is on the waitlist. AI will be available once access is granted.',
+    suspendedMessage: 'Your account is temporarily suspended. Contact support.',
   },
   uk: {
     welcomeMessage: (targetLabel: string) =>
@@ -100,6 +115,14 @@ const tutorCopy = {
     inputPlaceholder: 'Запитай про що завгодно...',
     errorMessage:
       'Маю тимчасові проблеми з підключенням. Спробуй ще раз трохи пізніше.\n\nПереконайся, що ключ API налаштовано в .env.local.',
+    limitMessage:
+      'Ви вичерпали місячний ліміт AI. Спробуйте після оновлення або перейдіть на Pro.',
+    globalLimitMessage:
+      'Глобальний ліміт AI вичерпано. Спробуйте пізніше.',
+    waitlistMessage:
+      'Ваш акаунт у списку очікування. AI буде доступний після надання доступу.',
+    suspendedMessage:
+      'Ваш акаунт тимчасово призупинений. Зверніться до адміністратора.',
   },
 } as const;
 
@@ -179,11 +202,63 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
         }),
       });
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
+        if (data?.error === 'user_limit_reached') {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: t.limitMessage,
+              timestamp: new Date(),
+            },
+          ]);
+          return;
+        }
+        if (data?.error === 'global_limit_reached') {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: t.globalLimitMessage,
+              timestamp: new Date(),
+            },
+          ]);
+          return;
+        }
+        if (data?.error === 'waitlisted') {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: t.waitlistMessage,
+              timestamp: new Date(),
+            },
+          ]);
+          return;
+        }
+        if (data?.error === 'suspended') {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: (Date.now() + 1).toString(),
+              role: 'assistant',
+              content: t.suspendedMessage,
+              timestamp: new Date(),
+            },
+          ]);
+          return;
+        }
         throw new Error('Failed to get response');
       }
 
-      const data = await response.json();
+      if (!data?.response) {
+        throw new Error('Invalid response');
+      }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),

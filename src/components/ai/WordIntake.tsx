@@ -193,6 +193,8 @@ export const wordIntakeCopy = {
       'Temat jest zbyt ogólny. Doprecyzuj, np. "zakupy w sklepie" lub "praca w biurze".',
     generatedFallback: (count: number, total: number) =>
       `Użyłem lokalnych danych (brak klucza API).\n\nZnalazłem ${Math.min(count, total)} przykładowych słówek. Skonfiguruj GEMINI_API_KEY w .env.local dla pełnej funkcjonalności.`,
+    generatedFallbackLimit: (count: number, total: number) =>
+      `Użyłem lokalnych danych (limit AI).\n\nZnalazłem ${Math.min(count, total)} przykładowych słówek.`,
     foundWordsWithPhonetics: (count: number) =>
       `Znalazłem **${count}** słówek. Dodałem poprawne transkrypcje fonetyczne.\n\nZaznacz te, które chcesz dodać:`,
     foundWords: (count: number) =>
@@ -220,6 +222,14 @@ export const wordIntakeCopy = {
     fileSupportHint: (maxSize: number) =>
       `Obsługiwane: TXT, PDF, DOCX, CSV (do ${maxSize} MB).`,
     fileReadError: 'Nie udało się wczytać pliku.',
+    aiLimitReached:
+      'Wykorzystałeś limit AI na ten miesiąc. Poczekaj na odnowienie limitu lub przejdź na plan Pro.',
+    aiGlobalLimitReached:
+      'Globalny limit AI został osiągnięty. Spróbuj ponownie później.',
+    aiWaitlisted:
+      'Twoje konto oczekuje na aktywację. AI będzie dostępne po przyznaniu dostępu.',
+    aiSuspended:
+      'Twoje konto jest tymczasowo zawieszone. Skontaktuj się z administratorem.',
     addedWords: (count: number, setName: string, category: string) =>
       `Dodano **${count}** słówek do zestawu "${setName}" w kategorii "${category}".\n\nCo jeszcze mogę dla Ciebie zrobić?`,
     setLabel: 'Zestaw:',
@@ -270,6 +280,8 @@ export const wordIntakeCopy = {
       'The topic is too broad. Please be more specific, e.g., "shopping at a store" or "office work".',
     generatedFallback: (count: number, total: number) =>
       `I used local data (no API key).\n\nFound ${Math.min(count, total)} sample words. Configure GEMINI_API_KEY in .env.local for full functionality.`,
+    generatedFallbackLimit: (count: number, total: number) =>
+      `I used local data (AI limit reached).\n\nFound ${Math.min(count, total)} sample words.`,
     foundWordsWithPhonetics: (count: number) =>
       `I found **${count}** words. Added correct phonetics.\n\nSelect the ones you want to add:`,
     foundWords: (count: number) => `I found **${count}** words. Select the ones you want to add:`,
@@ -295,6 +307,13 @@ export const wordIntakeCopy = {
     fileSupportHint: (maxSize: number) =>
       `Supported: TXT, PDF, DOCX, CSV (up to ${maxSize} MB).`,
     fileReadError: 'Could not read the file.',
+    aiLimitReached:
+      'You have reached your monthly AI limit. Wait for the next reset or upgrade to Pro.',
+    aiGlobalLimitReached:
+      'The global AI budget has been reached. Please try again later.',
+    aiWaitlisted:
+      'Your account is on the waitlist. AI will be available once access is granted.',
+    aiSuspended: 'Your account is temporarily suspended. Contact support.',
     addedWords: (count: number, setName: string, category: string) =>
       `Added **${count}** words to set "${setName}" in category "${category}".\n\nWhat else can I do for you?`,
     setLabel: 'Set:',
@@ -345,6 +364,8 @@ export const wordIntakeCopy = {
       'Тема надто загальна. Уточни, наприклад: "покупки в магазині" або "робота в офісі".',
     generatedFallback: (count: number, total: number) =>
       `Використав локальні дані (немає ключа API).\n\nЗнайшов ${Math.min(count, total)} прикладових слів. Налаштуй GEMINI_API_KEY в .env.local для повної функціональності.`,
+    generatedFallbackLimit: (count: number, total: number) =>
+      `Використав локальні дані (ліміт AI).\n\nЗнайшов ${Math.min(count, total)} прикладових слів.`,
     foundWordsWithPhonetics: (count: number) =>
       `Знайшов **${count}** слів. Додав коректну фонетику.\n\nОбери ті, які хочеш додати:`,
     foundWords: (count: number) =>
@@ -371,6 +392,14 @@ export const wordIntakeCopy = {
     fileSupportHint: (maxSize: number) =>
       `Підтримуються: TXT, PDF, DOCX, CSV (до ${maxSize} МБ).`,
     fileReadError: 'Не вдалося прочитати файл.',
+    aiLimitReached:
+      'Ви вичерпали місячний ліміт AI. Зачекайте на оновлення або перейдіть на Pro.',
+    aiGlobalLimitReached:
+      'Глобальний ліміт AI вичерпано. Спробуйте пізніше.',
+    aiWaitlisted:
+      'Ваш акаунт у списку очікування. AI буде доступний після надання доступу.',
+    aiSuspended:
+      'Ваш акаунт тимчасово призупинений. Зверніться до адміністратора.',
     addedWords: (count: number, setName: string, category: string) =>
       `Додано **${count}** слів до набору "${setName}" у категорії "${category}".\n\nЩо ще можу для тебе зробити?`,
     setLabel: 'Набір:',
@@ -505,6 +534,27 @@ export function WordIntake({
         timestamp: new Date(),
       },
     ]);
+  };
+
+  const handleAiLimitError = (data?: { error?: string }) => {
+    if (!data?.error) return null;
+    if (data.error === 'user_limit_reached') {
+      addAssistantMessage(t.aiLimitReached);
+      return 'user';
+    }
+    if (data.error === 'global_limit_reached') {
+      addAssistantMessage(t.aiGlobalLimitReached);
+      return 'global';
+    }
+    if (data.error === 'waitlisted') {
+      addAssistantMessage(t.aiWaitlisted);
+      return 'waitlisted';
+    }
+    if (data.error === 'suspended') {
+      addAssistantMessage(t.aiSuspended);
+      return 'suspended';
+    }
+    return null;
   };
 
   const buildSetName = (base?: string) => {
@@ -645,6 +695,16 @@ export function WordIntake({
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
+        if (
+          data?.error === 'user_limit_reached' ||
+          data?.error === 'global_limit_reached'
+        ) {
+          await generateWordsLocal(count, topic, 'limit');
+          return;
+        }
+        if (handleAiLimitError(data)) {
+          return;
+        }
         if (data?.error === 'unsafe_topic') {
           addAssistantMessage(t.unsafeTopic);
           return;
@@ -687,7 +747,11 @@ export function WordIntake({
     }
   };
 
-  const generateWordsLocal = async (count: number, topic: string) => {
+  const generateWordsLocal = async (
+    count: number,
+    topic: string,
+    reason?: 'limit'
+  ) => {
     const fallbackWords = (FALLBACK_WORDS[activePair.id] ?? FALLBACK_WORDS['pl-en']).map(
       (word) => ({
         ...word,
@@ -700,7 +764,11 @@ export function WordIntake({
     setSuggestedSetName(buildSetName(topic));
     setSelectedSetOption(NEW_SET_OPTION);
 
-    addAssistantMessage(t.generatedFallback(count, fallbackWords.length));
+    const fallbackMessage =
+      reason === 'limit'
+        ? t.generatedFallbackLimit(count, fallbackWords.length)
+        : t.generatedFallback(count, fallbackWords.length);
+    addAssistantMessage(fallbackMessage);
   };
 
   const parseTextWithAI = async (text: string) => {
@@ -718,22 +786,23 @@ export function WordIntake({
           }),
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.words && data.words.length > 0) {
-            setParsedWords(
-              data.words.map((w: ParsedWord) => ({
-                ...normalizeParsedWord(w),
-                selected: true,
-              }))
-            );
-            const category = data.category_suggestion || t.defaultCategory;
-            setSuggestedCategory(category);
-            setSuggestedSetName(buildSetName(category));
-            setSelectedSetOption(NEW_SET_OPTION);
-            addAssistantMessage(t.foundWordsWithPhonetics(data.words.length));
-            return;
-          }
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          handleAiLimitError(data);
+        } else if (data?.words && data.words.length > 0) {
+          setParsedWords(
+            data.words.map((w: ParsedWord) => ({
+              ...normalizeParsedWord(w),
+              selected: true,
+            }))
+          );
+          const category = data.category_suggestion || t.defaultCategory;
+          setSuggestedCategory(category);
+          setSuggestedSetName(buildSetName(category));
+          setSelectedSetOption(NEW_SET_OPTION);
+          addAssistantMessage(t.foundWordsWithPhonetics(data.words.length));
+          return;
         }
       } catch (error) {
         console.error('Parse API error:', error);
@@ -785,16 +854,20 @@ export function WordIntake({
         body: formData,
       });
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
         if (response.status === 413) {
           addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
           setIsProcessing(false);
           return;
         }
+        if (handleAiLimitError(data)) {
+          setIsProcessing(false);
+          return;
+        }
         throw new Error('API error');
       }
-
-      const data = await response.json();
 
       if (data.words && data.words.length > 0) {
         setParsedWords(
@@ -866,6 +939,8 @@ export function WordIntake({
         body: formData,
       });
 
+      const data = await response.json().catch(() => null);
+
       if (!response.ok) {
         if (response.status === 413) {
           addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
@@ -877,10 +952,12 @@ export function WordIntake({
           setIsProcessing(false);
           return;
         }
+        if (handleAiLimitError(data)) {
+          setIsProcessing(false);
+          return;
+        }
         throw new Error('API error');
       }
-
-      const data = await response.json();
 
       if (data.words && data.words.length > 0) {
         setParsedWords(
