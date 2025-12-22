@@ -19,6 +19,7 @@
 - `ALLOWLIST_EMAILS`, `ADMIN_EMAILS`, `MAX_ACTIVE_USERS` are injected from GitHub environment secrets.
 - Do not change app settings manually in Azure Portal; deploys will overwrite them.
 - If a user is still waitlisted after allowlist update, log out and clear cookies or use incognito to refresh the JWT.
+- Required admin: `radekbroniszewski@gmail.com` (must be present in `ADMIN_EMAILS` for all environments).
 
 ## Google OAuth
 - Keep redirect URIs in Google Cloud Console up to date:
