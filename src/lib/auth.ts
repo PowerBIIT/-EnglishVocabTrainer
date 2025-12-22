@@ -83,11 +83,17 @@ export const authOptions: NextAuthOptions = {
         if ((session as { mascotSkin?: string }).mascotSkin) {
           token.mascotSkin = (session as { mascotSkin?: string }).mascotSkin;
         }
-        if ((session as { plan?: string }).plan) {
-          token.plan = (session as { plan?: string }).plan;
+        const planValue = (session as { plan?: string }).plan;
+        if (planValue === 'FREE' || planValue === 'PRO') {
+          token.plan = planValue;
         }
-        if ((session as { accessStatus?: string }).accessStatus) {
-          token.accessStatus = (session as { accessStatus?: string }).accessStatus;
+        const accessStatusValue = (session as { accessStatus?: string }).accessStatus;
+        if (
+          accessStatusValue === 'ACTIVE' ||
+          accessStatusValue === 'WAITLISTED' ||
+          accessStatusValue === 'SUSPENDED'
+        ) {
+          token.accessStatus = accessStatusValue;
         }
       }
 
