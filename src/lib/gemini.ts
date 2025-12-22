@@ -4,6 +4,7 @@ import type { FeedbackLanguage, NativeLanguage, TargetLanguage } from '@/types';
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_MODEL = 'gemini-2.0-flash';
+const GEMINI_TIMEOUT_MS = 20000;
 
 interface GeminiResponse {
   candidates?: {
@@ -30,8 +31,8 @@ export class GeminiService {
     this.apiKey = apiKey;
   }
 
-  async generate(
-    prompt: string,
+  private async request(
+    body: Record<string, unknown>,
     options: GenerateOptions = {}
   ): Promise<string> {
     const {
@@ -40,32 +41,69 @@ export class GeminiService {
       model = DEFAULT_MODEL,
     } = options;
 
-    const response = await fetch(
-      `${GEMINI_API_URL}/${model}:generateContent?key=${this.apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature,
-            maxOutputTokens,
-          },
-        }),
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), GEMINI_TIMEOUT_MS);
+
+    try {
+      const response = await fetch(
+        `${GEMINI_API_URL}/${model}:generateContent?key=${this.apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...body,
+            generationConfig: {
+              temperature,
+              maxOutputTokens,
+            },
+          }),
+          signal: controller.signal,
+        }
+      );
+
+      const responseText = await response.text();
+      let data: GeminiResponse | null = null;
+      try {
+        data = JSON.parse(responseText) as GeminiResponse;
+      } catch {
+        data = null;
       }
+
+      if (!response.ok) {
+        const message = data?.error?.message ?? `Gemini API error (${response.status})`;
+        throw new Error(message);
+      }
+
+      if (data?.error) {
+        throw new Error(data.error.message);
+      }
+
+      const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!content) {
+        throw new Error('No response from Gemini');
+      }
+
+      return content;
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Gemini API timeout');
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  async generate(
+    prompt: string,
+    options: GenerateOptions = {}
+  ): Promise<string> {
+    return this.request(
+      {
+        contents: [{ parts: [{ text: prompt }] }],
+      },
+      options
     );
-
-    const data: GeminiResponse = await response.json();
-
-    if (data.error) {
-      throw new Error(data.error.message);
-    }
-
-    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      throw new Error('No response from Gemini');
-    }
-
-    return data.candidates[0].content.parts[0].text;
   }
 
   async generateWithImage(
@@ -74,50 +112,24 @@ export class GeminiService {
     mimeType: string = 'image/jpeg',
     options: GenerateOptions = {}
   ): Promise<string> {
-    const {
-      temperature = 0.7,
-      maxOutputTokens = 1024,
-      model = DEFAULT_MODEL,
-    } = options;
-
-    const response = await fetch(
-      `${GEMINI_API_URL}/${model}:generateContent?key=${this.apiKey}`,
+    return this.request(
       {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: prompt },
-                {
-                  inlineData: {
-                    mimeType,
-                    data: imageBase64,
-                  },
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              {
+                inlineData: {
+                  mimeType,
+                  data: imageBase64,
                 },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature,
-            maxOutputTokens,
+              },
+            ],
           },
-        }),
-      }
+        ],
+      },
+      options
     );
-
-    const data: GeminiResponse = await response.json();
-
-    if (data.error) {
-      throw new Error(data.error.message);
-    }
-
-    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-      throw new Error('No response from Gemini');
-    }
-
-    return data.candidates[0].content.parts[0].text;
   }
 }
 
@@ -354,10 +366,14 @@ export function parseAIResponse<T>(response: string): T {
   try {
     return JSON.parse(cleaned);
   } catch (parseError) {
-    // Log the problematic response for debugging
-    console.error('Failed to parse Gemini response as JSON:');
-    console.error('Original:', response);
-    console.error('Cleaned:', cleaned);
+    if (process.env.NODE_ENV !== 'production') {
+      // Log the problematic response for debugging
+      console.error('Failed to parse Gemini response as JSON:');
+      console.error('Original:', response);
+      console.error('Cleaned:', cleaned);
+    } else {
+      console.error('Failed to parse Gemini response as JSON.');
+    }
     throw new Error(
       `Invalid JSON response: ${parseError instanceof Error ? parseError.message : 'unknown error'}`
     );

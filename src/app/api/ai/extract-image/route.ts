@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { GeminiService, AI_PROMPTS, parseAIResponse } from '@/lib/gemini';
+import { AI_RATE_LIMIT, MAX_UPLOAD_SIZE_BYTES } from '@/lib/apiLimits';
+import { normalizeNativeLanguage, normalizeTargetLanguage } from '@/lib/aiValidation';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 interface ExtractedWord {
   target: string;
@@ -16,6 +21,19 @@ interface ExtractResult {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rate = checkRateLimit(`ai:extract-image:${session.user.id}`, AI_RATE_LIMIT);
+    if (!rate.ok) {
+      return NextResponse.json(
+        { error: 'rate_limited', retryAfter: rate.retryAfter },
+        { status: 429, headers: { 'Retry-After': rate.retryAfter.toString() } }
+      );
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -25,27 +43,49 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const {
-      imageBase64,
-      mimeType = 'image/jpeg',
-      targetLanguage = 'en',
-      nativeLanguage = 'pl',
-    } = await request.json();
+    const formData = await request.formData();
+    const file = formData.get('file');
+    const targetLanguageRaw = formData.get('targetLanguage');
+    const nativeLanguageRaw = formData.get('nativeLanguage');
 
-    if (!imageBase64) {
+    if (!file || !(file instanceof File)) {
       return NextResponse.json(
-        { error: 'Image data is required' },
+        { error: 'Image file is required' },
         { status: 400 }
       );
     }
 
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      return NextResponse.json(
+        { error: 'Image too large', maxBytes: MAX_UPLOAD_SIZE_BYTES },
+        { status: 413 }
+      );
+    }
+
+    const safeTargetLanguage = normalizeTargetLanguage(targetLanguageRaw);
+    const safeNativeLanguage = normalizeNativeLanguage(nativeLanguageRaw);
+    const allowedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
+    const safeMimeType = allowedImageTypes.has(file.type) ? file.type : '';
+    if (!safeMimeType) {
+      return NextResponse.json(
+        { error: 'Unsupported image format' },
+        { status: 415 }
+      );
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const imagePayload = buffer.toString('base64');
+
     const gemini = new GeminiService(apiKey);
-    const prompt = AI_PROMPTS.extractFromImage(targetLanguage, nativeLanguage);
+    const prompt = AI_PROMPTS.extractFromImage(
+      safeTargetLanguage,
+      safeNativeLanguage
+    );
 
     const response = await gemini.generateWithImage(
       prompt,
-      imageBase64,
-      mimeType,
+      imagePayload,
+      safeMimeType,
       {
         temperature: 0.3,
         maxOutputTokens: 2048,

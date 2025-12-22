@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { GeminiService, AI_PROMPTS, parseAIResponse } from '@/lib/gemini';
+import { AI_RATE_LIMIT, MAX_AI_TEXT_CHARS } from '@/lib/apiLimits';
+import { normalizeNativeLanguage, normalizeTargetLanguage } from '@/lib/aiValidation';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 interface ParsedWord {
   target: string;
@@ -16,6 +21,19 @@ interface ParseResult {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rate = checkRateLimit(`ai:parse-text:${session.user.id}`, AI_RATE_LIMIT);
+    if (!rate.ok) {
+      return NextResponse.json(
+        { error: 'rate_limited', retryAfter: rate.retryAfter },
+        { status: 429, headers: { 'Retry-After': rate.retryAfter.toString() } }
+      );
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -25,17 +43,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { text, targetLanguage = 'en', nativeLanguage = 'pl' } = await request.json();
+    const { text, targetLanguage, nativeLanguage } = await request.json();
+    const textValue = typeof text === 'string' ? text.trim() : '';
 
-    if (!text) {
+    if (!textValue) {
       return NextResponse.json(
         { error: 'Text is required' },
         { status: 400 }
       );
     }
 
+    if (textValue.length > MAX_AI_TEXT_CHARS) {
+      return NextResponse.json(
+        { error: 'Text too long', maxChars: MAX_AI_TEXT_CHARS },
+        { status: 413 }
+      );
+    }
+
+    const safeTargetLanguage = normalizeTargetLanguage(targetLanguage);
+    const safeNativeLanguage = normalizeNativeLanguage(nativeLanguage);
+
     const gemini = new GeminiService(apiKey);
-    const prompt = AI_PROMPTS.parseText(text, targetLanguage, nativeLanguage);
+    const prompt = AI_PROMPTS.parseText(
+      textValue,
+      safeTargetLanguage,
+      safeNativeLanguage
+    );
 
     const response = await gemini.generate(prompt, {
       temperature: 0.3,

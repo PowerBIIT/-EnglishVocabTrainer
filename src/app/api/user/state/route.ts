@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 import { createDefaultState } from '@/lib/appState';
 import type { Prisma } from '@prisma/client';
+import { MAX_STATE_BYTES } from '@/lib/apiLimits';
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -43,6 +44,14 @@ export async function PUT(request: Request) {
 
   if (!data) {
     return NextResponse.json({ error: 'Missing data' }, { status: 400 });
+  }
+
+  const serialized = JSON.stringify(data);
+  if (Buffer.byteLength(serialized, 'utf8') > MAX_STATE_BYTES) {
+    return NextResponse.json(
+      { error: 'State too large', maxBytes: MAX_STATE_BYTES },
+      { status: 413 }
+    );
   }
 
   await prisma.userState.upsert({

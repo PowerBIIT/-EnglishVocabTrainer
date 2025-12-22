@@ -18,6 +18,7 @@ import { useLanguage } from '@/lib/i18n';
 import { cn, formatDate, generateId } from '@/lib/utils';
 import { parseVocabularyInput } from '@/lib/parseVocabulary';
 import { getCategoryLabel } from '@/lib/categories';
+import { MAX_UPLOAD_SIZE_BYTES, MAX_UPLOAD_SIZE_MB } from '@/lib/apiLimits';
 import {
   getLanguageLabel,
   getLearningPair,
@@ -26,8 +27,6 @@ import {
 import type { LearningPairId, VocabularyItem } from '@/types';
 
 const NEW_SET_OPTION = '__new__';
-const MAX_FILE_SIZE_MB = 10;
-const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const SUPPORTED_FILE_EXTENSIONS = ['txt', 'csv', 'pdf', 'docx'];
 const SUPPORTED_FILE_MIME = [
   'text/plain',
@@ -755,6 +754,14 @@ export function WordIntake({
     const file = event.target.files?.[0];
     if (!file) return;
 
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
+      if (imageInputRef.current) {
+        imageInputRef.current.value = '';
+      }
+      return;
+    }
+
     setIsProcessing(true);
 
     setMessages((prev) => [
@@ -768,58 +775,49 @@ export function WordIntake({
     ]);
 
     try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const base64 = (reader.result as string).split(',')[1];
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('targetLanguage', activePair.target);
+      formData.append('nativeLanguage', activePair.native);
 
-        try {
-          const response = await fetch('/api/ai/extract-image', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              imageBase64: base64,
-              mimeType: file.type,
-              targetLanguage: activePair.target,
-              nativeLanguage: activePair.native,
-            }),
-          });
+      const response = await fetch('/api/ai/extract-image', {
+        method: 'POST',
+        body: formData,
+      });
 
-          if (!response.ok) {
-            throw new Error('API error');
-          }
-
-          const data = await response.json();
-
-          if (data.words && data.words.length > 0) {
-            setParsedWords(
-              data.words.map((w: ParsedWord) => ({
-                ...normalizeParsedWord(w),
-                selected: true,
-              }))
-            );
-            const category = data.category_suggestion || t.imageCategoryFallback;
-            setSuggestedCategory(category);
-            setSuggestedSetName(buildSetName(category));
-            setSelectedSetOption(NEW_SET_OPTION);
-
-            addAssistantMessage(t.imageFound(data.words.length, data.notes));
-          } else {
-            addAssistantMessage(t.imageNoWords(targetLabel, nativeLabel));
-          }
-        } catch (error) {
-          console.error('Image extraction error:', error);
-          addAssistantMessage(t.imageError);
+      if (!response.ok) {
+        if (response.status === 413) {
+          addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
+          setIsProcessing(false);
+          return;
         }
+        throw new Error('API error');
+      }
 
-        setIsProcessing(false);
-      };
+      const data = await response.json();
 
-      reader.readAsDataURL(file);
+      if (data.words && data.words.length > 0) {
+        setParsedWords(
+          data.words.map((w: ParsedWord) => ({
+            ...normalizeParsedWord(w),
+            selected: true,
+          }))
+        );
+        const category = data.category_suggestion || t.imageCategoryFallback;
+        setSuggestedCategory(category);
+        setSuggestedSetName(buildSetName(category));
+        setSelectedSetOption(NEW_SET_OPTION);
+
+        addAssistantMessage(t.imageFound(data.words.length, data.notes));
+      } else {
+        addAssistantMessage(t.imageNoWords(targetLabel, nativeLabel));
+      }
     } catch (error) {
-      console.error('File read error:', error);
-      addAssistantMessage(t.fileReadError);
-      setIsProcessing(false);
+      console.error('Image extraction error:', error);
+      addAssistantMessage(t.imageError);
     }
+
+    setIsProcessing(false);
 
     if (imageInputRef.current) {
       imageInputRef.current.value = '';
@@ -830,8 +828,8 @@ export function WordIntake({
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      addAssistantMessage(t.fileTooLarge(MAX_FILE_SIZE_MB));
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -870,7 +868,7 @@ export function WordIntake({
 
       if (!response.ok) {
         if (response.status === 413) {
-          addAssistantMessage(t.fileTooLarge(MAX_FILE_SIZE_MB));
+          addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
           setIsProcessing(false);
           return;
         }
@@ -1001,7 +999,7 @@ export function WordIntake({
           </button>
         ))}
       </div>
-      <p className="text-xs text-slate-500 mb-2">{t.fileSupportHint(MAX_FILE_SIZE_MB)}</p>
+          <p className="text-xs text-slate-500 mb-2">{t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}</p>
 
       <div className="flex gap-2">
         <input
@@ -1277,7 +1275,7 @@ export function WordIntake({
               </button>
             ))}
           </div>
-          <p className="text-xs text-slate-500">{t.fileSupportHint(MAX_FILE_SIZE_MB)}</p>
+              <p className="text-xs text-slate-500">{t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}</p>
           <div className="flex gap-2">
             <input
               ref={imageInputRef}

@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '20.x'
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  lint-unit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Unit tests
+        run: npm run test:unit
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: lint-unit
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: vocab
+          POSTGRES_PASSWORD: vocab
+          POSTGRES_DB: vocab
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U vocab -d vocab"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://vocab:vocab@localhost:5432/vocab
+      NEXTAUTH_SECRET: test-secret
+      NEXTAUTH_URL: http://localhost:3001
+      GOOGLE_CLIENT_ID: test
+      GOOGLE_CLIENT_SECRET: test
+      GEMINI_API_KEY: test
+      E2E_TEST: 'true'
+      NEXT_PUBLIC_E2E_TEST: 'true'
+      PORT: '3001'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare database schema
+        run: npx prisma db push
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests
+        run: npm run test:e2e

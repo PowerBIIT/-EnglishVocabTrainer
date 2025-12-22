@@ -1,0 +1,86 @@
+name: Deploy PRD
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to deploy (branch or tag)
+        required: false
+        default: main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prd
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20.x'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: prd
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Configure app settings
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az webapp config appsettings set \
+              --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+              --name "${{ secrets.AZURE_WEBAPP_NAME_PRD }}" \
+              --settings \
+                NODE_ENV=production \
+                WEBSITE_RUN_FROM_PACKAGE=1 \
+                SCM_DO_BUILD_DURING_DEPLOYMENT=false \
+                WEBSITE_NODE_DEFAULT_VERSION=20 \
+                NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}" \
+                NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
+                GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
+                GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}" \
+                GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
+                DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+                E2E_TEST=false \
+                NEXT_PUBLIC_E2E_TEST=false
+
+      - name: Prune dev dependencies
+        run: npm prune --omit=dev
+
+      - name: Prepare deployment package
+        run: |
+          mkdir -p .deploy
+          cp package.json package-lock.json next.config.js .deploy/
+          if [ -d public ]; then cp -R public .deploy/; fi
+          cp -R .next .deploy/
+          cp -R node_modules .deploy/
+          if [ -d prisma ]; then cp -R prisma .deploy/; fi
+
+      - name: Deploy to Azure Web App (PRD)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME_PRD }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_PRD }}
+          package: ./.deploy

@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { AI_PROMPTS, GeminiService, parseAIResponse } from '@/lib/gemini';
-import type { NativeLanguage, TargetLanguage } from '@/types';
-
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
-const MAX_TEXT_CHARS = 12000;
+import { AI_RATE_LIMIT, MAX_AI_TEXT_CHARS, MAX_UPLOAD_SIZE_BYTES } from '@/lib/apiLimits';
+import { normalizeNativeLanguage, normalizeTargetLanguage } from '@/lib/aiValidation';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 interface ExtractedWord {
   target: string;
@@ -74,6 +75,19 @@ const extractTextFromFile = async (file: File) => {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rate = checkRateLimit(`ai:extract-file:${session.user.id}`, AI_RATE_LIMIT);
+    if (!rate.ok) {
+      return NextResponse.json(
+        { error: 'rate_limited', retryAfter: rate.retryAfter },
+        { status: 429, headers: { 'Retry-After': rate.retryAfter.toString() } }
+      );
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
@@ -88,12 +102,8 @@ export async function POST(request: NextRequest) {
     const targetLanguageRaw = formData.get('targetLanguage');
     const nativeLanguageRaw = formData.get('nativeLanguage');
 
-    const targetLanguage = (typeof targetLanguageRaw === 'string'
-      ? targetLanguageRaw
-      : 'en') as TargetLanguage;
-    const nativeLanguage = (typeof nativeLanguageRaw === 'string'
-      ? nativeLanguageRaw
-      : 'pl') as NativeLanguage;
+    const targetLanguage = normalizeTargetLanguage(targetLanguageRaw);
+    const nativeLanguage = normalizeNativeLanguage(nativeLanguageRaw);
 
     if (!file || !(file instanceof File)) {
       return NextResponse.json(
@@ -102,7 +112,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (file.size > MAX_FILE_SIZE_BYTES) {
+    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
       return NextResponse.json(
         { error: 'File too large' },
         { status: 413 }
@@ -125,10 +135,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ words: [], notes: 'No text found in file.' });
     }
 
-    const truncated = cleanedText.length > MAX_TEXT_CHARS;
-    const safeText = truncated ? cleanedText.slice(0, MAX_TEXT_CHARS) : cleanedText;
+    const truncated = cleanedText.length > MAX_AI_TEXT_CHARS;
+    const safeText = truncated
+      ? cleanedText.slice(0, MAX_AI_TEXT_CHARS)
+      : cleanedText;
     const notes = truncated
-      ? `Input truncated to ${MAX_TEXT_CHARS} characters.`
+      ? `Input truncated to ${MAX_AI_TEXT_CHARS} characters.`
       : undefined;
 
     const gemini = new GeminiService(apiKey);
