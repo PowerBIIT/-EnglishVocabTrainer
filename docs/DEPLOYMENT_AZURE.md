@@ -29,6 +29,7 @@ Notes:
 ## 2) Configure App Settings via GitHub Actions
 
 App settings are injected at deploy time from GitHub environment secrets.
+The deploy workflow also sets the startup command to `npm start`.
 
 ## 3) Initialize database schema (once per environment)
 
@@ -39,6 +40,9 @@ DATABASE_URL="..." npx prisma db push
 ```
 
 When you add migrations, switch to `npx prisma migrate deploy`.
+
+Note: Azure PostgreSQL Flexible Server uses the admin user name as-is in the connection string
+(no `@server` suffix).
 
 ## 4) GitHub Actions secrets
 

@@ -10,6 +10,13 @@
 | Profile językowe | UK → PL, UK → EN, UK → DE, PL → EN, DE → EN |
 | Urządzenia | Desktop, Tablet, Mobile |
 
+### 1.1 Testy automatyczne (CI)
+
+- Lint: `npm run lint`
+- Typecheck: `npx tsc --noEmit`
+- Unit: `npm run test:unit`
+- E2E: `npm run test:e2e`
+
 ---
 
 ## 2. Wymagania wstępne
