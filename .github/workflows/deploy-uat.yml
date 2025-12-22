@@ -45,7 +45,8 @@ jobs:
       - name: Build version info
         id: build_info
         run: |
-          echo "app_version=$(node -p 'require(\"./package.json\").version')" >> "$GITHUB_OUTPUT"
+          app_version=$(node -p "require('./package.json').version")
+          echo "app_version=$app_version" >> "$GITHUB_OUTPUT"
           echo "app_commit=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
           echo "app_build_time=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
 
