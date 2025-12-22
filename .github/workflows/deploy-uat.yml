@@ -47,6 +47,11 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Reset UAT database
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: npx prisma migrate reset --force --skip-seed
+
       - name: Configure app settings
         uses: azure/CLI@v2
         with:
