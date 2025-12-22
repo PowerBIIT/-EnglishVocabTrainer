@@ -30,6 +30,8 @@ Notes:
 
 App settings are injected at deploy time from GitHub environment secrets.
 The deploy workflow also sets the startup command to `npm start`.
+Version metadata (`APP_VERSION`, `APP_COMMIT_SHA`, `APP_BUILD_TIME`) is injected automatically
+from the workflow and surfaced in `/api/health` and the admin panel.
 
 ## 3) Database migrations
 
@@ -128,3 +130,17 @@ Set required reviewers for `prd` to gate production deployments.
 
 - UAT: push to `main` (see `.github/workflows/deploy-uat.yml`)
 - PRD: run workflow `Deploy PRD` manually (see `.github/workflows/deploy-prd.yml`)
+
+## 7) Versioning & verification
+
+Each deploy stamps the app with:
+- `APP_VERSION` (from `package.json`)
+- `APP_COMMIT_SHA` (short git SHA)
+- `APP_BUILD_TIME` (UTC timestamp)
+
+The workflow verifies the deployment by calling:
+```
+GET /api/health
+```
+and checking that the response contains the expected version + commit. PRD deploys also run
+`npx prisma migrate status` before pushing artifacts to ensure schema compatibility.

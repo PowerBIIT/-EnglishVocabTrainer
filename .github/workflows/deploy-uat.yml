@@ -42,6 +42,13 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Build version info
+        id: build_info
+        run: |
+          echo "app_version=$(node -p 'require(\"./package.json\").version')" >> "$GITHUB_OUTPUT"
+          echo "app_commit=$(git rev-parse --short=12 HEAD)" >> "$GITHUB_OUTPUT"
+          echo "app_build_time=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> "$GITHUB_OUTPUT"
+
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -64,6 +71,9 @@ jobs:
                 WEBSITE_RUN_FROM_PACKAGE=1 \
                 SCM_DO_BUILD_DURING_DEPLOYMENT=false \
                 WEBSITE_NODE_DEFAULT_VERSION=20 \
+                APP_VERSION="${{ steps.build_info.outputs.app_version }}" \
+                APP_COMMIT_SHA="${{ steps.build_info.outputs.app_commit }}" \
+                APP_BUILD_TIME="${{ steps.build_info.outputs.app_build_time }}" \
                 NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}" \
                 NEXTAUTH_SECRET="${{ secrets.NEXTAUTH_SECRET }}" \
                 GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}" \
@@ -110,3 +120,39 @@ jobs:
           app-name: ${{ secrets.AZURE_WEBAPP_NAME_UAT }}
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_UAT }}
           package: ./.deploy
+
+      - name: Verify deployment health
+        env:
+          HEALTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          EXPECT_VERSION: ${{ steps.build_info.outputs.app_version }}
+          EXPECT_COMMIT: ${{ steps.build_info.outputs.app_commit }}
+        run: |
+          HEALTH_URL="${HEALTH_URL%/}"
+          response=""
+          for i in {1..12}; do
+            if response=$(curl -sSf "${HEALTH_URL}/api/health"); then
+              break
+            fi
+            sleep 10
+          done
+          if [ -z "$response" ]; then
+            echo "Health check failed after retries."
+            exit 1
+          fi
+          echo "$response"
+          echo "$response" | node -e '
+            const fs = require("fs");
+            const data = JSON.parse(fs.readFileSync(0, "utf8"));
+            if (data.status !== "ok") {
+              console.error("Health status not ok:", data.status);
+              process.exit(1);
+            }
+            if (data.version !== process.env.EXPECT_VERSION) {
+              console.error(`Version mismatch: ${data.version} != ${process.env.EXPECT_VERSION}`);
+              process.exit(1);
+            }
+            if (data.commit !== process.env.EXPECT_COMMIT) {
+              console.error(`Commit mismatch: ${data.commit} != ${process.env.EXPECT_COMMIT}`);
+              process.exit(1);
+            }
+          '

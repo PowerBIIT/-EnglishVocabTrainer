@@ -4,7 +4,7 @@
 
 | Pole | Wartość |
 |------|---------|
-| Wersja aplikacji | 1.0 |
+| Wersja aplikacji | Odczytaj z `/api/health` (pole `version`) |
 | Data utworzenia | 2025-12-20 |
 | Środowisko testowe | Chrome 120+, Firefox 120+, Safari 17+, Edge 120+ |
 | Profile językowe | UK → PL, UK → EN, UK → DE, PL → EN, DE → EN |
@@ -26,6 +26,7 @@
 - [ ] Aplikacja uruchomiona lokalnie (`npm run dev`)
 - [ ] Dostęp do mikrofonu (dla testów wymowy)
 - [ ] Głośniki/słuchawki (dla testów TTS)
+- [ ] Po wdrożeniu sprawdź `/api/health` i potwierdź zgodność `version` + `commit`
 
 ### 2.2 Przygotowanie danych
 - [ ] Użyj nowego konta lub wyczyść dane w bazie (`docker compose down -v`, `docker compose up -d`, `npm run db:push`)

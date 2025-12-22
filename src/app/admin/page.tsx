@@ -54,6 +54,9 @@ export default async function AdminPage() {
   const allowlist = getAllowlistEmails();
   const adminEmails = getAdminEmails();
   const maxActiveUsers = getMaxActiveUsers();
+  const appVersion = process.env.APP_VERSION ?? 'unknown';
+  const appCommit = process.env.APP_COMMIT_SHA ?? 'unknown';
+  const appBuildTime = process.env.APP_BUILD_TIME ?? 'unknown';
 
   return (
     <div className="min-h-screen px-6 py-10 space-y-6">
@@ -163,6 +166,15 @@ export default async function AdminPage() {
               <span className="font-semibold">
                 {maxActiveUsers === Number.POSITIVE_INFINITY ? 'unlimited' : maxActiveUsers}
               </span>
+            </div>
+            <div>
+              App version: <span className="font-semibold">{appVersion}</span>
+            </div>
+            <div>
+              Build commit: <span className="font-semibold">{appCommit}</span>
+            </div>
+            <div>
+              Build time: <span className="font-semibold">{appBuildTime}</span>
             </div>
             <div className="text-xs text-slate-400">
               Configure limits via environment variables (see README for details).
