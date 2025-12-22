@@ -143,30 +143,22 @@ jobs:
         run: |
           HEALTH_URL="${HEALTH_URL%/}"
           response=""
-          for i in {1..12}; do
-            if response=$(curl -sSf "${HEALTH_URL}/api/health"); then
-              break
+          for i in {1..18}; do
+            response=$(curl -sSf "${HEALTH_URL}/api/health" || true)
+            if [ -n "$response" ]; then
+              if echo "$response" | node -e '
+                const fs = require("fs");
+                const data = JSON.parse(fs.readFileSync(0, "utf8"));
+                if (data.status !== "ok") process.exit(1);
+                if (data.version !== process.env.EXPECT_VERSION) process.exit(1);
+                if (data.commit !== process.env.EXPECT_COMMIT) process.exit(1);
+              '; then
+                echo "$response"
+                exit 0
+              fi
             fi
             sleep 10
           done
-          if [ -z "$response" ]; then
-            echo "Health check failed after retries."
-            exit 1
-          fi
           echo "$response"
-          echo "$response" | node -e '
-            const fs = require("fs");
-            const data = JSON.parse(fs.readFileSync(0, "utf8"));
-            if (data.status !== "ok") {
-              console.error("Health status not ok:", data.status);
-              process.exit(1);
-            }
-            if (data.version !== process.env.EXPECT_VERSION) {
-              console.error(`Version mismatch: ${data.version} != ${process.env.EXPECT_VERSION}`);
-              process.exit(1);
-            }
-            if (data.commit !== process.env.EXPECT_COMMIT) {
-              console.error(`Commit mismatch: ${data.commit} != ${process.env.EXPECT_COMMIT}`);
-              process.exit(1);
-            }
-          '
+          echo "Health check failed after retries."
+          exit 1
