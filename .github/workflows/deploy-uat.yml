@@ -62,6 +62,15 @@ jobs:
                 E2E_TEST=false \
                 NEXT_PUBLIC_E2E_TEST=false
 
+      - name: Configure startup command
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az webapp config set \
+              --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+              --name "${{ secrets.AZURE_WEBAPP_NAME_UAT }}" \
+              --startup-file "npm start"
+
       - name: Prune dev dependencies
         run: npm prune --omit=dev
 

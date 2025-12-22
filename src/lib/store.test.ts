@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { useVocabStore } from '@/lib/store';
+import type { VocabularyItem } from '@/types';
 
-const seedVocabulary = [
+const seedVocabulary: VocabularyItem[] = [
   {
     id: 'v1',
     en: 'apple',

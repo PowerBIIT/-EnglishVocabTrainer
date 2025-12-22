@@ -1,11 +1,8 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 const TEST_PASSWORD = 'e2e';
 
-const login = async (
-  page: Parameters<typeof test>[0] extends { page: infer P } ? P : never,
-  email: string
-) => {
+const login = async (page: Page, email: string) => {
   await page.goto('/login');
 
   const response = await page.request.post('/api/test/login', {
