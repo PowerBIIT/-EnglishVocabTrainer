@@ -120,7 +120,7 @@ export default async function AdminPage() {
                   <span>
                     {entry.plan} · {entry.accessStatus}
                   </span>
-                  <span className="font-semibold">{entry._count._all}</span>
+                  <span className="font-semibold">{entry._count?._all ?? 0}</span>
                 </div>
               ))
             )}
