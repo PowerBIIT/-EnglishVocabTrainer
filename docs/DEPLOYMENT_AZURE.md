@@ -1,160 +1,211 @@
 # Azure Deployment (UAT + PRD)
 
-This setup uses Azure App Service (Linux) + Azure Database for PostgreSQL Flexible Server and GitHub Actions.
+Infrastructure as Code deployment using Azure App Service (Linux) + PostgreSQL Flexible Server and GitHub Actions.
 
-## Current project settings (this repo)
+## Current Infrastructure
 
-- Region: `polandcentral`
-- Resource group: `evt-rg-pl`
-- App Service plan: `evt-plan-pl`
-- UAT web app: `evt-uat-pl-44b1` (`https://evt-uat-pl-44b1.azurewebsites.net`)
-- PRD web app: `evt-prd-pl-44b1` (`https://evt-prd-pl-44b1.azurewebsites.net`)
-- Postgres flexible server: `evt-pg-pl-44b1`
-- Databases: `evt_uat`, `evt_prd`
+**Region:** Poland Central
+**Resource Group:** `evt-rg-pl`
 
-Notes:
-- UAT database is reset on every deploy (see `.github/workflows/deploy-uat.yml`).
-- PRD never resets data; it verifies migrations with `prisma migrate status`.
+| Resource | Name | Details |
+|----------|------|---------|
+| App Service Plan | `evt-plan-pl` | B1 (Basic, ~13 USD/month) |
+| UAT Web App | `evt-uat-pl-44b1` | https://evt-uat-pl-44b1.azurewebsites.net |
+| PRD Web App | `evt-prd-pl-44b1` | https://evt-prd-pl-44b1.azurewebsites.net |
+| PostgreSQL Server | `evt-pg-pl-44b1` | Burstable B1ms (~12 USD/month) |
+| UAT Database | `evt_uat` | Reset on every deploy |
+| PRD Database | `evt_prd` | Persistent, migration-verified |
 
-## 1) Provision Azure resources
+**Total Cost:** ~25 USD/month (~100 PLN/month)
 
-Run the script with your preferred names (web app names must be globally unique).
+## Deployment Workflows
 
+### 1. Provision Infrastructure
+
+**Workflow:** `.github/workflows/provision-infra.yml`
+**Trigger:** Manual (workflow_dispatch)
+
+Creates all Azure resources and configures GitHub secrets automatically.
+
+**Usage:**
+1. Go to Actions → Provision Azure Infrastructure
+2. Click "Run workflow"
+3. Enter confirmation: `create`
+4. Optional: customize region, resource group, SKU
+
+**What it does:**
+- Creates Resource Group
+- Creates App Service Plan (B1)
+- Creates Web Apps (UAT + PRD)
+- Creates PostgreSQL Flexible Server (Burstable B1ms)
+- Creates databases (evt_uat, evt_prd)
+- Creates Service Principal for deployments
+- Configures GitHub secrets for both environments
+
+**Required GitHub secrets (once):**
+- `AZURE_PROVISION_CREDENTIALS` - Service Principal with Owner role
+
+### 2. Deploy to UAT
+
+**Workflow:** `.github/workflows/deploy-uat.yml`
+**Trigger:** Automatic on push to `main` (excluding docs-only changes)
+
+**What it does:**
+1. Lint, test, build
+2. Login to Azure
+3. **Reset UAT database** (fresh start every deploy)
+4. Configure app settings
+5. Deploy application
+6. Restart app
+7. Verify health (version + commit match)
+
+### 3. Deploy to PRD
+
+**Workflow:** `.github/workflows/deploy-prd.yml`
+**Trigger:** Manual (workflow_dispatch)
+
+**What it does:**
+1. Lint, test, build
+2. Login to Azure
+3. **Verify migration status** (no reset)
+4. Configure app settings
+5. Deploy application
+6. Restart app
+7. Verify health (version + commit match)
+
+**Usage:**
 ```bash
-export AZ_LOCATION=polandcentral
-export AZ_RESOURCE_GROUP=evt-rg
-export AZ_PLAN_NAME=evt-plan
-export AZ_PLAN_SKU=B1
-export AZ_APP_UAT=evt-uat-001
-export AZ_APP_PRD=evt-prd-001
-export AZ_PG_SERVER=evt-postgres-001
-export AZ_PG_ADMIN_USER=vocabadmin
-export AZ_PG_ADMIN_PASSWORD='REPLACE_ME'
-export AZ_DB_UAT=evt_uat
-export AZ_DB_PRD=evt_prd
-
-./infra/azure/provision.sh
+gh workflow run deploy-prd.yml
 ```
 
-Notes:
-- `AZ_PLAN_SKU=B1` is a low-cost baseline. Upgrade if needed.
-- PostgreSQL is created with public access `All` + Azure services firewall rule. Tighten later.
+### 4. Destroy Infrastructure
 
-## 2) Configure App Settings via GitHub Actions
+**Workflow:** `.github/workflows/destroy-infra.yml`
+**Trigger:** Manual (workflow_dispatch)
 
-App settings are injected at deploy time from GitHub environment secrets.
-The deploy workflow also sets the startup command to `npm start`.
-Version metadata (`APP_VERSION`, `APP_COMMIT_SHA`, `APP_BUILD_TIME`) is injected automatically
-from the workflow and surfaced in `/api/health` and the admin panel.
+Removes all Azure resources and clears GitHub secrets.
 
-## 3) Database migrations
+**Usage:**
+1. Go to Actions → Destroy Azure Infrastructure
+2. Click "Run workflow"
+3. Enter confirmation: `destroy`
 
-Migrations are applied inside App Service on startup:
+**What it does:**
+- Lists resources to be deleted
+- Deletes Service Principal
+- Deletes Resource Group (and all resources)
+- Clears GitHub secrets for UAT and PRD
 
-```
+## GitHub Environments
+
+Create two environments in GitHub repository settings:
+- `uat` - UAT environment
+- `prd` - PRD environment (add required reviewers for approval)
+
+## GitHub Secrets
+
+Configured automatically by provision workflow:
+- `AZURE_RESOURCE_GROUP`
+- `AZURE_WEBAPP_NAME_UAT` / `AZURE_WEBAPP_NAME_PRD`
+- `AZURE_CREDENTIALS`
+- `AZURE_WEBAPP_PUBLISH_PROFILE_UAT` / `AZURE_WEBAPP_PUBLISH_PROFILE_PRD`
+- `DATABASE_URL`
+- `NEXTAUTH_URL`
+
+**Manually configure these secrets** for both `uat` and `prd` environments:
+- `NEXTAUTH_SECRET` - Generate with: `openssl rand -base64 32`
+- `GOOGLE_CLIENT_ID` - From Google Cloud Console
+- `GOOGLE_CLIENT_SECRET` - From Google Cloud Console
+- `GEMINI_API_KEY` - From Google AI Studio
+- `ALLOWLIST_EMAILS` - Comma-separated emails (leave empty to allow all)
+- `ADMIN_EMAILS` - Admin emails (e.g., radekbroniszewski@gmail.com)
+- `MAX_ACTIVE_USERS` - User limit (default: 100)
+- AI limits: `FREE_AI_REQUESTS_PER_MONTH`, `FREE_AI_UNITS_PER_MONTH`, etc.
+
+## Database Migrations
+
+Migrations run automatically on app startup:
+```bash
 node scripts/ensure-migrations.js && npx prisma migrate deploy
 ```
 
-The helper script baselines existing databases (created via `db push`) by marking the initial
-migration as applied when tables already exist.
+The `ensure-migrations.js` script baselines existing databases by marking initial migrations as applied when tables already exist.
 
-Note: Azure PostgreSQL Flexible Server uses the admin user name as-is in the connection string
-(no `@server` suffix).
+## Health Check
 
-## 4) GitHub Actions secrets
-
-Create publish profiles:
-
+Every deployment verifies the app is running correctly:
 ```bash
-az webapp deployment list-publishing-profiles \
-  --resource-group evt-rg \
-  --name evt-uat-001 \
-  --xml > uat.publish.xml
-
-az webapp deployment list-publishing-profiles \
-  --resource-group evt-rg \
-  --name evt-prd-001 \
-  --xml > prd.publish.xml
+curl https://evt-uat-pl-44b1.azurewebsites.net/api/health
 ```
 
-Create an Azure service principal and store its credentials:
+Response:
+```json
+{
+  "status": "ok",
+  "version": "1.0.2",
+  "commit": "3d46a397906f",
+  "buildTime": "2025-12-23T08:43:01Z",
+  "env": "production"
+}
+```
 
+The deploy workflow fails if:
+- Status is not "ok"
+- Version doesn't match `package.json`
+- Commit doesn't match deployment SHA
+
+## Admin User Exclusion
+
+Admins (configured in `ADMIN_EMAILS`) are excluded from the `MAX_ACTIVE_USERS` limit:
+
+**Implementation:** `src/lib/userPlan.ts`
+- Admins always get `ACTIVE` status (lines 17-19)
+- Admins are not counted in the active user limit (lines 27-37)
+- Regular users get `WAITLISTED` when limit is reached
+
+**Example:**
+- `MAX_ACTIVE_USERS=100`
+- 100 regular users: ACTIVE
+- Admin (radekbroniszewski@gmail.com): ACTIVE (not counted)
+- 101st regular user: WAITLISTED
+
+## Cost Optimization
+
+**Current setup (~25 USD/month):**
+- App Service Plan B1: ~13 USD/month
+- PostgreSQL Burstable B1ms: ~12 USD/month
+
+**Further optimization:**
+- Use Free tier (F1) for App Service Plan (limited to 60 CPU minutes/day)
+- Use Azure Database for PostgreSQL Single Server (cheaper for dev/test)
+- Delete UAT environment when not in use (use destroy workflow)
+
+**Destroy after testing:**
 ```bash
-az ad sp create-for-rbac \
-  --name "evt-deploy-sp" \
-  --role contributor \
-  --scopes /subscriptions/<SUBSCRIPTION_ID>/resourceGroups/<RESOURCE_GROUP> \
-  --sdk-auth > azure-credentials.json
+# Run destroy workflow
+gh workflow run destroy-infra.yml
+
+# Or manually:
+az group delete --name evt-rg-pl --yes
 ```
 
-Store secrets in GitHub (environment secrets for `uat` and `prd`):
+## Troubleshooting
 
-```bash
-gh secret set AZURE_RESOURCE_GROUP -b "evt-rg" -e uat
-gh secret set AZURE_RESOURCE_GROUP -b "evt-rg" -e prd
-gh secret set AZURE_WEBAPP_NAME_UAT -b "evt-uat-001" -e uat
-gh secret set AZURE_WEBAPP_NAME_PRD -b "evt-prd-001" -e prd
-gh secret set AZURE_WEBAPP_PUBLISH_PROFILE_UAT -b "$(cat uat.publish.xml)" -e uat
-gh secret set AZURE_WEBAPP_PUBLISH_PROFILE_PRD -b "$(cat prd.publish.xml)" -e prd
-gh secret set AZURE_CREDENTIALS -b "$(cat azure-credentials.json)" -e uat
-gh secret set AZURE_CREDENTIALS -b "$(cat azure-credentials.json)" -e prd
+**Deploy fails with Azure login error:**
+- Check `AZURE_CREDENTIALS` secret is valid
+- Verify Service Principal has Contributor role on Resource Group
 
-gh secret set NEXTAUTH_URL -b "https://<UAT>.azurewebsites.net" -e uat
-gh secret set NEXTAUTH_URL -b "https://<PRD>.azurewebsites.net" -e prd
-gh secret set NEXTAUTH_SECRET -b "<secret>" -e uat
-gh secret set NEXTAUTH_SECRET -b "<secret>" -e prd
-gh secret set GOOGLE_CLIENT_ID -b "<client-id>" -e uat
-gh secret set GOOGLE_CLIENT_ID -b "<client-id>" -e prd
-gh secret set GOOGLE_CLIENT_SECRET -b "<client-secret>" -e uat
-gh secret set GOOGLE_CLIENT_SECRET -b "<client-secret>" -e prd
-gh secret set GEMINI_API_KEY -b "<api-key>" -e uat
-gh secret set GEMINI_API_KEY -b "<api-key>" -e prd
-gh secret set DATABASE_URL -b "<database-url-uat>" -e uat
-gh secret set DATABASE_URL -b "<database-url-prd>" -e prd
-gh secret set ALLOWLIST_EMAILS -b "person@company.com, other@company.com" -e uat
-gh secret set ALLOWLIST_EMAILS -b "person@company.com, other@company.com" -e prd
-gh secret set ADMIN_EMAILS -b "admin@company.com" -e uat
-gh secret set ADMIN_EMAILS -b "admin@company.com" -e prd
-gh secret set MAX_ACTIVE_USERS -b "100" -e uat
-gh secret set MAX_ACTIVE_USERS -b "100" -e prd
-gh secret set FREE_AI_REQUESTS_PER_MONTH -b "60" -e uat
-gh secret set FREE_AI_REQUESTS_PER_MONTH -b "60" -e prd
-gh secret set FREE_AI_UNITS_PER_MONTH -b "120000" -e uat
-gh secret set FREE_AI_UNITS_PER_MONTH -b "120000" -e prd
-gh secret set PRO_AI_REQUESTS_PER_MONTH -b "600" -e uat
-gh secret set PRO_AI_REQUESTS_PER_MONTH -b "600" -e prd
-gh secret set PRO_AI_UNITS_PER_MONTH -b "1200000" -e uat
-gh secret set PRO_AI_UNITS_PER_MONTH -b "1200000" -e prd
-gh secret set GLOBAL_AI_REQUESTS_PER_MONTH -b "6000" -e uat
-gh secret set GLOBAL_AI_REQUESTS_PER_MONTH -b "6000" -e prd
-gh secret set GLOBAL_AI_UNITS_PER_MONTH -b "12000000" -e uat
-gh secret set GLOBAL_AI_UNITS_PER_MONTH -b "12000000" -e prd
-```
+**Health check fails:**
+- Check app logs: `az webapp log tail --name evt-uat-pl-44b1 --resource-group evt-rg-pl`
+- Verify all secrets are configured correctly
+- Check database connectivity
 
-Notes:
-- Leave allowlist empty to allow all users.
-- `ADMIN_EMAILS` controls access to `/admin`.
+**Database migration fails:**
+- Check `DATABASE_URL` secret is correct
+- Verify PostgreSQL firewall allows Azure services
+- Review migration files in `prisma/migrations/`
 
-## 5) Environments & approvals
-
-Create GitHub environments `uat` and `prd`.
-Set required reviewers for `prd` to gate production deployments.
-
-## 6) Deploy
-
-- UAT: push to `main` (see `.github/workflows/deploy-uat.yml`)
-- PRD: run workflow `Deploy PRD` manually (see `.github/workflows/deploy-prd.yml`)
-
-## 7) Versioning & verification
-
-Each deploy stamps the app with:
-- `APP_VERSION` (from `package.json`)
-- `APP_COMMIT_SHA` (short git SHA)
-- `APP_BUILD_TIME` (UTC timestamp)
-
-The workflow verifies the deployment by calling:
-```
-GET /api/health
-```
-and checking that the response contains the expected version + commit. PRD deploys also run
-`npx prisma migrate status` before pushing artifacts to ensure schema compatibility.
+**Admin cannot login despite limit:**
+- Verify `ADMIN_EMAILS` contains the correct email
+- Check user status in database: `SELECT * FROM "UserPlan" WHERE userId IN (SELECT id FROM "User" WHERE email = 'admin@example.com')`
+- Ensure email is lowercase (normalized)
