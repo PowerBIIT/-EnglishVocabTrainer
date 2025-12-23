@@ -53,6 +53,9 @@ const buildPromptSummaries = () =>
     .map((prompt) => `- ${prompt.id}: ${prompt.label} (${prompt.description})`)
     .join('\n');
 
+const isPromptId = (value: string): value is PromptId =>
+  getPromptCatalog().some((prompt) => prompt.id === value);
+
 export async function POST(request: Request) {
   const session = await requireAdmin();
   if (!session?.user?.id) {
@@ -78,13 +81,13 @@ export async function POST(request: Request) {
   const model = await resolveGeminiModel();
   const gemini = new GeminiService(apiKey);
 
-  const basePrompt =
-    promptId === 'global'
-      ? undefined
-      : getPromptDefinition(promptId)?.build?.() ??
-        getPromptCatalog().find((prompt) => prompt.id === promptId)?.prompt;
+  const isGlobal = promptId === 'global';
+  const resolvedPromptId = !isGlobal && isPromptId(promptId) ? promptId : null;
+  const basePrompt = resolvedPromptId
+    ? getPromptDefinition(resolvedPromptId)?.build()
+    : undefined;
 
-  if (promptId !== 'global' && !basePrompt) {
+  if (!isGlobal && !basePrompt) {
     return NextResponse.json({ error: 'prompt_not_found' }, { status: 404 });
   }
 
@@ -93,7 +96,7 @@ export async function POST(request: Request) {
     goal: goal || 'Improve clarity and effectiveness of the prompt overlay.',
     currentOverlay,
     basePrompt,
-    promptSummaries: promptId === 'global' ? buildPromptSummaries() : undefined,
+    promptSummaries: isGlobal ? buildPromptSummaries() : undefined,
   });
 
   try {
