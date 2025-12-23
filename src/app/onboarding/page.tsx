@@ -40,6 +40,7 @@ const onboardingCopy = {
     loading: 'Ładowanie...',
     onboardingLabel: 'Onboarding',
     signOut: 'Wyloguj się',
+    skip: 'Pomiń',
     title: 'Start przygody',
     languageLabel: 'Język',
     stepLabel: (current: number, total: number) => `Krok ${current} z ${total}`,
@@ -71,6 +72,7 @@ const onboardingCopy = {
     loading: 'Loading...',
     onboardingLabel: 'Onboarding',
     signOut: 'Sign out',
+    skip: 'Skip',
     title: 'Start the adventure',
     languageLabel: 'Language',
     stepLabel: (current: number, total: number) => `Step ${current} of ${total}`,
@@ -102,6 +104,7 @@ const onboardingCopy = {
     loading: 'Завантаження...',
     onboardingLabel: 'Онбординг',
     signOut: 'Вийти',
+    skip: 'Пропустити',
     title: 'Початок пригоди',
     languageLabel: 'Мова',
     stepLabel: (current: number, total: number) => `Крок ${current} з ${total}`,
@@ -240,6 +243,17 @@ export default function OnboardingPage() {
     setTimeout(() => router.push('/'), 600);
   };
 
+  const skipOnboarding = async () => {
+    await fetch('/api/user/profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ onboardingComplete: true }),
+    });
+
+    await update({ onboardingComplete: true });
+    router.push('/');
+  };
+
   return (
     <div className="min-h-screen px-4 py-10">
       <div className="mx-auto w-full max-w-4xl space-y-8">
@@ -296,6 +310,14 @@ export default function OnboardingPage() {
                 </button>
               </div>
             </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={skipOnboarding}
+            >
+              {t.skip}
+            </Button>
             <Button
               type="button"
               variant="ghost"
