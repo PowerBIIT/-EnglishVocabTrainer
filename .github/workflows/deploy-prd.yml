@@ -147,7 +147,7 @@ jobs:
           HEALTH_URL="${HEALTH_URL%/}"
           response=""
           for i in {1..18}; do
-            response=$(curl -sSf "${HEALTH_URL}/api/health" || true)
+            response=$(curl -sSf --connect-timeout 5 --max-time 10 "${HEALTH_URL}/api/health" || true)
             if [ -n "$response" ]; then
               if echo "$response" | node -e '
                 const fs = require("fs");
