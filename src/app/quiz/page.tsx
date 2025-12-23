@@ -496,8 +496,8 @@ export default function QuizPage() {
       {/* Settings preview */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 text-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-4 text-sm">
               <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
                 <Target size={16} />
                 <span>

@@ -372,7 +372,7 @@ export default function FlashcardsPage() {
       {/* Session info */}
       <Card>
         <CardContent className="p-4 space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
               <BookOpen size={20} className="text-primary-500" />
               <span className="font-medium text-slate-800 dark:text-slate-100">

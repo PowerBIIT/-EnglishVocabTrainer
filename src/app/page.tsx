@@ -311,7 +311,7 @@ export default function HomePage() {
         <div className="space-y-6">
           <Card className="bg-white/80 dark:bg-slate-900/70 border border-white/60">
             <CardContent className="p-6 space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-wide text-slate-500">{t.guide}</p>
                   <p className="font-semibold text-slate-800 dark:text-slate-100">{userName}</p>
@@ -328,7 +328,7 @@ export default function HomePage() {
           </Card>
 
           <Card>
-            <CardContent className="p-5 flex items-center gap-4">
+            <CardContent className="p-5 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
               <CircularProgress value={levelProgress.percentage} size={72} strokeWidth={6} />
               <div>
                 <p className="font-semibold text-slate-800 dark:text-slate-100">

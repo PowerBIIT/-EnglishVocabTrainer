@@ -124,7 +124,7 @@ export function ConfigSection({ config, loading, error, onSave }: ConfigSectionP
               key={item.key}
               className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4"
             >
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-sm font-semibold text-slate-900 dark:text-white">
                     {item.label}

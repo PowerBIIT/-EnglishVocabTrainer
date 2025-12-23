@@ -1285,12 +1285,16 @@ export default function ProfilePage() {
               <h2 className="font-semibold text-slate-800 dark:text-slate-100">{t.account}</h2>
             </div>
           </CardHeader>
-        <CardContent className="flex items-center justify-between">
+        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs text-slate-500">{t.signedInAs}</p>
             <p className="font-medium text-slate-800 dark:text-slate-100">{userEmail}</p>
           </div>
-          <Button variant="secondary" onClick={() => signOut({ callbackUrl: '/login' })}>
+          <Button
+            variant="secondary"
+            onClick={() => signOut({ callbackUrl: '/login' })}
+            className="w-full sm:w-auto"
+          >
             {t.logout}
           </Button>
         </CardContent>

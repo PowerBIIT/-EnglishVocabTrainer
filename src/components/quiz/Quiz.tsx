@@ -507,7 +507,7 @@ export function QuizResults({ results, words, onRetry, onClose }: QuizResultsPro
           </div>
         )}
 
-        <div className="flex justify-center gap-4 mt-6">
+        <div className="flex flex-col gap-3 mt-6 sm:flex-row sm:justify-center">
           <Button variant="secondary" onClick={onClose}>
             {t.finish}
           </Button>
@@ -525,7 +525,7 @@ export function QuizResults({ results, words, onRetry, onClose }: QuizResultsPro
           </h3>
           {wrongAnswers.map((item) => (
             <Card key={item!.questionId} className="p-4">
-              <div className="flex justify-between items-start">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <p className="font-medium text-slate-800 dark:text-slate-100">
                     {getTargetText(item!.word)}
@@ -534,7 +534,7 @@ export function QuizResults({ results, words, onRetry, onClose }: QuizResultsPro
                     {getNativeText(item!.word)}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right">
                   <p className="text-sm text-error-500">
                     {t.yourAnswer(item!.userAnswer)}
                   </p>
