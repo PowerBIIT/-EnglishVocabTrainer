@@ -104,3 +104,40 @@ export async function PATCH(
     },
   });
 }
+
+export async function DELETE(
+  _request: Request,
+  { params }: { params: { userId: string } }
+) {
+  const session = await requireAdmin();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  const userId = params.userId;
+  if (!userId) {
+    return NextResponse.json({ error: 'Missing user id' }, { status: 400 });
+  }
+
+  if (session.user.id === userId) {
+    return NextResponse.json({ error: 'Cannot delete yourself' }, { status: 400 });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { id: true, email: true },
+  });
+
+  if (!user) {
+    return NextResponse.json({ error: 'User not found' }, { status: 404 });
+  }
+
+  await prisma.user.delete({ where: { id: userId } });
+
+  return NextResponse.json({
+    user: {
+      userId: user.id,
+      email: user.email,
+    },
+  });
+}

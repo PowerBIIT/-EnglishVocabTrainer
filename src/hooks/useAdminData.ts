@@ -191,6 +191,15 @@ export function useAdminData(enabled: boolean = true) {
     [enabled, loadStats, loadUsers]
   );
 
+  const deleteUser = useCallback(
+    async (userId: string) => {
+      if (!enabled) return;
+      await fetchJson(`/api/admin/users/${userId}`, { method: 'DELETE' });
+      await Promise.all([loadUsers(), loadStats()]);
+    },
+    [enabled, loadStats, loadUsers]
+  );
+
   return {
     config,
     configLoading,
@@ -206,6 +215,7 @@ export function useAdminData(enabled: boolean = true) {
     setUsersQuery,
     updateConfig,
     updateUser,
+    deleteUser,
     refreshStats: loadStats,
     refreshUsers: loadUsers,
   };

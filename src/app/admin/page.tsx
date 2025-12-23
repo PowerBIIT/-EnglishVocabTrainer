@@ -30,6 +30,7 @@ export default function AdminPage() {
     setUsersQuery,
     updateConfig,
     updateUser,
+    deleteUser,
   } = useAdminData(isAdmin);
 
   useEffect(() => {
@@ -105,6 +106,7 @@ export default function AdminPage() {
               }))
             }
             onUpdateUser={updateUser}
+            onDeleteUser={deleteUser}
           />
         </TabsContent>
 

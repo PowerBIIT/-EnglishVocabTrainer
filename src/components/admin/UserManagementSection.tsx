@@ -19,6 +19,7 @@ type UserManagementSectionProps = {
   onFiltersChange: (nextFilters: { status: string; plan: string }) => void;
   onPageChange: (page: number) => void;
   onUpdateUser: (userId: string, updates: { plan?: string; accessStatus?: string }) => Promise<void>;
+  onDeleteUser: (userId: string) => Promise<void>;
 };
 
 const planOptions = [
@@ -45,11 +46,15 @@ export function UserManagementSection({
   onFiltersChange,
   onPageChange,
   onUpdateUser,
+  onDeleteUser,
 }: UserManagementSectionProps) {
   const [activeUser, setActiveUser] = useState<AdminUser | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
   const [editPlan, setEditPlan] = useState('FREE');
   const [editStatus, setEditStatus] = useState('ACTIVE');
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(
     null
   );
@@ -88,6 +93,51 @@ export function UserManagementSection({
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleStatusChange = async (
+    user: AdminUser,
+    nextStatus: 'ACTIVE' | 'WAITLISTED' | 'SUSPENDED'
+  ) => {
+    setPendingUserId(user.id);
+    setToast(null);
+    try {
+      await onUpdateUser(user.id, { accessStatus: nextStatus });
+      const message =
+        nextStatus === 'ACTIVE'
+          ? 'Access granted.'
+          : nextStatus === 'SUSPENDED'
+            ? 'User suspended.'
+            : 'User updated.';
+      setToast({ type: 'success', message });
+    } catch (actionError) {
+      setToast({
+        type: 'error',
+        message: actionError instanceof Error ? actionError.message : 'Failed to update user.',
+      });
+    } finally {
+      setPendingUserId(null);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setPendingUserId(deleteTarget.id);
+    setToast(null);
+    try {
+      await onDeleteUser(deleteTarget.id);
+      setToast({ type: 'success', message: 'User deleted.' });
+      setDeleteTarget(null);
+    } catch (deleteError) {
+      setToast({
+        type: 'error',
+        message: deleteError instanceof Error ? deleteError.message : 'Failed to delete user.',
+      });
+    } finally {
+      setDeleting(false);
+      setPendingUserId(null);
     }
   };
 
@@ -150,7 +200,7 @@ export function UserManagementSection({
               <th className="px-4 py-3">Plan</th>
               <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Created</th>
-              <th className="px-4 py-3 text-right">Action</th>
+              <th className="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="text-slate-700 dark:text-slate-200">
@@ -176,9 +226,44 @@ export function UserManagementSection({
                     {user.createdAt ? formatDate(new Date(user.createdAt)) : '—'}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button variant="secondary" size="sm" onClick={() => openEditor(user)}>
-                      Edit
-                    </Button>
+                    <div className="flex flex-wrap justify-end gap-2">
+                      {user.plan?.accessStatus !== 'ACTIVE' && (
+                        <Button
+                          variant="success"
+                          size="sm"
+                          disabled={pendingUserId === user.id}
+                          onClick={() => handleStatusChange(user, 'ACTIVE')}
+                        >
+                          Grant access
+                        </Button>
+                      )}
+                      {user.plan?.accessStatus !== 'SUSPENDED' && (
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          disabled={pendingUserId === user.id}
+                          onClick={() => handleStatusChange(user, 'SUSPENDED')}
+                        >
+                          Suspend
+                        </Button>
+                      )}
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        disabled={pendingUserId === user.id}
+                        onClick={() => setDeleteTarget(user)}
+                      >
+                        Delete
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={pendingUserId === user.id}
+                        onClick={() => openEditor(user)}
+                      >
+                        Edit
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -244,6 +329,27 @@ export function UserManagementSection({
             </Select>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        open={Boolean(deleteTarget)}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete user"
+        description={deleteTarget?.email ?? ''}
+        actions={
+          <>
+            <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={handleDelete} disabled={deleting}>
+              {deleting ? 'Deleting...' : 'Delete'}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-slate-600 dark:text-slate-300">
+          This permanently removes the user account and all related data.
+        </p>
       </Modal>
     </div>
   );
