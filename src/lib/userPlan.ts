@@ -1,6 +1,6 @@
 import { AccessStatus, Plan } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getMaxActiveUsers, isEmailAllowed } from '@/lib/access';
+import { getMaxActiveUsers, isEmailAllowed, getAdminEmails, isAdminEmail } from '@/lib/access';
 
 export const ensureUserPlan = async (userId: string, email?: string | null) => {
   const existing = await prisma.userPlan.findUnique({ where: { userId } });
@@ -14,6 +14,9 @@ export const ensureUserPlan = async (userId: string, email?: string | null) => {
 
   if (!allowlisted) {
     desiredStatus = AccessStatus.WAITLISTED;
+  } else if (isAdminEmail(email ?? undefined)) {
+    // Admini zawsze dostają ACTIVE, niezależnie od limitu użytkowników
+    desiredStatus = AccessStatus.ACTIVE;
   } else {
     const maxActiveUsers = getMaxActiveUsers();
     if (maxActiveUsers === Number.POSITIVE_INFINITY) {
@@ -21,8 +24,16 @@ export const ensureUserPlan = async (userId: string, email?: string | null) => {
     } else if (existing?.accessStatus === AccessStatus.ACTIVE) {
       desiredStatus = AccessStatus.ACTIVE;
     } else {
+      const adminEmails = getAdminEmails();
       const activeCount = await prisma.userPlan.count({
-        where: { accessStatus: AccessStatus.ACTIVE },
+        where: {
+          accessStatus: AccessStatus.ACTIVE,
+          user: {
+            email: {
+              notIn: adminEmails.length > 0 ? adminEmails : undefined,
+            },
+          },
+        },
       });
       desiredStatus = activeCount < maxActiveUsers ? AccessStatus.ACTIVE : AccessStatus.WAITLISTED;
     }
