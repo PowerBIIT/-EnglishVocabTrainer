@@ -1,5 +1,42 @@
 # Plan Testów Manualnych - English Vocab Trainer
 
+## 0. Checklista wejścia na produkcję UI (Desktop + Mobile)
+
+### 0.1 Inwentaryzacja UI (krok 1 planu)
+- [ ] Strony publiczne: `/login`, `/onboarding`, `/waitlist`
+- [ ] Główne moduły: `/`, `/vocabulary`, `/flashcards`, `/quiz`, `/pronunciation`, `/pronunciation/drills`, `/chat`, `/profile`, `/settings`
+- [ ] Panel admina: `/admin` (Konfiguracja, Użytkownicy, Zgłoszenia, Statystyki, AI/Modele)
+- [ ] Stany krytyczne: empty/loading/error/limit/403/401
+- [ ] Komponenty krytyczne: nawigacja dolna, nagłówek, modale, formularze, karty, tabele, filtry/sortowanie, statusy AI
+
+### 0.2 Responsywność i układ (krok 2 planu)
+- [ ] Breakpointy: 360x640, 390x844, 414x896, 768x1024
+- [ ] Dotyk: cele dotykowe >= 44px, brak nakładania elementów
+- [ ] Overflow: brak poziomych scrolli poza tabelami
+- [ ] Tabele admina: wersja mobilna (stack/scroll) + priorytety kolumn
+- [ ] Karty onboardingu: układ kolumnowy, pełna szerokość CTA, bez ucięć treści
+
+### 0.3 Spójność UX (krok 3 planu)
+- [ ] Empty/error/loading na każdej stronie
+- [ ] Walidacje formularzy i komunikaty błędów
+- [ ] Długie treści: skracanie, łamanie, elipsy
+- [ ] Nawigacja klawiaturą i fokusy
+
+### 0.4 Wydajność UI (krok 4 planu)
+- [ ] Obrazy i fonty zoptymalizowane
+- [ ] Brak skoków layoutu (CLS)
+- [ ] Szybkie wejście na mobile (INP/LCP w normie)
+
+### 0.5 QA i regresje (krok 5 planu)
+- [ ] Cross‑browser: Chrome/Firefox/Safari/Edge
+- [ ] Mobile: iOS Safari, Android Chrome
+- [ ] Checklisty regresji po poprawkach
+
+### 0.6 Release UI (krok 6 planu)
+- [ ] Bump wersji aplikacji
+- [ ] Aktualizacja checklisty wdrożeniowej UI
+- [ ] Weryfikacja `/api/health` po deployu
+
 ## 1. Informacje ogólne
 
 | Pole | Wartość |
