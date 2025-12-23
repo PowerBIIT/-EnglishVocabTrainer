@@ -18,12 +18,35 @@ type AssistResponse = {
 
 const MAX_OVERLAY_CHARS = 1200;
 
+const decodeJsonString = (value: string) =>
+  value
+    .replace(/\\n/g, '\n')
+    .replace(/\\r/g, '\r')
+    .replace(/\\t/g, '\t')
+    .replace(/\\"/g, '"')
+    .replace(/\\'/g, "'")
+    .replace(/\\\\/g, '\\');
+
+const extractJsonField = (value: string, field: string) => {
+  const doubleQuoted = new RegExp(`"${field}"\\s*:\\s*"([\\s\\S]*?)"\\s*(?:,|})`);
+  const singleQuoted = new RegExp(`'${field}'\\s*:\\s*'([\\s\\S]*?)'\\s*(?:,|})`);
+  const match = value.match(doubleQuoted) ?? value.match(singleQuoted);
+  if (!match) return '';
+  return decodeJsonString(match[1]).trim();
+};
+
+const trimOverlay = (value: string) =>
+  value.length > MAX_OVERLAY_CHARS ? value.slice(0, MAX_OVERLAY_CHARS) : value;
+
 const extractOverlayFallback = (value: string) => {
   const cleaned = value
     .replace(/```(?:json)?/gi, '')
     .replace(/```/g, '')
     .trim();
   if (!cleaned) return '';
+
+  const extractedOverlay = extractJsonField(cleaned, 'suggestedOverlay');
+  if (extractedOverlay) return trimOverlay(extractedOverlay);
 
   const lines = cleaned
     .split('\n')
@@ -32,9 +55,7 @@ const extractOverlayFallback = (value: string) => {
   if (lines.length === 0) return '';
 
   const overlay = lines.join('\n');
-  return overlay.length > MAX_OVERLAY_CHARS
-    ? overlay.slice(0, MAX_OVERLAY_CHARS)
-    : overlay;
+  return trimOverlay(overlay);
 };
 
 const parseAssistResponse = (response: string): AssistResponse => {
@@ -46,9 +67,10 @@ const parseAssistResponse = (response: string): AssistResponse => {
       throw error;
     }
     console.warn('Admin assist returned non-JSON response. Falling back to text overlay.');
+    const fallbackNotes = extractJsonField(response, 'notes');
     return {
       suggestedOverlay: fallbackOverlay,
-      notes: 'Auto-extracted from plain text response.',
+      notes: fallbackNotes || 'Auto-extracted from plain text response.',
     };
   }
 };
