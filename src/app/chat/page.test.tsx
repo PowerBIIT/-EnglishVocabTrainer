@@ -12,7 +12,7 @@ describe('ChatPage', () => {
   it('renders the AI assistant header and input', async () => {
     render(<ChatPage />);
 
-    expect(await screen.findByRole('heading', { name: 'AI Асистент' })).toBeVisible();
-    expect(screen.getByPlaceholderText('Введи слова або запитай...')).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Asystent AI' })).toBeVisible();
+    expect(screen.getByPlaceholderText('Wpisz słówka lub zapytaj...')).toBeVisible();
   });
 });

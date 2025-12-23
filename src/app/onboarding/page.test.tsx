@@ -14,8 +14,8 @@ describe('OnboardingPage', () => {
   it('shows the pair selection step', async () => {
     render(<OnboardingPage />);
 
-    expect(await screen.findByText('Обери мовну пару')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Далі' })).toBeVisible();
+    expect(await screen.findByText('Wybierz parę językową')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Dalej' })).toBeVisible();
   });
 
   it('updates the learning pair when a new option is selected', async () => {
@@ -23,7 +23,7 @@ describe('OnboardingPage', () => {
     render(<OnboardingPage />);
 
     const option = await screen.findByRole('button', {
-      name: /Українська → Англійська/,
+      name: /Ukraiński → Angielski/,
     });
     await user.click(option);
 

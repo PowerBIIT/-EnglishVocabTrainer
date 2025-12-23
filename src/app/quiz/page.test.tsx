@@ -13,48 +13,48 @@ const seedVocabulary = () => {
         id: 'word-1',
         en: 'bread',
         phonetic: '/bread/',
-        pl: 'хліб',
+        pl: 'chleb',
         category: 'Food',
         difficulty: 'easy',
         created_at: new Date('2024-01-01T00:00:00Z'),
         source: 'manual',
-        languagePair: 'uk-pl',
+        languagePair: 'pl-en',
         setIds: [],
       },
       {
         id: 'word-2',
         en: 'milk',
         phonetic: '/milk/',
-        pl: 'молоко',
+        pl: 'mleko',
         category: 'Food',
         difficulty: 'medium',
         created_at: new Date('2024-01-01T00:00:00Z'),
         source: 'manual',
-        languagePair: 'uk-pl',
+        languagePair: 'pl-en',
         setIds: [],
       },
       {
         id: 'word-3',
         en: 'train',
         phonetic: '/train/',
-        pl: 'поїзд',
+        pl: 'pociąg',
         category: 'Travel',
         difficulty: 'medium',
         created_at: new Date('2024-01-01T00:00:00Z'),
         source: 'manual',
-        languagePair: 'uk-pl',
+        languagePair: 'pl-en',
         setIds: [],
       },
       {
         id: 'word-4',
         en: 'ticket',
         phonetic: '/ticket/',
-        pl: 'квиток',
+        pl: 'bilet',
         category: 'Travel',
         difficulty: 'hard',
         created_at: new Date('2024-01-01T00:00:00Z'),
         source: 'manual',
-        languagePair: 'uk-pl',
+        languagePair: 'pl-en',
         setIds: [],
       },
     ],
@@ -70,10 +70,10 @@ describe('QuizPage', () => {
   it('renders quiz setup with modes and start button', async () => {
     render(<QuizPage />);
 
-    expect(await screen.findByText('Квіз')).toBeVisible();
-    expect(screen.getByText('Обери набір і перевір свої знання')).toBeVisible();
-    expect(screen.getByText('Режим квізу')).toBeVisible();
-    expect(screen.getByText('Введення')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Почати квіз' })).toBeVisible();
+    expect(await screen.findByText('Quiz')).toBeVisible();
+    expect(screen.getByText('Wybierz zestaw i sprawdź swoją wiedzę')).toBeVisible();
+    expect(screen.getByText('Tryb quizu')).toBeVisible();
+    expect(screen.getByText('Wpisywanie')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Rozpocznij quiz' })).toBeVisible();
   });
 });

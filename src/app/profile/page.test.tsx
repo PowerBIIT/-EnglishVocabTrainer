@@ -9,10 +9,10 @@ describe('ProfilePage', () => {
     resetStore();
   });
 
-  it('renders the profile header in Ukrainian', async () => {
+  it('renders the profile header in Polish', async () => {
     render(<ProfilePage />);
 
-    expect(await screen.findByText('Профіль')).toBeVisible();
+    expect(await screen.findByText('Profil')).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Test User' })).toBeVisible();
   });
 });

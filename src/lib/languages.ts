@@ -18,7 +18,7 @@ export interface LearningPair {
   label: Record<AppLanguage, string>;
 }
 
-export const DEFAULT_PAIR_ID: LearningPairId = 'uk-pl';
+export const DEFAULT_PAIR_ID: LearningPairId = 'pl-en';
 
 export const LEARNING_PAIRS: LearningPair[] = [
   {

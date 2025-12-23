@@ -13,24 +13,24 @@ const seedVocabulary = () => {
         id: 'word-1',
         en: 'bread',
         phonetic: '/bread/',
-        pl: 'хліб',
+        pl: 'chleb',
         category: 'Food',
         difficulty: 'easy',
         created_at: new Date('2024-01-01T00:00:00Z'),
         source: 'manual',
-        languagePair: 'uk-pl',
+        languagePair: 'pl-en',
         setIds: [],
       },
       {
         id: 'word-2',
         en: 'milk',
         phonetic: '/milk/',
-        pl: 'молоко',
+        pl: 'mleko',
         category: 'Food',
         difficulty: 'medium',
         created_at: new Date('2024-01-01T00:00:00Z'),
         source: 'manual',
-        languagePair: 'uk-pl',
+        languagePair: 'pl-en',
         setIds: [],
       },
     ],
@@ -46,10 +46,10 @@ describe('VocabularyPage', () => {
   it('renders the vocabulary summary and categories', async () => {
     render(<VocabularyPage />);
 
-    expect(await screen.findByText('Мої слова')).toBeVisible();
-    expect(screen.getByText(/2 слів у 1 категоріях/)).toBeVisible();
-    expect(screen.getByText('Їжа (2)')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Без набору (2)' })).toBeVisible();
-    expect(screen.getByPlaceholderText('Пошук слів...')).toBeVisible();
+    expect(await screen.findByText('Moje słówka')).toBeVisible();
+    expect(screen.getByText(/2 słówek w 1 kategoriach/)).toBeVisible();
+    expect(screen.getByText('Jedzenie (2)')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Bez zestawu (2)' })).toBeVisible();
+    expect(screen.getByPlaceholderText('Szukaj słówek...')).toBeVisible();
   });
 });

@@ -32,21 +32,21 @@ describe('WordIntake', () => {
     const user = userEvent.setup();
     render(<WordIntake variant="chat" />);
 
-    const input = await screen.findByPlaceholderText('Введи слова або запитай...');
+    const input = await screen.findByPlaceholderText('Wpisz słówka lub zapytaj...');
     await user.type(input, 'apple - jablko');
     await user.keyboard('{Enter}');
 
     expect(
-      await screen.findByText('Обери слова, які хочеш додати до бібліотеки.')
+      await screen.findByText('Zaznacz słówka, które chcesz dodać do biblioteki.')
     ).toBeVisible();
 
-    const addButton = screen.getByRole('button', { name: /Додати/ });
+    const addButton = screen.getByRole('button', { name: /Dodaj/ });
     await user.click(addButton);
 
     await waitFor(() => {
       expect(useVocabStore.getState().getActiveVocabulary()).toHaveLength(1);
     });
 
-    expect(await screen.findByText(/Додано/)).toBeVisible();
+    expect(await screen.findByText(/Dodano/)).toBeVisible();
   });
 });

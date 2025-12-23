@@ -13,24 +13,24 @@ const seedVocabulary = () => {
         id: 'word-1',
         en: 'bread',
         phonetic: '/bread/',
-        pl: 'хліб',
+        pl: 'chleb',
         category: 'Food',
         difficulty: 'easy',
         created_at: new Date('2024-01-01T00:00:00Z'),
         source: 'manual',
-        languagePair: 'uk-pl',
+        languagePair: 'pl-en',
         setIds: [],
       },
       {
         id: 'word-2',
         en: 'milk',
         phonetic: '/milk/',
-        pl: 'молоко',
+        pl: 'mleko',
         category: 'Food',
         difficulty: 'medium',
         created_at: new Date('2024-01-01T00:00:00Z'),
         source: 'manual',
-        languagePair: 'uk-pl',
+        languagePair: 'pl-en',
         setIds: [],
       },
     ],
@@ -46,9 +46,9 @@ describe('FlashcardsPage', () => {
   it('renders flashcards setup and session controls', async () => {
     render(<FlashcardsPage />);
 
-    expect(await screen.findByText('Флешкарти')).toBeVisible();
-    expect(screen.getByText('Обери набір або категорію та почни навчання')).toBeVisible();
-    expect(screen.getByText('Налаштування сесії')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Почати сесію' })).toBeVisible();
+    expect(await screen.findByText('Fiszki')).toBeVisible();
+    expect(screen.getByText('Wybierz zestaw lub kategorię i zacznij naukę')).toBeVisible();
+    expect(screen.getByText('Ustawienia sesji')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Rozpocznij sesję' })).toBeVisible();
   });
 });

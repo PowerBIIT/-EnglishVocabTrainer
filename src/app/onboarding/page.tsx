@@ -26,13 +26,13 @@ const MISSION_WORDS = 3;
 type Step = 'pair' | 'skin' | 'words' | 'mission' | 'done';
 
 const detectPreferredLanguage = (): AppLanguage => {
-  if (typeof navigator === 'undefined') return 'uk';
+  if (typeof navigator === 'undefined') return 'pl';
   const languages = navigator.languages?.length ? navigator.languages : [navigator.language];
   if (languages.some((lang) => lang.toLowerCase().startsWith('uk'))) return 'uk';
   if (languages.some((lang) => lang.toLowerCase().startsWith('ru'))) return 'uk';
   if (languages.some((lang) => lang.toLowerCase().startsWith('pl'))) return 'pl';
   if (languages.some((lang) => lang.toLowerCase().startsWith('en'))) return 'en';
-  return 'uk';
+  return 'pl';
 };
 
 const onboardingCopy = {
@@ -190,7 +190,7 @@ export default function OnboardingPage() {
     }
     const preferred = detectPreferredLanguage();
     if (preferred === 'uk') {
-      setLearningPair(DEFAULT_PAIR_ID);
+      setLearningPair('uk-pl');
     } else if (preferred === 'pl') {
       setLearningPair('pl-en');
     }

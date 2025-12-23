@@ -61,13 +61,13 @@ const loginCopy = {
 type LoginCopy = typeof loginCopy.pl;
 
 const detectPreferredLanguage = (): AppLanguage => {
-  if (typeof navigator === 'undefined') return 'uk';
+  if (typeof navigator === 'undefined') return 'pl';
   const languages = navigator.languages?.length ? navigator.languages : [navigator.language];
   if (languages.some((lang) => lang.toLowerCase().startsWith('uk'))) return 'uk';
   if (languages.some((lang) => lang.toLowerCase().startsWith('ru'))) return 'uk';
   if (languages.some((lang) => lang.toLowerCase().startsWith('pl'))) return 'pl';
   if (languages.some((lang) => lang.toLowerCase().startsWith('en'))) return 'en';
-  return 'uk';
+  return 'pl';
 };
 
 const languageOptions = [
