@@ -45,6 +45,8 @@ jobs:
         run: npm run test:unit
 
       - name: Build
+        env:
+          NEXT_PUBLIC_E2E_TEST: 'true'
         run: npm run build
 
       - name: Build version info
