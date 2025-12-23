@@ -80,6 +80,7 @@ const GENERATION_VERBS = [
 const GENERATION_NOUNS = [
   'slowa',
   'slowka',
+  'slowek',
   'words',
   'vocab',
   'слова',
@@ -603,14 +604,31 @@ export function WordIntake({
     ];
     const normalizedStatsKeywords = statsKeywords.map(normalizeForMatch);
     const hasTopicHint = containsKeyword(normalizedText, TOPIC_HINTS);
-    const hasWordHint = containsKeyword(normalizedText, GENERATION_NOUNS);
+    const topicPatterns = [
+      /o\s+([^\d]+?)(?:\s+poziom|\s+level|\s*$)/i,
+      /na temat\s+(.+?)(?:\s+poziom|\s+level|\s*$)/i,
+      /t.?e.?m.?a.?t[:\s]+(.+?)(?:\s+poziom|\s+level|\s*$)/i,
+      /tema[:\s]+(.+?)(?:\s+poziom|\s+level|\s*$)/i,
+      /about\s+(.+?)(?:\s+level|\s*$)/i,
+      /topic[:\s]+(.+?)(?:\s+level|\s*$)/i,
+      /про\s+([^\d]+?)(?:\s+рівень|\s+level|\s*$)/i,
+      /на тему\s+(.+?)(?:\s+рівень|\s+level|\s*$)/i,
+      /тема[:\s]+(.+?)(?:\s+рівень|\s+level|\s*$)/i,
+    ];
+    const hasTopicPattern = topicPatterns.some((pattern) => pattern.test(text));
+    const wordHintPattern =
+      /\b(sł[oó]w\w*|slow\w*|words?|vocab\w*|слов\w*|слів\w*|лексик\w*)\b/i;
+    const hasWordHint =
+      containsKeyword(normalizedText, GENERATION_NOUNS) ||
+      wordHintPattern.test(text);
     const hasLanguageHint = containsKeyword(normalizedText, LANGUAGE_HINTS);
     const hasGenerationVerb = containsKeyword(normalizedText, GENERATION_VERBS);
     const hasCountHint = Boolean(text.match(/\b\d+\b/));
     const wantsGeneration =
       hasGenerationVerb ||
-      (hasWordHint && (hasTopicHint || hasLanguageHint)) ||
-      (hasTopicHint && (hasLanguageHint || hasCountHint));
+      hasTopicHint ||
+      hasTopicPattern ||
+      (hasWordHint && (hasLanguageHint || hasCountHint));
     const wantsStats = containsKeyword(normalizedText, normalizedStatsKeywords);
 
     if (wantsGeneration) {
@@ -620,18 +638,6 @@ export function WordIntake({
         text.match(/(\d+)\s+word/i) ||
         text.match(/(\d+)\s+слов/i);
       const count = match ? parseInt(match[1]) : 10;
-
-      const topicPatterns = [
-        /o\s+([^\d]+?)(?:\s+poziom|\s+level|\s*$)/i,
-        /na temat\s+(.+?)(?:\s+poziom|\s+level|\s*$)/i,
-        /t.?e.?m.?a.?t[:\s]+(.+?)(?:\s+poziom|\s+level|\s*$)/i,
-        /tema[:\s]+(.+?)(?:\s+poziom|\s+level|\s*$)/i,
-        /about\s+(.+?)(?:\s+level|\s*$)/i,
-        /topic[:\s]+(.+?)(?:\s+level|\s*$)/i,
-        /про\s+([^\d]+?)(?:\s+рівень|\s+level|\s*$)/i,
-        /на тему\s+(.+?)(?:\s+рівень|\s+level|\s*$)/i,
-        /тема[:\s]+(.+?)(?:\s+рівень|\s+level|\s*$)/i,
-      ];
 
       let topic: string = t.defaultTopic;
       for (const pattern of topicPatterns) {
