@@ -10,6 +10,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { useAdminData } from '@/hooks/useAdminData';
 import { useLanguage } from '@/lib/i18n';
+import { useVocabStore } from '@/lib/store';
+import { cn } from '@/lib/utils';
 
 type AdminTab = 'config' | 'users' | 'requests' | 'stats';
 
@@ -20,6 +22,7 @@ const adminCopy = {
     loading: 'Ładowanie panelu admina...',
     accessDenied: 'Brak dostępu.',
     configKeys: (count: number) => `${count} kluczy konfiguracji`,
+    languageLabel: 'Język',
     tabs: {
       config: 'Konfiguracja',
       users: 'Użytkownicy',
@@ -36,6 +39,7 @@ const adminCopy = {
     loading: 'Loading admin panel...',
     accessDenied: 'Access denied.',
     configKeys: (count: number) => `${count} config keys`,
+    languageLabel: 'Language',
     tabs: {
       config: 'Configuration',
       users: 'Users',
@@ -56,6 +60,19 @@ export default function AdminPage() {
   const savedUsersState = useRef({ status: 'all', plan: 'all', page: 0 });
   const language = useLanguage();
   const t = language === 'pl' ? adminCopy.pl : adminCopy.en;
+  const updateSettings = useVocabStore((state) => state.updateSettings);
+  const selectedLanguage = language === 'pl' ? 'pl' : 'en';
+
+  const setLanguage = (nextLanguage: 'pl' | 'en') => {
+    if (nextLanguage === selectedLanguage) return;
+    updateSettings('general', { language: nextLanguage });
+    try {
+      window.localStorage.setItem('uiLanguage', nextLanguage);
+      window.localStorage.setItem('pendingLanguage', nextLanguage);
+    } catch (error) {
+      console.warn('Unable to store language preference.', error);
+    }
+  };
 
   const {
     config,
@@ -122,13 +139,41 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen px-6 py-10 space-y-6">
-      <header className="space-y-2">
-        <h1 className="font-display text-3xl md:text-4xl text-slate-900 dark:text-white">
-          {t.title}
-        </h1>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-          <span>{t.subtitle}</span>
-          <Badge variant="info">{t.configKeys(config.length)}</Badge>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="font-display text-3xl md:text-4xl text-slate-900 dark:text-white">
+            {t.title}
+          </h1>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+            <span>{t.subtitle}</span>
+            <Badge variant="info">{t.configKeys(config.length)}</Badge>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs uppercase tracking-wide text-slate-400">
+            {t.languageLabel}
+          </span>
+          <div className="inline-flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/70 p-1 shadow-sm border border-white/60 dark:border-slate-700">
+            {(['pl', 'en'] as const).map((option) => {
+              const isActive = selectedLanguage === option;
+              return (
+                <button
+                  key={option}
+                  type="button"
+                  onClick={() => setLanguage(option)}
+                  className={cn(
+                    'rounded-full px-3 py-1 text-xs font-semibold transition',
+                    isActive
+                      ? 'bg-primary-600 text-white shadow'
+                      : 'text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white'
+                  )}
+                  aria-pressed={isActive}
+                >
+                  {option.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </header>
 
