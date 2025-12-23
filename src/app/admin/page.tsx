@@ -46,25 +46,7 @@ const adminCopy = {
     requestsDescription: 'Users waiting for access.',
     requestsEmpty: 'No requests.',
   },
-  uk: {
-    title: 'Панель адміністратора',
-    subtitle: 'Керуйте доступом, конфігурацією та використанням AI.',
-    loading: 'Завантаження панелі адміністратора...',
-    accessDenied: 'Доступ заборонено.',
-    configKeys: (count: number) => `${count} ключів конфігурації`,
-    tabs: {
-      config: 'Конфігурація',
-      users: 'Користувачі',
-      requests: 'Заявки',
-      stats: 'Статистика',
-    },
-    requestsTitle: 'Заявки',
-    requestsDescription: 'Користувачі, що очікують на доступ.',
-    requestsEmpty: 'Немає заявок.',
-  },
 } as const;
-
-type AdminCopy = typeof adminCopy.pl;
 
 export default function AdminPage() {
   const router = useRouter();
@@ -73,7 +55,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('config');
   const savedUsersState = useRef({ status: 'all', plan: 'all', page: 0 });
   const language = useLanguage();
-  const t = (adminCopy[language] ?? adminCopy.pl) as AdminCopy;
+  const t = language === 'pl' ? adminCopy.pl : adminCopy.en;
 
   const {
     config,

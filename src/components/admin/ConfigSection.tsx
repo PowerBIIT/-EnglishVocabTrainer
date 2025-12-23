@@ -36,23 +36,11 @@ const configCopy = {
     toastFailed: 'Failed to save configuration.',
     loading: 'Loading configuration...',
   },
-  uk: {
-    title: 'Конфігурація',
-    description:
-      'Оновлюйте ліміти застосунку та allowlist. Порожнє поле повертає env/за замовчуванням.',
-    save: 'Зберегти зміни',
-    saving: 'Збереження...',
-    toastSaved: 'Конфігурацію збережено.',
-    toastFailed: 'Не вдалося зберегти конфігурацію.',
-    loading: 'Завантаження конфігурації...',
-  },
 } as const;
-
-type ConfigCopy = typeof configCopy.pl;
 
 export function ConfigSection({ config, loading, error, onSave }: ConfigSectionProps) {
   const language = useLanguage();
-  const t = (configCopy[language] ?? configCopy.pl) as ConfigCopy;
+  const t = language === 'pl' ? configCopy.pl : configCopy.en;
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(

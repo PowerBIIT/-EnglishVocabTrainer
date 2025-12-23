@@ -130,60 +130,7 @@ const userManagementCopy = {
       PRO: 'Pro',
     },
   },
-  uk: {
-    title: 'Керування користувачами',
-    description: 'Керуйте статусом доступу та планами.',
-    filters: {
-      statusAll: 'Усі статуси',
-      planAll: 'Усі плани',
-    },
-    columns: {
-      email: 'Email',
-      plan: 'План',
-      status: 'Статус',
-      created: 'Створено',
-      actions: 'Дії',
-    },
-    loading: 'Завантаження користувачів...',
-    empty: 'Користувачів не знайдено.',
-    unknown: 'Невідомо',
-    grantAccess: 'Надати доступ',
-    suspend: 'Призупинити',
-    delete: 'Видалити',
-    edit: 'Редагувати',
-    prev: 'Попередня',
-    next: 'Наступна',
-    pageLabel: (page: number, totalPages: number, total: number) =>
-      `Сторінка ${page} з ${totalPages} · ${total} користувачів`,
-    editTitle: 'Редагувати користувача',
-    deleteTitle: 'Видалити користувача',
-    cancel: 'Скасувати',
-    save: 'Зберегти',
-    saving: 'Збереження...',
-    deleting: 'Видалення...',
-    deleteConfirm: "Це остаточно видаляє обліковий запис користувача та всі пов'язані дані.",
-    planLabel: 'План',
-    statusLabel: 'Статус',
-    toastNoChanges: 'Немає змін для збереження.',
-    toastUpdated: 'Користувача оновлено.',
-    toastAccessGranted: 'Доступ надано.',
-    toastSuspended: 'Користувача призупинено.',
-    toastDeleted: 'Користувача видалено.',
-    toastUpdateFailed: 'Не вдалося оновити користувача.',
-    toastDeleteFailed: 'Не вдалося видалити користувача.',
-    statusLabels: {
-      ACTIVE: 'Активний',
-      WAITLISTED: 'Очікує',
-      SUSPENDED: 'Призупинений',
-    },
-    planLabels: {
-      FREE: 'Безкоштовний',
-      PRO: 'Про',
-    },
-  },
 } as const;
-
-type UserManagementCopy = typeof userManagementCopy.pl;
 
 export function UserManagementSection({
   users,
@@ -203,8 +150,8 @@ export function UserManagementSection({
   hideFilters = false,
 }: UserManagementSectionProps) {
   const language = useLanguage();
-  const t = (userManagementCopy[language] ?? userManagementCopy.pl) as UserManagementCopy;
-  const dateLocale = language === 'en' ? 'en-US' : language === 'uk' ? 'uk-UA' : 'pl-PL';
+  const t = language === 'pl' ? userManagementCopy.pl : userManagementCopy.en;
+  const dateLocale = language === 'pl' ? 'pl-PL' : 'en-US';
   const [activeUser, setActiveUser] = useState<AdminUser | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
   const [editPlan, setEditPlan] = useState('FREE');

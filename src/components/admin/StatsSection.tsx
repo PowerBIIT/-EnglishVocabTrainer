@@ -52,34 +52,12 @@ const statsCopy = {
     planBreakdown: 'Plan breakdown',
     planBreakdownEmpty: 'No plan breakdown data.',
   },
-  uk: {
-    title: 'Статистика',
-    periodLabel: (period: string) => `Поточний період: ${period}`,
-    loading: 'Завантаження статистики...',
-    empty: 'Немає статистики.',
-    active: 'Активні',
-    waitlisted: 'Очікують',
-    suspended: 'Призупинені',
-    globalUsage: 'Глобальне використання AI',
-    requests: 'Запити',
-    units: 'Одиниці',
-    estimatedCost: 'Оцінена вартість',
-    estimatedMonthly: 'Оцінено за місяць',
-    projectedEnd: 'Прогноз на кінець місяця',
-    planUsage: 'Використання планів',
-    topUsers: 'Топ користувачів (одиниці)',
-    topUsersEmpty: 'Ще немає використання AI.',
-    planBreakdown: 'Розподіл планів',
-    planBreakdownEmpty: 'Немає даних про розподіл планів.',
-  },
 } as const;
-
-type StatsCopy = typeof statsCopy.pl;
 
 export function StatsSection({ stats, loading, error }: StatsSectionProps) {
   const language = useLanguage();
-  const t = (statsCopy[language] ?? statsCopy.pl) as StatsCopy;
-  const locale = language === 'en' ? 'en-US' : language === 'uk' ? 'uk-UA' : 'pl-PL';
+  const t = language === 'pl' ? statsCopy.pl : statsCopy.en;
+  const locale = language === 'pl' ? 'pl-PL' : 'en-US';
   const formatNumber = (value: number) => new Intl.NumberFormat(locale).format(value);
   const formatUsd = (value: number) =>
     new Intl.NumberFormat(locale, {
