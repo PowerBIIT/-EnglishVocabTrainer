@@ -45,8 +45,6 @@ jobs:
         run: npm run test:unit
 
       - name: Build
-        env:
-          NEXT_PUBLIC_E2E_TEST: 'true'
         run: npm run build
 
       - name: Build version info
@@ -89,7 +87,7 @@ jobs:
                 GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}" \
                 DATABASE_URL="${{ secrets.DATABASE_URL }}" \
                 ALLOWLIST_EMAILS="${{ secrets.ALLOWLIST_EMAILS }}" \
-                ADMIN_EMAILS="${{ secrets.ADMIN_EMAILS }},e2e@local.test" \
+                ADMIN_EMAILS="${{ secrets.ADMIN_EMAILS }}" \
                 MAX_ACTIVE_USERS="${{ secrets.MAX_ACTIVE_USERS }}" \
                 FREE_AI_REQUESTS_PER_MONTH="${{ secrets.FREE_AI_REQUESTS_PER_MONTH }}" \
                 FREE_AI_UNITS_PER_MONTH="${{ secrets.FREE_AI_UNITS_PER_MONTH }}" \
@@ -97,9 +95,8 @@ jobs:
                 PRO_AI_UNITS_PER_MONTH="${{ secrets.PRO_AI_UNITS_PER_MONTH }}" \
                 GLOBAL_AI_REQUESTS_PER_MONTH="${{ secrets.GLOBAL_AI_REQUESTS_PER_MONTH }}" \
                 GLOBAL_AI_UNITS_PER_MONTH="${{ secrets.GLOBAL_AI_UNITS_PER_MONTH }}" \
-                E2E_TEST=true \
-                NEXT_PUBLIC_E2E_TEST=true \
-                E2E_TEST_PASSWORD=e2e
+                E2E_TEST=false \
+                NEXT_PUBLIC_E2E_TEST=false
 
       - name: Configure startup command
         uses: azure/CLI@v2
