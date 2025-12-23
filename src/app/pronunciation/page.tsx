@@ -640,6 +640,9 @@ export default function PronunciationPage() {
     setIsRecording(false);
   };
 
+  const buildAiStatus = (message: string, code?: string) =>
+    code ? `${message} (${code})` : message;
+
   const evaluatePronunciation = async (spoken: string) => {
     if (!currentWord) return;
     setIsProcessing(true);
@@ -665,18 +668,18 @@ export default function PronunciationPage() {
 
       // If API returned fallback flag or error, use local evaluation
       if (data.error === 'user_limit_reached') {
-        setRecordingStatus(t.status.aiLimitReached);
+        setRecordingStatus(buildAiStatus(t.status.aiLimitReached, data.error));
         evaluateLocally(spoken);
         return;
       }
       if (data.error === 'global_limit_reached') {
-        setRecordingStatus(t.status.aiGlobalLimitReached);
+        setRecordingStatus(buildAiStatus(t.status.aiGlobalLimitReached, data.error));
         evaluateLocally(spoken);
         return;
       }
       if (data.fallback || data.error) {
         console.log('API fallback triggered:', data.error || 'No API key');
-        setRecordingStatus(t.status.aiFallback);
+        setRecordingStatus(buildAiStatus(t.status.aiFallback, data.error));
         evaluateLocally(spoken);
         return;
       }

@@ -192,10 +192,12 @@ export const wordIntakeCopy = {
       'Nie mogę wygenerować słówek dla tego tematu. Wybierz neutralny, szkolny temat (np. szkoła, praca, podróże).',
     clarifyTopic:
       'Temat jest zbyt ogólny. Doprecyzuj, np. "zakupy w sklepie" lub "praca w biurze".',
-    generatedFallback: (count: number, total: number) =>
-      `Użyłem lokalnych danych (brak klucza API).\n\nZnalazłem ${Math.min(count, total)} przykładowych słówek. Skonfiguruj GEMINI_API_KEY w .env.local dla pełnej funkcjonalności.`,
-    generatedFallbackLimit: (count: number, total: number) =>
-      `Użyłem lokalnych danych (limit AI).\n\nZnalazłem ${Math.min(count, total)} przykładowych słówek.`,
+    generatedFallback: (count: number, total: number, code?: string) =>
+      `Użyłem lokalnych danych (brak lub nieprawidłowy klucz API${code ? `, ${code}` : ''}).\n\nZnalazłem ${Math.min(count, total)} przykładowych słówek. Skonfiguruj GEMINI_API_KEY w .env.local dla pełnej funkcjonalności.`,
+    generatedFallbackLimit: (count: number, total: number, code?: string) =>
+      `Użyłem lokalnych danych (limit AI${code ? `, ${code}` : ''}).\n\nZnalazłem ${Math.min(count, total)} przykładowych słówek.`,
+    generatedFallbackError: (count: number, total: number, code?: string) =>
+      `Użyłem lokalnych danych (błąd AI${code ? `, ${code}` : ''}).\n\nZnalazłem ${Math.min(count, total)} przykładowych słówek.`,
     foundWordsWithPhonetics: (count: number) =>
       `Znalazłem **${count}** słówek. Dodałem poprawne transkrypcje fonetyczne.\n\nZaznacz te, które chcesz dodać:`,
     foundWords: (count: number) =>
@@ -208,14 +210,14 @@ export const wordIntakeCopy = {
     imageNoWords: (target: string, native: string) =>
       `Nie udało się rozpoznać słówek na zdjęciu. Upewnij się, że notatki są czytelne i zawierają słówka ${target.toLowerCase()} z tłumaczeniami ${native.toLowerCase()}.`,
     imageError:
-      'Nie udało się przetworzyć zdjęcia. Upewnij się, że klucz API jest skonfigurowany w .env.local.',
+      'Nie udało się przetworzyć zdjęcia. Spróbuj ponownie lub sprawdź konfigurację AI.',
     fileUploaded: (fileName: string) => `Wczytano plik: ${fileName}`,
     fileFound: (count: number, notes?: string) =>
       `Znalazłem **${count}** słówek w pliku.\n\n${notes ? `Uwagi: ${notes}\n\n` : ''}Zaznacz te, które chcesz dodać:`,
     fileNoWords: (target: string, native: string) =>
       `Nie udało się rozpoznać słówek w pliku. Upewnij się, że plik zawiera słówka ${target.toLowerCase()} z tłumaczeniami ${native.toLowerCase()}.`,
     fileError:
-      'Nie udało się przetworzyć pliku. Upewnij się, że klucz API jest skonfigurowany w .env.local.',
+      'Nie udało się przetworzyć pliku. Spróbuj ponownie lub sprawdź konfigurację AI.',
     fileTooLarge: (maxSize: number) =>
       `Plik jest za duży. Maksymalny rozmiar to ${maxSize} MB.`,
     fileTypeUnsupported:
@@ -227,6 +229,9 @@ export const wordIntakeCopy = {
       'Wykorzystałeś limit AI na ten miesiąc. Poczekaj na odnowienie limitu lub przejdź na plan Pro.',
     aiGlobalLimitReached:
       'Globalny limit AI został osiągnięty. Spróbuj ponownie później.',
+    aiRateLimited: 'AI jest chwilowo przeciążone. Spróbuj ponownie za chwilę.',
+    aiConfigError: 'Błąd konfiguracji AI. Sprawdź GEMINI_API_KEY w .env.local.',
+    aiServiceError: 'Wystąpił błąd usługi AI. Spróbuj ponownie później.',
     aiWaitlisted:
       'Twoje konto oczekuje na aktywację. AI będzie dostępne po przyznaniu dostępu.',
     aiSuspended:
@@ -279,10 +284,12 @@ export const wordIntakeCopy = {
       'I can’t generate words for that topic. Pick a neutral, school-appropriate topic (e.g., school, work, travel).',
     clarifyTopic:
       'The topic is too broad. Please be more specific, e.g., "shopping at a store" or "office work".',
-    generatedFallback: (count: number, total: number) =>
-      `I used local data (no API key).\n\nFound ${Math.min(count, total)} sample words. Configure GEMINI_API_KEY in .env.local for full functionality.`,
-    generatedFallbackLimit: (count: number, total: number) =>
-      `I used local data (AI limit reached).\n\nFound ${Math.min(count, total)} sample words.`,
+    generatedFallback: (count: number, total: number, code?: string) =>
+      `I used local data (missing or invalid API key${code ? `, ${code}` : ''}).\n\nFound ${Math.min(count, total)} sample words. Configure GEMINI_API_KEY in .env.local for full functionality.`,
+    generatedFallbackLimit: (count: number, total: number, code?: string) =>
+      `I used local data (AI limit reached${code ? `, ${code}` : ''}).\n\nFound ${Math.min(count, total)} sample words.`,
+    generatedFallbackError: (count: number, total: number, code?: string) =>
+      `I used local data (AI error${code ? `, ${code}` : ''}).\n\nFound ${Math.min(count, total)} sample words.`,
     foundWordsWithPhonetics: (count: number) =>
       `I found **${count}** words. Added correct phonetics.\n\nSelect the ones you want to add:`,
     foundWords: (count: number) => `I found **${count}** words. Select the ones you want to add:`,
@@ -294,14 +301,14 @@ export const wordIntakeCopy = {
     imageNoWords: (target: string, native: string) =>
       `Could not recognize words in the image. Make sure your notes are readable and include ${target.toLowerCase()} words with ${native.toLowerCase()} translations.`,
     imageError:
-      'Could not process the image. Make sure GEMINI_API_KEY is configured in .env.local.',
+      'Could not process the image. Try again or check your AI configuration.',
     fileUploaded: (fileName: string) => `Uploaded file: ${fileName}`,
     fileFound: (count: number, notes?: string) =>
       `Found **${count}** words in the file.\n\n${notes ? `Notes: ${notes}\n\n` : ''}Select the ones you want to add:`,
     fileNoWords: (target: string, native: string) =>
       `Could not recognize words in the file. Make sure the file contains ${target.toLowerCase()} words with ${native.toLowerCase()} translations.`,
     fileError:
-      'Could not process the file. Make sure GEMINI_API_KEY is configured in .env.local.',
+      'Could not process the file. Try again or check your AI configuration.',
     fileTooLarge: (maxSize: number) =>
       `File is too large. Maximum size is ${maxSize} MB.`,
     fileTypeUnsupported: 'Unsupported file format. Use TXT, PDF, DOCX, or CSV.',
@@ -312,6 +319,9 @@ export const wordIntakeCopy = {
       'You have reached your monthly AI limit. Wait for the next reset or upgrade to Pro.',
     aiGlobalLimitReached:
       'The global AI budget has been reached. Please try again later.',
+    aiRateLimited: 'AI is rate limited right now. Please try again in a moment.',
+    aiConfigError: 'AI configuration error. Check GEMINI_API_KEY in .env.local.',
+    aiServiceError: 'AI service error. Please try again later.',
     aiWaitlisted:
       'Your account is on the waitlist. AI will be available once access is granted.',
     aiSuspended: 'Your account is temporarily suspended. Contact support.',
@@ -363,10 +373,12 @@ export const wordIntakeCopy = {
       'Не можу згенерувати слова для цієї теми. Обери нейтральну, шкільну тему (наприклад: школа, робота, подорожі).',
     clarifyTopic:
       'Тема надто загальна. Уточни, наприклад: "покупки в магазині" або "робота в офісі".',
-    generatedFallback: (count: number, total: number) =>
-      `Використав локальні дані (немає ключа API).\n\nЗнайшов ${Math.min(count, total)} прикладових слів. Налаштуй GEMINI_API_KEY в .env.local для повної функціональності.`,
-    generatedFallbackLimit: (count: number, total: number) =>
-      `Використав локальні дані (ліміт AI).\n\nЗнайшов ${Math.min(count, total)} прикладових слів.`,
+    generatedFallback: (count: number, total: number, code?: string) =>
+      `Використав локальні дані (немає або недійсний ключ API${code ? `, ${code}` : ''}).\n\nЗнайшов ${Math.min(count, total)} прикладових слів. Налаштуй GEMINI_API_KEY в .env.local для повної функціональності.`,
+    generatedFallbackLimit: (count: number, total: number, code?: string) =>
+      `Використав локальні дані (ліміт AI${code ? `, ${code}` : ''}).\n\nЗнайшов ${Math.min(count, total)} прикладових слів.`,
+    generatedFallbackError: (count: number, total: number, code?: string) =>
+      `Використав локальні дані (помилка AI${code ? `, ${code}` : ''}).\n\nЗнайшов ${Math.min(count, total)} прикладових слів.`,
     foundWordsWithPhonetics: (count: number) =>
       `Знайшов **${count}** слів. Додав коректну фонетику.\n\nОбери ті, які хочеш додати:`,
     foundWords: (count: number) =>
@@ -379,14 +391,14 @@ export const wordIntakeCopy = {
     imageNoWords: (target: string, native: string) =>
       `Не вдалося розпізнати слова на фото. Переконайся, що нотатки читабельні й містять слова ${target.toLowerCase()} з перекладами ${native.toLowerCase()}.`,
     imageError:
-      'Не вдалося обробити фото. Переконайся, що GEMINI_API_KEY налаштовано в .env.local.',
+      'Не вдалося обробити фото. Спробуй ще раз або перевір конфігурацію AI.',
     fileUploaded: (fileName: string) => `Завантажено файл: ${fileName}`,
     fileFound: (count: number, notes?: string) =>
       `Знайшов **${count}** слів у файлі.\n\n${notes ? `Нотатки: ${notes}\n\n` : ''}Обери ті, які хочеш додати:`,
     fileNoWords: (target: string, native: string) =>
       `Не вдалося розпізнати слова у файлі. Переконайся, що файл містить слова ${target.toLowerCase()} з перекладами ${native.toLowerCase()}.`,
     fileError:
-      'Не вдалося обробити файл. Переконайся, що GEMINI_API_KEY налаштовано в .env.local.',
+      'Не вдалося обробити файл. Спробуй ще раз або перевір конфігурацію AI.',
     fileTooLarge: (maxSize: number) =>
       `Файл завеликий. Максимальний розмір ${maxSize} МБ.`,
     fileTypeUnsupported: 'Непідтримуваний формат файлу. Використовуй TXT, PDF, DOCX або CSV.',
@@ -397,6 +409,9 @@ export const wordIntakeCopy = {
       'Ви вичерпали місячний ліміт AI. Зачекайте на оновлення або перейдіть на Pro.',
     aiGlobalLimitReached:
       'Глобальний ліміт AI вичерпано. Спробуйте пізніше.',
+    aiRateLimited: 'AI тимчасово перевантажене. Спробуй ще раз трохи пізніше.',
+    aiConfigError: 'Помилка налаштування AI. Перевір GEMINI_API_KEY в .env.local.',
+    aiServiceError: 'Сталася помилка сервісу AI. Спробуй пізніше.',
     aiWaitlisted:
       'Ваш акаунт у списку очікування. AI буде доступний після надання доступу.',
     aiSuspended:
@@ -537,24 +552,57 @@ export function WordIntake({
     ]);
   };
 
-  const handleAiLimitError = (data?: { error?: string }) => {
-    if (!data?.error) return null;
-    if (data.error === 'user_limit_reached') {
-      addAssistantMessage(t.aiLimitReached);
-      return 'user';
+  const appendErrorCode = (message: string, code?: string) =>
+    code ? `${message} (${code})` : message;
+
+  const handleAiLimitError = (
+    data?: { error?: string },
+    options: { silent?: boolean } = {}
+  ) => {
+    const errorCode = data?.error;
+    if (typeof errorCode !== 'string') return null;
+
+    const shouldNotify = !options.silent;
+    const notify = (message: string) => {
+      if (!shouldNotify) return;
+      addAssistantMessage(message);
+    };
+    const notifyWithCode = (message: string) =>
+      notify(appendErrorCode(message, errorCode));
+
+    if (errorCode === 'user_limit_reached') {
+      notify(t.aiLimitReached);
+      return 'user_limit';
     }
-    if (data.error === 'global_limit_reached') {
-      addAssistantMessage(t.aiGlobalLimitReached);
-      return 'global';
+    if (errorCode === 'global_limit_reached') {
+      notify(t.aiGlobalLimitReached);
+      return 'global_limit';
     }
-    if (data.error === 'waitlisted') {
-      addAssistantMessage(t.aiWaitlisted);
+    if (errorCode === 'waitlisted') {
+      notify(t.aiWaitlisted);
       return 'waitlisted';
     }
-    if (data.error === 'suspended') {
-      addAssistantMessage(t.aiSuspended);
+    if (errorCode === 'suspended') {
+      notify(t.aiSuspended);
       return 'suspended';
     }
+    if (errorCode === 'rate_limited' || errorCode === 'ai_rate_limited') {
+      notifyWithCode(t.aiRateLimited);
+      return 'rate_limited';
+    }
+    if (
+      errorCode === 'api_key_missing' ||
+      errorCode === 'ai_invalid_key' ||
+      errorCode === 'ai_permission_denied'
+    ) {
+      notifyWithCode(t.aiConfigError);
+      return 'config';
+    }
+    if (errorCode.startsWith('ai_')) {
+      notifyWithCode(t.aiServiceError);
+      return 'service';
+    }
+
     return null;
   };
 
@@ -701,22 +749,32 @@ export function WordIntake({
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        if (
-          data?.error === 'user_limit_reached' ||
-          data?.error === 'global_limit_reached'
-        ) {
-          await generateWordsLocal(count, topic, 'limit');
-          return;
-        }
-        if (handleAiLimitError(data)) {
-          return;
-        }
         if (data?.error === 'unsafe_topic') {
           addAssistantMessage(t.unsafeTopic);
           return;
         }
         if (data?.error === 'needs_clarification') {
           addAssistantMessage(t.clarifyTopic);
+          return;
+        }
+        if (
+          data?.error === 'user_limit_reached' ||
+          data?.error === 'global_limit_reached'
+        ) {
+          await generateWordsLocal(count, topic, 'limit', data?.error);
+          return;
+        }
+        const aiError = handleAiLimitError(data, { silent: true });
+        if (aiError === 'config') {
+          await generateWordsLocal(count, topic, 'config', data?.error);
+          return;
+        }
+        if (aiError === 'rate_limited' || aiError === 'service') {
+          await generateWordsLocal(count, topic, 'error', data?.error);
+          return;
+        }
+        if (aiError === 'waitlisted' || aiError === 'suspended') {
+          handleAiLimitError(data);
           return;
         }
         throw new Error('API error');
@@ -749,14 +807,15 @@ export function WordIntake({
       }
     } catch (error) {
       console.error('Generate error:', error);
-      await generateWordsLocal(count, topic);
+      await generateWordsLocal(count, topic, 'error');
     }
   };
 
   const generateWordsLocal = async (
     count: number,
     topic: string,
-    reason?: 'limit'
+    reason: 'limit' | 'config' | 'error' = 'config',
+    errorCode?: string
   ) => {
     const fallbackWords = (FALLBACK_WORDS[activePair.id] ?? FALLBACK_WORDS['pl-en']).map(
       (word) => ({
@@ -772,8 +831,10 @@ export function WordIntake({
 
     const fallbackMessage =
       reason === 'limit'
-        ? t.generatedFallbackLimit(count, fallbackWords.length)
-        : t.generatedFallback(count, fallbackWords.length);
+        ? t.generatedFallbackLimit(count, fallbackWords.length, errorCode)
+        : reason === 'error'
+          ? t.generatedFallbackError(count, fallbackWords.length, errorCode)
+          : t.generatedFallback(count, fallbackWords.length, errorCode);
     addAssistantMessage(fallbackMessage);
   };
 

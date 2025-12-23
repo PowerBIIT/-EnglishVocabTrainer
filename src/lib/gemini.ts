@@ -1,9 +1,15 @@
 import type { FeedbackLanguage, NativeLanguage, TargetLanguage } from '@/types';
+import {
+  GeminiApiError,
+  classifyGeminiError,
+  createGeminiTimeoutError,
+} from '@/lib/aiErrors';
+import { DEFAULT_GEMINI_MODEL } from '@/lib/aiModelCatalog';
 
 // Gemini API Service Layer
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models';
-const DEFAULT_MODEL = 'gemini-2.0-flash';
+const DEFAULT_MODEL = DEFAULT_GEMINI_MODEL;
 const GEMINI_TIMEOUT_MS = 20000;
 
 interface GeminiResponse {
@@ -15,6 +21,7 @@ interface GeminiResponse {
   error?: {
     message: string;
     code: number;
+    status?: string;
   };
 }
 
@@ -70,23 +77,41 @@ export class GeminiService {
       }
 
       if (!response.ok) {
+        const statusText = data?.error?.status;
         const message = data?.error?.message ?? `Gemini API error (${response.status})`;
-        throw new Error(message);
+        throw new GeminiApiError({
+          message,
+          status: response.status,
+          statusText,
+          type: classifyGeminiError(response.status, statusText),
+        });
       }
 
       if (data?.error) {
-        throw new Error(data.error.message);
+        const statusText = data.error.status;
+        const status = Number.isFinite(data.error.code) ? data.error.code : response.status;
+        throw new GeminiApiError({
+          message: data.error.message,
+          status,
+          statusText,
+          type: classifyGeminiError(status, statusText),
+        });
       }
 
       const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!content) {
-        throw new Error('No response from Gemini');
+        throw new GeminiApiError({
+          message: 'No response from Gemini',
+          status: response.status,
+          statusText: data?.error?.status,
+          type: 'unknown',
+        });
       }
 
       return content;
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Gemini API timeout');
+        throw createGeminiTimeoutError();
       }
       throw error;
     } finally {

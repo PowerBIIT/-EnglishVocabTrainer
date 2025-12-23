@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { GeminiService, AI_PROMPTS } from '@/lib/gemini';
+import { mapGeminiError } from '@/lib/aiErrors';
 import { AI_RATE_LIMIT, MAX_AI_TERM_CHARS } from '@/lib/apiLimits';
 import {
   normalizeFeedbackLanguage,
@@ -10,6 +11,7 @@ import {
 } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
+import { resolveGeminiModel } from '@/lib/aiModelResolver';
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +32,7 @@ export async function POST(request: NextRequest) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'API key not configured' },
+        { error: 'api_key_missing' },
         { status: 503 }
       );
     }
@@ -69,6 +71,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(usage.body, { status: usage.status });
     }
 
+    const model = await resolveGeminiModel();
     const gemini = new GeminiService(apiKey);
     const prompt = AI_PROMPTS.explainWord(
       wordValue,
@@ -80,11 +83,16 @@ export async function POST(request: NextRequest) {
     const response = await gemini.generate(prompt, {
       temperature: 0.7,
       maxOutputTokens: 1024,
+      model,
     });
 
     return NextResponse.json({ explanation: response });
   } catch (error) {
     console.error('Word explanation error:', error);
+    const mapped = mapGeminiError(error);
+    if (mapped) {
+      return NextResponse.json(mapped.body, { status: mapped.status });
+    }
     return NextResponse.json(
       { error: 'Failed to explain word' },
       { status: 500 }

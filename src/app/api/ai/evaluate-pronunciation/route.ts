@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { GeminiService, AI_PROMPTS, parseAIResponse } from '@/lib/gemini';
+import { mapGeminiError } from '@/lib/aiErrors';
 import { AI_RATE_LIMIT, MAX_AI_TERM_CHARS } from '@/lib/apiLimits';
 import {
   normalizeFeedbackLanguage,
@@ -10,6 +11,7 @@ import {
 } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
+import { resolveGeminiModel } from '@/lib/aiModelResolver';
 
 interface PhonemeAnalysis {
   phoneme: string;
@@ -47,7 +49,7 @@ export async function POST(request: NextRequest) {
     if (!apiKey) {
       console.error('GEMINI_API_KEY not configured in .env.local');
       return NextResponse.json(
-        { error: 'API key not configured', fallback: true },
+        { error: 'api_key_missing', fallback: true },
         { status: 200 }
       );
     }
@@ -102,6 +104,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const model = await resolveGeminiModel();
     const gemini = new GeminiService(apiKey);
     const prompt = AI_PROMPTS.evaluatePronunciation({
       expected: expectedValue,
@@ -120,6 +123,7 @@ export async function POST(request: NextRequest) {
     const response = await gemini.generate(prompt, {
       temperature: 0.3,
       maxOutputTokens: 512,
+      model,
     });
 
     if (process.env.NODE_ENV !== 'production') {
@@ -144,13 +148,21 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
+    const mapped = mapGeminiError(error);
+    if (mapped) {
+      return NextResponse.json(
+        { ...mapped.body, fallback: true },
+        { status: 200 }
+      );
+    }
+
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Pronunciation evaluation error:', errorMessage);
 
     // Return fallback flag so frontend uses local evaluation
     return NextResponse.json(
       {
-        error: errorMessage,
+        error: 'ai_failed',
         fallback: true,
         details:
           process.env.NODE_ENV === 'production'

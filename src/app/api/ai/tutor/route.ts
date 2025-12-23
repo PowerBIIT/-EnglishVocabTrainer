@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { GeminiService, AI_PROMPTS } from '@/lib/gemini';
+import { mapGeminiError } from '@/lib/aiErrors';
 import {
   AI_RATE_LIMIT,
   MAX_AI_CONTEXT_CHARS,
@@ -14,6 +15,7 @@ import {
 } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
+import { resolveGeminiModel } from '@/lib/aiModelResolver';
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'API key not configured' },
+        { error: 'api_key_missing' },
         { status: 503 }
       );
     }
@@ -78,6 +80,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(usage.body, { status: usage.status });
     }
 
+    const model = await resolveGeminiModel();
     const gemini = new GeminiService(apiKey);
     const prompt = AI_PROMPTS.tutorChat(
       safeContext,
@@ -90,11 +93,16 @@ export async function POST(request: NextRequest) {
     const response = await gemini.generate(prompt, {
       temperature: 0.8,
       maxOutputTokens: 1024,
+      model,
     });
 
     return NextResponse.json({ response });
   } catch (error) {
     console.error('Tutor chat error:', error);
+    const mapped = mapGeminiError(error);
+    if (mapped) {
+      return NextResponse.json(mapped.body, { status: mapped.status });
+    }
     return NextResponse.json(
       { error: 'Failed to get tutor response' },
       { status: 500 }

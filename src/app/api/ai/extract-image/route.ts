@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { GeminiService, AI_PROMPTS, parseAIResponse } from '@/lib/gemini';
+import { mapGeminiError } from '@/lib/aiErrors';
 import { AI_RATE_LIMIT, MAX_UPLOAD_SIZE_BYTES } from '@/lib/apiLimits';
 import { normalizeNativeLanguage, normalizeTargetLanguage } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
+import { resolveGeminiModel } from '@/lib/aiModelResolver';
 
 interface ExtractedWord {
   target: string;
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'API key not configured' },
+        { error: 'api_key_missing' },
         { status: 503 }
       );
     }
@@ -83,6 +85,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(usage.body, { status: usage.status });
     }
 
+    const model = await resolveGeminiModel();
     const buffer = Buffer.from(await file.arrayBuffer());
     const imagePayload = buffer.toString('base64');
 
@@ -99,6 +102,7 @@ export async function POST(request: NextRequest) {
       {
         temperature: 0.3,
         maxOutputTokens: 2048,
+        model,
       }
     );
 
@@ -107,6 +111,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('Image extraction error:', error);
+    const mapped = mapGeminiError(error);
+    if (mapped) {
+      return NextResponse.json(mapped.body, { status: mapped.status });
+    }
     return NextResponse.json(
       { error: 'Failed to extract words from image' },
       { status: 500 }

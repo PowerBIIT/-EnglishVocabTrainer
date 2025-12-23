@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { ConfigSection } from '@/components/admin/ConfigSection';
+import { AiModelSection } from '@/components/admin/AiModelSection';
 import { StatsSection } from '@/components/admin/StatsSection';
 import { UserManagementSection } from '@/components/admin/UserManagementSection';
 import { Badge } from '@/components/ui/Badge';
@@ -13,7 +14,7 @@ import { useLanguage } from '@/lib/i18n';
 import { useVocabStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'config' | 'users' | 'requests' | 'stats';
+type AdminTab = 'config' | 'ai' | 'users' | 'requests' | 'stats';
 
 const adminCopy = {
   pl: {
@@ -25,6 +26,7 @@ const adminCopy = {
     languageLabel: 'Język',
     tabs: {
       config: 'Konfiguracja',
+      ai: 'Modele AI',
       users: 'Użytkownicy',
       requests: 'Zgłoszenia',
       stats: 'Statystyki',
@@ -42,6 +44,7 @@ const adminCopy = {
     languageLabel: 'Language',
     tabs: {
       config: 'Configuration',
+      ai: 'AI models',
       users: 'Users',
       requests: 'Requests',
       stats: 'Statistics',
@@ -180,6 +183,7 @@ export default function AdminPage() {
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList className="w-full flex-wrap justify-start md:w-auto md:flex-nowrap">
           <TabsTrigger value="config">{t.tabs.config}</TabsTrigger>
+          <TabsTrigger value="ai">{t.tabs.ai}</TabsTrigger>
           <TabsTrigger value="users">{t.tabs.users}</TabsTrigger>
           <TabsTrigger value="requests">{t.tabs.requests}</TabsTrigger>
           <TabsTrigger value="stats">{t.tabs.stats}</TabsTrigger>
@@ -192,6 +196,10 @@ export default function AdminPage() {
             error={configError}
             onSave={updateConfig}
           />
+        </TabsContent>
+
+        <TabsContent value="ai">
+          <AiModelSection />
         </TabsContent>
 
         <TabsContent value="users">

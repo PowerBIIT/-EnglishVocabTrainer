@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { GeminiService, AI_PROMPTS, parseAIResponse } from '@/lib/gemini';
+import { mapGeminiError } from '@/lib/aiErrors';
 import { AI_RATE_LIMIT, MAX_AI_TEXT_CHARS } from '@/lib/apiLimits';
 import { normalizeNativeLanguage, normalizeTargetLanguage } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
+import { resolveGeminiModel } from '@/lib/aiModelResolver';
 
 interface ParsedWord {
   target: string;
@@ -39,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'API key not configured' },
+        { error: 'api_key_missing' },
         { status: 503 }
       );
     }
@@ -73,6 +75,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(usage.body, { status: usage.status });
     }
 
+    const model = await resolveGeminiModel();
     const gemini = new GeminiService(apiKey);
     const prompt = AI_PROMPTS.parseText(
       textValue,
@@ -83,6 +86,7 @@ export async function POST(request: NextRequest) {
     const response = await gemini.generate(prompt, {
       temperature: 0.3,
       maxOutputTokens: 1024,
+      model,
     });
 
     const result = parseAIResponse<ParseResult>(response);
@@ -90,6 +94,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error('Text parsing error:', error);
+    const mapped = mapGeminiError(error);
+    if (mapped) {
+      return NextResponse.json(mapped.body, { status: mapped.status });
+    }
     return NextResponse.json(
       { error: 'Failed to parse text' },
       { status: 500 }

@@ -50,6 +50,9 @@ const tutorCopy = {
     inputPlaceholder: 'Zapytaj o cokolwiek...',
     errorMessage:
       'Mam chwilowe problemy z połączeniem. Spróbuj ponownie za chwilę.\n\nUpewnij się, że klucz API jest skonfigurowany w .env.local.',
+    rateLimitMessage: 'Wysyłasz zbyt wiele zapytań. Spróbuj ponownie za chwilę.',
+    configMessage: 'Błąd konfiguracji AI. Sprawdź GEMINI_API_KEY w .env.local.',
+    serviceMessage: 'Wystąpił błąd usługi AI. Spróbuj ponownie później.',
     limitMessage:
       'Wykorzystałeś limit AI na ten miesiąc. Spróbuj ponownie po odnowieniu limitu lub przejdź na plan Pro.',
     globalLimitMessage:
@@ -83,6 +86,9 @@ const tutorCopy = {
     inputPlaceholder: 'Ask anything...',
     errorMessage:
       'I am having connection issues. Please try again in a moment.\n\nMake sure the API key is configured in .env.local.',
+    rateLimitMessage: 'Too many requests. Please try again in a moment.',
+    configMessage: 'AI configuration error. Check GEMINI_API_KEY in .env.local.',
+    serviceMessage: 'AI service error. Please try again later.',
     limitMessage:
       'You have reached your monthly AI limit. Try again after the reset or upgrade to Pro.',
     globalLimitMessage:
@@ -115,6 +121,9 @@ const tutorCopy = {
     inputPlaceholder: 'Запитай про що завгодно...',
     errorMessage:
       'Маю тимчасові проблеми з підключенням. Спробуй ще раз трохи пізніше.\n\nПереконайся, що ключ API налаштовано в .env.local.',
+    rateLimitMessage: 'Занадто багато запитів. Спробуй ще раз трохи пізніше.',
+    configMessage: 'Помилка налаштування AI. Перевір GEMINI_API_KEY в .env.local.',
+    serviceMessage: 'Сталася помилка сервісу AI. Спробуй пізніше.',
     limitMessage:
       'Ви вичерпали місячний ліміт AI. Спробуйте після оновлення або перейдіть на Pro.',
     globalLimitMessage:
@@ -173,6 +182,21 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
     `.trim();
   };
 
+  const appendErrorCode = (message: string, code?: string) =>
+    code ? `${message} (${code})` : message;
+
+  const addAssistantMessage = (content: string) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content,
+        timestamp: new Date(),
+      },
+    ]);
+  };
+
   const handleSend = async (customMessage?: string) => {
     const messageText = customMessage || input;
     if (!messageText.trim() || isLoading) return;
@@ -205,52 +229,37 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
       const data = await response.json().catch(() => null);
 
       if (!response.ok) {
-        if (data?.error === 'user_limit_reached') {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: (Date.now() + 1).toString(),
-              role: 'assistant',
-              content: t.limitMessage,
-              timestamp: new Date(),
-            },
-          ]);
+        const errorCode = data?.error;
+        if (errorCode === 'user_limit_reached') {
+          addAssistantMessage(t.limitMessage);
           return;
         }
-        if (data?.error === 'global_limit_reached') {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: (Date.now() + 1).toString(),
-              role: 'assistant',
-              content: t.globalLimitMessage,
-              timestamp: new Date(),
-            },
-          ]);
+        if (errorCode === 'global_limit_reached') {
+          addAssistantMessage(t.globalLimitMessage);
           return;
         }
-        if (data?.error === 'waitlisted') {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: (Date.now() + 1).toString(),
-              role: 'assistant',
-              content: t.waitlistMessage,
-              timestamp: new Date(),
-            },
-          ]);
+        if (errorCode === 'waitlisted') {
+          addAssistantMessage(t.waitlistMessage);
           return;
         }
-        if (data?.error === 'suspended') {
-          setMessages((prev) => [
-            ...prev,
-            {
-              id: (Date.now() + 1).toString(),
-              role: 'assistant',
-              content: t.suspendedMessage,
-              timestamp: new Date(),
-            },
-          ]);
+        if (errorCode === 'suspended') {
+          addAssistantMessage(t.suspendedMessage);
+          return;
+        }
+        if (errorCode === 'rate_limited' || errorCode === 'ai_rate_limited') {
+          addAssistantMessage(appendErrorCode(t.rateLimitMessage, errorCode));
+          return;
+        }
+        if (
+          errorCode === 'api_key_missing' ||
+          errorCode === 'ai_invalid_key' ||
+          errorCode === 'ai_permission_denied'
+        ) {
+          addAssistantMessage(appendErrorCode(t.configMessage, errorCode));
+          return;
+        }
+        if (typeof errorCode === 'string' && errorCode.startsWith('ai_')) {
+          addAssistantMessage(appendErrorCode(t.serviceMessage, errorCode));
           return;
         }
         throw new Error('Failed to get response');
@@ -260,22 +269,9 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
         throw new Error('Invalid response');
       }
 
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: data.response,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
+      addAssistantMessage(data.response);
     } catch (error) {
-      const errorMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: t.errorMessage,
-        timestamp: new Date(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      addAssistantMessage(t.errorMessage);
     } finally {
       setIsLoading(false);
     }
