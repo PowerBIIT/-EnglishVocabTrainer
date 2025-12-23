@@ -9,7 +9,7 @@ export const ensureUserPlan = async (userId: string, email?: string | null) => {
     return existing;
   }
 
-  const allowlisted = isEmailAllowed(email ?? undefined);
+  const allowlisted = await isEmailAllowed(email ?? undefined);
   let desiredStatus: AccessStatus = existing?.accessStatus ?? AccessStatus.ACTIVE;
 
   if (!allowlisted) {
@@ -18,7 +18,7 @@ export const ensureUserPlan = async (userId: string, email?: string | null) => {
     // Admini zawsze dostają ACTIVE, niezależnie od limitu użytkowników
     desiredStatus = AccessStatus.ACTIVE;
   } else {
-    const maxActiveUsers = getMaxActiveUsers();
+    const maxActiveUsers = await getMaxActiveUsers();
     if (maxActiveUsers === Number.POSITIVE_INFINITY) {
       desiredStatus = AccessStatus.ACTIVE;
     } else if (existing?.accessStatus === AccessStatus.ACTIVE) {

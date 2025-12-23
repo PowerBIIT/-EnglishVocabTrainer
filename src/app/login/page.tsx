@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { signIn, useSession } from 'next-auth/react';
 import { Compass, ShieldCheck, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
@@ -74,21 +75,49 @@ const languageOptions = [
     id: 'uk',
     label: 'UA',
     name: 'Українська',
-    flag: '🇺🇦',
+    flagEmoji: '🇺🇦',
+    flagSrc: '/flags/ua.svg',
   },
   {
     id: 'pl',
     label: 'PL',
     name: 'Polski',
-    flag: '🇵🇱',
+    flagEmoji: '🇵🇱',
+    flagSrc: '/flags/pl.svg',
   },
   {
     id: 'en',
     label: 'EN',
     name: 'English',
-    flag: '🇬🇧',
+    flagEmoji: '🇬🇧',
+    flagSrc: '/flags/gb.svg',
   },
 ] as const;
+
+function FlagIcon({ src, fallback }: { src: string; fallback: string }) {
+  const [useFallback, setUseFallback] = useState(false);
+
+  if (useFallback) {
+    return (
+      <span className="text-base" aria-hidden="true">
+        {fallback}
+      </span>
+    );
+  }
+
+  return (
+    <Image
+      src={src}
+      alt=""
+      aria-hidden="true"
+      width={24}
+      height={16}
+      className="h-4 w-6 rounded-sm object-cover"
+      onError={() => setUseFallback(true)}
+      unoptimized
+    />
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -190,7 +219,7 @@ export default function LoginPage() {
                           : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'
                       }`}
                     >
-                      <span className="text-base">{option.flag}</span>
+                      <FlagIcon src={option.flagSrc} fallback={option.flagEmoji} />
                       <span>{option.label}</span>
                     </button>
                   );

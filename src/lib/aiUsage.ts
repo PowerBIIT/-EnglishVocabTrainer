@@ -66,8 +66,8 @@ export const checkAndConsumeAiUsage = async ({
     }),
   ]);
 
-  const planLimits = getPlanLimits(plan);
-  const globalLimits = getGlobalLimits();
+  const planLimits = await getPlanLimits(plan);
+  const globalLimits = await getGlobalLimits();
 
   const nextUserUsage: UsageSnapshot = {
     count: (userUsage?.count ?? 0) + safeRequests,

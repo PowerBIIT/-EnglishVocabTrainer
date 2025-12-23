@@ -5,6 +5,7 @@ import { Navigation } from '@/components/layout/Navigation';
 import { ClientLayout } from '@/components/layout/ClientLayout';
 import { Providers } from '@/app/providers';
 import { AuthGate } from '@/components/layout/AuthGate';
+import { VersionBadge } from '@/components/layout/VersionBadge';
 
 const sans = localFont({
   src: [
@@ -40,6 +41,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const appVersion = process.env.APP_VERSION ?? 'unknown';
+
   return (
     <html lang="uk" suppressHydrationWarning>
       <body className={`${sans.variable} ${display.variable} font-sans antialiased`}>
@@ -51,6 +54,7 @@ export default function RootLayout({
               <main className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-10 md:pl-24">
                 {children}
               </main>
+              <VersionBadge version={appVersion} />
             </div>
           </AuthGate>
         </Providers>
