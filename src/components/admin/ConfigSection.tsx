@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Toast } from '@/components/ui/Toast';
 import type { AdminConfigItem } from '@/hooks/useAdminData';
+import { useLanguage } from '@/lib/i18n';
 
 type ConfigSectionProps = {
   config: AdminConfigItem[];
@@ -14,7 +15,44 @@ type ConfigSectionProps = {
   onSave: (updates: { key: string; value: string }[]) => Promise<void>;
 };
 
+const configCopy = {
+  pl: {
+    title: 'Konfiguracja',
+    description:
+      'Aktualizuj limity aplikacji i allowlistę. Puste pole przywraca env/domyślne.',
+    save: 'Zapisz zmiany',
+    saving: 'Zapisywanie...',
+    toastSaved: 'Konfiguracja zapisana.',
+    toastFailed: 'Nie udało się zapisać konfiguracji.',
+    loading: 'Ładowanie konfiguracji...',
+  },
+  en: {
+    title: 'Configuration',
+    description:
+      'Update application limits and allowlist. Empty value resets to env/default.',
+    save: 'Save changes',
+    saving: 'Saving...',
+    toastSaved: 'Configuration saved.',
+    toastFailed: 'Failed to save configuration.',
+    loading: 'Loading configuration...',
+  },
+  uk: {
+    title: 'Конфігурація',
+    description:
+      'Оновлюйте ліміти застосунку та allowlist. Порожнє поле повертає env/за замовчуванням.',
+    save: 'Зберегти зміни',
+    saving: 'Збереження...',
+    toastSaved: 'Конфігурацію збережено.',
+    toastFailed: 'Не вдалося зберегти конфігурацію.',
+    loading: 'Завантаження конфігурації...',
+  },
+} as const;
+
+type ConfigCopy = typeof configCopy.pl;
+
 export function ConfigSection({ config, loading, error, onSave }: ConfigSectionProps) {
+  const language = useLanguage();
+  const t = (configCopy[language] ?? configCopy.pl) as ConfigCopy;
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(
@@ -42,11 +80,11 @@ export function ConfigSection({ config, loading, error, onSave }: ConfigSectionP
     setToast(null);
     try {
       await onSave(updates);
-      setToast({ type: 'success', message: 'Configuration saved.' });
+      setToast({ type: 'success', message: t.toastSaved });
     } catch (saveError) {
       setToast({
         type: 'error',
-        message: saveError instanceof Error ? saveError.message : 'Failed to save configuration.',
+        message: saveError instanceof Error ? saveError.message : t.toastFailed,
       });
     } finally {
       setSaving(false);
@@ -64,17 +102,17 @@ export function ConfigSection({ config, loading, error, onSave }: ConfigSectionP
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            Configuration
+            {t.title}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Update application limits and allowlist. Empty value resets to env/default.
+            {t.description}
           </p>
         </div>
         <Button
           onClick={handleSave}
           disabled={saving || updates.length === 0 || loading}
         >
-          {saving ? 'Zapisywanie...' : 'Zapisz zmiany'}
+          {saving ? t.saving : t.save}
         </Button>
       </div>
 
@@ -90,7 +128,7 @@ export function ConfigSection({ config, loading, error, onSave }: ConfigSectionP
 
       <div className="space-y-4">
         {loading && config.length === 0 ? (
-          <div className="text-sm text-slate-500">Loading configuration...</div>
+          <div className="text-sm text-slate-500">{t.loading}</div>
         ) : (
           config.map((item) => (
             <div

@@ -9,8 +9,62 @@ import { UserManagementSection } from '@/components/admin/UserManagementSection'
 import { Badge } from '@/components/ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { useAdminData } from '@/hooks/useAdminData';
+import { useLanguage } from '@/lib/i18n';
 
 type AdminTab = 'config' | 'users' | 'requests' | 'stats';
+
+const adminCopy = {
+  pl: {
+    title: 'Panel admina',
+    subtitle: 'Zarządzaj dostępem, konfiguracją i użyciem AI.',
+    loading: 'Ładowanie panelu admina...',
+    accessDenied: 'Brak dostępu.',
+    configKeys: (count: number) => `${count} kluczy konfiguracji`,
+    tabs: {
+      config: 'Konfiguracja',
+      users: 'Użytkownicy',
+      requests: 'Zgłoszenia',
+      stats: 'Statystyki',
+    },
+    requestsTitle: 'Zgłoszenia',
+    requestsDescription: 'Użytkownicy oczekujący na dostęp.',
+    requestsEmpty: 'Brak zgłoszeń.',
+  },
+  en: {
+    title: 'Admin panel',
+    subtitle: 'Manage access, configuration, and AI usage.',
+    loading: 'Loading admin panel...',
+    accessDenied: 'Access denied.',
+    configKeys: (count: number) => `${count} config keys`,
+    tabs: {
+      config: 'Configuration',
+      users: 'Users',
+      requests: 'Requests',
+      stats: 'Statistics',
+    },
+    requestsTitle: 'Requests',
+    requestsDescription: 'Users waiting for access.',
+    requestsEmpty: 'No requests.',
+  },
+  uk: {
+    title: 'Панель адміністратора',
+    subtitle: 'Керуйте доступом, конфігурацією та використанням AI.',
+    loading: 'Завантаження панелі адміністратора...',
+    accessDenied: 'Доступ заборонено.',
+    configKeys: (count: number) => `${count} ключів конфігурації`,
+    tabs: {
+      config: 'Конфігурація',
+      users: 'Користувачі',
+      requests: 'Заявки',
+      stats: 'Статистика',
+    },
+    requestsTitle: 'Заявки',
+    requestsDescription: 'Користувачі, що очікують на доступ.',
+    requestsEmpty: 'Немає заявок.',
+  },
+} as const;
+
+type AdminCopy = typeof adminCopy.pl;
 
 export default function AdminPage() {
   const router = useRouter();
@@ -18,6 +72,8 @@ export default function AdminPage() {
   const isAdmin = Boolean(session?.user?.isAdmin);
   const [activeTab, setActiveTab] = useState<AdminTab>('config');
   const savedUsersState = useRef({ status: 'all', plan: 'all', page: 0 });
+  const language = useLanguage();
+  const t = (adminCopy[language] ?? adminCopy.pl) as AdminCopy;
 
   const {
     config,
@@ -69,7 +125,7 @@ export default function AdminPage() {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center px-6">
-        <p className="text-slate-500">Loading admin panel...</p>
+        <p className="text-slate-500">{t.loading}</p>
       </div>
     );
   }
@@ -77,7 +133,7 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center px-6">
-        <p className="text-slate-500">Access denied.</p>
+        <p className="text-slate-500">{t.accessDenied}</p>
       </div>
     );
   }
@@ -86,20 +142,20 @@ export default function AdminPage() {
     <div className="min-h-screen px-6 py-10 space-y-6">
       <header className="space-y-2">
         <h1 className="font-display text-3xl md:text-4xl text-slate-900 dark:text-white">
-          Admin panel
+          {t.title}
         </h1>
         <div className="flex flex-wrap items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-          <span>Manage access, configuration, and AI usage.</span>
-          <Badge variant="info">{config.length} config keys</Badge>
+          <span>{t.subtitle}</span>
+          <Badge variant="info">{t.configKeys(config.length)}</Badge>
         </div>
       </header>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
-          <TabsTrigger value="config">Konfiguracja</TabsTrigger>
-          <TabsTrigger value="users">Użytkownicy</TabsTrigger>
-          <TabsTrigger value="requests">Zgłoszenia</TabsTrigger>
-          <TabsTrigger value="stats">Statystyki</TabsTrigger>
+          <TabsTrigger value="config">{t.tabs.config}</TabsTrigger>
+          <TabsTrigger value="users">{t.tabs.users}</TabsTrigger>
+          <TabsTrigger value="requests">{t.tabs.requests}</TabsTrigger>
+          <TabsTrigger value="stats">{t.tabs.stats}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="config">
@@ -162,9 +218,9 @@ export default function AdminPage() {
             }
             onUpdateUser={updateUser}
             onDeleteUser={deleteUser}
-            title="Zgłoszenia"
-            description="Użytkownicy oczekujący na dostęp."
-            emptyMessage="Brak zgłoszeń."
+            title={t.requestsTitle}
+            description={t.requestsDescription}
+            emptyMessage={t.requestsEmpty}
             hideFilters
           />
         </TabsContent>
