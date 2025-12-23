@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { ConfigSection } from '@/components/admin/ConfigSection';
@@ -10,10 +10,14 @@ import { Badge } from '@/components/ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { useAdminData } from '@/hooks/useAdminData';
 
+type AdminTab = 'config' | 'users' | 'requests' | 'stats';
+
 export default function AdminPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const isAdmin = Boolean(session?.user?.isAdmin);
+  const [activeTab, setActiveTab] = useState<AdminTab>('config');
+  const savedUsersState = useRef({ status: 'all', plan: 'all', page: 0 });
 
   const {
     config,
@@ -32,6 +36,29 @@ export default function AdminPage() {
     updateUser,
     deleteUser,
   } = useAdminData(isAdmin);
+
+  const handleTabChange = (value: string) => {
+    const nextTab = value as AdminTab;
+    if (nextTab === 'requests') {
+      savedUsersState.current = {
+        status: usersQuery.status,
+        plan: usersQuery.plan,
+        page: usersQuery.page,
+      };
+      setUsersQuery((prev) => ({
+        ...prev,
+        status: 'WAITLISTED',
+        plan: 'all',
+        page: 0,
+      }));
+    } else if (activeTab === 'requests') {
+      setUsersQuery((prev) => ({
+        ...prev,
+        ...savedUsersState.current,
+      }));
+    }
+    setActiveTab(nextTab);
+  };
 
   useEffect(() => {
     if (status === 'authenticated' && !isAdmin) {
@@ -67,11 +94,12 @@ export default function AdminPage() {
         </div>
       </header>
 
-      <Tabs defaultValue="config">
+      <Tabs value={activeTab} onValueChange={handleTabChange}>
         <TabsList>
-          <TabsTrigger value="config">Configuration</TabsTrigger>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="stats">Statistics</TabsTrigger>
+          <TabsTrigger value="config">Konfiguracja</TabsTrigger>
+          <TabsTrigger value="users">Użytkownicy</TabsTrigger>
+          <TabsTrigger value="requests">Zgłoszenia</TabsTrigger>
+          <TabsTrigger value="stats">Statystyki</TabsTrigger>
         </TabsList>
 
         <TabsContent value="config">
@@ -107,6 +135,37 @@ export default function AdminPage() {
             }
             onUpdateUser={updateUser}
             onDeleteUser={deleteUser}
+          />
+        </TabsContent>
+
+        <TabsContent value="requests">
+          <UserManagementSection
+            users={users}
+            loading={usersLoading}
+            error={usersError}
+            page={usersQuery.page}
+            limit={usersQuery.limit}
+            total={usersTotal}
+            filters={{ status: usersQuery.status, plan: usersQuery.plan }}
+            onFiltersChange={(nextFilters) =>
+              setUsersQuery((prev) => ({
+                ...prev,
+                ...nextFilters,
+                page: 0,
+              }))
+            }
+            onPageChange={(nextPage) =>
+              setUsersQuery((prev) => ({
+                ...prev,
+                page: nextPage,
+              }))
+            }
+            onUpdateUser={updateUser}
+            onDeleteUser={deleteUser}
+            title="Zgłoszenia"
+            description="Użytkownicy oczekujący na dostęp."
+            emptyMessage="Brak zgłoszeń."
+            hideFilters
           />
         </TabsContent>
 

@@ -74,7 +74,7 @@ export function ConfigSection({ config, loading, error, onSave }: ConfigSectionP
           onClick={handleSave}
           disabled={saving || updates.length === 0 || loading}
         >
-          {saving ? 'Saving...' : 'Save changes'}
+          {saving ? 'Zapisywanie...' : 'Zapisz zmiany'}
         </Button>
       </div>
 

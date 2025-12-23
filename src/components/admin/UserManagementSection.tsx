@@ -20,6 +20,10 @@ type UserManagementSectionProps = {
   onPageChange: (page: number) => void;
   onUpdateUser: (userId: string, updates: { plan?: string; accessStatus?: string }) => Promise<void>;
   onDeleteUser: (userId: string) => Promise<void>;
+  title?: string;
+  description?: string;
+  emptyMessage?: string;
+  hideFilters?: boolean;
 };
 
 const planOptions = [
@@ -47,6 +51,10 @@ export function UserManagementSection({
   onPageChange,
   onUpdateUser,
   onDeleteUser,
+  title,
+  description,
+  emptyMessage,
+  hideFilters = false,
 }: UserManagementSectionProps) {
   const [activeUser, setActiveUser] = useState<AdminUser | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
@@ -60,6 +68,9 @@ export function UserManagementSection({
   );
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(total / limit)), [total, limit]);
+  const headerTitle = title ?? 'User management';
+  const headerDescription = description ?? 'Manage access status and plan assignments.';
+  const emptyStateMessage = emptyMessage ?? 'No users found.';
 
   const openEditor = (user: AdminUser) => {
     setActiveUser(user);
@@ -146,40 +157,42 @@ export function UserManagementSection({
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-            User management
+            {headerTitle}
           </h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Manage access status and plan assignments.
+            {headerDescription}
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Select
-            value={filters.status}
-            onChange={(event) => {
-              onFiltersChange({ ...filters, status: event.target.value });
-              onPageChange(0);
-            }}
-          >
-            {statusOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </Select>
-          <Select
-            value={filters.plan}
-            onChange={(event) => {
-              onFiltersChange({ ...filters, plan: event.target.value });
-              onPageChange(0);
-            }}
-          >
-            {planOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </Select>
-        </div>
+        {!hideFilters && (
+          <div className="flex flex-wrap gap-3">
+            <Select
+              value={filters.status}
+              onChange={(event) => {
+                onFiltersChange({ ...filters, status: event.target.value });
+                onPageChange(0);
+              }}
+            >
+              {statusOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </Select>
+            <Select
+              value={filters.plan}
+              onChange={(event) => {
+                onFiltersChange({ ...filters, plan: event.target.value });
+                onPageChange(0);
+              }}
+            >
+              {planOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
       </div>
 
       {toast && (
@@ -213,7 +226,7 @@ export function UserManagementSection({
             ) : users.length === 0 ? (
               <tr>
                 <td className="px-4 py-6" colSpan={5}>
-                  No users found.
+                  {emptyStateMessage}
                 </td>
               </tr>
             ) : (
@@ -234,7 +247,7 @@ export function UserManagementSection({
                           disabled={pendingUserId === user.id}
                           onClick={() => handleStatusChange(user, 'ACTIVE')}
                         >
-                          Grant access
+                          Nadaj dostęp
                         </Button>
                       )}
                       {user.plan?.accessStatus !== 'SUSPENDED' && (
@@ -244,7 +257,7 @@ export function UserManagementSection({
                           disabled={pendingUserId === user.id}
                           onClick={() => handleStatusChange(user, 'SUSPENDED')}
                         >
-                          Suspend
+                          Zawieś
                         </Button>
                       )}
                       <Button
@@ -253,7 +266,7 @@ export function UserManagementSection({
                         disabled={pendingUserId === user.id}
                         onClick={() => setDeleteTarget(user)}
                       >
-                        Delete
+                        Usuń
                       </Button>
                       <Button
                         variant="ghost"
@@ -261,7 +274,7 @@ export function UserManagementSection({
                         disabled={pendingUserId === user.id}
                         onClick={() => openEditor(user)}
                       >
-                        Edit
+                        Edytuj
                       </Button>
                     </div>
                   </td>
@@ -283,7 +296,7 @@ export function UserManagementSection({
             onClick={() => onPageChange(Math.max(0, page - 1))}
             disabled={page === 0}
           >
-            Previous
+            Poprzednia
           </Button>
           <Button
             variant="secondary"
@@ -291,7 +304,7 @@ export function UserManagementSection({
             onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
             disabled={page + 1 >= totalPages}
           >
-            Next
+            Następna
           </Button>
         </div>
       </div>
@@ -304,10 +317,10 @@ export function UserManagementSection({
         actions={
           <>
             <Button variant="ghost" onClick={() => setActiveUser(null)}>
-              Cancel
+              Anuluj
             </Button>
             <Button onClick={handleSave} disabled={saving}>
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? 'Zapisywanie...' : 'Zapisz'}
             </Button>
           </>
         }
@@ -339,10 +352,10 @@ export function UserManagementSection({
         actions={
           <>
             <Button variant="ghost" onClick={() => setDeleteTarget(null)} disabled={deleting}>
-              Cancel
+              Anuluj
             </Button>
             <Button variant="danger" onClick={handleDelete} disabled={deleting}>
-              {deleting ? 'Deleting...' : 'Delete'}
+              {deleting ? 'Usuwanie...' : 'Usuń'}
             </Button>
           </>
         }
