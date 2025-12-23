@@ -52,10 +52,10 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      - name: Verify database migrations
+      - name: Apply database migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
-        run: npx prisma migrate status --schema=prisma/schema.prisma
+        run: npx prisma migrate deploy --schema=prisma/schema.prisma
 
       - name: Configure app settings
         uses: azure/CLI@v2
