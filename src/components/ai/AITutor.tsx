@@ -12,6 +12,7 @@ import {
   Lightbulb,
   HelpCircle,
 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/Button';
 import { useVocabStore } from '@/lib/store';
 import { cn, speak } from '@/lib/utils';
@@ -29,10 +30,29 @@ const tutorCopy = {
   pl: {
     welcomeMessage: (targetLabel: string) =>
       `Cześć! Jestem Eva, Twój asystent do nauki ${targetLabel.toLowerCase()}.\n\nMogę Ci pomóc w następujących tematach:\n• Wyjaśnienie słówek krok po kroku\n• Wymowa i akcent\n• Wskazówki do nauki\n• Pytania o gramatykę\n\nO co chcesz zapytać?`,
+    adminWelcomeMessage:
+      'Cześć! Jestem asystentem admina. Pomagam w konfiguracji AI, promptach i diagnozowaniu problemów.\n\nOpisz, co chcesz usprawnić.',
     quickActions: [
       { icon: Lightbulb, label: 'Porada dnia', prompt: 'Daj mi poradę jak lepiej uczyć się słówek' },
       { icon: BookOpen, label: 'Wyjaśnij słówko', prompt: 'Wyjaśnij mi słówko: ' },
       { icon: HelpCircle, label: 'Jak wymówić?', prompt: 'Jak poprawnie wymówić słówko: ' },
+    ],
+    adminQuickActions: [
+      {
+        icon: Lightbulb,
+        label: 'Ulepsz prompt',
+        prompt: 'Zaproponuj overlay dla promptu generowania słówek.',
+      },
+      {
+        icon: BookOpen,
+        label: 'Test JSON',
+        prompt: 'Jak dopilnować, aby odpowiedzi zawsze były poprawnym JSON?',
+      },
+      {
+        icon: HelpCircle,
+        label: 'Diagnoza błędu',
+        prompt: 'Jak zdiagnozować błąd ai_model_not_found?',
+      },
     ],
     contextLabels: {
       level: 'Poziom użytkownika',
@@ -44,10 +64,12 @@ const tutorCopy = {
     openTitle: 'Otwórz asystenta AI',
     headerTitle: 'Eva - AI Tutor',
     headerSubtitle: 'Twój asystent do nauki',
+    adminHeaderSubtitle: 'Wsparcie konfiguracji AI',
     speakTitle: (targetLabel: string) => `Wymów słowa w języku ${targetLabel.toLowerCase()}`,
     typing: 'Eva pisze...',
     quickActionsLabel: 'Szybkie akcje:',
     inputPlaceholder: 'Zapytaj o cokolwiek...',
+    adminInputPlaceholder: 'Zapytaj o konfigurację AI...',
     errorMessage:
       'Mam chwilowe problemy z połączeniem. Spróbuj ponownie za chwilę.\n\nUpewnij się, że klucz API jest skonfigurowany w .env.local.',
     rateLimitMessage: 'Wysyłasz zbyt wiele zapytań. Spróbuj ponownie za chwilę.',
@@ -65,10 +87,29 @@ const tutorCopy = {
   en: {
     welcomeMessage: (targetLabel: string) =>
       `Hi! I am Eva, your ${targetLabel} learning assistant.\n\nI can help with:\n• Explaining words step by step\n• Pronunciation and stress\n• Study tips\n• Grammar questions\n\nWhat would you like to ask?`,
+    adminWelcomeMessage:
+      'Hi! I am the admin assistant. I can help with AI configuration, prompt overlays, and issue diagnosis.\n\nDescribe what you want to improve.',
     quickActions: [
       { icon: Lightbulb, label: 'Tip of the day', prompt: 'Give me a tip to learn vocabulary better' },
       { icon: BookOpen, label: 'Explain a word', prompt: 'Explain this word: ' },
       { icon: HelpCircle, label: 'How to pronounce?', prompt: 'How do I pronounce the word: ' },
+    ],
+    adminQuickActions: [
+      {
+        icon: Lightbulb,
+        label: 'Improve prompt',
+        prompt: 'Suggest an overlay for the generate-words prompt.',
+      },
+      {
+        icon: BookOpen,
+        label: 'Keep JSON',
+        prompt: 'How do we enforce JSON-only responses in prompts?',
+      },
+      {
+        icon: HelpCircle,
+        label: 'Diagnose error',
+        prompt: 'How do we diagnose ai_model_not_found errors?',
+      },
     ],
     contextLabels: {
       level: 'User level',
@@ -80,10 +121,12 @@ const tutorCopy = {
     openTitle: 'Open AI tutor',
     headerTitle: 'Eva - AI Tutor',
     headerSubtitle: 'Your learning companion',
+    adminHeaderSubtitle: 'AI configuration support',
     speakTitle: (targetLabel: string) => `Speak the ${targetLabel} words`,
     typing: 'Eva is typing...',
     quickActionsLabel: 'Quick actions:',
     inputPlaceholder: 'Ask anything...',
+    adminInputPlaceholder: 'Ask about AI configuration...',
     errorMessage:
       'I am having connection issues. Please try again in a moment.\n\nMake sure the API key is configured in .env.local.',
     rateLimitMessage: 'Too many requests. Please try again in a moment.',
@@ -100,10 +143,29 @@ const tutorCopy = {
   uk: {
     welcomeMessage: (targetLabel: string) =>
       `Привіт! Я Ева, твій асистент для вивчення ${targetLabel.toLowerCase()}.\n\nМожу допомогти з:\n• Поясненням слів крок за кроком\n• Вимовою та наголосом\n• Порадами для навчання\n• Питаннями з граматики\n\nПро що хочеш запитати?`,
+    adminWelcomeMessage:
+      'Привіт! Я асистент адміністратора. Допоможу з конфігурацією AI, оверлеями промптів і діагностикою проблем.\n\nОпиши, що треба покращити.',
     quickActions: [
       { icon: Lightbulb, label: 'Порада дня', prompt: 'Дай пораду, як краще вчити слова' },
       { icon: BookOpen, label: 'Поясни слово', prompt: 'Поясни слово: ' },
       { icon: HelpCircle, label: 'Як вимовити?', prompt: 'Як правильно вимовити слово: ' },
+    ],
+    adminQuickActions: [
+      {
+        icon: Lightbulb,
+        label: 'Покращити промпт',
+        prompt: 'Запропонуй оверлей для промпту генерації слів.',
+      },
+      {
+        icon: BookOpen,
+        label: 'JSON формат',
+        prompt: 'Як забезпечити відповідь лише у форматі JSON?',
+      },
+      {
+        icon: HelpCircle,
+        label: 'Діагностика',
+        prompt: 'Як діагностувати помилку ai_model_not_found?',
+      },
     ],
     contextLabels: {
       level: 'Рівень користувача',
@@ -115,10 +177,12 @@ const tutorCopy = {
     openTitle: 'Відкрити AI асистента',
     headerTitle: 'Eva - AI Наставник',
     headerSubtitle: 'Твій помічник у навчанні',
+    adminHeaderSubtitle: 'Підтримка AI конфігурації',
     speakTitle: (targetLabel: string) => `Вимов слова ${targetLabel.toLowerCase()}`,
     typing: 'Ева пише...',
     quickActionsLabel: 'Швидкі дії:',
     inputPlaceholder: 'Запитай про що завгодно...',
+    adminInputPlaceholder: 'Запитай про конфігурацію AI...',
     errorMessage:
       'Маю тимчасові проблеми з підключенням. Спробуй ще раз трохи пізніше.\n\nПереконайся, що ключ API налаштовано в .env.local.',
     rateLimitMessage: 'Занадто багато запитів. Спробуй ще раз трохи пізніше.',
@@ -147,6 +211,8 @@ export function AITutor() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const { data: session } = useSession();
+  const isAdminMode = Boolean(session?.user?.isAdmin);
   const language = useLanguage();
   const t = (tutorCopy[language] ?? tutorCopy.pl) as TutorCopy;
   const stats = useVocabStore((state) => state.stats);
@@ -154,6 +220,9 @@ export function AITutor() {
   const settings = useVocabStore((state) => state.settings);
   const activePair = getLearningPair(settings.learning.pairId);
   const targetLabel = getLanguageLabel(activePair.target, language);
+  const quickActions = isAdminMode ? t.adminQuickActions : t.quickActions;
+  const inputPlaceholder = isAdminMode ? t.adminInputPlaceholder : t.inputPlaceholder;
+  const headerSubtitle = isAdminMode ? t.adminHeaderSubtitle : t.headerSubtitle;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -166,12 +235,12 @@ export function AITutor() {
         {
           id: '1',
           role: 'assistant',
-          content: t.welcomeMessage(targetLabel),
+          content: isAdminMode ? t.adminWelcomeMessage : t.welcomeMessage(targetLabel),
           timestamp: new Date(),
         },
       ]);
     }
-  }, [isOpen, messages.length, t, targetLabel]);
+  }, [isAdminMode, isOpen, messages.length, t, targetLabel]);
 
   const buildContext = () => {
     return `
@@ -223,6 +292,7 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
           targetLanguage: activePair.target,
           nativeLanguage: activePair.native,
           feedbackLanguage: settings.ai.feedbackLanguage,
+          adminMode: isAdminMode,
         }),
       });
 
@@ -326,7 +396,7 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
           </div>
           <div>
             <h3 className="font-semibold">{t.headerTitle}</h3>
-            <p className="text-xs text-white/80">{t.headerSubtitle}</p>
+            <p className="text-xs text-white/80">{headerSubtitle}</p>
           </div>
         </div>
         <button
@@ -385,7 +455,7 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
           <div className="space-y-2">
             <p className="text-xs text-slate-500 text-center">{t.quickActionsLabel}</p>
             <div className="flex flex-wrap gap-2 justify-center">
-              {t.quickActions.map((action, index) => (
+              {quickActions.map((action, index) => (
                 <button
                   key={index}
                   onClick={() =>
@@ -416,7 +486,7 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder={t.inputPlaceholder}
+            placeholder={inputPlaceholder}
             className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
             disabled={isLoading}
           />

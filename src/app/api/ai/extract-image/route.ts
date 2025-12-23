@@ -8,6 +8,7 @@ import { normalizeNativeLanguage, normalizeTargetLanguage } from '@/lib/aiValida
 import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
+import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
 
 interface ExtractedWord {
   target: string;
@@ -94,9 +95,10 @@ export async function POST(request: NextRequest) {
       safeTargetLanguage,
       safeNativeLanguage
     );
+    const finalPrompt = await buildPromptWithOverlays('extract-image', prompt);
 
     const response = await gemini.generateWithImage(
-      prompt,
+      finalPrompt,
       imagePayload,
       safeMimeType,
       {

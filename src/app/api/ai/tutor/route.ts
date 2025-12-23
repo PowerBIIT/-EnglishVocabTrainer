@@ -16,6 +16,7 @@ import {
 import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
+import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,7 +42,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { message, context, targetLanguage, nativeLanguage, feedbackLanguage } =
+    const {
+      message,
+      context,
+      targetLanguage,
+      nativeLanguage,
+      feedbackLanguage,
+      adminMode,
+    } =
       await request.json();
     const messageValue = typeof message === 'string' ? message.trim() : '';
     const contextValue = typeof context === 'string' ? context : '';
@@ -70,6 +78,7 @@ export async function POST(request: NextRequest) {
       contextValue.length > MAX_AI_CONTEXT_CHARS
         ? contextValue.slice(-MAX_AI_CONTEXT_CHARS)
         : contextValue;
+    const isAdminRequest = Boolean(adminMode) && Boolean(session.user.isAdmin);
 
     const usage = await enforceAiUsage({
       userId: session.user.id,
@@ -82,15 +91,22 @@ export async function POST(request: NextRequest) {
 
     const model = await resolveGeminiModel();
     const gemini = new GeminiService(apiKey);
-    const prompt = AI_PROMPTS.tutorChat(
-      safeContext,
-      messageValue,
-      safeTargetLanguage,
-      safeNativeLanguage,
-      safeFeedbackLanguage
-    );
+    const prompt = isAdminRequest
+      ? AI_PROMPTS.adminAssistant(
+          safeContext,
+          messageValue,
+          safeFeedbackLanguage
+        )
+      : AI_PROMPTS.tutorChat(
+          safeContext,
+          messageValue,
+          safeTargetLanguage,
+          safeNativeLanguage,
+          safeFeedbackLanguage
+        );
+    const finalPrompt = await buildPromptWithOverlays('tutor-chat', prompt);
 
-    const response = await gemini.generate(prompt, {
+    const response = await gemini.generate(finalPrompt, {
       temperature: 0.8,
       maxOutputTokens: 1024,
       model,

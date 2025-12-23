@@ -12,6 +12,7 @@ import {
 import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
+import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
 
 export async function POST(request: NextRequest) {
   try {
@@ -79,8 +80,9 @@ export async function POST(request: NextRequest) {
       safeNativeLanguage,
       safeFeedbackLanguage
     );
+    const finalPrompt = await buildPromptWithOverlays('explain-word', prompt);
 
-    const response = await gemini.generate(prompt, {
+    const response = await gemini.generate(finalPrompt, {
       temperature: 0.7,
       maxOutputTokens: 1024,
       model,

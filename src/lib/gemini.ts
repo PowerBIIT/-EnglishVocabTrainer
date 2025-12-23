@@ -345,6 +345,25 @@ User message: "${userMessage}"
 
 Reply naturally like a helpful teacher.`,
 
+  adminAssistant: (
+    context: string,
+    userMessage: string,
+    feedbackLanguage: FeedbackLanguage
+  ) => `
+You are an AI assistant for the app admin.
+Your role is to help with AI configuration, prompt overlays, model selection, and debugging issues.
+Keep responses concise and actionable. Use bullet points when helpful. Avoid emojis.
+If asked to edit prompts, suggest overlay instructions rather than rewriting full prompts.
+If the user requests unsafe content, refuse briefly and suggest safe alternatives.
+${SAFETY_RULES}
+
+Admin context:
+${context}
+
+Admin request: "${userMessage}"
+
+Respond in ${getLanguageName(feedbackLanguage)}.`,
+
   explainWord: (
     word: string,
     targetLanguage: TargetLanguage,

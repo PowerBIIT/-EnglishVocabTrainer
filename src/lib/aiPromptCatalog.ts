@@ -11,9 +11,11 @@ export type AdminPromptPreview = Omit<PromptCatalogItem, 'build'> & {
   prompt: string;
 };
 
+export type PromptDefinition = PromptCatalogItem;
+
 const SAMPLE_CONTEXT = `Level: A2\nVocabulary: 120\nStreak: 3 days`;
 
-const PROMPT_CATALOG: PromptCatalogItem[] = [
+const PROMPT_CATALOG = [
   {
     id: 'generate-words',
     label: 'Generate vocabulary',
@@ -66,10 +68,17 @@ const PROMPT_CATALOG: PromptCatalogItem[] = [
         feedbackLanguage: 'pl',
       }),
   },
-];
+] as const satisfies PromptCatalogItem[];
+
+export type PromptId = (typeof PROMPT_CATALOG)[number]['id'];
 
 export const getPromptCatalog = (): AdminPromptPreview[] =>
   PROMPT_CATALOG.map(({ build, ...rest }) => ({
     ...rest,
     prompt: build(),
   }));
+
+export const getPromptDefinition = (id: PromptId): PromptDefinition | null => {
+  const match = PROMPT_CATALOG.find((item) => item.id === id);
+  return match ?? null;
+};

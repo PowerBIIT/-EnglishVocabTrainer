@@ -8,6 +8,7 @@ import { normalizeNativeLanguage, normalizeTargetLanguage } from '@/lib/aiValida
 import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
+import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
 
 interface ExtractedWord {
   target: string;
@@ -158,8 +159,9 @@ export async function POST(request: NextRequest) {
     const model = await resolveGeminiModel();
     const gemini = new GeminiService(apiKey);
     const prompt = AI_PROMPTS.parseText(safeText, targetLanguage, nativeLanguage);
+    const finalPrompt = await buildPromptWithOverlays('parse-text', prompt);
 
-    const response = await gemini.generate(prompt, {
+    const response = await gemini.generate(finalPrompt, {
       temperature: 0.3,
       maxOutputTokens: 2048,
       model,

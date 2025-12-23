@@ -12,6 +12,7 @@ import { normalizeNativeLanguage, normalizeTargetLanguage } from '@/lib/aiValida
 import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
+import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
 
 interface GeneratedWord {
   target: string;
@@ -112,8 +113,9 @@ export async function POST(request: NextRequest) {
       safeTargetLanguage,
       safeNativeLanguage
     );
+    const finalPrompt = await buildPromptWithOverlays('generate-words', prompt);
 
-    const response = await gemini.generate(prompt, {
+    const response = await gemini.generate(finalPrompt, {
       temperature: 0.8,
       maxOutputTokens: 2048,
       model,

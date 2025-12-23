@@ -12,6 +12,7 @@ import {
 import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
+import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
 
 interface PhonemeAnalysis {
   phoneme: string;
@@ -114,13 +115,17 @@ export async function POST(request: NextRequest) {
       targetLanguage: safeTargetLanguage,
       feedbackLanguage: safeFeedbackLanguage,
     });
+    const finalPrompt = await buildPromptWithOverlays(
+      'evaluate-pronunciation',
+      prompt
+    );
 
     if (process.env.NODE_ENV !== 'production') {
       console.log('Calling Gemini API for pronunciation evaluation...');
       console.log('Expected:', expectedValue, '| Spoken:', spokenValue);
     }
 
-    const response = await gemini.generate(prompt, {
+    const response = await gemini.generate(finalPrompt, {
       temperature: 0.3,
       maxOutputTokens: 512,
       model,
