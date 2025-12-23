@@ -16,6 +16,43 @@ type AssistResponse = {
   notes?: string;
 };
 
+const MAX_OVERLAY_CHARS = 1200;
+
+const extractOverlayFallback = (value: string) => {
+  const cleaned = value
+    .replace(/```(?:json)?/gi, '')
+    .replace(/```/g, '')
+    .trim();
+  if (!cleaned) return '';
+
+  const lines = cleaned
+    .split('\n')
+    .map((line) => line.replace(/^[-*]\s*/, '').trim())
+    .filter(Boolean);
+  if (lines.length === 0) return '';
+
+  const overlay = lines.join('\n');
+  return overlay.length > MAX_OVERLAY_CHARS
+    ? overlay.slice(0, MAX_OVERLAY_CHARS)
+    : overlay;
+};
+
+const parseAssistResponse = (response: string): AssistResponse => {
+  try {
+    return parseAIResponse<AssistResponse>(response);
+  } catch (error) {
+    const fallbackOverlay = extractOverlayFallback(response);
+    if (!fallbackOverlay) {
+      throw error;
+    }
+    console.warn('Admin assist returned non-JSON response. Falling back to text overlay.');
+    return {
+      suggestedOverlay: fallbackOverlay,
+      notes: 'Auto-extracted from plain text response.',
+    };
+  }
+};
+
 const buildAdminAssistPrompt = ({
   scope,
   goal,
@@ -104,8 +141,9 @@ export async function POST(request: Request) {
       temperature: 0.6,
       maxOutputTokens: 512,
       model,
+      responseMimeType: 'application/json',
     });
-    const parsed = parseAIResponse<AssistResponse>(response);
+    const parsed = parseAssistResponse(response);
     const suggestedOverlay =
       typeof parsed.suggestedOverlay === 'string' ? parsed.suggestedOverlay.trim() : '';
     const notes = typeof parsed.notes === 'string' ? parsed.notes.trim() : undefined;

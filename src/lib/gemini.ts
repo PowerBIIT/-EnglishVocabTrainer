@@ -29,6 +29,8 @@ interface GenerateOptions {
   temperature?: number;
   maxOutputTokens?: number;
   model?: string;
+  responseMimeType?: string;
+  responseSchema?: Record<string, unknown>;
 }
 
 export class GeminiService {
@@ -46,6 +48,8 @@ export class GeminiService {
       temperature = 0.7,
       maxOutputTokens = 1024,
       model = DEFAULT_MODEL,
+      responseMimeType,
+      responseSchema,
     } = options;
 
     const controller = new AbortController();
@@ -62,6 +66,8 @@ export class GeminiService {
             generationConfig: {
               temperature,
               maxOutputTokens,
+              ...(responseMimeType ? { responseMimeType } : {}),
+              ...(responseSchema ? { responseSchema } : {}),
             },
           }),
           signal: controller.signal,
