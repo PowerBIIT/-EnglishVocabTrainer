@@ -119,13 +119,24 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_PRD }}
           package: ./.deploy
 
-      - name: Restart app (apply settings)
+      - name: Ensure app running (apply settings)
         uses: azure/CLI@v2
         with:
           inlineScript: |
-            az webapp restart \
+            state=$(az webapp show \
               --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
-              --name "${{ secrets.AZURE_WEBAPP_NAME_PRD }}"
+              --name "${{ secrets.AZURE_WEBAPP_NAME_PRD }}" \
+              --query state \
+              -o tsv)
+            if [ "$state" = "Running" ]; then
+              az webapp restart \
+                --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+                --name "${{ secrets.AZURE_WEBAPP_NAME_PRD }}"
+            else
+              az webapp start \
+                --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+                --name "${{ secrets.AZURE_WEBAPP_NAME_PRD }}"
+            fi
 
       - name: Verify deployment health
         env:
