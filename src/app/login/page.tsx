@@ -6,7 +6,7 @@ import { signIn, useSession } from 'next-auth/react';
 import { Compass, ShieldCheck, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MascotAvatar } from '@/components/mascot/MascotAvatar';
-import { useLanguage, isAppLanguage } from '@/lib/i18n';
+import { useLanguage, isAppLanguage, type AppLanguage } from '@/lib/i18n';
 import { useHydration, useVocabStore } from '@/lib/store';
 
 const loginCopy = {
