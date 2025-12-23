@@ -17,6 +17,7 @@ permissions:
 jobs:
   destroy:
     runs-on: ubuntu-latest
+    environment: prd
     if: ${{ github.event.inputs.confirm == 'destroy' }}
     steps:
       - name: Checkout
@@ -34,7 +35,7 @@ jobs:
       - name: Azure Login
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_PROVISION_CREDENTIALS }}
+          creds: ${{ secrets.AZURE_PROVISION_CREDENTIALS != '' && secrets.AZURE_PROVISION_CREDENTIALS || secrets.AZURE_CREDENTIALS }}
 
       - name: Verify resource group exists
         id: verify
