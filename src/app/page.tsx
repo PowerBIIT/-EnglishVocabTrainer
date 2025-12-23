@@ -224,7 +224,7 @@ export default function HomePage() {
 
           <Card variant="elevated" className="overflow-hidden">
             <CardContent className="p-6 bg-gradient-to-br from-primary-600 via-primary-500 to-amber-400 text-white">
-              <div className="flex items-start justify-between gap-6">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <div className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-white/80">
                     <Compass size={14} />

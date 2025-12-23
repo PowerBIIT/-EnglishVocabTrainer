@@ -321,7 +321,7 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
   }
 
   return (
-    <div className="fixed bottom-[calc(7rem+env(safe-area-inset-bottom))] right-4 md:bottom-8 md:right-6 w-[360px] h-[500px] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden border border-slate-200 dark:border-slate-700">
+    <div className="fixed bottom-[calc(7rem+env(safe-area-inset-bottom))] right-4 md:bottom-8 md:right-6 w-[calc(100vw-2rem)] sm:w-[360px] h-[calc(100dvh-10rem)] sm:h-[500px] bg-white dark:bg-slate-800 rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden border border-slate-200 dark:border-slate-700">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-500 to-amber-400 text-white p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">

@@ -324,7 +324,7 @@ export default function OnboardingPage() {
         {step === 'pair' && (
           <section className="space-y-6">
             <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6 space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-semibold text-slate-800 dark:text-slate-100">
                     {t.choosePair}
@@ -382,7 +382,7 @@ export default function OnboardingPage() {
         {step === 'skin' && (
           <section className="space-y-6">
             <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-semibold text-slate-800 dark:text-slate-100">
                     {t.chooseSkin}
@@ -425,7 +425,7 @@ export default function OnboardingPage() {
         {step === 'words' && (
           <section className="space-y-6">
             <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6 space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-semibold text-slate-800 dark:text-slate-100">
                     {t.addFirstSet}
@@ -459,7 +459,7 @@ export default function OnboardingPage() {
         {step === 'mission' && (
           <section className="space-y-6">
             <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-semibold text-slate-800 dark:text-slate-100">
                     {t.firstMission}

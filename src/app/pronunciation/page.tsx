@@ -885,7 +885,7 @@ export default function PronunciationPage() {
         </div>
 
         {/* Stats summary */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
           <Card className="p-3 text-center">
             <div className="flex items-center justify-center gap-1 text-amber-500 mb-1">
               <Flame size={18} />
@@ -916,7 +916,7 @@ export default function PronunciationPage() {
               <Settings size={18} />
               {t.sessionLength}
             </h3>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {SESSION_LENGTHS.map((len) => (
                 <button
                   key={len}
@@ -1036,7 +1036,7 @@ export default function PronunciationPage() {
               <h3 className="font-semibold text-slate-800 dark:text-slate-100">
                 {t.selectPhoneme}
               </h3>
-              <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
+              <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto sm:grid-cols-2">
                 {phonemeDrills.map((drill) => (
                   <button
                     key={drill.id}
@@ -1099,7 +1099,7 @@ export default function PronunciationPage() {
           <div className="flex justify-center gap-2 mb-6">{getScoreStars(avgScore)}</div>
 
           {/* Session stats */}
-          <div className="grid grid-cols-2 gap-4 mb-6 text-left">
+          <div className="grid grid-cols-1 gap-4 mb-6 text-left sm:grid-cols-2">
             <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
               <p className="text-sm text-slate-500">{t.wordsLabel}</p>
               <p className="text-xl font-bold text-slate-800 dark:text-slate-100">

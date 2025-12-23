@@ -178,7 +178,7 @@ export default function AdminPage() {
       </header>
 
       <Tabs value={activeTab} onValueChange={handleTabChange}>
-        <TabsList>
+        <TabsList className="w-full flex-wrap justify-start md:w-auto md:flex-nowrap">
           <TabsTrigger value="config">{t.tabs.config}</TabsTrigger>
           <TabsTrigger value="users">{t.tabs.users}</TabsTrigger>
           <TabsTrigger value="requests">{t.tabs.requests}</TabsTrigger>

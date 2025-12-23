@@ -384,7 +384,7 @@ export default function FlashcardsPage() {
             </Link>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
             <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-xl">
               <p className="text-slate-500 dark:text-slate-400">{t.flashcardCount}</p>
               <p className="font-semibold text-slate-800 dark:text-slate-100">

@@ -719,7 +719,7 @@ export default function PhonemeDrillsPage() {
           <p className="text-slate-500 mb-4">{t.averageScore(avgScore)}</p>
           <div className="flex justify-center gap-2 mb-6">{getScoreStars(avgScore)}</div>
 
-          <div className="grid grid-cols-2 gap-4 mb-6 text-left">
+          <div className="grid grid-cols-1 gap-4 mb-6 text-left sm:grid-cols-2">
             <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
               <p className="text-sm text-slate-500">{t.wordsLabel}</p>
               <p className="text-xl font-bold text-slate-800 dark:text-slate-100">

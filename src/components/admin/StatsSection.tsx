@@ -114,7 +114,7 @@ export function StatsSection({ stats, loading, error }: StatsSectionProps) {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4 space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-500">{t.globalUsage}</p>
             <span className="text-xs text-slate-400">
               {formatNumber(usage.count)} {t.requests} · {formatNumber(usage.units)} {t.units}
@@ -159,11 +159,11 @@ export function StatsSection({ stats, loading, error }: StatsSectionProps) {
         <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4 space-y-3">
           <p className="text-sm text-slate-500">{t.estimatedCost}</p>
           <div className="grid gap-3">
-            <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
+            <div className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
               <span>{t.estimatedMonthly}</span>
               <span className="font-semibold">{formatUsd(stats.costs.estimatedMonthly)}</span>
             </div>
-            <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-300">
+            <div className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
               <span>{t.projectedEnd}</span>
               <span className="font-semibold">{formatUsd(stats.costs.projectedEndOfMonth)}</span>
             </div>
@@ -177,7 +177,7 @@ export function StatsSection({ stats, loading, error }: StatsSectionProps) {
           <div className="mt-3 space-y-2">
             {stats.aiUsage.byPlan.map((plan) => (
               <div key={plan.plan} className="space-y-1">
-                <div className="flex items-center justify-between text-sm text-slate-700 dark:text-slate-200">
+                <div className="flex flex-col gap-1 text-sm text-slate-700 dark:text-slate-200 sm:flex-row sm:items-center sm:justify-between">
                   <span>{plan.plan}</span>
                   <span>
                     {formatNumber(plan.count)} {t.requests} · {formatNumber(plan.units)} {t.units}
@@ -201,8 +201,11 @@ export function StatsSection({ stats, loading, error }: StatsSectionProps) {
               <div>{t.topUsersEmpty}</div>
             ) : (
               stats.aiUsage.topUsers.map((user) => (
-                <div key={user.email} className="flex items-center justify-between">
-                  <span>{user.email}</span>
+                <div
+                  key={user.email}
+                  className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <span className="break-all sm:break-normal">{user.email}</span>
                   <span className="font-semibold">{formatNumber(user.units)}</span>
                 </div>
               ))
@@ -219,7 +222,7 @@ export function StatsSection({ stats, loading, error }: StatsSectionProps) {
               stats.users.planBreakdown.map((entry) => (
                 <div
                   key={`${entry.plan}-${entry.accessStatus}`}
-                  className="flex items-center justify-between"
+                  className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <span>
                     {entry.plan} · {entry.accessStatus}

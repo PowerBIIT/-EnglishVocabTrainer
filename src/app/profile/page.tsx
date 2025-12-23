@@ -101,14 +101,16 @@ interface SettingRowProps {
 
 function SettingRow({ label, description, children }: SettingRowProps) {
   return (
-    <div className="flex items-center justify-between py-3">
+    <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex-1">
         <p className="font-medium text-slate-800 dark:text-slate-100">{label}</p>
         {description && (
           <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
         )}
       </div>
-      {children}
+      <div className="flex w-full justify-start sm:w-auto sm:justify-end">
+        {children}
+      </div>
     </div>
   );
 }
@@ -704,7 +706,7 @@ export default function ProfilePage() {
       <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
         <Card variant="elevated" className="overflow-hidden">
           <CardContent className="p-6 bg-gradient-to-br from-primary-600 via-primary-500 to-amber-400 text-white">
-            <div className="flex items-start justify-between gap-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-white/80">
                   <Compass size={14} />
@@ -762,7 +764,7 @@ export default function ProfilePage() {
                 <ProgressBar value={levelProgress.percentage} size="sm" className="mt-2" />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
               <div className="rounded-xl bg-slate-50 dark:bg-slate-800 p-3">
                 <p className="text-slate-500">{t.masteredWords}</p>
                 <p className="font-semibold text-slate-800 dark:text-slate-100">{masteredCount}</p>

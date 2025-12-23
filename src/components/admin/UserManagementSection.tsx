@@ -314,7 +314,112 @@ export function UserManagementSection({
 
       {error && <Toast variant="error" message={error} />}
 
-      <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60">
+      <div className="space-y-3 md:hidden">
+        {loading ? (
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4 text-sm text-slate-500 dark:text-slate-400">
+            {t.loading}
+          </div>
+        ) : users.length === 0 ? (
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4 text-sm text-slate-500 dark:text-slate-400">
+            {emptyStateMessage}
+          </div>
+        ) : (
+          users.map((user) => {
+            const planLabel =
+              t.planLabels[user.plan?.plan ?? 'FREE'] ?? (user.plan?.plan ?? 'FREE');
+            const statusLabel =
+              t.statusLabels[user.plan?.accessStatus ?? 'ACTIVE'] ??
+              (user.plan?.accessStatus ?? 'ACTIVE');
+            const createdLabel = user.createdAt
+              ? formatDate(new Date(user.createdAt), dateLocale)
+              : '—';
+
+            return (
+              <div
+                key={user.id}
+                className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4 space-y-3"
+              >
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-slate-400">
+                    {t.columns.email}
+                  </p>
+                  <p className="font-semibold text-slate-900 dark:text-slate-100 break-words">
+                    {user.email ?? t.unknown}
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-slate-400">
+                      {t.columns.plan}
+                    </p>
+                    <p className="font-medium text-slate-700 dark:text-slate-200">
+                      {planLabel}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-slate-400">
+                      {t.columns.status}
+                    </p>
+                    <p className="font-medium text-slate-700 dark:text-slate-200">
+                      {statusLabel}
+                    </p>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <p className="text-xs uppercase tracking-wide text-slate-400">
+                      {t.columns.created}
+                    </p>
+                    <p className="text-slate-600 dark:text-slate-300">{createdLabel}</p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                  {user.plan?.accessStatus !== 'ACTIVE' && (
+                    <Button
+                      variant="success"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      disabled={pendingUserId === user.id}
+                      onClick={() => handleStatusChange(user, 'ACTIVE')}
+                    >
+                      {t.grantAccess}
+                    </Button>
+                  )}
+                  {user.plan?.accessStatus !== 'SUSPENDED' && (
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      disabled={pendingUserId === user.id}
+                      onClick={() => handleStatusChange(user, 'SUSPENDED')}
+                    >
+                      {t.suspend}
+                    </Button>
+                  )}
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                    disabled={pendingUserId === user.id}
+                    onClick={() => setDeleteTarget(user)}
+                  >
+                    {t.delete}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full sm:w-auto"
+                    disabled={pendingUserId === user.id}
+                    onClick={() => openEditor(user)}
+                  >
+                    {t.edit}
+                  </Button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="hidden md:block overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60">
         <table className="min-w-full text-sm">
           <thead className="text-left text-slate-500 dark:text-slate-400">
             <tr>
@@ -399,7 +504,7 @@ export function UserManagementSection({
         </table>
       </div>
 
-      <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
+      <div className="flex flex-col gap-2 text-sm text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
         <span>{t.pageLabel(page + 1, totalPages, total)}</span>
         <div className="flex gap-2">
           <Button

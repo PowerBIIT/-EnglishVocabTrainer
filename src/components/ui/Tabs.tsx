@@ -54,9 +54,20 @@ export function Tabs({ defaultValue, value, onValueChange, children }: TabsProps
   return <TabsContext.Provider value={contextValue}>{children}</TabsContext.Provider>;
 }
 
-export function TabsList({ children }: { children: ReactNode }) {
+export function TabsList({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-2xl bg-white/80 dark:bg-slate-900/70 p-1 shadow-sm border border-white/60 dark:border-slate-700">
+    <div
+      className={cn(
+        'inline-flex items-center gap-2 rounded-2xl bg-white/80 dark:bg-slate-900/70 p-1 shadow-sm border border-white/60 dark:border-slate-700',
+        className
+      )}
+    >
       {children}
     </div>
   );
