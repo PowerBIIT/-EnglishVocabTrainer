@@ -3,29 +3,27 @@
 Next.js app for learning vocabulary with AI assistance. Includes onboarding, flashcards, quizzes,
 pronunciation practice, and AI-powered word intake.
 
-## Status projektu (wersja 1.0.6 - 2025-12-23)
+## Status projektu (wersja 1.0.7 - 2025-12-23)
 
-### Wdrożone zmiany w 1.0.6
-✅ **Edytowalny panel admina** - konfiguracja limitów, zarządzanie użytkownikami i statystyki kosztów
-- UI: zakładki Configuration / Users / Statistics
-- API: `/api/admin/config`, `/api/admin/users`, `/api/admin/stats`
-- Baza danych: `AppConfig` + `ConfigHistory` (fallback do env vars)
+### Wdrożone zmiany w 1.0.7
+✅ **Panel admina: szybkie akcje + zgłoszenia**
+- Przyciski w tabeli: Nadaj dostęp / Zawieś / Usuń (z potwierdzeniem)
+- Zakładka "Zgłoszenia" (lista WAITLISTED)
 
-✅ **Widoczny numer wersji w UI** - badge w prawym dolnym rogu (APP_VERSION)
+✅ **Panel admina PL/EN** - przełącznik języka w nagłówku
+
+✅ **Domyślny język PL** - domyślna para `pl-en` i UI po polsku
+
+✅ **Widoczny numer wersji w UI** - badge pobiera wersję z `/api/health`
 - Plik: `src/components/layout/VersionBadge.tsx`
-
-✅ **Flagi języka jako SVG + fallback emoji** - stabilne renderowanie niezależnie od wsparcia emoji
-- Pliki: `public/flags/*.svg`
-- Komponent: `src/app/login/page.tsx` (FlagIcon)
-
-✅ **Pozostałe zmiany z 1.0.5** - przycisk "Pomiń" w onboardingu + auto-detekcja języka
-- Pliki: `src/app/onboarding/page.tsx`, `src/app/login/page.tsx`
 
 ### Znane problemy
 - Brak krytycznych znanych problemów.
 
 ### Panel admina (WDROŻONY)
 - Dostępny pod `/admin` dla emaili z `ADMIN_EMAILS`
+- Zakładki: Konfiguracja / Użytkownicy / Zgłoszenia / Statystyki (PL/EN)
+- Szybkie akcje: Nadaj dostęp / Zawieś / Usuń (usuwa konto i dane)
 - Konfiguracja zapisywana w DB (`AppConfig`), historia zmian w `ConfigHistory`
 - UAT: baza resetowana przy każdym deployu (zmiany w panelu są nietrwałe)
 - PRD: zmiany trwałe, migracje uruchamiane przy starcie aplikacji
@@ -36,13 +34,14 @@ pronunciation practice, and AI-powered word intake.
    ```bash
    curl https://evt-uat-pl-44b1.azurewebsites.net/api/health
    ```
-   Oczekiwana odpowiedź: `"version":"1.0.6"`, `"status":"ok"`
+   Oczekiwana odpowiedź: `"version":"1.0.7"`, `"status":"ok"`
 
 2. **Sprawdź panel admina:**
    - Zaloguj się kontem z `ADMIN_EMAILS`
    - Otwórz https://evt-uat-pl-44b1.azurewebsites.net/admin
+   - Przełącz język w nagłówku (PL/EN)
+   - Sprawdź zakładkę "Zgłoszenia" i nadaj dostęp
    - Zmień np. `MAX_ACTIVE_USERS` i zapisz
-   - Zweryfikuj źródło wartości w `/api/admin/config` (powinno być `db`)
 
 3. **Środowisko:**
    - Region: Poland Central
@@ -50,9 +49,12 @@ pronunciation practice, and AI-powered word intake.
    - PRD: https://evt-prd-pl-44b1.azurewebsites.net
    - Deployment: GitHub Actions (`.github/workflows/`)
 
-### Commity w wersji 1.0.6
-- "Implement admin panel config management"
-- "Bump version to 1.0.6 + aktualizacja README"
+### Commity w wersji 1.0.7
+- "Add quick admin actions for user access"
+- "Polish admin buttons and add requests view"
+- "Add admin language switcher"
+- "Limit admin UI to Polish and English"
+- "Bump version to 1.0.7"
 
 ## Stack
 - Next.js 14 / React 18
