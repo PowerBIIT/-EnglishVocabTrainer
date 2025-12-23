@@ -68,7 +68,7 @@ export const defaultSettings: AppSettings = {
     showPhonemeHints: true,
   },
   general: {
-    language: 'uk',
+    language: 'pl',
     theme: 'auto',
     sounds: true,
     notifications: false,
@@ -76,13 +76,13 @@ export const defaultSettings: AppSettings = {
   },
   ai: {
     feedbackDetail: 'detailed',
-    feedbackLanguage: 'uk',
+    feedbackLanguage: 'pl',
     phoneticHints: true,
   },
   learning: {
-    nativeLanguage: 'uk',
-    targetLanguage: 'pl',
-    pairId: 'uk-pl',
+    nativeLanguage: 'pl',
+    targetLanguage: 'en',
+    pairId: 'pl-en',
   },
 };
 
