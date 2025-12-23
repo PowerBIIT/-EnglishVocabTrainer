@@ -314,14 +314,6 @@ export default function OnboardingPage() {
               type="button"
               variant="ghost"
               size="sm"
-              onClick={skipOnboarding}
-            >
-              {t.skip}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
               onClick={() => signOut({ callbackUrl: '/login' })}
             >
               {t.signOut}
@@ -376,7 +368,10 @@ export default function OnboardingPage() {
               <p className="text-xs text-slate-500">{t.choosePairHint}</p>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-3">
+              <Button variant="ghost" onClick={skipOnboarding}>
+                {t.skip}
+              </Button>
               <Button size="lg" onClick={() => setStep('skin')}>
                 {t.choosePairAction}
               </Button>
@@ -410,7 +405,10 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-3">
+              <Button variant="ghost" onClick={skipOnboarding}>
+                {t.skip}
+              </Button>
               <Button
                 size="lg"
                 onClick={async () => {
@@ -448,6 +446,12 @@ export default function OnboardingPage() {
                 minWords={MISSION_WORDS}
                 onWordsAdded={handleWordsAdded}
               />
+            </div>
+
+            <div className="flex justify-end">
+              <Button variant="ghost" onClick={skipOnboarding}>
+                {t.skip}
+              </Button>
             </div>
           </section>
         )}

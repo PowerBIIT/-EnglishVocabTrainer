@@ -59,30 +59,34 @@ const loginCopy = {
 
 type LoginCopy = typeof loginCopy.pl;
 
+const detectPreferredLanguage = (): AppLanguage => {
+  if (typeof navigator === 'undefined') return 'uk';
+  const languages = navigator.languages?.length ? navigator.languages : [navigator.language];
+  if (languages.some((lang) => lang.toLowerCase().startsWith('uk'))) return 'uk';
+  if (languages.some((lang) => lang.toLowerCase().startsWith('ru'))) return 'uk';
+  if (languages.some((lang) => lang.toLowerCase().startsWith('pl'))) return 'pl';
+  if (languages.some((lang) => lang.toLowerCase().startsWith('en'))) return 'en';
+  return 'uk';
+};
+
 const languageOptions = [
   {
     id: 'uk',
     label: 'UA',
     name: 'Українська',
-    flagStyle: {
-      background: 'linear-gradient(180deg, #0057b7 0%, #0057b7 50%, #ffd700 50%, #ffd700 100%)',
-    },
+    flag: '🇺🇦',
   },
   {
     id: 'pl',
     label: 'PL',
     name: 'Polski',
-    flagStyle: {
-      background: 'linear-gradient(180deg, #ffffff 0%, #ffffff 50%, #dc143c 50%, #dc143c 100%)',
-    },
+    flag: '🇵🇱',
   },
   {
     id: 'en',
     label: 'EN',
     name: 'English',
-    flagStyle: {
-      background: 'linear-gradient(90deg, #00247d 0%, #00247d 33%, #ffffff 33%, #ffffff 66%, #cf142b 66%, #cf142b 100%)',
-    },
+    flag: '🇬🇧',
   },
 ] as const;
 
@@ -110,6 +114,13 @@ export default function LoginPage() {
       const storedLanguage = window.localStorage.getItem('uiLanguage');
       if (storedLanguage && isAppLanguage(storedLanguage) && storedLanguage !== language) {
         updateSettings('general', { language: storedLanguage });
+      } else if (!storedLanguage) {
+        // First visit - detect language from browser
+        const preferred = detectPreferredLanguage();
+        if (preferred !== language) {
+          updateSettings('general', { language: preferred });
+          window.localStorage.setItem('uiLanguage', preferred);
+        }
       }
     } catch (error) {
       console.warn('Unable to read stored language preference.', error);
@@ -179,10 +190,7 @@ export default function LoginPage() {
                           : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'
                       }`}
                     >
-                      <span
-                        className="h-3.5 w-5 rounded-sm border border-slate-200 dark:border-slate-700"
-                        style={option.flagStyle}
-                      />
+                      <span className="text-base">{option.flag}</span>
                       <span>{option.label}</span>
                     </button>
                   );
