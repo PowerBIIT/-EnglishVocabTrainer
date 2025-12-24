@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
   ArrowLeft,
   Volume2,
@@ -19,6 +19,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useVocabStore, useHydration } from '@/lib/store';
 import { PhonemeType, PhonemeDrill } from '@/types';
 import { cn, speak, XP_ACTIONS } from '@/lib/utils';
+import { calculatePronunciationScore } from '@/lib/pronunciation';
 import { phonemeDrills } from '@/data/phonemeDrills';
 import { useLanguage } from '@/lib/i18n';
 import { getLearningPair, getSpeechLocale } from '@/lib/languages';
@@ -199,12 +200,16 @@ export default function PhonemeDrillsPage() {
   const [result, setResult] = useState<{ score: number; recognized: string } | null>(null);
   const [scores, setScores] = useState<number[]>([]);
 
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionSessionRef = useRef(0);
+
   const settings = useVocabStore((state) => state.settings);
   const stats = useVocabStore((state) => state.stats);
   const addXp = useVocabStore((state) => state.addXp);
   const updatePhonemeMastery = useVocabStore((state) => state.updatePhonemeMastery);
   const activePair = getLearningPair(settings.learning.pairId);
   const isAvailable = activePair.native === 'pl' && activePair.target === 'en';
+  const passingScore = settings.pronunciation.passingScore;
 
   const getDrillName = (drill: PhonemeDrill) =>
     language === 'en' ? drill.nameEn : drill.namePl;
@@ -239,6 +244,59 @@ export default function PhonemeDrillsPage() {
     }
   };
 
+  const stopRecognition = useCallback(() => {
+    recognitionSessionRef.current += 1;
+    const recognition = recognitionRef.current;
+    if (recognition) {
+      recognition.onstart = null;
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+      try {
+        recognition.abort?.();
+      } catch {
+        // Ignore abort errors from stale sessions
+      }
+      try {
+        recognition.stop?.();
+      } catch {
+        // Ignore stop errors from stale sessions
+      }
+    }
+    recognitionRef.current = null;
+    setIsRecording(false);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      recognitionSessionRef.current += 1;
+      const recognition = recognitionRef.current;
+      if (recognition) {
+        recognition.onstart = null;
+        recognition.onresult = null;
+        recognition.onerror = null;
+        recognition.onend = null;
+        try {
+          recognition.abort?.();
+        } catch {
+          // Ignore abort errors from stale sessions
+        }
+        try {
+          recognition.stop?.();
+        } catch {
+          // Ignore stop errors from stale sessions
+        }
+      }
+      recognitionRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (drillState !== 'practice') {
+      stopRecognition();
+    }
+  }, [drillState, stopRecognition]);
+
   const startRecording = () => {
     const SpeechRecognitionApi = window.SpeechRecognition || window.webkitSpeechRecognition;
 
@@ -247,6 +305,10 @@ export default function PhonemeDrillsPage() {
       return;
     }
 
+    stopRecognition();
+    const sessionId = ++recognitionSessionRef.current;
+
+    setResult(null);
     const recognition = new SpeechRecognitionApi();
     recognition.lang = getSpeechLocale(
       settings.learning.targetLanguage,
@@ -254,78 +316,67 @@ export default function PhonemeDrillsPage() {
     );
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
+    recognition.continuous = false;
 
     recognition.onstart = () => {
+      if (sessionId !== recognitionSessionRef.current) return;
       setIsRecording(true);
       setResult(null);
     };
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = event.results[0][0].transcript.toLowerCase();
+      if (sessionId !== recognitionSessionRef.current) return;
+      const transcript = event.results[0][0].transcript.trim();
+      setIsRecording(false);
+      recognition.stop();
       evaluatePronunciation(transcript);
     };
 
     recognition.onerror = () => {
+      if (sessionId !== recognitionSessionRef.current) return;
       setIsRecording(false);
       setResult({ score: 0, recognized: '' });
     };
 
     recognition.onend = () => {
+      if (sessionId !== recognitionSessionRef.current) return;
       setIsRecording(false);
     };
 
-    recognition.start();
+    recognitionRef.current = recognition;
+    try {
+      recognition.start();
+    } catch (error) {
+      console.error('[STT] Failed to start:', error);
+      setIsRecording(false);
+    }
   };
 
   const evaluatePronunciation = (spoken: string) => {
     if (!currentWord) return;
 
-    const expected = currentWord.word.toLowerCase();
-    const spokenClean = spoken.toLowerCase();
-
-    // Simple similarity
-    const similarity = calculateSimilarity(expected, spokenClean);
-    const score = Math.round(similarity * 10);
+    const { score } = calculatePronunciationScore(
+      currentWord.word,
+      spoken,
+      { language: settings.learning.targetLanguage }
+    );
 
     setResult({ score, recognized: spoken });
     setScores((prev) => [...prev, score]);
 
-    if (selectedDrill && score >= 7) {
+    if (selectedDrill) {
       updatePhonemeMastery(selectedDrill.phonemeType, score);
     }
 
-    if (score >= 8) {
+    if (score >= passingScore) {
       addXp(XP_ACTIONS.pronunciation_good);
     }
-  };
-
-  const calculateSimilarity = (str1: string, str2: string): number => {
-    const longer = str1.length > str2.length ? str1 : str2;
-    const shorter = str1.length > str2.length ? str2 : str1;
-    if (longer.length === 0) return 1;
-
-    const m = longer.length;
-    const n = shorter.length;
-    const dp: number[][] = Array(m + 1)
-      .fill(null)
-      .map(() => Array(n + 1).fill(0));
-    for (let i = 0; i <= m; i++) dp[i][0] = i;
-    for (let j = 0; j <= n; j++) dp[0][j] = j;
-    for (let i = 1; i <= m; i++) {
-      for (let j = 1; j <= n; j++) {
-        if (longer[i - 1] === shorter[j - 1]) {
-          dp[i][j] = dp[i - 1][j - 1];
-        } else {
-          dp[i][j] = Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]) + 1;
-        }
-      }
-    }
-    return (m - dp[m][n]) / m;
   };
 
   const handleNext = () => {
     if (!selectedDrill) return;
 
+    stopRecognition();
     if (currentWordIndex + 1 < selectedDrill.practiceWords.length) {
       setCurrentWordIndex((prev) => prev + 1);
       setResult(null);
@@ -597,7 +648,10 @@ export default function PhonemeDrillsPage() {
       <div className="p-4 space-y-6 max-w-lg mx-auto">
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setDrillState('learn')}
+            onClick={() => {
+              stopRecognition();
+              setDrillState('learn');
+            }}
             className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
@@ -644,7 +698,7 @@ export default function PhonemeDrillsPage() {
                 </p>
 
                 <button
-                  onClick={isRecording ? () => setIsRecording(false) : startRecording}
+                  onClick={isRecording ? stopRecognition : startRecording}
                   className={cn(
                     'mx-auto w-20 h-20 rounded-full flex items-center justify-center transition-all',
                     isRecording ? 'bg-error-500 animate-pulse' : 'bg-primary-500 hover:bg-primary-600'
@@ -668,7 +722,7 @@ export default function PhonemeDrillsPage() {
                   <p
                     className={cn(
                       'text-3xl font-bold',
-                      result.score >= 8
+                      result.score >= passingScore
                         ? 'text-success-500'
                         : result.score >= 6
                         ? 'text-amber-500'
@@ -686,7 +740,14 @@ export default function PhonemeDrillsPage() {
                 )}
 
                 <div className="flex gap-3">
-                  <Button variant="secondary" onClick={() => setResult(null)} className="flex-1">
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      stopRecognition();
+                      setResult(null);
+                    }}
+                    className="flex-1"
+                  >
                     {t.repeat}
                   </Button>
                   <Button onClick={handleNext} className="flex-1">
@@ -729,7 +790,7 @@ export default function PhonemeDrillsPage() {
             <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
               <p className="text-sm text-slate-500">{t.goodPronunciations}</p>
               <p className="text-xl font-bold text-success-500">
-                {scores.filter((s) => s >= 8).length}
+                {scores.filter((s) => s >= passingScore).length}
               </p>
             </div>
           </div>

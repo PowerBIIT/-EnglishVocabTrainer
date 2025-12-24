@@ -41,6 +41,7 @@ declare global {
     onend: (() => void) | null;
     start: () => void;
     stop: () => void;
+    abort?: () => void;
   }
 
   interface SpeechRecognitionConstructor {

@@ -26,6 +26,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useVocabStore, useHydration } from '@/lib/store';
 import { VocabularyItem, PronunciationFocusMode, PhonemeType, PronunciationAttempt } from '@/types';
 import { cn, speak, XP_ACTIONS } from '@/lib/utils';
+import { calculatePronunciationScore } from '@/lib/pronunciation';
 import { phonemeDrills } from '@/data/phonemeDrills';
 import { useLanguage } from '@/lib/i18n';
 import {
@@ -355,6 +356,7 @@ export default function PronunciationPage() {
   const [selectedPhoneme, setSelectedPhoneme] = useState<PhonemeType | undefined>(undefined);
 
   const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionSessionRef = useRef(0);
 
   const settings = useVocabStore((state) => state.settings);
   const stats = useVocabStore((state) => state.stats);
@@ -372,6 +374,7 @@ export default function PronunciationPage() {
   const activePair = useMemo(() => getLearningPair(settings.learning.pairId), [settings.learning.pairId]);
   const isEnglishTarget = settings.learning.targetLanguage === 'en';
   const enablePhonemeDrills = isEnglishTarget && settings.learning.nativeLanguage === 'pl';
+  const passingScore = settings.pronunciation.passingScore;
 
   const currentWord = sessionWords[currentIndex];
   const progress = sessionWords.length > 0 ? ((currentIndex + 1) / sessionWords.length) * 100 : 0;
@@ -451,10 +454,75 @@ export default function PronunciationPage() {
     setCurrentIndex(0);
     setScores([]);
     setResult(null);
+    setRecognizedText('');
+    setRecordingStatus('');
     setSessionState('practice');
   };
 
+  const stopRecognition = useCallback((clearStatus = false) => {
+    recognitionSessionRef.current += 1;
+    const recognition = recognitionRef.current;
+    if (recognition) {
+      recognition.onstart = null;
+      recognition.onaudiostart = null;
+      recognition.onsoundstart = null;
+      recognition.onspeechstart = null;
+      recognition.onspeechend = null;
+      recognition.onresult = null;
+      recognition.onnomatch = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+      try {
+        recognition.abort?.();
+      } catch {
+        // Ignore abort errors from stale sessions
+      }
+      try {
+        recognition.stop?.();
+      } catch {
+        // Ignore stop errors from stale sessions
+      }
+    }
+    recognitionRef.current = null;
+    setIsRecording(false);
+    if (clearStatus) {
+      setRecordingStatus('');
+      setIsProcessing(false);
+      setRecognizedText('');
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      recognitionSessionRef.current += 1;
+      const recognition = recognitionRef.current;
+      if (recognition) {
+        recognition.onstart = null;
+        recognition.onaudiostart = null;
+        recognition.onsoundstart = null;
+        recognition.onspeechstart = null;
+        recognition.onspeechend = null;
+        recognition.onresult = null;
+        recognition.onnomatch = null;
+        recognition.onerror = null;
+        recognition.onend = null;
+        try {
+          recognition.abort?.();
+        } catch {
+          // Ignore abort errors from stale sessions
+        }
+        try {
+          recognition.stop?.();
+        } catch {
+          // Ignore stop errors from stale sessions
+        }
+      }
+      recognitionRef.current = null;
+    };
+  }, []);
+
   const finishSession = useCallback(() => {
+    stopRecognition(true);
     updatePronunciationStreak();
     completePronunciationSession({
       sessionId: Date.now().toString(),
@@ -465,16 +533,18 @@ export default function PronunciationPage() {
       totalWords: sessionWords.length,
       averageScore: avgScore,
       attempts: [],
-      xpEarned: scores.filter((s) => s >= 8).length * XP_ACTIONS.pronunciation_good,
+      xpEarned: scores.filter((s) => s >= passingScore).length * XP_ACTIONS.pronunciation_good,
     });
     setSessionState('complete');
   }, [
     avgScore,
     completePronunciationSession,
+    passingScore,
     scores,
     selectedFocusMode,
     selectedPhoneme,
     sessionWords.length,
+    stopRecognition,
     updatePronunciationStreak,
   ]);
 
@@ -502,12 +572,16 @@ export default function PronunciationPage() {
   };
 
   const startRecording = () => {
+    if (isProcessing) return;
     const SpeechRecognitionApi = window.SpeechRecognition || window.webkitSpeechRecognition;
 
     if (!SpeechRecognitionApi) {
       setRecordingStatus(t.recognitionUnsupported);
       return;
     }
+
+    stopRecognition();
+    const sessionId = ++recognitionSessionRef.current;
 
     // Reset states
     setResult(null);
@@ -523,13 +597,14 @@ export default function PronunciationPage() {
     );
     recognition.interimResults = true;
     recognition.maxAlternatives = 1;
-    recognition.continuous = true; // Keep listening until we get a result
+    recognition.continuous = false;
 
     let hasResult = false;
     let hasSpeechStarted = false;
 
     // Service started listening
     recognition.onstart = () => {
+      if (sessionId !== recognitionSessionRef.current) return;
       console.log('[STT] Recognition service started');
       hasResult = false;
       hasSpeechStarted = false;
@@ -539,17 +614,20 @@ export default function PronunciationPage() {
 
     // Audio capture started (microphone is working)
     recognition.onaudiostart = () => {
+      if (sessionId !== recognitionSessionRef.current) return;
       console.log('[STT] Audio capture started');
       setRecordingStatus(t.status.recording);
     };
 
     // Sound detected (any sound, not necessarily speech)
     recognition.onsoundstart = () => {
+      if (sessionId !== recognitionSessionRef.current) return;
       console.log('[STT] Sound detected');
     };
 
     // Speech detected
     recognition.onspeechstart = () => {
+      if (sessionId !== recognitionSessionRef.current) return;
       console.log('[STT] Speech detected');
       hasSpeechStarted = true;
       setRecordingStatus(t.status.hearing);
@@ -557,6 +635,7 @@ export default function PronunciationPage() {
 
     // Speech ended
     recognition.onspeechend = () => {
+      if (sessionId !== recognitionSessionRef.current) return;
       console.log('[STT] Speech ended');
       if (!hasResult) {
         setRecordingStatus(t.status.processing);
@@ -565,9 +644,10 @@ export default function PronunciationPage() {
 
     // Result received
     recognition.onresult = (event: SpeechRecognitionEvent) => {
+      if (sessionId !== recognitionSessionRef.current) return;
       const resultIndex = event.results.length - 1;
       const result = event.results[resultIndex];
-      const transcript = result[0].transcript;
+      const transcript = result[0].transcript.trim();
       const confidence = result[0].confidence;
       const isFinal = result.isFinal;
 
@@ -581,7 +661,7 @@ export default function PronunciationPage() {
         setIsRecording(false);
         // Stop recognition after getting result
         recognition.stop();
-        evaluatePronunciation(transcript.toLowerCase());
+        evaluatePronunciation(transcript);
       } else {
         // Show interim result while speaking
         setRecordingStatus(t.status.recognizing(transcript));
@@ -590,12 +670,14 @@ export default function PronunciationPage() {
 
     // No match found
     recognition.onnomatch = () => {
+      if (sessionId !== recognitionSessionRef.current) return;
       console.log('[STT] No match - speech not recognized');
       setRecordingStatus(t.status.noMatch);
     };
 
     // Error occurred
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      if (sessionId !== recognitionSessionRef.current) return;
       console.error('[STT] Error:', event.error);
       setIsRecording(false);
       hasResult = true;
@@ -607,6 +689,7 @@ export default function PronunciationPage() {
 
     // Recognition ended
     recognition.onend = () => {
+      if (sessionId !== recognitionSessionRef.current) return;
       console.log('[STT] Recognition ended. hasResult:', hasResult, 'hasSpeechStarted:', hasSpeechStarted);
       setIsRecording(false);
 
@@ -634,10 +717,7 @@ export default function PronunciationPage() {
   };
 
   const stopRecording = () => {
-    if (recognitionRef.current) {
-      recognitionRef.current.stop();
-    }
-    setIsRecording(false);
+    stopRecognition();
   };
 
   const buildAiStatus = (message: string, code?: string) =>
@@ -726,26 +806,26 @@ export default function PronunciationPage() {
         updatePhonemeMastery(selectedPhoneme, data.score);
       }
 
-      if (data.score >= settings.pronunciation.passingScore) {
+      if (data.score >= passingScore) {
         addXp(XP_ACTIONS.pronunciation_good);
         updateDailyMissionProgress('pronunciation', 1);
       }
     } catch (error) {
       console.error('AI evaluation error:', error);
       evaluateLocally(spoken);
+    } finally {
+      setIsProcessing(false);
     }
-
-    setIsProcessing(false);
   };
 
   const evaluateLocally = (spoken: string) => {
     if (!currentWord) return;
 
-    const expected = getTargetText(currentWord).toLowerCase().replace(/^(a |an |the )/i, '');
-    const spokenClean = spoken.toLowerCase().replace(/^(a |an |the )/i, '');
-
-    const similarity = calculateSimilarity(expected, spokenClean);
-    const score = Math.round(similarity * 10);
+    const { score, expectedNormalized, spokenNormalized } = calculatePronunciationScore(
+      getTargetText(currentWord),
+      spoken,
+      { language: settings.learning.targetLanguage }
+    );
 
     let feedback = '';
     let tip = '';
@@ -764,10 +844,13 @@ export default function PronunciationPage() {
     }
 
     if (isEnglishTarget) {
-      if (expected.includes('th') && !spokenClean.includes('th')) {
+      if (expectedNormalized.includes('th') && !spokenNormalized.includes('th')) {
         tip = t.localFeedback.tipTh;
       }
-      if (expected.includes('w') && spokenClean.replace('w', 'v') === expected.replace('w', 'v')) {
+      if (
+        expectedNormalized.includes('w') &&
+        spokenNormalized.replace('w', 'v') === expectedNormalized.replace('w', 'v')
+      ) {
         tip = t.localFeedback.tipW;
       }
     }
@@ -790,42 +873,15 @@ export default function PronunciationPage() {
       updatePhonemeMastery(selectedPhoneme, score);
     }
 
-    if (score >= settings.pronunciation.passingScore) {
+    if (score >= passingScore) {
       addXp(XP_ACTIONS.pronunciation_good);
       updateDailyMissionProgress('pronunciation', 1);
     }
   };
 
-  const calculateSimilarity = (str1: string, str2: string): number => {
-    const longer = str1.length > str2.length ? str1 : str2;
-    const shorter = str1.length > str2.length ? str2 : str1;
-    if (longer.length === 0) return 1;
-    const distance = levenshteinDistance(longer, shorter);
-    return (longer.length - distance) / longer.length;
-  };
-
-  const levenshteinDistance = (str1: string, str2: string): number => {
-    const m = str1.length;
-    const n = str2.length;
-    const dp: number[][] = Array(m + 1)
-      .fill(null)
-      .map(() => Array(n + 1).fill(0));
-    for (let i = 0; i <= m; i++) dp[i][0] = i;
-    for (let j = 0; j <= n; j++) dp[0][j] = j;
-    for (let i = 1; i <= m; i++) {
-      for (let j = 1; j <= n; j++) {
-        if (str1[i - 1] === str2[j - 1]) {
-          dp[i][j] = dp[i - 1][j - 1];
-        } else {
-          dp[i][j] = Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]) + 1;
-        }
-      }
-    }
-    return dp[m][n];
-  };
-
   const handleNext = () => {
     if (currentIndex + 1 < sessionWords.length) {
+      stopRecognition(true);
       setCurrentIndex((prev) => prev + 1);
       setResult(null);
       setRecordingStatus('');
@@ -836,13 +892,14 @@ export default function PronunciationPage() {
   };
 
   const handleRetry = () => {
+    stopRecognition(true);
     setResult(null);
     setRecordingStatus('');
     setRecognizedText('');
   };
 
   const getScoreColor = (score: number) => {
-    if (score >= 8) return 'text-success-500';
+    if (score >= passingScore) return 'text-success-500';
     if (score >= 6) return 'text-amber-500';
     return 'text-error-500';
   };
@@ -1112,13 +1169,13 @@ export default function PronunciationPage() {
             <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
               <p className="text-sm text-slate-500">{t.goodPronunciation}</p>
               <p className="text-xl font-bold text-success-500">
-                {scores.filter((s) => s >= 8).length}
+                {scores.filter((s) => s >= passingScore).length}
               </p>
             </div>
             <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
               <p className="text-sm text-slate-500">{t.xpEarned}</p>
               <p className="text-xl font-bold text-primary-500">
-                +{scores.filter((s) => s >= 8).length * XP_ACTIONS.pronunciation_good}
+                +{scores.filter((s) => s >= passingScore).length * XP_ACTIONS.pronunciation_good}
               </p>
             </div>
             <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
@@ -1131,7 +1188,14 @@ export default function PronunciationPage() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <Button onClick={() => setSessionState('setup')}>{t.newSession}</Button>
+            <Button
+              onClick={() => {
+                stopRecognition(true);
+                setSessionState('setup');
+              }}
+            >
+              {t.newSession}
+            </Button>
             <Link href="/">
               <Button variant="secondary" className="w-full">
                 {t.backToMenu}
@@ -1157,7 +1221,10 @@ export default function PronunciationPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <button
-          onClick={() => setSessionState('setup')}
+          onClick={() => {
+            stopRecognition(true);
+            setSessionState('setup');
+          }}
           className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
         >
           <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
