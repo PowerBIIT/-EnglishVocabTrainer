@@ -1,12 +1,15 @@
 # Runbook (Ops + Deploy)
 
 ## Environments
-- UAT: https://evt-uat-pl-44b1.azurewebsites.net
-- PRD: https://evt-prd-pl-44b1.azurewebsites.net
+- UAT: https://<APP_UAT>.azurewebsites.net
+- PRD: https://<APP_PRD>.azurewebsites.net
+- Aktualne URL-e znajdziesz w outputcie workflow `Provision Azure Infrastructure`
+  oraz w sekretach `NEXTAUTH_URL` środowisk `uat` i `prd`.
 
 ## Pipeline behavior
-- UAT deploy: push to `main` (excluding doc-only changes) -> lint, unit, e2e -> build -> reset DB -> deploy -> restart -> health check.
-- PRD deploy: manual `Deploy PRD` workflow -> lint, unit, build -> migrate status -> deploy -> restart -> health check.
+- CI: lint + typecheck + unit + e2e (Postgres service w CI).
+- UAT deploy: push to `main` (excluding doc-only changes) -> lint, unit -> build -> reset DB -> deploy -> restart -> health check.
+- PRD deploy: manual `Deploy PRD` -> lint, unit -> build -> apply migrations -> deploy -> start/restart -> health check.
 - PRD never resets data.
 
 ## Health/version verification
@@ -23,8 +26,13 @@
 
 ## Google OAuth
 - Keep redirect URIs in Google Cloud Console up to date:
-  - `https://evt-uat-pl-44b1.azurewebsites.net/api/auth/callback/google`
-  - `https://evt-prd-pl-44b1.azurewebsites.net/api/auth/callback/google`
+  - `https://<APP_UAT>.azurewebsites.net/api/auth/callback/google`
+  - `https://<APP_PRD>.azurewebsites.net/api/auth/callback/google`
+
+## Infra lifecycle
+- Provision: `Provision Azure Infrastructure` workflow (`confirm=create`)
+- Destroy: `Destroy Azure Infrastructure` workflow (`confirm=destroy`)
+- Po provisioning zaktualizuj redirect URIs w Google OAuth i zweryfikuj `NEXTAUTH_URL`.
 
 ## UAT database reset
 - UAT runs `npx prisma migrate reset --force --skip-seed` on every deploy.

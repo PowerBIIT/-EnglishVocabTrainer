@@ -3,9 +3,9 @@
 Next.js app for learning vocabulary with AI assistance. Includes onboarding, flashcards, quizzes,
 pronunciation practice, and AI-powered word intake.
 
-## Status projektu (wersja 1.0.7 - 2025-12-23)
+## Status projektu (wersja 1.0.14 - stan na grudzień 2025)
 
-### Wdrożone zmiany w 1.0.7
+### Wdrożone funkcje (stan stabilny)
 ✅ **Panel admina: szybkie akcje + zgłoszenia**
 - Przyciski w tabeli: Nadaj dostęp / Zawieś / Usuń (z potwierdzeniem)
 - Zakładka "Zgłoszenia" (lista WAITLISTED)
@@ -32,29 +32,23 @@ pronunciation practice, and AI-powered word intake.
 
 1. **Sprawdź wdrożenie UAT:**
    ```bash
-   curl https://evt-uat-pl-44b1.azurewebsites.net/api/health
+   curl https://<APP_UAT>.azurewebsites.net/api/health
    ```
-   Oczekiwana odpowiedź: `"version":"1.0.7"`, `"status":"ok"`
+   Oczekiwana odpowiedź: `"status":"ok"`, `version` zgodna z `package.json`, `commit` zgodny z deployem
 
 2. **Sprawdź panel admina:**
    - Zaloguj się kontem z `ADMIN_EMAILS`
-   - Otwórz https://evt-uat-pl-44b1.azurewebsites.net/admin
+   - Otwórz https://<APP_UAT>.azurewebsites.net/admin
    - Przełącz język w nagłówku (PL/EN)
    - Sprawdź zakładkę "Zgłoszenia" i nadaj dostęp
    - Zmień np. `MAX_ACTIVE_USERS` i zapisz
 
 3. **Środowisko:**
    - Region: Poland Central
-   - UAT: https://evt-uat-pl-44b1.azurewebsites.net
-   - PRD: https://evt-prd-pl-44b1.azurewebsites.net
+   - UAT: https://<APP_UAT>.azurewebsites.net
+   - PRD: https://<APP_PRD>.azurewebsites.net
    - Deployment: GitHub Actions (`.github/workflows/`)
-
-### Commity w wersji 1.0.7
-- "Add quick admin actions for user access"
-- "Polish admin buttons and add requests view"
-- "Add admin language switcher"
-- "Limit admin UI to Polish and English"
-- "Bump version to 1.0.7"
+   - Aktualne adresy z outputu workflow `Provision Azure Infrastructure`
 
 ## Stack
 - Next.js 14 / React 18
@@ -74,7 +68,7 @@ npm ci
 cp .env.example .env.local
 ```
 
-3) Start Postgres (optional for local):
+3) Start Postgres (wymagane dla testów i większości funkcji):
 ```bash
 docker compose up -d
 ```
@@ -108,6 +102,7 @@ Notes:
 - Manual plan: `docs/MANUAL_TEST_PLAN.md`
 
 CI runs lint + typecheck + unit + e2e on PR and `main`.
+E2E wymaga działającego Postgresa i poprawnego `DATABASE_URL`.
 
 ## Deployment
 Azure deployment (UAT + PRD) is documented in `docs/DEPLOYMENT_AZURE.md`.
