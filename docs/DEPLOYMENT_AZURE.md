@@ -1,227 +1,285 @@
 # Azure Deployment (UAT + PRD)
 
-Infrastructure as Code deployment using Azure App Service (Linux) + PostgreSQL Flexible Server and GitHub Actions.
+Kompletny przewodnik wdrożenia aplikacji English Vocab Trainer na Azure.
 
-## Infrastructure (dynamic, grudzień 2025)
+## Szybki start - wdrożenie od zera
 
-Zasoby są tworzone przez workflow `provision-infra.yml` i dostają losowy suffix `<suffix>`.
-Po uruchomieniu `destroy-infra.yml` środowisko może nie istnieć.
+### Krok 1: Wymagania wstępne
 
-**Region:** Poland Central
-**Resource Group:** `evt-rg-pl`
+1. **Konto Azure** z aktywną subskrypcją
+2. **Konto GitHub** z dostępem do repozytorium
+3. **Konto Google Cloud** z projektem OAuth
+4. **Azure CLI** zainstalowane i zalogowane:
+   ```bash
+   az login
+   az account show  # sprawdź czy jesteś zalogowany
+   ```
+5. **GitHub CLI** zainstalowane i zalogowane:
+   ```bash
+   gh auth login
+   gh auth status
+   ```
 
-| Resource | Name (pattern) | Details |
-|----------|----------------|---------|
-| App Service Plan | `evt-plan-pl` | B1 (Basic, ~13 USD/month) |
-| UAT Web App | `evt-uat-pl-<suffix>` | https://evt-uat-pl-<suffix>.azurewebsites.net |
-| PRD Web App | `evt-prd-pl-<suffix>` | https://evt-prd-pl-<suffix>.azurewebsites.net |
-| PostgreSQL Server | `evt-pg-pl-<suffix>` | Burstable B1ms (~12 USD/month) |
-| UAT Database | `evt_uat` | Reset on every deploy |
-| PRD Database | `evt_prd` | Persistent, migration-applied |
+### Krok 2: Utwórz infrastrukturę Azure
 
-**Total Cost (B1 + B1ms):** ~25 USD/month (~100 PLN/month)
+```bash
+# 1. Utwórz resource group
+az group create --name evt-rg-pl --location polandcentral
 
-## Deployment Workflows
+# 2. Utwórz App Service Plan
+az appservice plan create --name evt-plan-pl --resource-group evt-rg-pl --sku B1 --is-linux
 
-### 1. Provision Infrastructure
+# 3. Wygeneruj losowy suffix (np. 6e5d)
+SUFFIX=$(openssl rand -hex 2)
+echo "Suffix: $SUFFIX"
 
-**Workflow:** `.github/workflows/provision-infra.yml`
-**Trigger:** Manual (workflow_dispatch)
+# 4. Utwórz Web Apps
+az webapp create --name evt-uat-pl-$SUFFIX --resource-group evt-rg-pl --plan evt-plan-pl --runtime "NODE|20-lts"
+az webapp create --name evt-prd-pl-$SUFFIX --resource-group evt-rg-pl --plan evt-plan-pl --runtime "NODE|20-lts"
 
-Creates all Azure resources and configures GitHub secrets automatically.
+# 5. Wygeneruj hasło PostgreSQL
+PG_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-20)
+echo "PostgreSQL password: $PG_PASS"  # ZAPISZ TO!
 
-**Usage:**
-1. Go to Actions → Provision Azure Infrastructure
-2. Click "Run workflow"
-3. Enter confirmation: `create`
-4. Optional: customize region, resource group, SKU
+# 6. Utwórz PostgreSQL Flexible Server (~5 min)
+az postgres flexible-server create \
+  --name evt-pg-pl-$SUFFIX \
+  --resource-group evt-rg-pl \
+  --location polandcentral \
+  --admin-user vocabadmin \
+  --admin-password "$PG_PASS" \
+  --sku-name Standard_B1ms \
+  --tier Burstable \
+  --storage-size 32 \
+  --version 16 \
+  --public-access All
 
-**What it does:**
-- Creates Resource Group
-- Creates App Service Plan (B1)
-- Creates Web Apps (UAT + PRD)
-- Creates PostgreSQL Flexible Server (Burstable B1ms)
-- Creates databases (evt_uat, evt_prd)
-- Creates Service Principal for deployments
-- Configures GitHub secrets for both environments
+# 7. Utwórz bazy danych
+az postgres flexible-server db create --resource-group evt-rg-pl --server-name evt-pg-pl-$SUFFIX --database-name evt_uat
+az postgres flexible-server db create --resource-group evt-rg-pl --server-name evt-pg-pl-$SUFFIX --database-name evt_prd
 
-**Required GitHub secrets (once):**
-- `AZURE_PROVISION_CREDENTIALS` - Service Principal with Owner role
+# 8. Dodaj regułę firewall dla Azure
+az postgres flexible-server firewall-rule create \
+  --resource-group evt-rg-pl \
+  --name evt-pg-pl-$SUFFIX \
+  --rule-name AllowAllAzureServices \
+  --start-ip-address 0.0.0.0 \
+  --end-ip-address 0.0.0.0
+```
 
-**Important (permissions):**
-- Provisioning uses `gh secret set` to update environment secrets.
-- Ensure the token used by the workflow can write environment secrets
-  (e.g. `actions: write` on `GITHUB_TOKEN` or a PAT with repo admin rights).
+### Krok 3: Skonfiguruj GitHub Secrets
 
-### 2. Deploy to UAT
+```bash
+# Pobierz wartości
+SUFFIX="6e5d"  # Twój suffix
+PG_PASS="TwojeHaslo"  # Hasło z kroku 2
 
-**Workflow:** `.github/workflows/deploy-uat.yml`
-**Trigger:** Automatic on push to `main` (excluding docs-only changes)
+# Utwórz Service Principal dla deploymentu
+SP_JSON=$(az ad sp create-for-rbac --name "evt-deploy-sp" --role contributor \
+  --scopes "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/evt-rg-pl" --sdk-auth)
 
-**What it does:**
-1. Lint, test, build
-2. Login to Azure
-3. **Reset UAT database** (fresh start every deploy)
-4. Configure app settings
-5. Deploy application
-6. Restart app
-7. Verify health (version + commit match)
+# Pobierz publish profile
+UAT_PROFILE=$(az webapp deployment list-publishing-profiles --resource-group evt-rg-pl --name evt-uat-pl-$SUFFIX --xml)
 
-### 3. Deploy to PRD
+# Ustaw sekrety dla środowiska UAT
+gh secret set AZURE_CREDENTIALS --env uat --body "$SP_JSON"
+gh secret set AZURE_RESOURCE_GROUP --env uat --body "evt-rg-pl"
+gh secret set AZURE_WEBAPP_NAME_UAT --env uat --body "evt-uat-pl-$SUFFIX"
+gh secret set AZURE_WEBAPP_PUBLISH_PROFILE_UAT --env uat --body "$UAT_PROFILE"
+gh secret set DATABASE_URL --env uat --body "postgresql://vocabadmin:${PG_PASS}@evt-pg-pl-${SUFFIX}.postgres.database.azure.com:5432/evt_uat?sslmode=require"
+gh secret set NEXTAUTH_URL --env uat --body "https://evt-uat-pl-${SUFFIX}.azurewebsites.net"
 
-**Workflow:** `.github/workflows/deploy-prd.yml`
-**Trigger:** Manual (workflow_dispatch)
+# Wygeneruj NEXTAUTH_SECRET
+NEXTAUTH_SECRET=$(openssl rand -base64 32)
+gh secret set NEXTAUTH_SECRET --env uat --body "$NEXTAUTH_SECRET"
 
-**What it does:**
-1. Lint, test, build
-2. Login to Azure
-3. **Apply database migrations** (`prisma migrate deploy`, no reset)
-4. Configure app settings
-5. Deploy application
-6. Ensure app is running (start or restart)
-7. Verify health (version + commit match)
+# Ustaw pozostałe sekrety (skopiuj z .env.local lub Google Cloud Console)
+gh secret set GOOGLE_CLIENT_ID --env uat --body "TWOJ_GOOGLE_CLIENT_ID"
+gh secret set GOOGLE_CLIENT_SECRET --env uat --body "TWOJ_GOOGLE_CLIENT_SECRET"
+gh secret set GEMINI_API_KEY --env uat --body "TWOJ_GEMINI_API_KEY"
+gh secret set ADMIN_EMAILS --env uat --body "twoj@email.com"
+gh secret set ALLOWLIST_EMAILS --env uat --body ""
+gh secret set MAX_ACTIVE_USERS --env uat --body "100"
+gh secret set FREE_AI_REQUESTS_PER_MONTH --env uat --body "100"
+gh secret set FREE_AI_UNITS_PER_MONTH --env uat --body "10000"
+gh secret set PRO_AI_REQUESTS_PER_MONTH --env uat --body "1000"
+gh secret set PRO_AI_UNITS_PER_MONTH --env uat --body "100000"
+gh secret set GLOBAL_AI_REQUESTS_PER_MONTH --env uat --body "10000"
+gh secret set GLOBAL_AI_UNITS_PER_MONTH --env uat --body "1000000"
+```
 
-**Usage:**
+### Krok 4: Skonfiguruj Google OAuth
+
+1. Otwórz [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
+2. Znajdź swój OAuth 2.0 Client
+3. Dodaj **Authorized JavaScript origins**:
+   ```
+   https://evt-uat-pl-SUFFIX.azurewebsites.net
+   https://evt-prd-pl-SUFFIX.azurewebsites.net
+   ```
+4. Dodaj **Authorized redirect URIs**:
+   ```
+   https://evt-uat-pl-SUFFIX.azurewebsites.net/api/auth/callback/google
+   https://evt-prd-pl-SUFFIX.azurewebsites.net/api/auth/callback/google
+   ```
+5. Zapisz zmiany
+
+### Krok 5: Wdróż aplikację
+
+```bash
+# Zwiększ wersję w package.json
+# "version": "1.0.15" -> "1.0.16"
+
+# Commit i push
+git add package.json
+git commit -m "Bump version to 1.0.16"
+git push origin main
+
+# Deployment UAT uruchomi się automatycznie
+# Sprawdź status:
+gh run list --workflow="Deploy UAT" --limit 1
+gh run watch  # monitoruj na żywo
+```
+
+### Krok 6: Zweryfikuj wdrożenie
+
+```bash
+# Health check
+curl https://evt-uat-pl-SUFFIX.azurewebsites.net/api/health
+
+# Oczekiwana odpowiedź:
+# {"status":"ok","version":"1.0.16","commit":"abc123","buildTime":"...","env":"production"}
+```
+
+---
+
+## Aktualna infrastruktura (grudzień 2025)
+
+| Zasób | Nazwa | URL/Szczegóły |
+|-------|-------|---------------|
+| Resource Group | `evt-rg-pl` | Poland Central |
+| App Service Plan | `evt-plan-pl` | B1 (~13 USD/mies.) |
+| UAT Web App | `evt-uat-pl-6e5d` | https://evt-uat-pl-6e5d.azurewebsites.net |
+| PRD Web App | `evt-prd-pl-6e5d` | https://evt-prd-pl-6e5d.azurewebsites.net |
+| PostgreSQL Server | `evt-pg-pl-6e5d` | Burstable B1ms (~12 USD/mies.) |
+| UAT Database | `evt_uat` | Reset przy każdym deploy |
+| PRD Database | `evt_prd` | Trwała (migracje) |
+
+**Koszt:** ~25 USD/miesiąc (~100 PLN/miesiąc)
+
+---
+
+## Workflows GitHub Actions
+
+### Deploy UAT (automatyczny)
+- **Trigger:** Push do `main` (bez zmian tylko w docs)
+- **Co robi:** lint, test, build, reset bazy UAT, deploy, health check
+
+### Deploy PRD (manualny)
 ```bash
 gh workflow run deploy-prd.yml
 ```
+- **Co robi:** lint, test, build, migracje bazy (bez reset), deploy, health check
 
-### 4. Destroy Infrastructure
+### Destroy Infrastructure (manualny)
+```bash
+gh workflow run destroy-infra.yml
+# Potwierdź wpisując: destroy
+```
 
-**Workflow:** `.github/workflows/destroy-infra.yml`
-**Trigger:** Manual (workflow_dispatch)
+---
 
-Removes all Azure resources and clears GitHub secrets.
+## Sekrety GitHub
 
-**Usage:**
-1. Go to Actions → Destroy Azure Infrastructure
-2. Click "Run workflow"
-3. Enter confirmation: `destroy`
-
-**What it does:**
-- Lists resources to be deleted
-- Deletes Service Principal
-- Deletes Resource Group (and all resources)
-- Clears GitHub secrets for UAT and PRD
-
-## GitHub Environments
-
-Create two environments in GitHub repository settings:
-- `uat` - UAT environment
-- `prd` - PRD environment (add required reviewers for approval)
-
-## GitHub Secrets
-
-Configured automatically by provision workflow:
-- `AZURE_RESOURCE_GROUP`
+### Konfigurowane automatycznie przez provisioning:
+- `AZURE_CREDENTIALS` - Service Principal JSON
+- `AZURE_RESOURCE_GROUP` - evt-rg-pl
 - `AZURE_WEBAPP_NAME_UAT` / `AZURE_WEBAPP_NAME_PRD`
-- `AZURE_CREDENTIALS`
 - `AZURE_WEBAPP_PUBLISH_PROFILE_UAT` / `AZURE_WEBAPP_PUBLISH_PROFILE_PRD`
 - `DATABASE_URL`
 - `NEXTAUTH_URL`
 
-**Manually configure these secrets** for both `uat` and `prd` environments:
-- `NEXTAUTH_SECRET` - Generate with: `openssl rand -base64 32`
-- `GOOGLE_CLIENT_ID` - From Google Cloud Console
-- `GOOGLE_CLIENT_SECRET` - From Google Cloud Console
-- `GEMINI_API_KEY` - From Google AI Studio
-- `ALLOWLIST_EMAILS` - Comma-separated emails (leave empty to allow all)
-- `ADMIN_EMAILS` - Admin emails (e.g., radekbroniszewski@gmail.com)
-- `MAX_ACTIVE_USERS` - User limit (default: 100)
-- AI limits: `FREE_AI_REQUESTS_PER_MONTH`, `FREE_AI_UNITS_PER_MONTH`, etc.
+### Do ręcznej konfiguracji:
+- `NEXTAUTH_SECRET` - `openssl rand -base64 32`
+- `GOOGLE_CLIENT_ID` - z Google Cloud Console
+- `GOOGLE_CLIENT_SECRET` - z Google Cloud Console
+- `GEMINI_API_KEY` - z Google AI Studio
+- `ADMIN_EMAILS` - lista adminów (comma-separated)
+- `ALLOWLIST_EMAILS` - lista dozwolonych (puste = wszyscy)
+- `MAX_ACTIVE_USERS` - limit użytkowników (default: 100)
+- Limity AI: `FREE_AI_*`, `PRO_AI_*`, `GLOBAL_AI_*`
 
-## Database Migrations
+---
 
-Migrations run automatically on app startup:
+## Migracje bazy danych
+
+Migracje uruchamiają się automatycznie przy starcie aplikacji:
 ```bash
 node scripts/ensure-migrations.js && npx prisma migrate deploy
 ```
 
-The `ensure-migrations.js` script baselines existing databases by marking initial migrations as applied when tables already exist.
+- **UAT:** Baza resetowana przy każdym deploy (czysta instalacja)
+- **PRD:** Tylko migracje (dane zachowane)
 
-PRD deploy dodatkowo uruchamia `prisma migrate deploy` przed wdrożeniem, aby ograniczyć drift schematu.
-
-## Health Check
-
-Every deployment verifies the app is running correctly:
-```bash
-curl https://evt-uat-pl-44b1.azurewebsites.net/api/health
-```
-
-Response:
-```json
-{
-  "status": "ok",
-  "version": "1.0.14",
-  "commit": "<SHORT_SHA>",
-  "buildTime": "2025-12-23T08:43:01Z",
-  "env": "production"
-}
-```
-
-The deploy workflow fails if:
-- Status is not "ok"
-- Version doesn't match `package.json`
-- Commit doesn't match deployment SHA
-
-## Admin User Exclusion
-
-Admins (configured in `ADMIN_EMAILS`) are excluded from the `MAX_ACTIVE_USERS` limit:
-
-**Implementation:** `src/lib/userPlan.ts`
-- Admins always get `ACTIVE` status (lines 17-19)
-- Admins are not counted in the active user limit (lines 27-37)
-- Regular users get `WAITLISTED` when limit is reached
-
-**Example:**
-- `MAX_ACTIVE_USERS=100`
-- 100 regular users: ACTIVE
-- Admin (radekbroniszewski@gmail.com): ACTIVE (not counted)
-- 101st regular user: WAITLISTED
-
-## Cost Optimization
-
-**Current setup (~25 USD/month):**
-- App Service Plan B1: ~13 USD/month
-- PostgreSQL Burstable B1ms: ~12 USD/month
-
-**Further optimization:**
-- Use Free tier (F1) for App Service Plan (limited to 60 CPU minutes/day)
-- Use Azure Database for PostgreSQL Single Server (cheaper for dev/test)
-- Delete UAT environment when not in use (use destroy workflow)
-
-**Destroy after testing:**
-```bash
-# Run destroy workflow
-gh workflow run destroy-infra.yml
-
-# Or manually:
-az group delete --name evt-rg-pl --yes
-```
-
-## Production Hardening (recommended)
-
-- PostgreSQL is provisioned with public access for convenience. For production,
-  restrict access to private networks or an IP allowlist and remove `0.0.0.0`.
-- Use separate service principals for provisioning and deployment with least privilege.
+---
 
 ## Troubleshooting
 
-**Deploy fails with Azure login error:**
-- Check `AZURE_CREDENTIALS` secret is valid
-- Verify Service Principal has Contributor role on Resource Group
+### Błąd logowania OAuth (`redirect_uri_mismatch`)
+1. Otwórz Google Cloud Console → APIs & Services → Credentials
+2. Edytuj OAuth 2.0 Client
+3. Dodaj brakujące URIs (origins + redirect)
+4. Zapisz i poczekaj 1-5 minut
 
-**Health check fails:**
-- Check app logs: `az webapp log tail --name evt-uat-pl-44b1 --resource-group evt-rg-pl`
-- Verify all secrets are configured correctly
-- Check database connectivity
+### Deploy fails - Azure login error
+```bash
+# Sprawdź czy SP jest aktualny
+az ad sp show --id "CLIENT_ID_Z_AZURE_CREDENTIALS"
 
-**Database migration fails:**
-- Check `DATABASE_URL` secret is correct
-- Verify PostgreSQL firewall allows Azure services
-- Review migration files in `prisma/migrations/`
+# Jeśli wygasł, utwórz nowy:
+az ad sp create-for-rbac --name "evt-deploy-sp" --role contributor \
+  --scopes "/subscriptions/SUBSCRIPTION_ID/resourceGroups/evt-rg-pl" --sdk-auth
+```
 
-**Admin cannot login despite limit:**
-- Verify `ADMIN_EMAILS` contains the correct email
-- Check user status in database: `SELECT * FROM "UserPlan" WHERE userId IN (SELECT id FROM "User" WHERE email = 'admin@example.com')`
-- Ensure email is lowercase (normalized)
+### Health check fails
+```bash
+# Sprawdź logi aplikacji
+az webapp log tail --name evt-uat-pl-6e5d --resource-group evt-rg-pl
+
+# Sprawdź ustawienia
+az webapp config appsettings list --name evt-uat-pl-6e5d --resource-group evt-rg-pl
+```
+
+### Baza danych niedostępna
+```bash
+# Sprawdź firewall PostgreSQL
+az postgres flexible-server firewall-rule list --resource-group evt-rg-pl --name evt-pg-pl-6e5d
+
+# Sprawdź status serwera
+az postgres flexible-server show --resource-group evt-rg-pl --name evt-pg-pl-6e5d --query "state"
+```
+
+---
+
+## Usuwanie środowiska
+
+```bash
+# Opcja 1: Workflow
+gh workflow run destroy-infra.yml
+# Wpisz: destroy
+
+# Opcja 2: Ręcznie (szybsze)
+az group delete --name evt-rg-pl --yes --no-wait
+```
+
+---
+
+## Checklist przed wdrożeniem PRD
+
+- [ ] Wszystkie testy przechodzą (`npm run test:unit`)
+- [ ] Build działa lokalnie (`npm run build`)
+- [ ] UAT działa i przetestowany
+- [ ] Wersja w package.json zaktualizowana
+- [ ] OAuth URIs dla PRD skonfigurowane w Google Cloud
+- [ ] Sekrety PRD skonfigurowane w GitHub
+- [ ] Backup danych (jeśli potrzebny)
