@@ -1129,21 +1129,23 @@ export function WordIntake({
     !isProcessing;
   const chatMessagesPadding = compactChatSpacing
     ? 'pb-6'
-    : 'pb-[calc(12rem+env(safe-area-inset-bottom))]';
+    : 'pb-[calc(10rem+env(safe-area-inset-bottom))] sm:pb-[calc(12rem+env(safe-area-inset-bottom))]';
   const inputPanel = (
     <>
-      <div className="flex flex-wrap gap-2 mb-2">
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 mb-2 sm:flex-wrap sm:overflow-visible">
         {t.quickActions.map((action) => (
           <button
             key={action.label}
             onClick={() => setInput(action.prompt)}
-            className="flex-shrink-0 px-3 py-1.5 rounded-full text-sm bg-primary-50 dark:bg-primary-900 text-primary-600 dark:text-primary-400 hover:bg-primary-100"
+            className="flex-shrink-0 px-3 py-1 rounded-full text-xs sm:text-sm bg-primary-50 dark:bg-primary-900 text-primary-600 dark:text-primary-400 hover:bg-primary-100"
           >
             {action.label}
           </button>
         ))}
       </div>
-          <p className="text-xs text-slate-500 mb-2">{t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}</p>
+      <p className="text-[11px] sm:text-xs text-slate-500 mb-2">
+        {t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}
+      </p>
 
       <div className="flex gap-2">
         <input
@@ -1156,10 +1158,10 @@ export function WordIntake({
         <button
           onClick={() => imageInputRef.current?.click()}
           disabled={isProcessing}
-          className="p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
+          className="p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
           title={t.imageButtonTitle}
         >
-          <ImageIcon size={20} />
+          <ImageIcon size={18} className="sm:size-5" />
         </button>
 
         <input
@@ -1172,10 +1174,10 @@ export function WordIntake({
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isProcessing}
-          className="p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
+          className="p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
           title={t.fileButtonTitle}
         >
-          <FileText size={20} />
+          <FileText size={18} className="sm:size-5" />
         </button>
 
         <input
@@ -1185,11 +1187,15 @@ export function WordIntake({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           placeholder={t.inputPlaceholder}
-          className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary-500"
           disabled={isProcessing}
         />
-        <Button onClick={handleSend} disabled={!input.trim() || isProcessing} className="px-4">
-          <Send size={20} />
+        <Button
+          onClick={handleSend}
+          disabled={!input.trim() || isProcessing}
+          className="px-3 sm:px-4"
+        >
+          <Send size={18} className="sm:size-5" />
         </Button>
       </div>
     </>
@@ -1336,16 +1342,16 @@ export function WordIntake({
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-0 right-0 md:left-24 md:bottom-8 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-4">
+        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 md:left-24 md:bottom-8 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 sm:p-4">
           <div className="max-w-3xl mx-auto">
             {parsedWords.length > 0 ? (
               <div className="flex gap-3">
-                <Button variant="secondary" onClick={cancelWords} className="flex-1">
-                  <X size={18} className="mr-2" />
+                <Button variant="secondary" size="sm" onClick={cancelWords} className="flex-1">
+                  <X size={16} className="mr-2 sm:size-4" />
                   {t.cancel}
                 </Button>
-                <Button onClick={addSelectedWords} className="flex-1" disabled={!canAddWords}>
-                  <Plus size={18} className="mr-2" />
+                <Button size="sm" onClick={addSelectedWords} className="flex-1" disabled={!canAddWords}>
+                  <Plus size={16} className="mr-2 sm:size-4" />
                   {addLabel}
                 </Button>
               </div>
