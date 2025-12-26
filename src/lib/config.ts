@@ -5,22 +5,62 @@ export type ConfigValueType = 'number' | 'list' | 'string';
 type ConfigCache = {
   data: Map<string, string>;
   timestamp: number;
+  lastChangedAt: string | null;
 };
 
-const CACHE_TTL = 60_000;
+const parseCacheTtl = () => {
+  const raw = process.env.CONFIG_CACHE_TTL_MS ?? '';
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return 5_000;
+  }
+  return Math.min(60_000, Math.floor(parsed));
+};
+
+const CACHE_TTL = parseCacheTtl();
 let configCache: ConfigCache | null = null;
 
 const normalizeKey = (key: string) => key.trim();
 
+const getLatestChangeTimestamp = async () => {
+  const latestChange = await prisma.configHistory.findFirst({
+    orderBy: { changedAt: 'desc' },
+    select: { changedAt: true },
+  });
+  return latestChange?.changedAt ?? null;
+};
+
+const shouldUseCache = (now: number, latestChange: Date | null) => {
+  if (!configCache) return false;
+  const cacheAge = now - configCache.timestamp;
+  if (cacheAge >= CACHE_TTL) return false;
+  if (!latestChange && !configCache.lastChangedAt) return true;
+  if (!latestChange || !configCache.lastChangedAt) return false;
+  return latestChange.getTime() <= new Date(configCache.lastChangedAt).getTime();
+};
+
 const loadConfigCache = async (): Promise<Map<string, string>> => {
   const now = Date.now();
-  if (configCache && now - configCache.timestamp < CACHE_TTL) {
-    return configCache.data;
+  const latestChange = await getLatestChangeTimestamp();
+
+  if (shouldUseCache(now, latestChange)) {
+    return configCache!.data;
   }
 
-  const rows = await prisma.appConfig.findMany();
+  const [rows, latest] = await prisma.$transaction([
+    prisma.appConfig.findMany(),
+    prisma.configHistory.findFirst({
+      orderBy: { changedAt: 'desc' },
+      select: { changedAt: true },
+    }),
+  ]);
   const data = new Map(rows.map((row) => [row.key, row.value]));
-  configCache = { data, timestamp: now };
+  configCache = {
+    data,
+    timestamp: now,
+    lastChangedAt: latest?.changedAt?.toISOString() ?? latestChange?.toISOString() ?? null,
+  };
+
   return data;
 };
 

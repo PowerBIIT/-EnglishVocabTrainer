@@ -10,6 +10,7 @@ import {
 import { getPromptCatalog, type PromptId } from '@/lib/aiPromptCatalog';
 import {
   GLOBAL_PROMPT_OVERLAY_KEY,
+  MAX_PROMPT_OVERLAY_LENGTH,
   PROMPT_OVERLAY_KEYS,
   applyPromptOverlays,
   getAllPromptOverlays,
@@ -20,6 +21,19 @@ const readEnvValue = (key: string) => {
   if (!value) return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+};
+
+const validateOverlayLength = (value: string | undefined, source: string) => {
+  if (value && value.trim().length > MAX_PROMPT_OVERLAY_LENGTH) {
+    return NextResponse.json(
+      {
+        error: `${source} overlay too long`,
+        maxChars: MAX_PROMPT_OVERLAY_LENGTH,
+      },
+      { status: 400 }
+    );
+  }
+  return null;
 };
 
 export async function GET() {
@@ -82,6 +96,19 @@ export async function PATCH(request: Request) {
   }
 
   if (overlays) {
+    const overlayValidation = validateOverlayLength(overlays.global, 'Global');
+    if (overlayValidation) return overlayValidation;
+
+    if (overlays.byPrompt && typeof overlays.byPrompt === 'object') {
+      for (const [promptId, value] of Object.entries(overlays.byPrompt)) {
+        const promptValidation = validateOverlayLength(
+          typeof value === 'string' ? value : undefined,
+          `Prompt ${promptId}`
+        );
+        if (promptValidation) return promptValidation;
+      }
+    }
+
     if (typeof overlays.global === 'string') {
       const trimmed = overlays.global.trim();
       if (!trimmed) {

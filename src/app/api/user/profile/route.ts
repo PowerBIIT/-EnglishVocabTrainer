@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { mascotSkins } from '@/data/mascotSkins';
+
+const allowedMascotSkins = new Set(mascotSkins.map((skin) => skin.id));
 
 export async function GET() {
   const session = await getServerSession(authOptions);
@@ -36,7 +39,14 @@ export async function PATCH(request: Request) {
   const updates: { mascotSkin?: string; onboardingComplete?: boolean } = {};
 
   if (typeof body?.mascotSkin === 'string') {
-    updates.mascotSkin = body.mascotSkin;
+    const mascotSkinValue = body.mascotSkin.trim();
+    if (!allowedMascotSkins.has(mascotSkinValue)) {
+      return NextResponse.json(
+        { error: 'Invalid mascot skin' },
+        { status: 400 }
+      );
+    }
+    updates.mascotSkin = mascotSkinValue;
   }
 
   if (typeof body?.onboardingComplete === 'boolean') {
