@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useCallback, useEffect, useRef } from 'react';
+import { signOut, useSession } from 'next-auth/react';
 import { useVocabStore } from '@/lib/store';
 import { isAppLanguage } from '@/lib/i18n';
 import type { AppState } from '@/types';
@@ -13,6 +13,16 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
   const hasLoadedRef = useRef(false);
   const debounceRef = useRef<NodeJS.Timeout | null>(null);
   const lastPayloadRef = useRef<string>('');
+  const signingOutRef = useRef(false);
+
+  const handleUnauthorized = useCallback(() => {
+    if (signingOutRef.current) {
+      return;
+    }
+
+    signingOutRef.current = true;
+    signOut({ callbackUrl: '/login' });
+  }, [signOut]);
 
   const hydrateFromServer = useVocabStore((state) => state.hydrateFromServer);
   const setReady = useVocabStore((state) => state.setReady);
@@ -43,6 +53,10 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     const loadState = async () => {
       try {
         const response = await fetch('/api/user/state');
+        if (response.status === 401) {
+          handleUnauthorized();
+          return;
+        }
         if (!response.ok) {
           throw new Error('Failed to load state');
         }
@@ -74,7 +88,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [hydrateFromServer, setReady, session?.user?.accessStatus, status, updateSettings]);
+  }, [handleUnauthorized, hydrateFromServer, setReady, session?.user?.accessStatus, status, updateSettings]);
 
   useEffect(() => {
     if (
@@ -102,9 +116,15 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: syncPayload }),
-      }).catch(() => null);
+      })
+        .then((response) => {
+          if (response.status === 401) {
+            handleUnauthorized();
+          }
+        })
+        .catch(() => null);
     }, SYNC_DEBOUNCE_MS);
-  }, [isReady, session?.user?.accessStatus, status, syncPayload]);
+  }, [handleUnauthorized, isReady, session?.user?.accessStatus, status, syncPayload]);
 
   useEffect(() => {
     return () => {
