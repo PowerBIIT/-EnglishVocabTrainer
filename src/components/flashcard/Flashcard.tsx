@@ -201,35 +201,35 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
 
       {/* Action buttons */}
       {showActions && (
-        <div className="flex justify-center gap-4 mt-6">
+        <div className="flex justify-center gap-3 mt-4 sm:mt-6">
           <Button
             variant="danger"
-            size="lg"
+            size="sm"
             onClick={() => handleAction('repeat')}
-            className="flex items-center gap-2"
+            className="flex flex-1 min-w-0 items-center justify-center gap-2 text-sm sm:flex-none sm:min-w-[120px] sm:px-4 sm:py-2 sm:text-base"
           >
-            <X size={20} />
-            {t.repeat}
+            <X size={18} className="shrink-0" />
+            <span className="truncate">{t.repeat}</span>
           </Button>
 
           <Button
             variant="secondary"
-            size="lg"
+            size="sm"
             onClick={() => handleAction('hard')}
-            className="flex items-center gap-2"
+            className="flex flex-1 min-w-0 items-center justify-center gap-2 text-sm sm:flex-none sm:min-w-[120px] sm:px-4 sm:py-2 sm:text-base"
           >
-            <AlertTriangle size={20} />
-            {t.difficult}
+            <AlertTriangle size={18} className="shrink-0" />
+            <span className="truncate">{t.difficult}</span>
           </Button>
 
           <Button
             variant="success"
-            size="lg"
+            size="sm"
             onClick={() => handleAction('know')}
-            className="flex items-center gap-2"
+            className="flex flex-1 min-w-0 items-center justify-center gap-2 text-sm sm:flex-none sm:min-w-[120px] sm:px-4 sm:py-2 sm:text-base"
           >
-            <Check size={20} />
-            {t.know}
+            <Check size={18} className="shrink-0" />
+            <span className="truncate">{t.know}</span>
           </Button>
         </div>
       )}

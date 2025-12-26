@@ -748,34 +748,34 @@ export default function ProfilePage() {
 
       <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
         <Card variant="elevated" className="overflow-hidden">
-          <CardContent className="p-6 bg-gradient-to-br from-primary-600 via-primary-500 to-amber-400 text-white">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-primary-600 via-primary-500 to-amber-400 text-white">
+            <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-white/80">
                   <Compass size={14} />
                   {t.dailyMission}
                 </div>
-                <h2 className="mt-2 font-display text-2xl">{missionCopy.title}</h2>
-                <p className="text-sm text-white/80 mt-2">{missionCopy.description}</p>
+                <h2 className="mt-2 font-display text-xl sm:text-2xl">{missionCopy.title}</h2>
+                <p className="text-xs sm:text-sm text-white/80 mt-2">{missionCopy.description}</p>
               </div>
               <div className="text-right">
                 <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs">
                   <Sparkles size={14} />
                   +{dailyMission.rewardXp} XP
                 </div>
-                <p className="mt-3 text-sm font-semibold">
+                <p className="mt-2 sm:mt-3 text-sm font-semibold">
                   {dailyMission.progress}/{dailyMission.target}
                 </p>
               </div>
             </div>
-            <ProgressBar value={missionProgress} size="sm" className="mt-4" />
-              <div className="mt-5 flex flex-wrap items-center gap-3">
-                <Link href={missionRoute.href}>
-                  <Button variant="secondary">
-                    {dailyMission.completed ? t.missionContinue : t.missionStart} •{' '}
-                    {missionRoute.label}
-                  </Button>
-                </Link>
+            <ProgressBar value={missionProgress} size="sm" className="mt-3 sm:mt-4" />
+            <div className="mt-4 sm:mt-5 flex flex-wrap items-center gap-3">
+              <Link href={missionRoute.href}>
+                <Button variant="secondary" size="sm" className="sm:px-4 sm:py-2 sm:text-base">
+                  {dailyMission.completed ? t.missionContinue : t.missionStart} •{' '}
+                  {missionRoute.label}
+                </Button>
+              </Link>
               <span className="text-xs text-white/80">
                 {t.keepStreak(stats.currentStreak)}
               </span>
