@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { AITutor } from '@/components/ai/AITutor';
 import { useLanguage } from '@/lib/i18n';
 
 const PUBLIC_PATHS = new Set(['/login', '/onboarding', '/waitlist']);
@@ -57,9 +56,5 @@ export function ClientLayout() {
     status,
   ]);
 
-  if (isPublic || session?.user?.accessStatus !== 'ACTIVE') {
-    return null;
-  }
-
-  return <AITutor />;
+  return null;
 }
