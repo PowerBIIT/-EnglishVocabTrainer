@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rate = checkRateLimit(`ai:explain-word:${session.user.id}`, AI_RATE_LIMIT);
+    const rate = await checkRateLimit(`ai:explain-word:${session.user.id}`, AI_RATE_LIMIT);
     if (!rate.ok) {
       return NextResponse.json(
         { error: 'rate_limited', retryAfter: rate.retryAfter },
