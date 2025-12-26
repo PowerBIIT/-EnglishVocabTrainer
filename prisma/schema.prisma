@@ -141,3 +141,17 @@ model ConfigHistory {
 
   @@index([configKey, changedAt])
 }
+
+model RateLimitWindow {
+  id          String   @id @default(cuid())
+  key         String
+  windowStart DateTime
+  resetAt     DateTime
+  count       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([key, windowStart])
+  @@index([key])
+  @@index([resetAt])
+}

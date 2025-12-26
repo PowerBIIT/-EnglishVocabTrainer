@@ -2,6 +2,7 @@ import { getAppConfig } from '@/lib/config';
 import { PromptId } from '@/lib/aiPromptCatalog';
 
 export const GLOBAL_PROMPT_OVERLAY_KEY = 'GEMINI_PROMPT_OVERLAY_GLOBAL';
+export const MAX_PROMPT_OVERLAY_LENGTH = 4000;
 
 export const PROMPT_OVERLAY_KEYS: Record<PromptId, string> = {
   'generate-words': 'GEMINI_PROMPT_OVERLAY_GENERATE_WORDS',

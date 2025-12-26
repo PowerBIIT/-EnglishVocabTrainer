@@ -74,7 +74,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [hydrateFromServer, setReady, session?.user?.accessStatus, status]);
+  }, [hydrateFromServer, setReady, session?.user?.accessStatus, status, updateSettings]);
 
   useEffect(() => {
     if (
