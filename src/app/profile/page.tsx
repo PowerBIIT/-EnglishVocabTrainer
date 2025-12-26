@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import {
   BookOpen,
   Compass,
@@ -230,6 +231,12 @@ const profileCopy = {
     aiPhoneticHintsDesc: 'Pokazuj porady dotyczące wymowy',
     account: 'Konto',
     signedInAs: 'Zalogowany jako',
+    restartOnboarding: 'Powtórz onboarding',
+    restartOnboardingDesc:
+      'Przejdziesz ponownie przez wybór pary językowej, skina i pierwszej misji. Dane pozostaną bez zmian.',
+    restartOnboardingAction: 'Uruchom ponownie',
+    restartOnboardingConfirm:
+      'Na pewno chcesz ponownie uruchomić onboarding? Dane nie zostaną usunięte.',
     deleteSetConfirm: (name: string) =>
       `Usunąć zestaw "${name}"? Słówka pozostaną w bibliotece bez przypisanego zestawu.`,
   },
@@ -326,6 +333,11 @@ const profileCopy = {
     aiPhoneticHintsDesc: 'Show pronunciation tips',
     account: 'Account',
     signedInAs: 'Signed in as',
+    restartOnboarding: 'Restart onboarding',
+    restartOnboardingDesc:
+      'Go through the language pair, mascot, and first mission again. Your data will stay intact.',
+    restartOnboardingAction: 'Restart',
+    restartOnboardingConfirm: 'Restart onboarding now? Your data will not be deleted.',
     deleteSetConfirm: (name: string) =>
       `Delete set "${name}"? Words will stay in the library without a set.`,
   },
@@ -422,6 +434,11 @@ const profileCopy = {
     aiPhoneticHintsDesc: 'Показувати поради з вимови',
     account: 'Обліковий запис',
     signedInAs: 'Увійшов як',
+    restartOnboarding: 'Повторити онбординг',
+    restartOnboardingDesc:
+      'Пройди вибір мовної пари, скіна та першої місії ще раз. Дані залишаться.',
+    restartOnboardingAction: 'Повторити',
+    restartOnboardingConfirm: 'Повторити онбординг? Дані не буде видалено.',
     deleteSetConfirm: (name: string) =>
       `Видалити набір "${name}"? Слова залишаться в бібліотеці без набору.`,
   },
@@ -434,10 +451,12 @@ const AUTO_SAVE_IDLE_DELAY_MS = 2200;
 
 export default function ProfilePage() {
   const hydrated = useHydration();
+  const router = useRouter();
   const { data: session, update } = useSession();
   const language = useLanguage();
   const t = (profileCopy[language] ?? profileCopy.pl) as ProfileCopy;
   const [selectedSkin, setSelectedSkin] = useState('explorer');
+  const [isRestartingOnboarding, setIsRestartingOnboarding] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasMountedRef = useRef(false);
@@ -662,6 +681,30 @@ export default function ProfilePage() {
     const confirmation = confirm(t.deleteSetConfirm(name));
     if (!confirmation) return;
     deleteSet(setId);
+  };
+
+  const handleRestartOnboarding = async () => {
+    const confirmation = confirm(t.restartOnboardingConfirm);
+    if (!confirmation) return;
+    setIsRestartingOnboarding(true);
+
+    try {
+      const response = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ onboardingComplete: false }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to restart onboarding');
+      }
+
+      await update({ onboardingComplete: false });
+      router.push('/onboarding');
+    } catch (error) {
+      console.error('Unable to restart onboarding.', error);
+      setIsRestartingOnboarding(false);
+    }
   };
 
   if (!hydrated) {
@@ -1279,24 +1322,37 @@ export default function ProfilePage() {
       </section>
 
       <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <ShieldCheck size={20} className="text-primary-500" />
-              <h2 className="font-semibold text-slate-800 dark:text-slate-100">{t.account}</h2>
-            </div>
-          </CardHeader>
-        <CardContent className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-xs text-slate-500">{t.signedInAs}</p>
-            <p className="font-medium text-slate-800 dark:text-slate-100">{userEmail}</p>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <ShieldCheck size={20} className="text-primary-500" />
+            <h2 className="font-semibold text-slate-800 dark:text-slate-100">{t.account}</h2>
           </div>
-          <Button
-            variant="secondary"
-            onClick={() => signOut({ callbackUrl: '/login' })}
-            className="w-full sm:w-auto"
-          >
-            {t.logout}
-          </Button>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs text-slate-500">{t.signedInAs}</p>
+              <p className="font-medium text-slate-800 dark:text-slate-100">{userEmail}</p>
+            </div>
+            <Button
+              variant="secondary"
+              onClick={() => signOut({ callbackUrl: '/login' })}
+              className="w-full sm:w-auto"
+            >
+              {t.logout}
+            </Button>
+          </div>
+          <div className="h-px bg-slate-100 dark:bg-slate-700" />
+          <SettingRow label={t.restartOnboarding} description={t.restartOnboardingDesc}>
+            <Button
+              variant="secondary"
+              onClick={handleRestartOnboarding}
+              disabled={isRestartingOnboarding}
+              className="w-full sm:w-auto"
+            >
+              {t.restartOnboardingAction}
+            </Button>
+          </SettingRow>
         </CardContent>
       </Card>
     </div>

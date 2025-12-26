@@ -99,7 +99,6 @@ Notes:
 ## Testing
 - Unit tests: `npm run test:unit`
 - E2E tests: `npm run test:e2e`
-- Manual plan: `docs/MANUAL_TEST_PLAN.md`
 
 CI runs lint + typecheck + unit + e2e on PR and `main`.
 E2E wymaga działającego Postgresa i poprawnego `DATABASE_URL`.
