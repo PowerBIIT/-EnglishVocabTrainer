@@ -6,10 +6,51 @@ import { createDefaultState } from '@/lib/appState';
 import type { Prisma } from '@prisma/client';
 import { MAX_STATE_BYTES } from '@/lib/apiLimits';
 
+type SessionUser = {
+  id: string;
+  email?: string | null;
+  name?: string | null;
+  image?: string | null;
+  onboardingComplete?: boolean;
+  mascotSkin?: string | null;
+};
+
+const ensureUserRecord = async (user: SessionUser) => {
+  const existing = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { id: true },
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  try {
+    return await prisma.user.create({
+      data: {
+        id: user.id,
+        email: user.email ?? null,
+        name: user.name ?? null,
+        image: user.image ?? null,
+        onboardingComplete: user.onboardingComplete ?? false,
+        mascotSkin: user.mascotSkin ?? 'explorer',
+      },
+      select: { id: true },
+    });
+  } catch {
+    return null;
+  }
+};
+
 export async function GET() {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const user = await ensureUserRecord(session.user);
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -36,6 +77,11 @@ export async function PUT(request: Request) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const user = await ensureUserRecord(session.user);
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
