@@ -255,7 +255,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen px-4 py-10">
+    <div className="min-h-screen px-4 py-10 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-10">
       <div className="mx-auto w-full max-w-4xl space-y-8">
         <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -368,7 +368,7 @@ export default function OnboardingPage() {
               <p className="text-xs text-slate-500">{t.choosePairHint}</p>
             </div>
 
-            <div className="flex justify-end gap-3">
+            <div className="hidden md:flex justify-end gap-3">
               <Button variant="ghost" onClick={skipOnboarding}>
                 {t.skip}
               </Button>
@@ -377,6 +377,19 @@ export default function OnboardingPage() {
               </Button>
             </div>
           </section>
+        )}
+
+        {step === 'pair' && (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
+            <div className="flex gap-3 max-w-4xl mx-auto">
+              <Button variant="ghost" onClick={skipOnboarding} className="flex-1">
+                {t.skip}
+              </Button>
+              <Button size="lg" onClick={() => setStep('skin')} className="flex-1">
+                {t.choosePairAction}
+              </Button>
+            </div>
+          </div>
         )}
 
         {step === 'skin' && (
@@ -405,7 +418,7 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="flex justify-end gap-3">
+            <div className="hidden md:flex justify-end gap-3">
               <Button variant="ghost" onClick={skipOnboarding}>
                 {t.skip}
               </Button>
@@ -420,6 +433,26 @@ export default function OnboardingPage() {
               </Button>
             </div>
           </section>
+        )}
+
+        {step === 'skin' && (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
+            <div className="flex gap-3 max-w-4xl mx-auto">
+              <Button variant="ghost" onClick={skipOnboarding} className="flex-1">
+                {t.skip}
+              </Button>
+              <Button
+                size="lg"
+                onClick={async () => {
+                  await saveSkin();
+                  setStep('words');
+                }}
+                className="flex-1"
+              >
+                {t.startMission}
+              </Button>
+            </div>
+          </div>
         )}
 
         {step === 'words' && (
@@ -448,12 +481,22 @@ export default function OnboardingPage() {
               />
             </div>
 
-            <div className="flex justify-end">
+            <div className="hidden md:flex justify-end">
               <Button variant="ghost" onClick={skipOnboarding}>
                 {t.skip}
               </Button>
             </div>
           </section>
+        )}
+
+        {step === 'words' && (
+          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
+            <div className="flex gap-3 max-w-4xl mx-auto">
+              <Button variant="ghost" onClick={skipOnboarding} className="flex-1">
+                {t.skip}
+              </Button>
+            </div>
+          </div>
         )}
 
         {step === 'mission' && (

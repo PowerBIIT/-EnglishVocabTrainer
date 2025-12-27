@@ -47,6 +47,8 @@ const homeCopy = {
     flashcardsDesc: 'Szybki sprint 3 min',
     quiz: 'Quiz',
     quizDesc: 'Wyzwanie na czas',
+    classTest: 'Klasówka w 5 min',
+    classTestDesc: 'Wklej słówka i od razu zacznij quiz',
     pronunciation: 'Wymowa',
     pronunciationDesc: 'Trening głosu',
     guide: 'Twój przewodnik',
@@ -76,6 +78,8 @@ const homeCopy = {
     flashcardsDesc: 'Quick 3‑min sprint',
     quiz: 'Quiz',
     quizDesc: 'Time challenge',
+    classTest: 'Test in 5 minutes',
+    classTestDesc: 'Paste words and start the quiz fast',
     pronunciation: 'Pronunciation',
     pronunciationDesc: 'Voice training',
     guide: 'Your guide',
@@ -105,6 +109,8 @@ const homeCopy = {
     flashcardsDesc: 'Швидкий спринт на 3 хв',
     quiz: 'Квіз',
     quizDesc: 'Часовий виклик',
+    classTest: 'Контрольна за 5 хв',
+    classTestDesc: 'Встав слова й одразу почни квіз',
     pronunciation: 'Вимова',
     pronunciationDesc: 'Тренування голосу',
     guide: 'Твій провідник',
@@ -259,7 +265,7 @@ export default function HomePage() {
             </CardContent>
           </Card>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Link href="/flashcards">
               <Card className="h-full hover:shadow-md transition-shadow">
                 <CardContent className="p-5 space-y-3">
@@ -286,6 +292,21 @@ export default function HomePage() {
                       {t.quiz}
                     </p>
                     <p className="text-sm text-slate-500">{t.quizDesc}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link href="/klasowka">
+              <Card className="h-full hover:shadow-md transition-shadow">
+                <CardContent className="p-5 space-y-3">
+                  <div className="w-10 h-10 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center">
+                    <Zap size={22} />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-slate-800 dark:text-slate-100">
+                      {t.classTest}
+                    </p>
+                    <p className="text-sm text-slate-500">{t.classTestDesc}</p>
                   </div>
                 </CardContent>
               </Card>

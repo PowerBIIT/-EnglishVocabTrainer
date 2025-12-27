@@ -3,7 +3,7 @@ import { encode } from 'next-auth/jwt';
 import { prisma } from '@/lib/db';
 
 const ensureE2EEnabled = () => {
-  if (process.env.E2E_TEST !== 'true') {
+  if (process.env.NODE_ENV === 'production' || process.env.E2E_TEST !== 'true') {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
   return null;
@@ -68,17 +68,6 @@ export async function POST(request: Request) {
   const body = await request.json();
   const email = String(body?.email || 'e2e@local.test');
   const password = String(body?.password || '');
-
-  return buildSessionResponse(email, password);
-}
-
-export async function GET(request: Request) {
-  const guard = ensureE2EEnabled();
-  if (guard) return guard;
-
-  const { searchParams } = new URL(request.url);
-  const email = searchParams.get('email') || 'e2e@local.test';
-  const password = searchParams.get('password') || '';
 
   return buildSessionResponse(email, password);
 }

@@ -126,7 +126,9 @@ export default function LoginPage() {
   const language = useLanguage();
   const updateSettings = useVocabStore((state) => state.updateSettings);
   const t = (loginCopy[language] ?? loginCopy.pl) as LoginCopy;
-  const isE2E = process.env.NEXT_PUBLIC_E2E_TEST === 'true';
+  const isE2E =
+    process.env.NEXT_PUBLIC_E2E_TEST === 'true' &&
+    process.env.NODE_ENV !== 'production';
   const [e2eEmail, setE2eEmail] = useState('');
   const [e2ePassword, setE2ePassword] = useState('');
   const [e2eError, setE2eError] = useState('');

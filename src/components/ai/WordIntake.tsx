@@ -1365,7 +1365,7 @@ export function WordIntake({
   }
 
   return (
-    <div className={cn('grid gap-6 md:grid-cols-[1.2fr_1fr]', className)}>
+    <div className={cn('grid gap-6 md:grid-cols-[1.2fr_1fr] pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0', className)}>
       <div className="space-y-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-amber-400 flex items-center justify-center">
@@ -1577,7 +1577,20 @@ export function WordIntake({
           )}
         </div>
 
-        <div className="flex gap-3">
+        <div className="hidden md:flex gap-3">
+          <Button variant="secondary" onClick={cancelWords} className="flex-1">
+            <X size={18} className="mr-2" />
+            {t.cancel}
+          </Button>
+          <Button onClick={addSelectedWords} className="flex-1" disabled={!canAddWords}>
+            <Plus size={18} className="mr-2" />
+            {addLabel}
+          </Button>
+        </div>
+      </div>
+
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
+        <div className="flex gap-3 max-w-4xl mx-auto">
           <Button variant="secondary" onClick={cancelWords} className="flex-1">
             <X size={18} className="mr-2" />
             {t.cancel}

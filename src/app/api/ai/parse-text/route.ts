@@ -91,9 +91,16 @@ export async function POST(request: NextRequest) {
       model,
     });
 
-    const result = parseAIResponse<ParseResult>(response);
-
-    return NextResponse.json(result);
+    try {
+      const result = parseAIResponse<ParseResult>(response, { logErrors: false });
+      return NextResponse.json(result);
+    } catch {
+      return NextResponse.json({
+        words: [],
+        category_suggestion: '',
+        parse_errors: ['ai_invalid_json'],
+      });
+    }
   } catch (error) {
     console.error('Text parsing error:', error);
     const mapped = mapGeminiError(error);

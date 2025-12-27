@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { AccessStatus } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { mascotSkins } from '@/data/mascotSkins';
+import { ensureUserPlan } from '@/lib/userPlan';
 
 const allowedMascotSkins = new Set(mascotSkins.map((skin) => skin.id));
 
@@ -11,6 +13,17 @@ export async function GET() {
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const plan = await ensureUserPlan(session.user.id, session.user.email);
+  if (plan.accessStatus !== AccessStatus.ACTIVE) {
+    return NextResponse.json(
+      {
+        error:
+          plan.accessStatus === AccessStatus.WAITLISTED ? 'waitlisted' : 'suspended',
+      },
+      { status: 403 }
+    );
   }
 
   const user = await prisma.user.findUnique({
@@ -33,6 +46,17 @@ export async function PATCH(request: Request) {
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const plan = await ensureUserPlan(session.user.id, session.user.email);
+  if (plan.accessStatus !== AccessStatus.ACTIVE) {
+    return NextResponse.json(
+      {
+        error:
+          plan.accessStatus === AccessStatus.WAITLISTED ? 'waitlisted' : 'suspended',
+      },
+      { status: 403 }
+    );
   }
 
   const body = await request.json();

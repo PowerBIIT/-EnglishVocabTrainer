@@ -279,6 +279,7 @@ az group delete --name evt-rg-pl --yes --no-wait
 - [ ] Wszystkie testy przechodzą (`npm run test:unit`)
 - [ ] Build działa lokalnie (`npm run build`)
 - [ ] UAT działa i przetestowany
+- [ ] Testy manualne wykonane (`docs/MANUAL_TESTS.md`)
 - [ ] Wersja w package.json zaktualizowana
 - [ ] OAuth URIs dla PRD skonfigurowane w Google Cloud
 - [ ] Sekrety PRD skonfigurowane w GitHub

@@ -23,5 +23,6 @@ declare module 'next-auth/jwt' {
     accessStatus?: AccessStatus;
     isAdmin?: boolean;
     email?: string | null;
+    planSyncedAt?: number;
   }
 }

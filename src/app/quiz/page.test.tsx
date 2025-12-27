@@ -1,79 +1,55 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import QuizPage from '@/app/quiz/page';
-import { useVocabStore } from '@/lib/store';
 import { resetStore } from '@/test/utils';
+import { useVocabStore } from '@/lib/store';
+import * as navigation from 'next/navigation';
 
-const seedVocabulary = () => {
-  useVocabStore.setState((state) => ({
-    ...state,
-    vocabulary: [
-      {
-        id: 'word-1',
-        en: 'bread',
-        phonetic: '/bread/',
-        pl: 'chleb',
-        category: 'Food',
-        difficulty: 'easy',
-        created_at: new Date('2024-01-01T00:00:00Z'),
-        source: 'manual',
-        languagePair: 'pl-en',
-        setIds: [],
-      },
-      {
-        id: 'word-2',
-        en: 'milk',
-        phonetic: '/milk/',
-        pl: 'mleko',
-        category: 'Food',
-        difficulty: 'medium',
-        created_at: new Date('2024-01-01T00:00:00Z'),
-        source: 'manual',
-        languagePair: 'pl-en',
-        setIds: [],
-      },
-      {
-        id: 'word-3',
-        en: 'train',
-        phonetic: '/train/',
-        pl: 'pociąg',
-        category: 'Travel',
-        difficulty: 'medium',
-        created_at: new Date('2024-01-01T00:00:00Z'),
-        source: 'manual',
-        languagePair: 'pl-en',
-        setIds: [],
-      },
-      {
-        id: 'word-4',
-        en: 'ticket',
-        phonetic: '/ticket/',
-        pl: 'bilet',
-        category: 'Travel',
-        difficulty: 'hard',
-        created_at: new Date('2024-01-01T00:00:00Z'),
-        source: 'manual',
-        languagePair: 'pl-en',
-        setIds: [],
-      },
-    ],
-  }));
-};
+const setId = 'set-123';
 
 describe('QuizPage', () => {
   beforeEach(() => {
     resetStore();
-    seedVocabulary();
+    const useSearchParamsMock = navigation.useSearchParams as unknown as vi.Mock;
+    useSearchParamsMock.mockReturnValue(new URLSearchParams(`setId=${setId}`));
+
+    useVocabStore.setState((state) => ({
+      ...state,
+      isReady: true,
+      sets: [
+        {
+          id: setId,
+          name: 'Biologia',
+          createdAt: new Date(),
+          languagePair: 'pl-en',
+        },
+      ],
+      vocabulary: [
+        {
+          id: 'word-1',
+          en: 'cell',
+          phonetic: '',
+          pl: 'komorka',
+          category: 'School',
+          setIds: [setId],
+          difficulty: 'easy',
+          created_at: new Date(),
+          source: 'manual',
+          languagePair: 'pl-en',
+        },
+      ],
+    }));
   });
 
-  it('renders quiz setup with modes and start button', async () => {
+  it('preselects a set from the query param', async () => {
     render(<QuizPage />);
 
-    expect(await screen.findByText('Quiz')).toBeVisible();
-    expect(screen.getByText('Wybierz zestaw i sprawdź swoją wiedzę')).toBeVisible();
-    expect(screen.getByText('Tryb quizu')).toBeVisible();
-    expect(screen.getByText('Wpisywanie')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Rozpocznij quiz' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Quiz' })).toBeVisible();
+
+    const setButton = screen.getByRole('button', { name: /Biologia/ });
+    await waitFor(() => {
+      expect(setButton).toHaveClass('bg-primary-500');
+    });
   });
 });

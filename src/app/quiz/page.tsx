@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Target, Shuffle, Clock, Keyboard, Volume2 } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { QuizSession, QuizResults } from '@/components/quiz/Quiz';
@@ -123,12 +124,15 @@ export default function QuizPage() {
   const hydrated = useHydration();
   const language = useLanguage();
   const t = (quizPageCopy[language] ?? quizPageCopy.pl) as QuizPageCopy;
+  const searchParams = useSearchParams();
+  const setIdParam = searchParams.get('setId')?.trim() ?? '';
   const [sessionState, setSessionState] = useState<SessionState>('setup');
   const [selectedMode, setSelectedMode] = useState<QuizMode>('en_to_pl');
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
   const [selectedSetId, setSelectedSetId] = useState<'all' | 'unassigned' | string>('all');
   const [sessionWords, setSessionWords] = useState<VocabularyItem[]>([]);
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
+  const [appliedSetParam, setAppliedSetParam] = useState(false);
 
   const learning = useVocabStore((state) => state.settings.learning);
   const activePair = useMemo(() => getLearningPair(learning.pairId), [learning.pairId]);
@@ -212,6 +216,20 @@ export default function QuizPage() {
     const filtered = filterBySet(vocabulary);
     return Array.from(new Set(filtered.map((word) => word.category)));
   }, [filterBySet, vocabulary]);
+
+  useEffect(() => {
+    if (!hydrated || appliedSetParam) return;
+    if (!setIdParam) {
+      setAppliedSetParam(true);
+      return;
+    }
+    if (sets.length === 0) {
+      return;
+    }
+    const exists = sets.some((set) => set.id === setIdParam);
+    setSelectedSetId(exists ? setIdParam : 'all');
+    setAppliedSetParam(true);
+  }, [appliedSetParam, hydrated, setIdParam, sets]);
 
   useEffect(() => {
     if (selectedCategory !== 'all' && !categories.includes(selectedCategory)) {

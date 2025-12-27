@@ -1,6 +1,6 @@
 {
   "name": "english-vocab-trainer",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "private": true,
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "next dev",
     "prebuild": "prisma generate",
-    "build": "next build",
+    "build": "node --require ./scripts/rename-fallback.js node_modules/next/dist/bin/next build",
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",

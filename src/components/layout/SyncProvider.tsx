@@ -22,7 +22,7 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
 
     signingOutRef.current = true;
     signOut({ callbackUrl: '/login' });
-  }, [signOut]);
+  }, []);
 
   const hydrateFromServer = useVocabStore((state) => state.hydrateFromServer);
   const setReady = useVocabStore((state) => state.setReady);

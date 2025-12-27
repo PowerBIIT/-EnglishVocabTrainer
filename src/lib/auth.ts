@@ -1,4 +1,5 @@
 import type { NextAuthOptions } from 'next-auth';
+import type { JWT } from 'next-auth/jwt';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
@@ -7,6 +8,10 @@ import { prisma } from '@/lib/db';
 import { ensureUserPlan } from '@/lib/userPlan';
 import { isAdminEmail } from '@/lib/access';
 
+const E2E_ENABLED =
+  process.env.E2E_TEST === 'true' && process.env.NODE_ENV !== 'production';
+const PLAN_SYNC_INTERVAL_MS = 60_000;
+
 const providers: NextAuthOptions['providers'] = [
   GoogleProvider({
     clientId: process.env.GOOGLE_CLIENT_ID ?? '',
@@ -14,7 +19,7 @@ const providers: NextAuthOptions['providers'] = [
   }),
 ];
 
-if (process.env.E2E_TEST === 'true') {
+if (E2E_ENABLED) {
   providers.push(
     CredentialsProvider({
       name: 'E2E',
@@ -48,11 +53,31 @@ if (process.env.E2E_TEST === 'true') {
   );
 }
 
+const shouldSyncPlan = (token: JWT) => {
+  const lastSync = typeof token.planSyncedAt === 'number' ? token.planSyncedAt : 0;
+  return !lastSync || Date.now() - lastSync > PLAN_SYNC_INTERVAL_MS;
+};
+
+const syncPlan = async (token: JWT, userId: string, email?: string | null) => {
+  const plan = await ensureUserPlan(userId, email ?? undefined);
+  token.plan = plan.plan;
+  token.accessStatus = plan.accessStatus;
+  token.isAdmin = isAdminEmail(email ?? undefined);
+  token.planSyncedAt = Date.now();
+};
+
+const resolveEmail = (
+  token: JWT,
+  user?: { email?: string | null },
+  session?: { user?: { email?: string | null } }
+) => user?.email ?? token.email ?? session?.user?.email ?? null;
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers,
   session: {
     strategy: 'jwt',
+    updateAge: 60,
   },
   pages: {
     signIn: '/login',
@@ -65,15 +90,20 @@ export const authOptions: NextAuthOptions = {
         token.mascotSkin = (user as { mascotSkin?: string }).mascotSkin ?? 'explorer';
         token.email = user.email;
 
-        const plan = await ensureUserPlan(user.id, user.email);
-        token.plan = plan.plan;
-        token.accessStatus = plan.accessStatus;
-        token.isAdmin = isAdminEmail(user.email);
-      } else if (!token.plan && token.userId) {
-        const plan = await ensureUserPlan(token.userId, token.email ?? undefined);
-        token.plan = plan.plan;
-        token.accessStatus = plan.accessStatus;
-        token.isAdmin = isAdminEmail(token.email ?? undefined);
+        await syncPlan(token, user.id, user.email);
+      } else {
+        if (!token.userId && token.sub) {
+          token.userId = token.sub;
+        }
+
+        const email = resolveEmail(token, user, session);
+        if (email && token.email !== email) {
+          token.email = email;
+        }
+
+        if (token.userId && (!token.plan || !token.accessStatus || shouldSyncPlan(token))) {
+          await syncPlan(token, token.userId, email);
+        }
       }
 
       if (trigger === 'update' && session) {
@@ -82,18 +112,6 @@ export const authOptions: NextAuthOptions = {
         }
         if ((session as { mascotSkin?: string }).mascotSkin) {
           token.mascotSkin = (session as { mascotSkin?: string }).mascotSkin;
-        }
-        const planValue = (session as { plan?: string }).plan;
-        if (planValue === 'FREE' || planValue === 'PRO') {
-          token.plan = planValue;
-        }
-        const accessStatusValue = (session as { accessStatus?: string }).accessStatus;
-        if (
-          accessStatusValue === 'ACTIVE' ||
-          accessStatusValue === 'WAITLISTED' ||
-          accessStatusValue === 'SUSPENDED'
-        ) {
-          token.accessStatus = accessStatusValue;
         }
       }
 

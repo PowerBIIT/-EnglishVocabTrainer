@@ -392,7 +392,10 @@ Respond in ${getLanguageName(feedbackLanguage)}. Do not use emojis.`,
 };
 
 // Helper to safely parse JSON from AI response
-export function parseAIResponse<T>(response: string): T {
+export function parseAIResponse<T>(
+  response: string,
+  options?: { logErrors?: boolean }
+): T {
   let cleaned = response.trim();
 
   // Remove markdown code blocks (```json or ```)
@@ -416,12 +419,13 @@ export function parseAIResponse<T>(response: string): T {
   try {
     return JSON.parse(cleaned);
   } catch (parseError) {
-    if (process.env.NODE_ENV !== 'production') {
+    const shouldLog = options?.logErrors !== false;
+    if (shouldLog && process.env.NODE_ENV !== 'production') {
       // Log the problematic response for debugging
       console.error('Failed to parse Gemini response as JSON:');
       console.error('Original:', response);
       console.error('Cleaned:', cleaned);
-    } else {
+    } else if (shouldLog) {
       console.error('Failed to parse Gemini response as JSON.');
     }
     throw new Error(

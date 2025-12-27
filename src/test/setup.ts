@@ -53,6 +53,7 @@ vi.mock('next/navigation', () => ({
     refresh: vi.fn(),
   }),
   usePathname: vi.fn(() => '/'),
+  useSearchParams: vi.fn(() => new URLSearchParams()),
 }));
 
 vi.mock('next-auth/react', () => ({
