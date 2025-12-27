@@ -136,6 +136,26 @@ const onboardingCopy = {
 
 type OnboardingCopy = typeof onboardingCopy.pl;
 
+interface OnboardingFooterProps {
+  children: React.ReactNode;
+}
+
+function OnboardingFooter({ children }: OnboardingFooterProps) {
+  return (
+    <>
+      {/* Mobile fixed footer */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
+        <div className="flex gap-3 max-w-4xl mx-auto">
+          {children}
+        </div>
+      </div>
+      {/* Desktop inline buttons */}
+      <div className="hidden md:flex justify-end gap-3">
+        {children}
+      </div>
+    </>
+  );
+}
 
 export default function OnboardingPage() {
   const hydrated = useHydration();
@@ -368,28 +388,15 @@ export default function OnboardingPage() {
               <p className="text-xs text-slate-500">{t.choosePairHint}</p>
             </div>
 
-            <div className="hidden md:flex justify-end gap-3">
-              <Button variant="ghost" onClick={skipOnboarding}>
+            <OnboardingFooter>
+              <Button variant="ghost" onClick={skipOnboarding} className="md:flex-initial flex-1">
                 {t.skip}
               </Button>
-              <Button size="lg" onClick={() => setStep('skin')}>
+              <Button size="lg" onClick={() => setStep('skin')} className="md:flex-initial flex-1">
                 {t.choosePairAction}
               </Button>
-            </div>
+            </OnboardingFooter>
           </section>
-        )}
-
-        {step === 'pair' && (
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
-            <div className="flex gap-3 max-w-4xl mx-auto">
-              <Button variant="ghost" onClick={skipOnboarding} className="flex-1">
-                {t.skip}
-              </Button>
-              <Button size="lg" onClick={() => setStep('skin')} className="flex-1">
-                {t.choosePairAction}
-              </Button>
-            </div>
-          </div>
         )}
 
         {step === 'skin' && (
@@ -418,8 +425,8 @@ export default function OnboardingPage() {
               </div>
             </div>
 
-            <div className="hidden md:flex justify-end gap-3">
-              <Button variant="ghost" onClick={skipOnboarding}>
+            <OnboardingFooter>
+              <Button variant="ghost" onClick={skipOnboarding} className="md:flex-initial flex-1">
                 {t.skip}
               </Button>
               <Button
@@ -428,31 +435,12 @@ export default function OnboardingPage() {
                   await saveSkin();
                   setStep('words');
                 }}
+                className="md:flex-initial flex-1"
               >
                 {t.startMission}
               </Button>
-            </div>
+            </OnboardingFooter>
           </section>
-        )}
-
-        {step === 'skin' && (
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
-            <div className="flex gap-3 max-w-4xl mx-auto">
-              <Button variant="ghost" onClick={skipOnboarding} className="flex-1">
-                {t.skip}
-              </Button>
-              <Button
-                size="lg"
-                onClick={async () => {
-                  await saveSkin();
-                  setStep('words');
-                }}
-                className="flex-1"
-              >
-                {t.startMission}
-              </Button>
-            </div>
-          </div>
         )}
 
         {step === 'words' && (
@@ -478,25 +466,15 @@ export default function OnboardingPage() {
                 variant="onboarding"
                 minWords={MISSION_WORDS}
                 onWordsAdded={handleWordsAdded}
+                renderActions={(buttons) => (
+                  <OnboardingFooter>
+                    {buttons}
+                  </OnboardingFooter>
+                )}
               />
             </div>
 
-            <div className="hidden md:flex justify-end">
-              <Button variant="ghost" onClick={skipOnboarding}>
-                {t.skip}
-              </Button>
-            </div>
           </section>
-        )}
-
-        {step === 'words' && (
-          <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
-            <div className="flex gap-3 max-w-4xl mx-auto">
-              <Button variant="ghost" onClick={skipOnboarding} className="flex-1">
-                {t.skip}
-              </Button>
-            </div>
-          </div>
         )}
 
         {step === 'mission' && (

@@ -50,7 +50,8 @@ describe('KlasowkaPage', () => {
 
     expect(await screen.findByText('Zestaw gotowy')).toBeVisible();
 
-    await user.click(screen.getByRole('button', { name: 'Start quizu' }));
+    const startButtons = screen.getAllByRole('button', { name: 'Start quizu' });
+    await user.click(startButtons[0]);
     expect(push).toHaveBeenCalledWith('/quiz?setId=set-1');
   });
 });

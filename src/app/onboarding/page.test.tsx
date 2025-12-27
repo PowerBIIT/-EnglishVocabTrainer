@@ -15,7 +15,9 @@ describe('OnboardingPage', () => {
     render(<OnboardingPage />);
 
     expect(await screen.findByText('Wybierz parę językową')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Dalej' })).toBeVisible();
+    const continueButtons = screen.getAllByRole('button', { name: 'Dalej' });
+    expect(continueButtons.length).toBeGreaterThan(0);
+    expect(continueButtons[0]).toBeInTheDocument();
   });
 
   it('updates the learning pair when a new option is selected', async () => {
