@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, Flag, Sparkles } from 'lucide-react';
+import { CheckCircle2, Flag, Sparkles, Target } from 'lucide-react';
 import { mascotSkins } from '@/data/mascotSkins';
 import { MascotSkinCard } from '@/components/mascot/MascotSkinCard';
 import { Button } from '@/components/ui/Button';
@@ -23,7 +23,8 @@ import type { VocabularyItem } from '@/types';
 
 const MISSION_WORDS = 3;
 
-type Step = 'pair' | 'skin' | 'words' | 'mission' | 'done';
+type Step = 'pair' | 'goal' | 'skin' | 'words' | 'mission' | 'done';
+type OnboardingGoal = 'classTest' | 'daily';
 
 const detectPreferredLanguage = (): AppLanguage => {
   if (typeof navigator === 'undefined') return 'pl';
@@ -48,6 +49,14 @@ const onboardingCopy = {
     choosePairDesc: 'To ustawia język interfejsu, AI oraz kierunek nauki.',
     choosePairHint: 'Możesz zmienić później w profilu.',
     choosePairAction: 'Dalej',
+    chooseGoal: 'Wybierz cel nauki',
+    chooseGoalDesc: 'Dopasujemy tempo sesji i liczbę pytań.',
+    goalClassTest: 'Szybka klasówka',
+    goalClassTestDesc: 'Krótki quiz i szybkie powtórki przed sprawdzianem.',
+    goalDaily: 'Regularna nauka',
+    goalDailyDesc: 'Spokojniejsze tempo i równy rytm powtórek.',
+    goalHint: 'Możesz zmienić później w ustawieniach sesji.',
+    chooseGoalAction: 'Dalej',
     chooseSkin: 'Wybierz styl przewodnika',
     chooseSkinDesc: 'Twój mascot będzie prowadził misje i nagrody.',
     startMission: 'Zaczynamy misję',
@@ -80,6 +89,14 @@ const onboardingCopy = {
     choosePairDesc: 'This sets the interface language, AI feedback, and learning direction.',
     choosePairHint: 'You can change it later in profile.',
     choosePairAction: 'Continue',
+    chooseGoal: 'Pick a learning goal',
+    chooseGoalDesc: 'We will tune the session pace and question count.',
+    goalClassTest: 'Quick test prep',
+    goalClassTestDesc: 'Short quiz and fast review before a test.',
+    goalDaily: 'Regular learning',
+    goalDailyDesc: 'Steady pace and balanced review.',
+    goalHint: 'You can change it later in session settings.',
+    chooseGoalAction: 'Continue',
     chooseSkin: 'Choose your guide style',
     chooseSkinDesc: 'Your mascot will lead missions and rewards.',
     startMission: 'Start the mission',
@@ -112,6 +129,14 @@ const onboardingCopy = {
     choosePairDesc: 'Це задає мову інтерфейсу, фідбек AI та напрям навчання.',
     choosePairHint: 'Можеш змінити пізніше в профілі.',
     choosePairAction: 'Далі',
+    chooseGoal: 'Обери ціль навчання',
+    chooseGoalDesc: 'Налаштуємо темп сесій і кількість запитань.',
+    goalClassTest: 'Швидка контрольна',
+    goalClassTestDesc: 'Короткий квіз і швидкі повторення перед тестом.',
+    goalDaily: 'Регулярне навчання',
+    goalDailyDesc: 'Спокійний темп і рівні повторення.',
+    goalHint: 'Зможеш змінити пізніше в налаштуваннях сесій.',
+    chooseGoalAction: 'Далі',
     chooseSkin: 'Обери стиль провідника',
     chooseSkinDesc: 'Твій маскот веде місії та нагороди.',
     startMission: 'Почати місію',
@@ -167,6 +192,7 @@ export default function OnboardingPage() {
   const [selectedSkin, setSelectedSkin] = useState(session?.user?.mascotSkin || 'explorer');
   const [onboardingSetId, setOnboardingSetId] = useState<string | null>(null);
   const [onboardingSetName, setOnboardingSetName] = useState('');
+  const [goal, setGoal] = useState<OnboardingGoal>('classTest');
   const autoLanguageRef = useRef(false);
   const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
   const allVocabulary = useVocabStore((state) => state.vocabulary);
@@ -186,17 +212,9 @@ export default function OnboardingPage() {
     return vocabulary.slice(0, MISSION_WORDS);
   }, [onboardingSetId, vocabulary]);
 
-  const stepIndex =
-    step === 'pair'
-      ? 1
-      : step === 'skin'
-      ? 2
-      : step === 'words'
-      ? 3
-      : step === 'mission'
-      ? 4
-      : 5;
-  const totalSteps = 5;
+  const steps: Step[] = ['pair', 'goal', 'skin', 'words', 'mission', 'done'];
+  const stepIndex = steps.indexOf(step) + 1;
+  const totalSteps = steps.length;
 
   useEffect(() => {
     if (!hydrated || autoLanguageRef.current) return;
@@ -240,6 +258,40 @@ export default function OnboardingPage() {
 
     await update({ mascotSkin: selectedSkin });
   };
+
+  const applyGoalSettings = (selectedGoal: OnboardingGoal) => {
+    if (selectedGoal === 'classTest') {
+      updateSettings('session', {
+        quizQuestionCount: 5,
+        flashcardCount: 5,
+        timeLimit: 10,
+      });
+      return;
+    }
+
+    updateSettings('session', {
+      quizQuestionCount: 10,
+      flashcardCount: 10,
+      timeLimit: null,
+    });
+  };
+
+  const goalOptions: Array<{
+    id: OnboardingGoal;
+    label: string;
+    description: string;
+  }> = [
+    {
+      id: 'classTest',
+      label: t.goalClassTest,
+      description: t.goalClassTestDesc,
+    },
+    {
+      id: 'daily',
+      label: t.goalDaily,
+      description: t.goalDailyDesc,
+    },
+  ];
 
   const handleWordsAdded = (payload: {
     setId: string;
@@ -392,8 +444,71 @@ export default function OnboardingPage() {
               <Button variant="ghost" onClick={skipOnboarding} className="md:flex-initial flex-1">
                 {t.skip}
               </Button>
-              <Button size="lg" onClick={() => setStep('skin')} className="md:flex-initial flex-1">
+              <Button size="lg" onClick={() => setStep('goal')} className="md:flex-initial flex-1">
                 {t.choosePairAction}
+              </Button>
+            </OnboardingFooter>
+          </section>
+        )}
+
+        {step === 'goal' && (
+          <section className="space-y-6">
+            <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6 space-y-4">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                    {t.chooseGoal}
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {t.chooseGoalDesc}
+                  </p>
+                </div>
+                <Target className="text-primary-600" size={20} />
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                {goalOptions.map((option) => {
+                  const isSelected = option.id === goal;
+
+                  return (
+                    <button
+                      key={option.id}
+                      type="button"
+                      onClick={() => setGoal(option.id)}
+                      className={cn(
+                        'rounded-2xl border p-4 text-left transition-all',
+                        isSelected
+                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/40 shadow-lg'
+                          : 'border-slate-200 dark:border-slate-700 hover:border-primary-300'
+                      )}
+                    >
+                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        {option.label}
+                      </div>
+                      <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                        {option.description}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <p className="text-xs text-slate-500">{t.goalHint}</p>
+            </div>
+
+            <OnboardingFooter>
+              <Button variant="ghost" onClick={skipOnboarding} className="md:flex-initial flex-1">
+                {t.skip}
+              </Button>
+              <Button
+                size="lg"
+                onClick={() => {
+                  applyGoalSettings(goal);
+                  setStep('skin');
+                }}
+                className="md:flex-initial flex-1"
+              >
+                {t.chooseGoalAction}
               </Button>
             </OnboardingFooter>
           </section>

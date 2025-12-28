@@ -88,6 +88,17 @@ Oczekiwane:
 - CTA i pola są widoczne i klikalne.
 - Na podsumowaniu przyciski „Wróć” i „Start quizu” są widoczne bez nakładania.
 
+## TC-OB-00: Onboarding – wybór celu nauki
+Kroki:
+1) Przejdź onboarding do kroku „Wybierz cel nauki”.
+2) Zaznacz „Szybka klasówka”.
+3) Kliknij „Dalej” i przejdź dalej do kolejnych kroków.
+Oczekiwane:
+- Wybrana karta jest wyróżniona.
+- Po zakończeniu onboardingu w /profile#settings widzisz ustawione: Quiz = 5 pytań, Fiszki = 5, Limit czasu = 10s.
+Alternatywa:
+- Wybierz „Regularna nauka” → po onboardingu Quiz = 10 pytań, Fiszki = 10, Limit czasu = brak.
+
 ## TC-OB-01: Onboarding krok 3 – „Pomiń” na mobile
 Kroki:
 1) Włącz viewport 390x844.
