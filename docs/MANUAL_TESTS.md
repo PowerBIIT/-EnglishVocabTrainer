@@ -122,6 +122,13 @@ Oczekiwane:
 - Na ekranie „Sesja zakończona!” widać sekcję „Gotowość do kartkówki”.
 - Wartość procentowa i zmiana (np. „Zmiana +8%”) są widoczne.
 
+## TC-PR-03: AI podsumowanie wymowy
+Kroki:
+1) Na ekranie „Sesja zakończona!” kliknij „Podsumuj z AI”.
+Oczekiwane:
+- Pojawia się krótki tekst podsumowania i 2 krótkie wskazówki.
+- UI nie jest przeładowany (brak dodatkowych dużych bloków).
+
 ## TC-OB-00: Onboarding – wybór celu nauki
 Kroki:
 1) Przejdź onboarding do kroku „Wybierz cel nauki”.
@@ -167,6 +174,7 @@ Oczekiwane:
 - Content w kroku 3 zasłonięty przez fixed footer.
 - „Wymowa 3 min” nie ustawia parametrów sesji (focus/length/set).
 - Brak „Gotowość do kartkówki” po zakończeniu sesji wymowy.
+- Brak „AI podsumowanie” po kliknięciu „Podsumuj z AI”.
 
 ## Sprzątanie (opcjonalnie)
 - Wejdź w `/vocabulary`, zaznacz dodane słówka i usuń, aby oczyścić konto testowe.

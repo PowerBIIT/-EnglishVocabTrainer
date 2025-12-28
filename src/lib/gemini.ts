@@ -227,6 +227,57 @@ Respond ONLY in JSON (no markdown):
   "nativeInterference": "<optional: note about native language influence if detected>"
 }`,
 
+  pronunciationSummary: ({
+    averageScore,
+    passingScore,
+    focusMode,
+    targetLanguage,
+    nativeLanguage,
+    feedbackLanguage,
+    words,
+  }: {
+    averageScore: number;
+    passingScore: number;
+    focusMode: string;
+    targetLanguage: TargetLanguage;
+    nativeLanguage: NativeLanguage;
+    feedbackLanguage: FeedbackLanguage;
+    words: Array<{ word: string; phonetic?: string; score?: number | null }>;
+  }) => {
+    const wordLines = words
+      .map((item) => {
+        const scoreLabel =
+          typeof item.score === 'number' ? item.score.toFixed(1) : 'n/a';
+        const phonetic = item.phonetic ? ` IPA: ${item.phonetic}` : '';
+        return `- ${item.word} (${scoreLabel}/10)${phonetic}`;
+      })
+      .join('\n');
+
+    return `
+${SAFETY_RULES}
+
+You are a pronunciation coach. The learner's native language is ${getLanguageName(nativeLanguage)}.
+They are practicing ${getLanguageName(targetLanguage)} pronunciation.
+
+Session focus: ${focusMode}
+Average score: ${averageScore.toFixed(1)}/10 (passing: ${passingScore}/10)
+
+Words and scores:
+${wordLines}
+
+TASK: Provide a very short summary in ${getLanguageName(feedbackLanguage)} and 2 short tips.
+
+Constraints:
+- Summary: max 2 sentences, supportive tone, no emojis.
+- Tips: exactly 2 items, each max 6 words.
+
+Respond ONLY in JSON (no markdown):
+{
+  "summary": "<short summary>",
+  "tips": ["<tip 1>", "<tip 2>"]
+}`;
+  },
+
   generateWords: (
     topic: string,
     count: number,

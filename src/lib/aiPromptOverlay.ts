@@ -11,6 +11,7 @@ export const PROMPT_OVERLAY_KEYS: Record<PromptId, string> = {
   'tutor-chat': 'GEMINI_PROMPT_OVERLAY_TUTOR_CHAT',
   'explain-word': 'GEMINI_PROMPT_OVERLAY_EXPLAIN_WORD',
   'evaluate-pronunciation': 'GEMINI_PROMPT_OVERLAY_EVALUATE_PRONUNCIATION',
+  'pronunciation-summary': 'GEMINI_PROMPT_OVERLAY_PRONUNCIATION_SUMMARY',
 };
 
 const normalizeOverlay = (value: string | null) => {

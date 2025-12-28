@@ -101,6 +101,14 @@ const pronunciationCopy = {
     averageScore: (score: number) => `Średnia ocena: ${score.toFixed(1)}/10`,
     readinessTitle: 'Gotowość do kartkówki',
     readinessDelta: (delta: string) => `Zmiana ${delta}`,
+    aiSummaryTitle: 'AI podsumowanie',
+    aiSummaryAction: 'Podsumuj z AI',
+    aiSummaryLoading: 'AI podsumowuje...',
+    aiSummaryGood: 'Wymowa jest czytelna i stabilna.',
+    aiSummaryNeedsWork: 'Wymowa jeszcze nie jest stabilna — powtórz słabsze słowa.',
+    aiSummaryTipWeak: (words: string) => `Powtórz: ${words}.`,
+    aiSummaryTipMaintain: 'Utrzymaj rytm: 5 słów dziennie.',
+    aiSummaryTipListen: 'Odsłuchaj wzorzec i powtórz.',
     wordsLabel: 'Słowa',
     goodPronunciation: 'Dobra wymowa',
     xpEarned: 'XP zdobyte',
@@ -185,6 +193,14 @@ const pronunciationCopy = {
     averageScore: (score: number) => `Average score: ${score.toFixed(1)}/10`,
     readinessTitle: 'Test readiness',
     readinessDelta: (delta: string) => `Change ${delta}`,
+    aiSummaryTitle: 'AI summary',
+    aiSummaryAction: 'Summarize with AI',
+    aiSummaryLoading: 'AI summarizing...',
+    aiSummaryGood: 'Your pronunciation is clear and stable.',
+    aiSummaryNeedsWork: 'Pronunciation isn’t stable yet — repeat weaker words.',
+    aiSummaryTipWeak: (words: string) => `Repeat: ${words}.`,
+    aiSummaryTipMaintain: 'Keep the rhythm: 5 words a day.',
+    aiSummaryTipListen: 'Listen to the model and repeat.',
     wordsLabel: 'Words',
     goodPronunciation: 'Good pronunciations',
     xpEarned: 'XP earned',
@@ -270,6 +286,14 @@ const pronunciationCopy = {
     averageScore: (score: number) => `Середня оцінка: ${score.toFixed(1)}/10`,
     readinessTitle: 'Готовність до контрольної',
     readinessDelta: (delta: string) => `Зміна ${delta}`,
+    aiSummaryTitle: 'AI підсумок',
+    aiSummaryAction: 'Підсумуй з AI',
+    aiSummaryLoading: 'AI підсумовує...',
+    aiSummaryGood: 'Вимова чітка й стабільна.',
+    aiSummaryNeedsWork: 'Вимова ще нестабільна — повтори слабші слова.',
+    aiSummaryTipWeak: (words: string) => `Повтори: ${words}.`,
+    aiSummaryTipMaintain: 'Тримай ритм: 5 слів на день.',
+    aiSummaryTipListen: 'Послухай зразок і повтори.',
     wordsLabel: 'Слова',
     goodPronunciation: 'Добра вимова',
     xpEarned: 'XP отримано',
@@ -365,6 +389,8 @@ export default function PronunciationPage() {
     readiness: number;
     delta: number;
   } | null>(null);
+  const [aiSummary, setAiSummary] = useState<{ summary: string; tips: string[] } | null>(null);
+  const [aiSummaryStatus, setAiSummaryStatus] = useState<'idle' | 'loading'>('idle');
 
   // Session config
   const [selectedLength, setSelectedLength] = useState<number>(10);
@@ -421,6 +447,70 @@ export default function PronunciationPage() {
     () => vocabulary.filter((word) => (word.setIds ?? []).length === 0).length,
     [vocabulary]
   );
+
+  const buildSummaryWords = () =>
+    sessionWords.map((word, index) => ({
+      word: getTargetText(word),
+      phonetic: word.phonetic,
+      score: typeof scores[index] === 'number' ? scores[index] : null,
+    }));
+
+  const buildLocalSummary = () => {
+    const summaryWords = buildSummaryWords().filter(
+      (item) => typeof item.score === 'number'
+    ) as Array<{ word: string; score: number }>;
+    const weakWords = summaryWords
+      .filter((item) => item.score < passingScore)
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 2)
+      .map((item) => item.word);
+    const summary =
+      avgScore >= passingScore ? t.aiSummaryGood : t.aiSummaryNeedsWork;
+    const tips = [
+      weakWords.length > 0
+        ? t.aiSummaryTipWeak(weakWords.join(', '))
+        : t.aiSummaryTipMaintain,
+      t.aiSummaryTipListen,
+    ];
+
+    return { summary, tips };
+  };
+
+  const requestAiSummary = async () => {
+    if (aiSummaryStatus === 'loading' || sessionWords.length === 0) return;
+    setAiSummaryStatus('loading');
+    try {
+      const response = await fetch('/api/ai/pronunciation-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          averageScore: avgScore,
+          passingScore,
+          focusMode: selectedFocusMode,
+          targetLanguage: activePair.target,
+          nativeLanguage: activePair.native,
+          feedbackLanguage: settings.ai.feedbackLanguage,
+          words: buildSummaryWords(),
+        }),
+      });
+      const data = await response.json().catch(() => null);
+      if (response.ok && data?.summary) {
+        setAiSummary({
+          summary: String(data.summary).trim(),
+          tips: Array.isArray(data.tips)
+            ? data.tips.filter((tip: unknown) => typeof tip === 'string').slice(0, 2)
+            : [],
+        });
+      } else {
+        setAiSummary(buildLocalSummary());
+      }
+    } catch (error) {
+      console.error('AI summary error:', error);
+      setAiSummary(buildLocalSummary());
+    } finally {
+      setAiSummaryStatus('idle');
+    }
+  };
 
   const filterBySet = useCallback(
     (words: VocabularyItem[]) => {
@@ -512,6 +602,9 @@ export default function PronunciationPage() {
     setResult(null);
     setRecognizedText('');
     setRecordingStatus('');
+    setReadinessSnapshot(null);
+    setAiSummary(null);
+    setAiSummaryStatus('idle');
     setSessionState('practice');
   };
 
@@ -1244,6 +1337,40 @@ export default function PronunciationPage() {
             </span>
           </p>
 
+          {aiSummary ? (
+            <div className="text-left mb-6">
+              <p className="text-xs uppercase tracking-wide text-slate-500">
+                {t.aiSummaryTitle}
+              </p>
+              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                {aiSummary.summary}
+              </p>
+              {aiSummary.tips.length > 0 && (
+                <ul className="mt-2 text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                  {aiSummary.tips.map((tip, index) => (
+                    <li key={`${tip}-${index}`} className="flex gap-2">
+                      <span className="text-slate-400">•</span>
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : (
+            <div className="flex justify-center mb-6">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={requestAiSummary}
+                disabled={aiSummaryStatus === 'loading'}
+              >
+                {aiSummaryStatus === 'loading'
+                  ? t.aiSummaryLoading
+                  : t.aiSummaryAction}
+              </Button>
+            </div>
+          )}
+
           {/* Session stats */}
           <div className="grid grid-cols-1 gap-4 mb-6 text-left sm:grid-cols-2">
             <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
@@ -1277,6 +1404,9 @@ export default function PronunciationPage() {
             <Button
               onClick={() => {
                 stopRecognition(true);
+                setAiSummary(null);
+                setAiSummaryStatus('idle');
+                setReadinessSnapshot(null);
                 setSessionState('setup');
               }}
             >

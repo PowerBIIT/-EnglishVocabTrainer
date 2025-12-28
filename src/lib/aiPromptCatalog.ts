@@ -68,6 +68,25 @@ const PROMPT_CATALOG = [
         feedbackLanguage: 'pl',
       }),
   },
+  {
+    id: 'pronunciation-summary',
+    label: 'Pronunciation summary',
+    description: 'Summarizes a pronunciation session with short tips.',
+    build: () =>
+      AI_PROMPTS.pronunciationSummary({
+        averageScore: 7.4,
+        passingScore: 7,
+        focusMode: 'new_words',
+        targetLanguage: 'en',
+        nativeLanguage: 'pl',
+        feedbackLanguage: 'pl',
+        words: [
+          { word: 'school', phonetic: '/skuːl/', score: 8 },
+          { word: 'homework', phonetic: '/ˈhəʊmwɜːk/', score: 6 },
+          { word: 'teacher', phonetic: '/ˈtiːtʃər/', score: 7 },
+        ],
+      }),
+  },
 ] as const satisfies PromptCatalogItem[];
 
 export type PromptId = (typeof PROMPT_CATALOG)[number]['id'];
