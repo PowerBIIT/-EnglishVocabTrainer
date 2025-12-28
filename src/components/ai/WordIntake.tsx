@@ -460,6 +460,7 @@ interface WordIntakeProps {
   }) => void;
   className?: string;
   renderActions?: (buttons: React.ReactNode) => React.ReactNode;
+  compact?: boolean;
 }
 
 const isSupportedFile = (file: File) => {
@@ -476,6 +477,7 @@ export function WordIntake({
   onWordsAdded,
   className,
   renderActions,
+  compact,
 }: WordIntakeProps) {
   const language = useLanguage();
   const t = (wordIntakeCopy[language] ?? wordIntakeCopy.pl) as IntakeCopy;
@@ -493,6 +495,7 @@ export function WordIntake({
     `${examplePair.target} - ${examplePair.native}`
   );
   const dateLocale = language === 'en' ? 'en-US' : language === 'uk' ? 'uk-UA' : 'pl-PL';
+  const isCompact = Boolean(compact && variant === 'onboarding');
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -1367,8 +1370,14 @@ export function WordIntake({
   }
 
   return (
-    <div className={cn('grid gap-6 md:grid-cols-[1.2fr_1fr] pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0', className)}>
-      <div className="space-y-4">
+    <div
+      className={cn(
+        'grid md:grid-cols-[1.2fr_1fr] pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0',
+        isCompact ? 'gap-4' : 'gap-6',
+        className
+      )}
+    >
+      <div className={cn('space-y-4', isCompact && 'space-y-3')}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-amber-400 flex items-center justify-center">
             <Wand2 size={20} className="text-white" />
@@ -1381,7 +1390,14 @@ export function WordIntake({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-4 max-h-64 overflow-y-auto space-y-3">
+        <div
+          className={cn(
+            'rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 overflow-y-auto',
+            isCompact
+              ? 'p-3 max-h-32 sm:max-h-64 space-y-2'
+              : 'p-4 max-h-64 space-y-3'
+          )}
+        >
           {messages.map((message) => (
             <div
               key={message.id}
@@ -1415,8 +1431,8 @@ export function WordIntake({
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="space-y-3">
-          <div className="flex flex-wrap gap-2">
+        <div className={cn('space-y-3', isCompact && 'space-y-2')}>
+          <div className={cn('flex flex-wrap gap-2', isCompact && 'gap-1.5')}>
             {t.quickActions.map((action) => (
               <button
                 key={action.label}
@@ -1427,8 +1443,10 @@ export function WordIntake({
               </button>
             ))}
           </div>
-              <p className="text-xs text-slate-500">{t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}</p>
-          <div className="flex gap-2">
+          <p className={cn('text-xs text-slate-500', isCompact && 'leading-snug')}>
+            {t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}
+          </p>
+          <div className={cn('flex gap-2', isCompact && 'gap-1.5')}>
             <input
               ref={imageInputRef}
               type="file"
@@ -1482,8 +1500,13 @@ export function WordIntake({
         </div>
       </div>
 
-      <div className="space-y-4">
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4 space-y-3">
+      <div className={cn('space-y-4', isCompact && 'space-y-3')}>
+        <div
+          className={cn(
+            'rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800',
+            isCompact ? 'p-3 space-y-2' : 'p-4 space-y-3'
+          )}
+        >
           <p className="text-xs text-slate-500">{selectionHint}</p>
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span>{t.selectedCount(selectedWordCount)}</span>
@@ -1535,7 +1558,14 @@ export function WordIntake({
           </div>
         </div>
 
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 space-y-2 max-h-64 overflow-y-auto">
+        <div
+          className={cn(
+            'rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 overflow-y-auto',
+            isCompact
+              ? 'p-2.5 space-y-2 max-h-40 sm:max-h-64'
+              : 'p-3 space-y-2 max-h-64'
+          )}
+        >
           {parsedWords.length === 0 ? (
             <p className="text-sm text-slate-500">{selectionHint}</p>
           ) : (
@@ -1582,11 +1612,19 @@ export function WordIntake({
         {renderActions ? (
           renderActions(
             <>
-              <Button variant="secondary" onClick={cancelWords} className="md:flex-initial flex-1">
+              <Button
+                variant="secondary"
+                onClick={cancelWords}
+                className="md:flex-initial flex-1 min-w-[140px]"
+              >
                 <X size={18} className="mr-2" />
                 {t.cancel}
               </Button>
-              <Button onClick={addSelectedWords} className="md:flex-initial flex-1" disabled={!canAddWords}>
+              <Button
+                onClick={addSelectedWords}
+                className="md:flex-initial flex-1 min-w-[140px]"
+                disabled={!canAddWords}
+              >
                 <Plus size={18} className="mr-2" />
                 {addLabel}
               </Button>

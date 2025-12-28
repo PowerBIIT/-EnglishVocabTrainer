@@ -8,6 +8,7 @@ bez błędów 500 z `/api/ai/parse-text` i z poprawną preselekcją zestawu w qu
 - CTA „Klasówka w 5 min” na stronie głównej.
 - Flow `/klasowka` (dodanie słówek → podsumowanie → start quizu).
 - Preselekcja zestawu w `/quiz` przez `setId` w URL.
+- Onboarding krok 3 na mobile (przycisk „Pomiń”, brak zasłaniania contentu).
 - Układ mobilny (390x844).
 
 ## Wymagania wstępne
@@ -34,6 +35,13 @@ bez błędów 500 z `/api/ai/parse-text` i z poprawną preselekcją zestawu w qu
 Użyj dokładnie tych 8 par:
 ```
 aa - bb, cc - dd, ff - hh, ii - kk, ll - mm, pp - qq, xx - aa, bb - cc
+```
+
+## Dane testowe (12 par, onboarding)
+Użyj do testów kroku 3:
+```
+alpha - alfa, beta - beta, gamma - gamma, delta - delta, epsilon - epsilon, zeta - zeta,
+eta - eta, theta - theta, iota - iota, kappa - kappa, lambda - lambda, omega - omega
 ```
 
 ## Narzędzia (DevTools)
@@ -80,11 +88,38 @@ Oczekiwane:
 - CTA i pola są widoczne i klikalne.
 - Na podsumowaniu przyciski „Wróć” i „Start quizu” są widoczne bez nakładania.
 
+## TC-OB-01: Onboarding krok 3 – „Pomiń” na mobile
+Kroki:
+1) Włącz viewport 390x844.
+2) Przejdź onboarding do kroku „Dodaj pierwszy zestaw słówek”.
+3) Sprawdź dolny fixed footer.
+Oczekiwane:
+- Przycisk „Pomiń” jest widoczny w footerze.
+- W footerze są widoczne 3 akcje: „Pomiń”, „Anuluj”, „Dodaj”.
+
+## TC-OB-02: Onboarding krok 3 – footer nie zasłania contentu
+Kroki:
+1) W kroku 3 wklej 12 par z sekcji „Dane testowe (12 par, onboarding)”.
+2) Przewiń do listy słówek (na końcu).
+Oczekiwane:
+- Ostatnie elementy listy są w pełni widoczne (nie pod stopką).
+- Footer nie nachodzi na interaktywne elementy.
+
+## TC-OB-03: Onboarding krok 3 – układ kompaktowy
+Kroki:
+1) W kroku 3 oceń gęstość UI (panele wiadomości i lista słówek).
+2) Dodaj 12 par i sprawdź długość scrolla.
+Oczekiwane:
+- Panele mają własne, ograniczone wysokości i własny scroll.
+- Przewijanie strony jest zauważalnie krótsze niż przed zmianą.
+
 ## Kryteria FAIL
 - 500 z `/api/ai/parse-text` w Network/Console.
 - Brak preselekcji zestawu w quizie.
 - Brak CTA lub brak przejścia na `/klasowka`.
 - Widoczne błędy JS w Console.
+- Brak przycisku „Pomiń” w kroku 3 na mobile.
+- Content w kroku 3 zasłonięty przez fixed footer.
 
 ## Sprzątanie (opcjonalnie)
 - Wejdź w `/vocabulary`, zaznacz dodane słówka i usuń, aby oczyścić konto testowe.

@@ -145,7 +145,7 @@ function OnboardingFooter({ children }: OnboardingFooterProps) {
     <>
       {/* Mobile fixed footer */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
-        <div className="flex gap-3 max-w-4xl mx-auto">
+        <div className="flex flex-wrap gap-3 max-w-4xl mx-auto">
           {children}
         </div>
       </div>
@@ -444,8 +444,8 @@ export default function OnboardingPage() {
         )}
 
         {step === 'words' && (
-          <section className="space-y-6">
-            <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6 space-y-6">
+          <section className="space-y-4 sm:space-y-6">
+            <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-4 sm:p-6 space-y-4 sm:space-y-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-semibold text-slate-800 dark:text-slate-100">
@@ -466,8 +466,17 @@ export default function OnboardingPage() {
                 variant="onboarding"
                 minWords={MISSION_WORDS}
                 onWordsAdded={handleWordsAdded}
+                className="pb-[calc(6rem+env(safe-area-inset-bottom))] md:pb-0"
+                compact
                 renderActions={(buttons) => (
                   <OnboardingFooter>
+                    <Button
+                      variant="ghost"
+                      onClick={skipOnboarding}
+                      className="md:flex-initial flex-1 min-w-[140px]"
+                    >
+                      {t.skip}
+                    </Button>
                     {buttons}
                   </OnboardingFooter>
                 )}
