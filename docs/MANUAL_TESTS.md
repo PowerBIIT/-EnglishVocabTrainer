@@ -128,6 +128,7 @@ Kroki:
 Oczekiwane:
 - Pojawia się krótki tekst podsumowania i 2 krótkie wskazówki.
 - UI nie jest przeładowany (brak dodatkowych dużych bloków).
+- Jeśli AI jest niedostępne, pojawia się lokalny fallback (to jest OK).
 
 ## TC-OB-00: Onboarding – wybór celu nauki
 Kroki:

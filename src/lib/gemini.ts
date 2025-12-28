@@ -268,8 +268,8 @@ ${wordLines}
 TASK: Provide a very short summary in ${getLanguageName(feedbackLanguage)} and 2 short tips.
 
 Constraints:
-- Summary: max 2 sentences, supportive tone, no emojis.
-- Tips: exactly 2 items, each max 6 words.
+- Summary: exactly 1 sentence, supportive tone, no emojis.
+- Tips: exactly 2 items, each max 5 words.
 
 Respond ONLY in JSON (no markdown):
 {
