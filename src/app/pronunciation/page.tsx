@@ -99,6 +99,8 @@ const pronunciationCopy = {
     phonemeDrills: 'Ćwiczenia fonemów (angielski)',
     sessionComplete: 'Sesja zakończona!',
     averageScore: (score: number) => `Średnia ocena: ${score.toFixed(1)}/10`,
+    readinessTitle: 'Gotowość do kartkówki',
+    readinessDelta: (delta: string) => `Zmiana ${delta}`,
     wordsLabel: 'Słowa',
     goodPronunciation: 'Dobra wymowa',
     xpEarned: 'XP zdobyte',
@@ -181,6 +183,8 @@ const pronunciationCopy = {
     phonemeDrills: 'Phoneme drills (English)',
     sessionComplete: 'Session complete!',
     averageScore: (score: number) => `Average score: ${score.toFixed(1)}/10`,
+    readinessTitle: 'Test readiness',
+    readinessDelta: (delta: string) => `Change ${delta}`,
     wordsLabel: 'Words',
     goodPronunciation: 'Good pronunciations',
     xpEarned: 'XP earned',
@@ -264,6 +268,8 @@ const pronunciationCopy = {
     phonemeDrills: 'Вправи фонемів (англійська)',
     sessionComplete: 'Сесію завершено!',
     averageScore: (score: number) => `Середня оцінка: ${score.toFixed(1)}/10`,
+    readinessTitle: 'Готовність до контрольної',
+    readinessDelta: (delta: string) => `Зміна ${delta}`,
     wordsLabel: 'Слова',
     goodPronunciation: 'Добра вимова',
     xpEarned: 'XP отримано',
@@ -355,6 +361,10 @@ export default function PronunciationPage() {
   const [recognizedText, setRecognizedText] = useState<string>('');
   const [selectedSetId, setSelectedSetId] = useState<'all' | 'unassigned' | string>('all');
   const [appliedParams, setAppliedParams] = useState(false);
+  const [readinessSnapshot, setReadinessSnapshot] = useState<{
+    readiness: number;
+    delta: number;
+  } | null>(null);
 
   // Session config
   const [selectedLength, setSelectedLength] = useState<number>(10);
@@ -569,6 +579,15 @@ export default function PronunciationPage() {
 
   const finishSession = useCallback(() => {
     stopRecognition(true);
+    const readinessPercent = Math.min(100, Math.max(0, Math.round(avgScore * 10)));
+    const previousReadiness = Math.min(
+      100,
+      Math.max(0, Math.round((stats.averagePronunciationScore || 0) * 10))
+    );
+    setReadinessSnapshot({
+      readiness: readinessPercent,
+      delta: readinessPercent - previousReadiness,
+    });
     updatePronunciationStreak();
     completePronunciationSession({
       sessionId: Date.now().toString(),
@@ -590,6 +609,7 @@ export default function PronunciationPage() {
     selectedFocusMode,
     selectedPhoneme,
     sessionWords.length,
+    stats.averagePronunciationScore,
     stopRecognition,
     updatePronunciationStreak,
   ]);
@@ -1190,6 +1210,10 @@ export default function PronunciationPage() {
 
   // COMPLETE SCREEN
   if (sessionState === 'complete') {
+    const readinessPercent =
+      readinessSnapshot?.readiness ?? Math.min(100, Math.max(0, Math.round(avgScore * 10)));
+    const readinessDelta = readinessSnapshot?.delta ?? 0;
+    const readinessDeltaLabel = `${readinessDelta >= 0 ? '+' : ''}${readinessDelta}%`;
     return (
       <div className="p-4 space-y-6 max-w-2xl mx-auto">
         <Card variant="elevated" className="text-center p-8">
@@ -1203,6 +1227,27 @@ export default function PronunciationPage() {
             {t.averageScore(avgScore)}
           </p>
           <div className="flex justify-center gap-2 mb-6">{getScoreStars(avgScore)}</div>
+
+          <div className="rounded-2xl border border-amber-200/70 dark:border-amber-400/40 bg-amber-50/70 dark:bg-amber-900/20 p-4 mb-6 text-left">
+            <p className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">
+              {t.readinessTitle}
+            </p>
+            <div className="mt-2 flex items-baseline justify-between">
+              <p className="text-2xl font-bold text-amber-700 dark:text-amber-200">
+                {readinessPercent}%
+              </p>
+              <p
+                className={cn(
+                  'text-sm font-semibold',
+                  readinessDelta >= 0
+                    ? 'text-success-600 dark:text-success-400'
+                    : 'text-error-600 dark:text-error-400'
+                )}
+              >
+                {t.readinessDelta(readinessDeltaLabel)}
+              </p>
+            </div>
+          </div>
 
           {/* Session stats */}
           <div className="grid grid-cols-1 gap-4 mb-6 text-left sm:grid-cols-2">

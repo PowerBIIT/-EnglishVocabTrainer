@@ -2,12 +2,15 @@
 
 ## Cel
 Zweryfikować, że flow „Klasówka” działa end‑to‑end (desktop i mobile),
-bez błędów 500 z `/api/ai/parse-text` i z poprawną preselekcją zestawu w quizie.
+bez błędów 500 z `/api/ai/parse-text`, z poprawną preselekcją zestawu w quizie
+i z szybkim startem wymowy.
 
 ## Zakres
 - CTA „Klasówka w 5 min” na stronie głównej.
 - Flow `/klasowka` (dodanie słówek → podsumowanie → start quizu).
 - Preselekcja zestawu w `/quiz` przez `setId` w URL.
+- CTA „Wymowa” na home (kontekst: słabe/nowe słowa).
+- Preselekcja sesji w `/pronunciation` przez `setId`, `focus`, `length`.
 - Onboarding krok 3 na mobile (przycisk „Pomiń”, brak zasłaniania contentu).
 - Układ mobilny (390x844).
 
@@ -27,9 +30,10 @@ bez błędów 500 z `/api/ai/parse-text` i z poprawną preselekcją zestawu w qu
 
 ## Gdy pojawia się onboarding
 1) Wybierz parę językową (np. Polski → Angielski).
-2) Wybierz dowolny styl przewodnika.
-3) Dodaj minimalny zestaw słówek, dokończ misję.
-4) Po ukończeniu wróć do `/`.
+2) Wybierz cel nauki (np. „Szybka klasówka”).
+3) Wybierz dowolny styl przewodnika.
+4) Dodaj minimalny zestaw słówek, dokończ misję.
+5) Po ukończeniu wróć do `/`.
 
 ## Dane testowe (8 par)
 Użyj dokładnie tych 8 par:
@@ -95,6 +99,29 @@ Oczekiwane:
 - CTA i pola są widoczne i klikalne.
 - Na podsumowaniu przyciski „Wróć” i „Start quizu” są widoczne bez nakładania.
 
+## TC-HM-PR-01: Karta „Wymowa” na home
+Kroki:
+1) Wejdź na `/`.
+2) Znajdź kartę „Wymowa”.
+3) Kliknij kartę.
+Oczekiwane:
+- Karta pokazuje kontekst (np. „Słabe słowa: X” lub „Nowe słowa: szybka rozgrzewka”).
+- Przejście do `/pronunciation` z `focus` i `length=5`.
+
+## TC-PR-01: Parametry w `/pronunciation`
+Kroki:
+1) Wejdź na `/pronunciation?focus=new_words&length=5`.
+Oczekiwane:
+- Wybrany tryb ćwiczeń: „Nowe słowa”.
+- Długość sesji ustawiona na 5.
+
+## TC-PR-02: Podsumowanie wymowy – gotowość do kartkówki
+Kroki:
+1) Rozpocznij sesję wymowy i zakończ ją.
+Oczekiwane:
+- Na ekranie „Sesja zakończona!” widać sekcję „Gotowość do kartkówki”.
+- Wartość procentowa i zmiana (np. „Zmiana +8%”) są widoczne.
+
 ## TC-OB-00: Onboarding – wybór celu nauki
 Kroki:
 1) Przejdź onboarding do kroku „Wybierz cel nauki”.
@@ -139,6 +166,7 @@ Oczekiwane:
 - Brak przycisku „Pomiń” w kroku 3 na mobile.
 - Content w kroku 3 zasłonięty przez fixed footer.
 - „Wymowa 3 min” nie ustawia parametrów sesji (focus/length/set).
+- Brak „Gotowość do kartkówki” po zakończeniu sesji wymowy.
 
 ## Sprzątanie (opcjonalnie)
 - Wejdź w `/vocabulary`, zaznacz dodane słówka i usuń, aby oczyścić konto testowe.
