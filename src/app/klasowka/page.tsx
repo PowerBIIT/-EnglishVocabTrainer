@@ -116,7 +116,7 @@ export default function KlasowkaPage() {
   };
 
   return (
-    <div className="min-h-screen px-4 py-10 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-10">
+    <div className="min-h-screen px-4 py-10 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-10 overflow-x-hidden">
       <div className="mx-auto w-full max-w-5xl space-y-8">
         <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-start gap-4">
@@ -152,7 +152,7 @@ export default function KlasowkaPage() {
         {summary ? (
           <>
             <Card className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl">
-              <CardContent className="p-6 space-y-6">
+              <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-wide text-slate-500">
@@ -229,7 +229,7 @@ export default function KlasowkaPage() {
           </>
         ) : (
           <Card className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl">
-            <CardContent className="p-6 space-y-6">
+            <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-semibold text-slate-800 dark:text-slate-100">

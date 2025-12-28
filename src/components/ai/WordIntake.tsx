@@ -1373,11 +1373,11 @@ export function WordIntake({
     <div
       className={cn(
         'grid md:grid-cols-[1.2fr_1fr] pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0',
-        isCompact ? 'gap-4' : 'gap-6',
+        isCompact ? 'gap-3 sm:gap-4' : 'gap-4 sm:gap-6',
         className
       )}
     >
-      <div className={cn('space-y-4', isCompact && 'space-y-3')}>
+      <div className={cn('min-w-0 space-y-4', isCompact && 'space-y-3')}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-amber-400 flex items-center justify-center">
             <Wand2 size={20} className="text-white" />
@@ -1446,7 +1446,7 @@ export function WordIntake({
           <p className={cn('text-xs text-slate-500', isCompact && 'leading-snug')}>
             {t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}
           </p>
-          <div className={cn('flex gap-2', isCompact && 'gap-1.5')}>
+          <div className={cn('flex gap-2 min-w-0', isCompact && 'gap-1.5')}>
             <input
               ref={imageInputRef}
               type="file"
@@ -1457,7 +1457,7 @@ export function WordIntake({
             <button
               onClick={() => imageInputRef.current?.click()}
               disabled={isProcessing}
-              className="p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
+              className="p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
               title={t.imageButtonTitle}
             >
               <ImageIcon size={20} />
@@ -1473,7 +1473,7 @@ export function WordIntake({
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing}
-              className="p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
+              className="p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
               title={t.fileButtonTitle}
             >
               <FileText size={20} />
@@ -1486,13 +1486,13 @@ export function WordIntake({
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSend()}
               placeholder={t.inputPlaceholder}
-              className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               disabled={isProcessing}
             />
             <Button
               onClick={handleSend}
               disabled={!input.trim() || isProcessing}
-              className="px-4"
+              className="px-3 sm:px-4"
             >
               <Send size={18} />
             </Button>
@@ -1500,7 +1500,7 @@ export function WordIntake({
         </div>
       </div>
 
-      <div className={cn('space-y-4', isCompact && 'space-y-3')}>
+      <div className={cn('min-w-0 space-y-4', isCompact && 'space-y-3')}>
         <div
           className={cn(
             'rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800',

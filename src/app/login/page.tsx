@@ -94,6 +94,8 @@ const languageOptions = [
   },
 ] as const;
 
+const isEnvEnabled = (value?: string) => value === 'true' || value === '1';
+
 function FlagIcon({ src, fallback }: { src: string; fallback: string }) {
   const [useFallback, setUseFallback] = useState(false);
 
@@ -127,7 +129,7 @@ export default function LoginPage() {
   const updateSettings = useVocabStore((state) => state.updateSettings);
   const t = (loginCopy[language] ?? loginCopy.pl) as LoginCopy;
   const isE2E =
-    process.env.NEXT_PUBLIC_E2E_TEST === 'true' &&
+    isEnvEnabled(process.env.NEXT_PUBLIC_E2E_TEST) &&
     process.env.NODE_ENV !== 'production';
   const [e2eEmail, setE2eEmail] = useState('');
   const [e2ePassword, setE2ePassword] = useState('');

@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const isDev = process.env.NODE_ENV !== 'production';
+const e2eUiFlag =
+  process.env.NEXT_PUBLIC_E2E_TEST ?? process.env.E2E_TEST ?? 'false';
 
 const contentSecurityPolicy = [
   "default-src 'self'",
@@ -31,6 +33,9 @@ const securityHeaders = [
 
 const nextConfig = {
   reactStrictMode: true,
+  env: {
+    NEXT_PUBLIC_E2E_TEST: e2eUiFlag,
+  },
   images: {
     remotePatterns: [
       {

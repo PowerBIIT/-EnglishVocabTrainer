@@ -8,8 +8,11 @@ import { prisma } from '@/lib/db';
 import { ensureUserPlan } from '@/lib/userPlan';
 import { isAdminEmail } from '@/lib/access';
 
+const isEnvEnabled = (value?: string) => value === 'true' || value === '1';
 const E2E_ENABLED =
-  process.env.E2E_TEST === 'true' && process.env.NODE_ENV !== 'production';
+  process.env.NODE_ENV !== 'production' &&
+  (isEnvEnabled(process.env.E2E_TEST) ||
+    isEnvEnabled(process.env.NEXT_PUBLIC_E2E_TEST));
 const PLAN_SYNC_INTERVAL_MS = 60_000;
 
 const providers: NextAuthOptions['providers'] = [
