@@ -77,6 +77,13 @@ Oczekiwane:
 - Na liście zestawów nowy zestaw jest podświetlony (aktywny chip).
 - Quiz nie startuje automatycznie; przycisk „Rozpocznij quiz” jest widoczny.
 
+## TC-CL-03A: Podsumowanie – szybka wymowa
+Kroki:
+1) Po utworzeniu zestawu na `/klasowka` kliknij „Wymowa 3 min”.
+Oczekiwane:
+- Przejście do `/pronunciation` z parametrami `setId`, `focus=new_words`, `length=5`.
+- W konfiguracji sesji wybrany jest właściwy zestaw.
+
 ## TC-CL-04: Układ mobilny
 Kroki:
 1) W DevTools włącz Device Toolbar (Ctrl/Cmd+Shift+M).
@@ -131,6 +138,7 @@ Oczekiwane:
 - Widoczne błędy JS w Console.
 - Brak przycisku „Pomiń” w kroku 3 na mobile.
 - Content w kroku 3 zasłonięty przez fixed footer.
+- „Wymowa 3 min” nie ustawia parametrów sesji (focus/length/set).
 
 ## Sprzątanie (opcjonalnie)
 - Wejdź w `/vocabulary`, zaznacz dodane słówka i usuń, aby oczyścić konto testowe.

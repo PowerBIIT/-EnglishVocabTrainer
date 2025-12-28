@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -338,6 +339,10 @@ export default function PronunciationPage() {
   const hydrated = useHydration();
   const language = useLanguage();
   const t = (pronunciationCopy[language] ?? pronunciationCopy.pl) as PronunciationCopy;
+  const searchParams = useSearchParams();
+  const setIdParam = searchParams.get('setId')?.trim() ?? '';
+  const focusParam = searchParams.get('focus')?.trim() ?? '';
+  const lengthParam = searchParams.get('length')?.trim() ?? '';
   const focusModes = focusModeCopy[language] ?? focusModeCopy.pl;
   const [sessionState, setSessionState] = useState<SessionState>('setup');
   const [isRecording, setIsRecording] = useState(false);
@@ -349,6 +354,7 @@ export default function PronunciationPage() {
   const [recordingStatus, setRecordingStatus] = useState<string>('');
   const [recognizedText, setRecognizedText] = useState<string>('');
   const [selectedSetId, setSelectedSetId] = useState<'all' | 'unassigned' | string>('all');
+  const [appliedParams, setAppliedParams] = useState(false);
 
   // Session config
   const [selectedLength, setSelectedLength] = useState<number>(10);
@@ -431,6 +437,46 @@ export default function PronunciationPage() {
       setSelectedSetId('all');
     }
   }, [selectedSetId, sets]);
+
+  useEffect(() => {
+    if (!hydrated || appliedParams) return;
+
+    if (focusParam && availableFocusModes.includes(focusParam as PronunciationFocusMode)) {
+      setSelectedFocusMode(focusParam as PronunciationFocusMode);
+    }
+
+    const parsedLength = Number.parseInt(lengthParam, 10);
+    if (SESSION_LENGTHS.includes(parsedLength as typeof SESSION_LENGTHS[number])) {
+      setSelectedLength(parsedLength);
+    }
+
+    if (!setIdParam) {
+      setAppliedParams(true);
+      return;
+    }
+
+    if (setIdParam === 'unassigned') {
+      setSelectedSetId('unassigned');
+      setAppliedParams(true);
+      return;
+    }
+
+    if (sets.length === 0) {
+      return;
+    }
+
+    const exists = sets.some((set) => set.id === setIdParam);
+    setSelectedSetId(exists ? setIdParam : 'all');
+    setAppliedParams(true);
+  }, [
+    appliedParams,
+    availableFocusModes,
+    focusParam,
+    hydrated,
+    lengthParam,
+    setIdParam,
+    sets,
+  ]);
 
   useEffect(() => {
     if (!enablePhonemeDrills && selectedFocusMode === 'phoneme_specific') {

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, Sparkles, Target } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Mic, Sparkles, Target } from 'lucide-react';
 import { WordIntake } from '@/components/ai/WordIntake';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -26,6 +26,7 @@ const klasowkaCopy = {
     setLabel: 'Zestaw',
     wordCountLabel: 'Liczba słówek',
     categoryLabel: 'Kategoria',
+    startPronunciation: 'Wymowa 3 min',
     startQuiz: 'Start quizu',
     back: 'Wróć',
   },
@@ -41,6 +42,7 @@ const klasowkaCopy = {
     setLabel: 'Set',
     wordCountLabel: 'Word count',
     categoryLabel: 'Category',
+    startPronunciation: 'Pronunciation 3 min',
     startQuiz: 'Start quiz',
     back: 'Back',
   },
@@ -56,6 +58,7 @@ const klasowkaCopy = {
     setLabel: 'Набір',
     wordCountLabel: 'Кількість слів',
     categoryLabel: 'Категорія',
+    startPronunciation: 'Вимова 3 хв',
     startQuiz: 'Почати квіз',
     back: 'Назад',
   },
@@ -99,6 +102,13 @@ export default function KlasowkaPage() {
   const handleStartQuiz = () => {
     if (!summary) return;
     router.push(`/quiz?setId=${encodeURIComponent(summary.setId)}`);
+  };
+
+  const handleStartPronunciation = () => {
+    if (!summary) return;
+    router.push(
+      `/pronunciation?setId=${encodeURIComponent(summary.setId)}&focus=new_words&length=5`
+    );
   };
 
   const handleBack = () => {
@@ -189,6 +199,10 @@ export default function KlasowkaPage() {
                   <Button variant="secondary" onClick={handleBack}>
                     {t.back}
                   </Button>
+                  <Button variant="secondary" onClick={handleStartPronunciation}>
+                    <Mic size={18} className="mr-2" />
+                    {t.startPronunciation}
+                  </Button>
                   <Button size="lg" onClick={handleStartQuiz}>
                     <Target size={18} className="mr-2" />
                     {t.startQuiz}
@@ -198,11 +212,15 @@ export default function KlasowkaPage() {
             </Card>
 
             <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
-              <div className="flex gap-3 max-w-5xl mx-auto">
-                <Button variant="secondary" onClick={handleBack} className="flex-1">
+              <div className="flex flex-wrap gap-3 max-w-5xl mx-auto">
+                <Button variant="secondary" onClick={handleBack} className="flex-1 min-w-[140px]">
                   {t.back}
                 </Button>
-                <Button size="lg" onClick={handleStartQuiz} className="flex-1">
+                <Button variant="secondary" onClick={handleStartPronunciation} className="flex-1 min-w-[140px]">
+                  <Mic size={18} className="mr-2" />
+                  {t.startPronunciation}
+                </Button>
+                <Button size="lg" onClick={handleStartQuiz} className="flex-1 min-w-[140px]">
                   <Target size={18} className="mr-2" />
                   {t.startQuiz}
                 </Button>

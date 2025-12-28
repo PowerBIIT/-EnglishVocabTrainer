@@ -51,6 +51,11 @@ const homeCopy = {
     classTestDesc: 'Wklej słówka i od razu zacznij quiz',
     pronunciation: 'Wymowa',
     pronunciationDesc: 'Trening głosu',
+    pronunciationStats: (avg: number, streak: number) =>
+      `Średnia ${avg.toFixed(1)}/10 • Streak ${streak}`,
+    pronunciationEmpty: 'Zrób 5 słów i złap pierwszy wynik.',
+    pronunciationWeak: (count: number) => `Słabe słowa: ${count}`,
+    pronunciationNew: 'Nowe słowa: szybka rozgrzewka',
     guide: 'Twój przewodnik',
     adventureMode: 'Tryb przygody',
     guideNote: 'Dzisiaj celem jest utrzymanie tempa. Wybierz misję i zdobądź nagrodę.',
@@ -82,6 +87,11 @@ const homeCopy = {
     classTestDesc: 'Paste words and start the quiz fast',
     pronunciation: 'Pronunciation',
     pronunciationDesc: 'Voice training',
+    pronunciationStats: (avg: number, streak: number) =>
+      `Avg ${avg.toFixed(1)}/10 • Streak ${streak}`,
+    pronunciationEmpty: 'Do 5 words and get your first score.',
+    pronunciationWeak: (count: number) => `Weak words: ${count}`,
+    pronunciationNew: 'New words: quick warm-up',
     guide: 'Your guide',
     adventureMode: 'Adventure mode',
     guideNote: 'Today the goal is to keep momentum. Pick a mission and earn a reward.',
@@ -113,6 +123,11 @@ const homeCopy = {
     classTestDesc: 'Встав слова й одразу почни квіз',
     pronunciation: 'Вимова',
     pronunciationDesc: 'Тренування голосу',
+    pronunciationStats: (avg: number, streak: number) =>
+      `Середнє ${avg.toFixed(1)}/10 • Серія ${streak}`,
+    pronunciationEmpty: 'Спробуй 5 слів і отримай перший результат.',
+    pronunciationWeak: (count: number) => `Слабкі слова: ${count}`,
+    pronunciationNew: 'Нові слова: швидка розминка',
     guide: 'Твій провідник',
     adventureMode: 'Режим пригоди',
     guideNote: 'Сьогодні мета — зберегти темп. Обери місію та здобудь нагороду.',
@@ -141,6 +156,7 @@ export default function HomePage() {
   const progress = useVocabStore((state) => state.progress);
   const getCategorySummary = useVocabStore((state) => state.getCategorySummary);
   const getNextReviewWords = useVocabStore((state) => state.getNextReviewWords);
+  const getWeakPronunciationWords = useVocabStore((state) => state.getWeakPronunciationWords);
   const dailyMission = useVocabStore((state) => state.dailyMission);
 
   const categorySummary = getCategorySummary();
@@ -196,6 +212,18 @@ export default function HomePage() {
   const userName = session?.user?.name?.split(' ')[0] || t.defaultName;
   const mascotSkin = session?.user?.mascotSkin || 'explorer';
   const missionCopy = getMissionCopy(language, dailyMission.type);
+  const weakPronunciationCount = getWeakPronunciationWords(100).length;
+  const hasPronunciationStats = stats.totalPronunciationSessions > 0;
+  const pronunciationMeta = hasPronunciationStats
+    ? t.pronunciationStats(stats.averagePronunciationScore || 0, stats.pronunciationStreak || 0)
+    : t.pronunciationEmpty;
+  const pronunciationFocus = weakPronunciationCount > 0
+    ? t.pronunciationWeak(weakPronunciationCount)
+    : t.pronunciationNew;
+  const pronunciationHref =
+    weakPronunciationCount > 0
+      ? '/pronunciation?focus=weak_words&length=5'
+      : '/pronunciation?focus=new_words&length=5';
 
   if (!hydrated) {
     return (
@@ -311,7 +339,7 @@ export default function HomePage() {
                 </CardContent>
               </Card>
             </Link>
-            <Link href="/pronunciation">
+            <Link href={pronunciationHref}>
               <Card className="h-full hover:shadow-md transition-shadow">
                 <CardContent className="p-5 space-y-3">
                   <div className="w-10 h-10 rounded-2xl bg-success-100 text-success-600 flex items-center justify-center">
@@ -322,6 +350,8 @@ export default function HomePage() {
                       {t.pronunciation}
                     </p>
                     <p className="text-sm text-slate-500">{t.pronunciationDesc}</p>
+                    <p className="text-xs text-slate-500 mt-2">{pronunciationMeta}</p>
+                    <p className="text-xs text-slate-500">{pronunciationFocus}</p>
                   </div>
                 </CardContent>
               </Card>
