@@ -1227,27 +1227,22 @@ export default function PronunciationPage() {
             {t.averageScore(avgScore)}
           </p>
           <div className="flex justify-center gap-2 mb-6">{getScoreStars(avgScore)}</div>
-
-          <div className="rounded-2xl border border-amber-200/70 dark:border-amber-400/40 bg-amber-50/70 dark:bg-amber-900/20 p-4 mb-6 text-left">
-            <p className="text-xs uppercase tracking-wide text-amber-700 dark:text-amber-300">
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+            <span className="font-semibold text-slate-700 dark:text-slate-200">
               {t.readinessTitle}
-            </p>
-            <div className="mt-2 flex items-baseline justify-between">
-              <p className="text-2xl font-bold text-amber-700 dark:text-amber-200">
-                {readinessPercent}%
-              </p>
-              <p
-                className={cn(
-                  'text-sm font-semibold',
-                  readinessDelta >= 0
-                    ? 'text-success-600 dark:text-success-400'
-                    : 'text-error-600 dark:text-error-400'
-                )}
-              >
-                {t.readinessDelta(readinessDeltaLabel)}
-              </p>
-            </div>
-          </div>
+            </span>{' '}
+            {readinessPercent}% ·{' '}
+            <span
+              className={cn(
+                'font-semibold',
+                readinessDelta >= 0
+                  ? 'text-success-600 dark:text-success-400'
+                  : 'text-error-600 dark:text-error-400'
+              )}
+            >
+              {t.readinessDelta(readinessDeltaLabel)}
+            </span>
+          </p>
 
           {/* Session stats */}
           <div className="grid grid-cols-1 gap-4 mb-6 text-left sm:grid-cols-2">
