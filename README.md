@@ -1,9 +1,16 @@
 # English Vocab Trainer
 
-Next.js app for learning vocabulary with AI assistance. Includes onboarding, flashcards, quizzes,
-pronunciation practice, and AI-powered word intake.
+Next.js app for school‑focused vocabulary learning (PL→EN for Polish students, UA→PL for
+Ukrainian students in Poland). Includes onboarding, flashcards, quizzes, pronunciation practice,
+and AI‑powered word intake with multi‑file upload.
 
 ## Status projektu (wersja 1.0.14 - stan na grudzień 2025)
+
+### Funkcje użytkownika (szkoła/UA)
+- Ścieżki onboardingu: „Uczeń w Polsce” (PL → EN) i „Uczeń z Ukrainy w Polsce” (UA → PL).
+- UI dopasowane do uczniów: lekcje, zadania, krótkie quizy, zadanie dnia.
+- Podpowiedź polskich znaków dla UI UA przy parze UA → PL.
+- Dodawanie słówek: wklejanie tekstu, zdjęcia lub pliki (możesz wybrać wiele naraz).
 
 ### Wdrożone funkcje (stan stabilny)
 ✅ **Panel admina: szybkie akcje + zgłoszenia**

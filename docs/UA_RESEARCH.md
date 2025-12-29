@@ -19,11 +19,11 @@
 
 ## Implikacje dla aplikacji
 - Ukrainian‑first onboarding z gotową ścieżką „Ukrainian in Poland”.
-- Gotowe paczki startowe słówek dla: urząd, zdrowie, praca, szkoła, mieszkanie, transport.
 - Szybkie akcje AI ukierunkowane na codzienne sytuacje w PL.
 - Priorytetowe scenariusze w AI chat: „wizyta u lekarza”, „rozmowa z nauczycielem”, „podpisanie umowy”.
+- Tematy słówek dopasowane do szkoły i życia w PL (np. urząd, zdrowie, praca, transport).
 
-## Rekomendowane paczki startowe (v1)
+## Rekomendowane tematy słówek (v1)
 - Urząd i dokumenty
 - Praca i HR
 - Zdrowie i apteka
