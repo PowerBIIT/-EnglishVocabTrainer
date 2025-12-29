@@ -121,11 +121,9 @@ Kroki:
 2) Znajdź sekcję „Zestawy startowe”.
 3) Kliknij „Dodaj zestaw” na jednym z zestawów.
 4) Wejdź na `/flashcards` i sprawdź listę zestawów.
-5) Wróć na `/` i kliknij „Dodaj i quiz” na innym zestawie.
 Oczekiwane:
 - Sekcja „Zestawy startowe” jest widoczna dla par PL → EN i UA → PL.
 - Po „Dodaj zestaw” nowy zestaw jest widoczny na liście (np. w filtrze zestawów).
-- Po „Dodaj i quiz” następuje przejście do `/quiz?setId=...` i nowy zestaw jest aktywny.
 
 ## TC-HM-UA-01: Badge UA na home
 Kroki:

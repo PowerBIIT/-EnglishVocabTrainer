@@ -223,7 +223,7 @@ export const wordIntakeCopy = {
     fileTypeUnsupported:
       'Nieobsługiwany format pliku. Użyj TXT, PDF, DOCX lub CSV.',
     fileSupportHint: (maxSize: number) =>
-      `Obsługiwane: TXT, PDF, DOCX, CSV (do ${maxSize} MB).`,
+      `Obsługiwane: TXT, PDF, DOCX, CSV (do ${maxSize} MB). Możesz wybrać kilka naraz.`,
     fileReadError: 'Nie udało się wczytać pliku.',
     aiLimitReached:
       'Wykorzystałeś limit AI na ten miesiąc. Poczekaj na odnowienie limitu lub przejdź na plan Pro.',
@@ -314,7 +314,7 @@ export const wordIntakeCopy = {
       `File is too large. Maximum size is ${maxSize} MB.`,
     fileTypeUnsupported: 'Unsupported file format. Use TXT, PDF, DOCX, or CSV.',
     fileSupportHint: (maxSize: number) =>
-      `Supported: TXT, PDF, DOCX, CSV (up to ${maxSize} MB).`,
+      `Supported: TXT, PDF, DOCX, CSV (up to ${maxSize} MB). You can select multiple at once.`,
     fileReadError: 'Could not read the file.',
     aiLimitReached:
       'You have reached your monthly AI limit. Wait for the next reset or upgrade to Pro.',
@@ -405,7 +405,7 @@ export const wordIntakeCopy = {
       `Файл завеликий. Максимальний розмір ${maxSize} МБ.`,
     fileTypeUnsupported: 'Непідтримуваний формат файлу. Використовуй TXT, PDF, DOCX або CSV.',
     fileSupportHint: (maxSize: number) =>
-      `Підтримуються: TXT, PDF, DOCX, CSV (до ${maxSize} МБ).`,
+      `Підтримуються: TXT, PDF, DOCX, CSV (до ${maxSize} МБ). Можна вибрати кілька одночасно.`,
     fileReadError: 'Не вдалося прочитати файл.',
     aiLimitReached:
       'Ви вичерпали місячний ліміт AI. Зачекайте на оновлення або перейдіть на Pro.',
@@ -617,6 +617,20 @@ export function WordIntake({
     const trimmed = base?.trim();
     const label = trimmed && trimmed.length > 0 ? trimmed : t.defaultSetLabel;
     return `${label} (${formatDate(new Date(), dateLocale)})`;
+  };
+
+  const mapParsedWords = (words: ParsedWord[]) =>
+    words.map((word) => ({
+      ...normalizeParsedWord(word),
+      selected: true,
+    }));
+
+  const applyParsedWords = (words: ParsedWord[], category: string) => {
+    if (words.length === 0) return;
+    setParsedWords(words);
+    setSuggestedCategory(category);
+    setSuggestedSetName(buildSetName(category));
+    setSelectedSetOption(NEW_SET_OPTION);
   };
 
   const handleSend = async () => {
@@ -894,74 +908,76 @@ export function WordIntake({
   };
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-      addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
-      if (imageInputRef.current) {
-        imageInputRef.current.value = '';
-      }
-      return;
-    }
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
 
     setIsProcessing(true);
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: generateId(),
-        role: 'user',
-        content: t.imageUploaded(file.name),
-        timestamp: new Date(),
-      },
-    ]);
+    const collectedWords: ParsedWord[] = [];
+    let suggestedCategory: string | null = null;
+    let stopProcessing = false;
 
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('targetLanguage', activePair.target);
-      formData.append('nativeLanguage', activePair.native);
+    for (const file of files) {
+      if (stopProcessing) break;
 
-      const response = await fetch('/api/ai/extract-image', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        if (response.status === 413) {
-          addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
-          setIsProcessing(false);
-          return;
-        }
-        if (handleAiLimitError(data)) {
-          setIsProcessing(false);
-          return;
-        }
-        throw new Error('API error');
+      if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+        addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
+        continue;
       }
 
-      if (data.words && data.words.length > 0) {
-        setParsedWords(
-          data.words.map((w: ParsedWord) => ({
-            ...normalizeParsedWord(w),
-            selected: true,
-          }))
-        );
-        const category = data.category_suggestion || t.imageCategoryFallback;
-        setSuggestedCategory(category);
-        setSuggestedSetName(buildSetName(category));
-        setSelectedSetOption(NEW_SET_OPTION);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: generateId(),
+          role: 'user',
+          content: t.imageUploaded(file.name),
+          timestamp: new Date(),
+        },
+      ]);
 
-        addAssistantMessage(t.imageFound(data.words.length, data.notes));
-      } else {
-        addAssistantMessage(t.imageNoWords(targetLabel, nativeLabel));
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('targetLanguage', activePair.target);
+        formData.append('nativeLanguage', activePair.native);
+
+        const response = await fetch('/api/ai/extract-image', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          if (response.status === 413) {
+            addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
+            continue;
+          }
+          if (handleAiLimitError(data)) {
+            stopProcessing = true;
+            continue;
+          }
+          throw new Error('API error');
+        }
+
+        if (data.words && data.words.length > 0) {
+          collectedWords.push(...mapParsedWords(data.words));
+          if (!suggestedCategory) {
+            suggestedCategory = data.category_suggestion || t.imageCategoryFallback;
+          }
+          addAssistantMessage(t.imageFound(data.words.length, data.notes));
+        } else {
+          addAssistantMessage(t.imageNoWords(targetLabel, nativeLabel));
+        }
+      } catch (error) {
+        console.error('Image extraction error:', error);
+        addAssistantMessage(t.imageError);
       }
-    } catch (error) {
-      console.error('Image extraction error:', error);
-      addAssistantMessage(t.imageError);
+    }
+
+    if (collectedWords.length > 0) {
+      const finalCategory = suggestedCategory ?? t.imageCategoryFallback;
+      applyParsedWords(collectedWords, finalCategory);
     }
 
     setIsProcessing(false);
@@ -972,86 +988,85 @@ export function WordIntake({
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > MAX_UPLOAD_SIZE_BYTES) {
-      addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
-
-    if (!isSupportedFile(file)) {
-      addAssistantMessage(t.fileTypeUnsupported);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      return;
-    }
+    const files = Array.from(event.target.files ?? []);
+    if (files.length === 0) return;
 
     setIsProcessing(true);
-    setMessages((prev) => [
-      ...prev,
-      {
-        id: generateId(),
-        role: 'user',
-        content: t.fileUploaded(file.name),
-        timestamp: new Date(),
-      },
-    ]);
 
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('targetLanguage', activePair.target);
-      formData.append('nativeLanguage', activePair.native);
+    const collectedWords: ParsedWord[] = [];
+    let suggestedCategory: string | null = null;
+    let stopProcessing = false;
 
-      const response = await fetch('/api/ai/extract-file', {
-        method: 'POST',
-        body: formData,
-      });
+    for (const file of files) {
+      if (stopProcessing) break;
 
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        if (response.status === 413) {
-          addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
-          setIsProcessing(false);
-          return;
-        }
-        if (response.status === 415) {
-          addAssistantMessage(t.fileTypeUnsupported);
-          setIsProcessing(false);
-          return;
-        }
-        if (handleAiLimitError(data)) {
-          setIsProcessing(false);
-          return;
-        }
-        throw new Error('API error');
+      if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+        addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
+        continue;
       }
 
-      if (data.words && data.words.length > 0) {
-        setParsedWords(
-          data.words.map((w: ParsedWord) => ({
-            ...normalizeParsedWord(w),
-            selected: true,
-          }))
-        );
-        const category = data.category_suggestion || t.defaultCategory;
-        setSuggestedCategory(category);
-        setSuggestedSetName(buildSetName(category));
-        setSelectedSetOption(NEW_SET_OPTION);
-
-        addAssistantMessage(t.fileFound(data.words.length, data.notes));
-      } else {
-        addAssistantMessage(t.fileNoWords(targetLabel, nativeLabel));
+      if (!isSupportedFile(file)) {
+        addAssistantMessage(t.fileTypeUnsupported);
+        continue;
       }
-    } catch (error) {
-      console.error('File extraction error:', error);
-      addAssistantMessage(t.fileError);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: generateId(),
+          role: 'user',
+          content: t.fileUploaded(file.name),
+          timestamp: new Date(),
+        },
+      ]);
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('targetLanguage', activePair.target);
+        formData.append('nativeLanguage', activePair.native);
+
+        const response = await fetch('/api/ai/extract-file', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          if (response.status === 413) {
+            addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
+            continue;
+          }
+          if (response.status === 415) {
+            addAssistantMessage(t.fileTypeUnsupported);
+            continue;
+          }
+          if (handleAiLimitError(data)) {
+            stopProcessing = true;
+            continue;
+          }
+          throw new Error('API error');
+        }
+
+        if (data.words && data.words.length > 0) {
+          collectedWords.push(...mapParsedWords(data.words));
+          if (!suggestedCategory) {
+            suggestedCategory = data.category_suggestion || t.defaultCategory;
+          }
+          addAssistantMessage(t.fileFound(data.words.length, data.notes));
+        } else {
+          addAssistantMessage(t.fileNoWords(targetLabel, nativeLabel));
+        }
+      } catch (error) {
+        console.error('File extraction error:', error);
+        addAssistantMessage(t.fileError);
+      }
+    }
+
+    if (collectedWords.length > 0) {
+      const finalCategory = suggestedCategory ?? t.defaultCategory;
+      applyParsedWords(collectedWords, finalCategory);
     }
 
     setIsProcessing(false);
@@ -1161,6 +1176,7 @@ export function WordIntake({
           accept="image/*"
           onChange={handleImageUpload}
           className="hidden"
+          multiple
         />
         <button
           onClick={() => imageInputRef.current?.click()}
@@ -1177,6 +1193,7 @@ export function WordIntake({
           accept=".txt,.csv,.pdf,.docx,text/plain,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
           onChange={handleFileUpload}
           className="hidden"
+          multiple
         />
         <button
           onClick={() => fileInputRef.current?.click()}
@@ -1455,6 +1472,7 @@ export function WordIntake({
               accept="image/*"
               onChange={handleImageUpload}
               className="hidden"
+              multiple
             />
             <button
               onClick={() => imageInputRef.current?.click()}
@@ -1471,6 +1489,7 @@ export function WordIntake({
               accept=".txt,.csv,.pdf,.docx,text/plain,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
               onChange={handleFileUpload}
               className="hidden"
+              multiple
             />
             <button
               onClick={() => fileInputRef.current?.click()}

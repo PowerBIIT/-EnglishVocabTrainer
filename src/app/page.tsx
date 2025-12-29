@@ -25,7 +25,6 @@ import { getCategoryLabel } from '@/lib/categories';
 import { getMissionCopy } from '@/lib/missions';
 import { getLearningPair, getLanguageLabel } from '@/lib/languages';
 import { getStarterPacksForPair, StarterPack } from '@/data/starterPacks';
-import { useRouter } from 'next/navigation';
 
 const badgeIcons = {
   flame: Flame,
@@ -76,7 +75,6 @@ const homeCopy = {
     starterPacksDesc: 'Wybierz temat i zacznij naukę od razu.',
     starterPackWords: (count: number) => `${count} słówek`,
     starterPackAdd: 'Dodaj zestaw',
-    starterPackAddQuiz: 'Dodaj i quiz',
     uaFocusBadge: 'Polski w Polsce',
     uaFocusNote: 'Szkoła i codzienne sprawy (UA → PL).',
   },
@@ -119,7 +117,6 @@ const homeCopy = {
     starterPacksDesc: 'Pick a topic and start right away.',
     starterPackWords: (count: number) => `${count} words`,
     starterPackAdd: 'Add pack',
-    starterPackAddQuiz: 'Add and quiz',
     uaFocusBadge: 'Polish in Poland',
     uaFocusNote: 'School and everyday life (UA → PL).',
   },
@@ -162,7 +159,6 @@ const homeCopy = {
     starterPacksDesc: 'Обери тему й починай одразу.',
     starterPackWords: (count: number) => `${count} слів`,
     starterPackAdd: 'Додати набір',
-    starterPackAddQuiz: 'Додати і квіз',
     uaFocusBadge: 'Польська в Польщі',
     uaFocusNote: 'Школа та повсякденні справи (UA → PL).',
   },
@@ -172,7 +168,6 @@ type HomeCopy = typeof homeCopy.pl;
 
 export default function HomePage() {
   const hydrated = useHydration();
-  const router = useRouter();
   const { data: session } = useSession();
   const language = useLanguage();
   const t = (homeCopy[language] ?? homeCopy.pl) as HomeCopy;
@@ -258,7 +253,7 @@ export default function HomePage() {
       ? '/pronunciation?focus=weak_words&length=5'
       : '/pronunciation?focus=new_words&length=5';
 
-  const addStarterPack = (pack: StarterPack, mode?: 'quiz') => {
+  const addStarterPack = (pack: StarterPack) => {
     const packTitle = pack.title[language] ?? pack.title.pl;
     const packCategory = pack.category[language] ?? pack.category.pl;
     const newSet = createSet(packTitle);
@@ -279,10 +274,6 @@ export default function HomePage() {
     }));
 
     addVocabulary(newVocab);
-
-    if (mode === 'quiz') {
-      router.push(`/quiz?setId=${encodeURIComponent(newSet.id)}`);
-    }
   };
 
   if (!hydrated) {
@@ -481,12 +472,6 @@ export default function HomePage() {
                             onClick={() => addStarterPack(pack)}
                           >
                             {t.starterPackAdd}
-                          </Button>
-                          <Button
-                            size="sm"
-                            onClick={() => addStarterPack(pack, 'quiz')}
-                          >
-                            {t.starterPackAddQuiz}
                           </Button>
                         </div>
                       </CardContent>
