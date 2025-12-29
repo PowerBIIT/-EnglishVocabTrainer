@@ -2,15 +2,13 @@
 
 ## Cel
 Zweryfikować, że szkolny onboarding i flow „Klasówka” działają end‑to‑end (desktop i mobile),
-bez błędów 500 z `/api/ai/parse-text`, z poprawną preselekcją zestawów (quiz/flashcards),
-zestawami startowymi oraz szybkim startem wymowy.
+bez błędów 500 z `/api/ai/parse-text`, z poprawną preselekcją zestawów (quiz/flashcards)
+oraz szybkim startem wymowy.
 
 ## Zakres
 - CTA „Klasówka w 5 min” na stronie głównej.
 - Flow `/klasowka` (dodanie słówek → podsumowanie → start quizu).
-- Sekcja „Zestawy startowe” na home (przyciski „Dodaj zestaw” i „Dodaj i quiz”).
-- Onboarding: wybór ścieżki ucznia, wybór celu nauki, krok „Dodaj pierwszy zestaw słówek”
-  (w tym zestawy startowe).
+- Onboarding: wybór ścieżki ucznia, wybór celu nauki, krok „Dodaj pierwszy zestaw słówek”.
 - Podpowiedź „Polskie litery” dla UI UA i pary UA → PL.
 - Badge „Polski w Polsce” na home dla pary UA → PL.
 - Preselekcja zestawu w `/quiz` i `/flashcards` przez `setId`.
@@ -39,7 +37,7 @@ lub `E2E_TEST=true` w `.env.local` i zrestartuj serwer dev.
 2) (Opcjonalnie) Skoryguj parę językową w kolejnym kroku.
 3) Wybierz cel nauki (np. „Szybka klasówka”).
 4) Wybierz dowolny styl przewodnika.
-5) W kroku „Dodaj pierwszy zestaw słówek” dodaj słówka lub wybierz zestaw startowy.
+5) W kroku „Dodaj pierwszy zestaw słówek” dodaj słówka.
 6) Dokończ misję i wróć do `/`.
 
 ## Dane testowe (8 par)
@@ -114,16 +112,6 @@ Kroki:
 Oczekiwane:
 - Karta pokazuje kontekst (np. „Słabe słowa: X” lub „Nowe słowa: szybka rozgrzewka”).
 - Przejście do `/pronunciation` z `focus` i `length=5`.
-
-## TC-HM-SP-01: Zestawy startowe na home
-Kroki:
-1) Wejdź na `/`.
-2) Znajdź sekcję „Zestawy startowe”.
-3) Kliknij „Dodaj zestaw” na jednym z zestawów.
-4) Wejdź na `/flashcards` i sprawdź listę zestawów.
-Oczekiwane:
-- Sekcja „Zestawy startowe” jest widoczna dla par PL → EN i UA → PL.
-- Po „Dodaj zestaw” nowy zestaw jest widoczny na liście (np. w filtrze zestawów).
 
 ## TC-HM-UA-01: Badge UA na home
 Kroki:
@@ -212,15 +200,6 @@ Oczekiwane:
 - Panele mają własne, ograniczone wysokości i własny scroll.
 - Przewijanie strony jest zauważalnie krótsze niż przed zmianą.
 
-## TC-OB-05: Onboarding – zestaw startowy
-Kroki:
-1) W kroku „Dodaj pierwszy zestaw słówek” znajdź sekcję „Zestawy startowe”.
-2) Kliknij „Dodaj i przejdź dalej” na jednym z zestawów.
-Oczekiwane:
-- Tworzy się nowy zestaw z nazwą zgodną z tytułem zestawu.
-- Następuje przejście do kroku „Pierwsza misja”.
-- Opis misji odnosi się do wybranego zestawu.
-
 ## TC-OB-06: Onboarding – podpowiedź „Polskie litery”
 Kroki:
 1) Ustaw język UI na UA w nagłówku onboardingu.
@@ -235,8 +214,6 @@ Oczekiwane:
 - Brak CTA lub brak przejścia na `/klasowka`.
 - Widoczne błędy JS w Console.
 - Brak kroku „Wybierz ścieżkę ucznia” w onboarding.
-- Brak sekcji „Zestawy startowe” na home lub w onboardingu dla par PL → EN lub UA → PL.
-- „Dodaj i przejdź dalej” w onboarding nie tworzy zestawu lub nie przenosi do misji.
 - Brak przycisku „Pomiń” w kroku 5 na mobile.
 - Content w kroku 5 zasłonięty przez fixed footer.
 - Brak podpowiedzi „Polskie litery” dla UI UA i pary UA → PL.
@@ -254,7 +231,7 @@ Oczekiwane:
 
 ### Podsumowanie testów manualnych
 
-PASS (11 testów)
+PASS (10 testów)
 
 | Test        | Opis                                                 |
 |-------------|------------------------------------------------------|
@@ -264,10 +241,9 @@ PASS (11 testów)
 | TC-CL-03A   | Przycisk "Wymowa 3 min" z poprawnymi parametrami URL |
 | TC-CL-04    | Brak overflow na mobile (382px < 390px)              |
 | TC-HM-PR-01 | Karta Wymowa z kontekstem widoczna                   |
-| TC-HM-SP-01 | Zestawy startowe (Biologia, Geografia) działają      |
 | TC-HM-UA-01 | Badge UA "Польська в Польщі" widoczny                |
 | TC-PR-01    | Parametry URL w /pronunciation działają              |
-| TC-OB-00-05 | Onboarding wszystkie kroki działają                  |
+| TC-OB-00-04 | Onboarding wszystkie kroki działają                  |
 | TC-OB-06    | Wskazówka "Польські літери" widoczna dla UA→PL       |
 
 FAIL (1 test)

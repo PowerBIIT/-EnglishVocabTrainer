@@ -20,11 +20,10 @@ import { ProgressBar, CircularProgress } from '@/components/ui/ProgressBar';
 import { MascotAvatar } from '@/components/mascot/MascotAvatar';
 import { useVocabStore, useHydration } from '@/lib/store';
 import { useLanguage } from '@/lib/i18n';
-import { BADGES, generateId, getLevelProgress } from '@/lib/utils';
+import { BADGES, getLevelProgress } from '@/lib/utils';
 import { getCategoryLabel } from '@/lib/categories';
 import { getMissionCopy } from '@/lib/missions';
 import { getLearningPair, getLanguageLabel } from '@/lib/languages';
-import { getStarterPacksForPair, StarterPack } from '@/data/starterPacks';
 
 const badgeIcons = {
   flame: Flame,
@@ -71,10 +70,6 @@ const homeCopy = {
     sessionsCompleted: 'Sesji ukończonych',
     badges: 'Twoje odznaki',
     defaultName: 'Uczniu',
-    starterPacksTitle: 'Zestawy startowe',
-    starterPacksDesc: 'Wybierz temat i zacznij naukę od razu.',
-    starterPackWords: (count: number) => `${count} słówek`,
-    starterPackAdd: 'Dodaj zestaw',
     uaFocusBadge: 'Polski w Polsce',
     uaFocusNote: 'Szkoła i codzienne sprawy (UA → PL).',
   },
@@ -113,10 +108,6 @@ const homeCopy = {
     sessionsCompleted: 'Sessions completed',
     badges: 'Your badges',
     defaultName: 'Student',
-    starterPacksTitle: 'Starter packs',
-    starterPacksDesc: 'Pick a topic and start right away.',
-    starterPackWords: (count: number) => `${count} words`,
-    starterPackAdd: 'Add pack',
     uaFocusBadge: 'Polish in Poland',
     uaFocusNote: 'School and everyday life (UA → PL).',
   },
@@ -155,10 +146,6 @@ const homeCopy = {
     sessionsCompleted: 'Сесій завершено',
     badges: 'Твої відзнаки',
     defaultName: 'Учню',
-    starterPacksTitle: 'Стартові набори',
-    starterPacksDesc: 'Обери тему й починай одразу.',
-    starterPackWords: (count: number) => `${count} слів`,
-    starterPackAdd: 'Додати набір',
     uaFocusBadge: 'Польська в Польщі',
     uaFocusNote: 'Школа та повсякденні справи (UA → PL).',
   },
@@ -179,12 +166,8 @@ export default function HomePage() {
   const getNextReviewWords = useVocabStore((state) => state.getNextReviewWords);
   const getWeakPronunciationWords = useVocabStore((state) => state.getWeakPronunciationWords);
   const dailyMission = useVocabStore((state) => state.dailyMission);
-  const createSet = useVocabStore((state) => state.createSet);
-  const addVocabulary = useVocabStore((state) => state.addVocabulary);
-
   const activePair = getLearningPair(learning.pairId);
   const targetLabel = getLanguageLabel(activePair.target, language);
-  const starterPacks = getStarterPacksForPair(activePair.id);
   const isUaStudent = activePair.id === 'uk-pl';
 
   const categorySummary = getCategorySummary();
@@ -252,29 +235,6 @@ export default function HomePage() {
     weakPronunciationCount > 0
       ? '/pronunciation?focus=weak_words&length=5'
       : '/pronunciation?focus=new_words&length=5';
-
-  const addStarterPack = (pack: StarterPack) => {
-    const packTitle = pack.title[language] ?? pack.title.pl;
-    const packCategory = pack.category[language] ?? pack.category.pl;
-    const newSet = createSet(packTitle);
-    const now = new Date();
-    const newVocab = pack.words.map((word) => ({
-      id: generateId(),
-      en: word.target,
-      phonetic: '',
-      pl: word.native,
-      category: packCategory,
-      setIds: [newSet.id],
-      example_en: undefined,
-      example_pl: undefined,
-      difficulty: 'medium' as const,
-      created_at: now,
-      source: 'preset' as const,
-      languagePair: activePair.id,
-    }));
-
-    addVocabulary(newVocab);
-  };
 
   if (!hydrated) {
     return (
@@ -417,70 +377,6 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {starterPacks.length > 0 && (
-            <section className="space-y-4">
-              <div className="flex flex-col gap-1">
-                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
-                  {t.starterPacksTitle}
-                </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  {t.starterPacksDesc}
-                </p>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                {starterPacks.map((pack) => {
-                  const packTitle = pack.title[language] ?? pack.title.pl;
-                  const packDesc = pack.description[language] ?? pack.description.pl;
-                  const packCategory = pack.category[language] ?? pack.category.pl;
-                  const previewWords = pack.words.slice(0, 6);
-
-                  return (
-                    <Card key={pack.id} className="h-full">
-                      <CardContent className="p-5 space-y-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-xs uppercase tracking-wide text-slate-400">
-                              {packCategory}
-                            </p>
-                            <h3 className="mt-1 text-base font-semibold text-slate-800 dark:text-slate-100">
-                              {packTitle}
-                            </h3>
-                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                              {packDesc}
-                            </p>
-                          </div>
-                          <span className="text-xs text-slate-500">
-                            {t.starterPackWords(pack.words.length)}
-                          </span>
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          {previewWords.map((word) => (
-                            <span
-                              key={`${pack.id}-${word.target}-${word.native}`}
-                              className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs text-slate-600 dark:text-slate-300"
-                            >
-                              {word.target} · {word.native}
-                            </span>
-                          ))}
-                        </div>
-
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => addStarterPack(pack)}
-                          >
-                            {t.starterPackAdd}
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </section>
-          )}
         </div>
 
         <div className="space-y-6">

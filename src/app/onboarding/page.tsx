@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { FlashcardSession } from '@/components/flashcard/Flashcard';
 import { WordIntake } from '@/components/ai/WordIntake';
 import { useHydration, useVocabStore } from '@/lib/store';
-import { cn, generateId } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { useLanguage, type AppLanguage } from '@/lib/i18n';
 import {
   DEFAULT_PAIR_ID,
@@ -20,8 +20,6 @@ import {
   LEARNING_PAIR_SAMPLES,
 } from '@/lib/languages';
 import { getPersonaForPair } from '@/lib/persona';
-import { getStarterPacksForPair, type StarterPack } from '@/data/starterPacks';
-import type { VocabularyItem } from '@/types';
 
 const MISSION_WORDS = 3;
 
@@ -47,7 +45,7 @@ const onboardingCopy = {
     skip: 'Pomiń',
     title: 'Start nauki',
     choosePath: 'Wybierz ścieżkę ucznia',
-    choosePathDesc: 'Dopasujemy język, tempo i zestawy startowe.',
+    choosePathDesc: 'Dopasujemy język i tempo nauki.',
     pathPolishStudent: 'Uczeń w Polsce (PL → EN)',
     pathPolishStudentDesc: 'Klasówki, słówka z lekcji i szybkie quizy.',
     pathUkrainianStudent: 'Uczeń z Ukrainy w Polsce (UA → PL)',
@@ -57,10 +55,6 @@ const onboardingCopy = {
     polishHintTitle: 'Polskie znaki',
     polishHintBody:
       'Zwróć uwagę na litery: ą, ę, ł, ó, ś, ć, ń, ż, ź. Wpisuj je dokładnie — to inne słowa.',
-    starterPacksTitle: 'Zestawy startowe',
-    starterPacksDesc: 'Wybierz temat i przejdź od razu do pierwszej misji.',
-    starterPackWords: (count: number) => `${count} słówek`,
-    starterPackAddContinue: 'Dodaj i przejdź dalej',
     languageLabel: 'Język',
     stepLabel: (current: number, total: number) => `Krok ${current} z ${total}`,
     choosePair: 'Wybierz parę językową',
@@ -102,7 +96,7 @@ const onboardingCopy = {
     skip: 'Skip',
     title: 'Start learning',
     choosePath: 'Choose your school track',
-    choosePathDesc: 'We will tailor language, pace, and starter packs.',
+    choosePathDesc: 'We will tailor language and learning pace.',
     pathPolishStudent: 'Student in Poland (PL → EN)',
     pathPolishStudentDesc: 'Tests, lesson vocabulary, and quick quizzes.',
     pathUkrainianStudent: 'Ukrainian student in Poland (UA → PL)',
@@ -112,10 +106,6 @@ const onboardingCopy = {
     polishHintTitle: 'Polish letters',
     polishHintBody:
       'Watch for: ą, ę, ł, ó, ś, ć, ń, ż, ź. Type them exactly — they change meaning.',
-    starterPacksTitle: 'Starter packs',
-    starterPacksDesc: 'Pick a topic and jump straight to your first mission.',
-    starterPackWords: (count: number) => `${count} words`,
-    starterPackAddContinue: 'Add and continue',
     languageLabel: 'Language',
     stepLabel: (current: number, total: number) => `Step ${current} of ${total}`,
     choosePair: 'Choose your learning pair',
@@ -157,7 +147,7 @@ const onboardingCopy = {
     skip: 'Пропустити',
     title: 'Старт навчання',
     choosePath: 'Обери навчальний шлях',
-    choosePathDesc: 'Підлаштуємо мову, темп і стартові набори.',
+    choosePathDesc: 'Підлаштуємо мову та темп навчання.',
     pathPolishStudent: 'Учень у Польщі (PL → EN)',
     pathPolishStudentDesc: 'Контрольні, слова з уроків і швидкі квізи.',
     pathUkrainianStudent: 'Учень з України в Польщі (UA → PL)',
@@ -167,10 +157,6 @@ const onboardingCopy = {
     polishHintTitle: 'Польські літери',
     polishHintBody:
       'Зверни увагу на: ą, ę, ł, ó, ś, ć, ń, ż, ź. Пиши їх точно — це інші слова.',
-    starterPacksTitle: 'Стартові набори',
-    starterPacksDesc: 'Обери тему й переходь одразу до першої місії.',
-    starterPackWords: (count: number) => `${count} слів`,
-    starterPackAddContinue: 'Додати і продовжити',
     languageLabel: 'Мова',
     stepLabel: (current: number, total: number) => `Крок ${current} з ${total}`,
     choosePair: 'Обери мовну пару',
@@ -248,11 +234,8 @@ export default function OnboardingPage() {
   const updateSettings = useVocabStore((state) => state.updateSettings);
   const settings = useVocabStore((state) => state.settings);
   const setLearningPair = useVocabStore((state) => state.setLearningPair);
-  const createSet = useVocabStore((state) => state.createSet);
-  const addVocabulary = useVocabStore((state) => state.addVocabulary);
   const activePair = getLearningPair(settings.learning.pairId);
   const examplePair = LEARNING_PAIR_SAMPLES[activePair.id] ?? { target: 'word', native: 'translation' };
-  const starterPacks = getStarterPacksForPair(activePair.id);
 
   const missionWords = useMemo(() => {
     if (onboardingSetId) {
@@ -360,32 +343,6 @@ export default function OnboardingPage() {
   }) => {
     setOnboardingSetId(payload.setId);
     setOnboardingSetName(payload.setName);
-    setStep('mission');
-  };
-
-  const addStarterPack = (pack: StarterPack) => {
-    const packTitle = pack.title[language] ?? pack.title.pl;
-    const packCategory = pack.category[language] ?? pack.category.pl;
-    const newSet = createSet(packTitle);
-    const now = new Date();
-    const newVocab: VocabularyItem[] = pack.words.map((word) => ({
-      id: generateId(),
-      en: word.target,
-      phonetic: '',
-      pl: word.native,
-      category: packCategory,
-      setIds: [newSet.id],
-      example_en: undefined,
-      example_pl: undefined,
-      difficulty: 'medium',
-      created_at: now,
-      source: 'preset',
-      languagePair: activePair.id,
-    }));
-
-    addVocabulary(newVocab);
-    setOnboardingSetId(newSet.id);
-    setOnboardingSetName(newSet.name);
     setStep('mission');
   };
 
@@ -738,64 +695,6 @@ export default function OnboardingPage() {
                     {t.polishHintTitle}
                   </p>
                   <p className="mt-1">{t.polishHintBody}</p>
-                </div>
-              )}
-
-              {starterPacks.length > 0 && (
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1">
-                    <h3 className="text-sm font-semibold text-slate-700 dark:text-slate-100">
-                      {t.starterPacksTitle}
-                    </h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {t.starterPacksDesc}
-                    </p>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {starterPacks.map((pack) => {
-                      const packTitle = pack.title[language] ?? pack.title.pl;
-                      const packDesc = pack.description[language] ?? pack.description.pl;
-                      const packCategory = pack.category[language] ?? pack.category.pl;
-                      const previewWords = pack.words.slice(0, 6);
-
-                      return (
-                        <div
-                          key={pack.id}
-                          className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-900/50 p-4 space-y-3"
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="text-[11px] uppercase tracking-wide text-slate-400">
-                                {packCategory}
-                              </p>
-                              <p className="mt-1 text-sm font-semibold text-slate-800 dark:text-slate-100">
-                                {packTitle}
-                              </p>
-                              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                {packDesc}
-                              </p>
-                            </div>
-                            <span className="text-[11px] text-slate-500">
-                              {t.starterPackWords(pack.words.length)}
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            {previewWords.map((word) => (
-                              <span
-                                key={`${pack.id}-${word.target}-${word.native}`}
-                                className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-[11px] text-slate-600 dark:text-slate-300"
-                              >
-                                {word.target} · {word.native}
-                              </span>
-                            ))}
-                          </div>
-                          <Button size="sm" onClick={() => addStarterPack(pack)}>
-                            {t.starterPackAddContinue}
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
                 </div>
               )}
 
