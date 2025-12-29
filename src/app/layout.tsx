@@ -32,8 +32,8 @@ const display = localFont({
 });
 
 export const metadata: Metadata = {
-  title: 'English Vocab Trainer',
-  description: 'Interaktywna aplikacja do nauki słówek angielskich z AI',
+  title: 'Trener Słówek',
+  description: 'Szkolna aplikacja do nauki słówek (PL/UA) z AI',
 };
 
 export default function RootLayout({
@@ -44,7 +44,7 @@ export default function RootLayout({
   const appVersion = process.env.APP_VERSION ?? 'unknown';
 
   return (
-    <html lang="uk" suppressHydrationWarning>
+    <html lang="pl" suppressHydrationWarning>
       <body className={`${sans.variable} ${display.variable} font-sans antialiased`}>
         <Providers>
           <ClientLayout />

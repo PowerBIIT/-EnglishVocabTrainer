@@ -144,9 +144,9 @@ const profileCopy = {
     userFallback: 'Użytkownik',
     emailFallback: 'Brak e-maila',
     logout: 'Wyloguj',
-    dailyMission: 'Misja dzienna',
-    missionStart: 'Start',
-    missionContinue: 'Kontynuuj',
+    dailyMission: 'Zadanie dnia',
+    missionStart: 'Start zadania',
+    missionContinue: 'Kontynuuj zadanie',
     keepStreak: (days: number) => `Utrzymaj serię: ${days} dni`,
     levelTitle: 'Twój poziom',
     levelLabel: (level: number) => `Poziom ${level}`,
@@ -197,6 +197,8 @@ const profileCopy = {
     voiceBritish: 'Brytyjski',
     voiceAmerican: 'Amerykański',
     voiceAustralian: 'Australijski',
+    voiceAuto: 'Automatyczny (język docelowy)',
+    voiceAutoDesc: 'Dla języków innych niż angielski głos jest dobierany automatycznie.',
     speechSpeed: 'Prędkość mowy',
     speedSlow: 'Wolna',
     speedNormal: 'Normalna',
@@ -246,9 +248,9 @@ const profileCopy = {
     userFallback: 'User',
     emailFallback: 'No email',
     logout: 'Log out',
-    dailyMission: 'Daily mission',
-    missionStart: 'Start',
-    missionContinue: 'Continue',
+    dailyMission: 'Task of the day',
+    missionStart: 'Start task',
+    missionContinue: 'Continue task',
     keepStreak: (days: number) => `Keep your streak: ${days} days`,
     levelTitle: 'Your level',
     levelLabel: (level: number) => `Level ${level}`,
@@ -299,6 +301,8 @@ const profileCopy = {
     voiceBritish: 'British',
     voiceAmerican: 'American',
     voiceAustralian: 'Australian',
+    voiceAuto: 'Automatic (target language)',
+    voiceAutoDesc: 'For non-English targets, the voice is selected automatically.',
     speechSpeed: 'Speech speed',
     speedSlow: 'Slow',
     speedNormal: 'Normal',
@@ -347,9 +351,9 @@ const profileCopy = {
     userFallback: 'Користувач',
     emailFallback: 'Немає e-mail',
     logout: 'Вийти',
-    dailyMission: 'Місія дня',
-    missionStart: 'Старт',
-    missionContinue: 'Продовжити',
+    dailyMission: 'Завдання дня',
+    missionStart: 'Почати завдання',
+    missionContinue: 'Продовжити завдання',
     keepStreak: (days: number) => `Утримай серію: ${days} днів`,
     levelTitle: 'Твій рівень',
     levelLabel: (level: number) => `Рівень ${level}`,
@@ -400,6 +404,8 @@ const profileCopy = {
     voiceBritish: 'Британський',
     voiceAmerican: 'Американський',
     voiceAustralian: 'Австралійський',
+    voiceAuto: 'Автоматично (цільова мова)',
+    voiceAutoDesc: 'Для неанглійської цілі голос підбирається автоматично.',
     speechSpeed: 'Швидкість мовлення',
     speedSlow: 'Повільна',
     speedNormal: 'Нормальна',
@@ -633,6 +639,7 @@ export default function ProfilePage() {
       : '';
   const languagePreview = t.languagePreview;
   const activePair = getLearningPair(settings.learning.pairId);
+  const isEnglishTarget = settings.learning.targetLanguage === 'en';
 
   const setCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -1154,21 +1161,29 @@ export default function ProfilePage() {
             </div>
           </CardHeader>
           <CardContent className="divide-y divide-slate-100 dark:divide-slate-700">
-            <SettingRow label={t.voice}>
-              <Select
-                value={settings.pronunciation.voice}
-                options={[
-                  { value: 'british', label: t.voiceBritish },
-                  { value: 'american', label: t.voiceAmerican },
-                  { value: 'australian', label: t.voiceAustralian },
-                ]}
-                onChange={(v) =>
-                  updateSettings('pronunciation', {
-                    voice: v as 'british' | 'american' | 'australian',
-                  })
-                }
-              />
-            </SettingRow>
+            {isEnglishTarget ? (
+              <SettingRow label={t.voice}>
+                <Select
+                  value={settings.pronunciation.voice}
+                  options={[
+                    { value: 'british', label: t.voiceBritish },
+                    { value: 'american', label: t.voiceAmerican },
+                    { value: 'australian', label: t.voiceAustralian },
+                  ]}
+                  onChange={(v) =>
+                    updateSettings('pronunciation', {
+                      voice: v as 'british' | 'american' | 'australian',
+                    })
+                  }
+                />
+              </SettingRow>
+            ) : (
+              <SettingRow label={t.voice} description={t.voiceAutoDesc}>
+                <span className="text-sm text-slate-500 dark:text-slate-400">
+                  {t.voiceAuto}
+                </span>
+              </SettingRow>
+            )}
 
             <SettingRow label={t.speechSpeed}>
               <Select

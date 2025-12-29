@@ -1,17 +1,21 @@
 # Testy manualne
 
 ## Cel
-Zweryfikować, że flow „Klasówka” działa end‑to‑end (desktop i mobile),
-bez błędów 500 z `/api/ai/parse-text`, z poprawną preselekcją zestawu w quizie
-i z szybkim startem wymowy.
+Zweryfikować, że szkolny onboarding i flow „Klasówka” działają end‑to‑end (desktop i mobile),
+bez błędów 500 z `/api/ai/parse-text`, z poprawną preselekcją zestawów (quiz/flashcards),
+zestawami startowymi oraz szybkim startem wymowy.
 
 ## Zakres
 - CTA „Klasówka w 5 min” na stronie głównej.
 - Flow `/klasowka` (dodanie słówek → podsumowanie → start quizu).
-- Preselekcja zestawu w `/quiz` przez `setId` w URL.
+- Sekcja „Zestawy startowe” na home (przyciski „Dodaj zestaw” i „Dodaj i quiz”).
+- Onboarding: wybór ścieżki ucznia, wybór celu nauki, krok „Dodaj pierwszy zestaw słówek”
+  (w tym zestawy startowe).
+- Podpowiedź „Polskie litery” dla UI UA i pary UA → PL.
+- Badge „Polski w Polsce” na home dla pary UA → PL.
+- Preselekcja zestawu w `/quiz` i `/flashcards` przez `setId`.
 - CTA „Wymowa” na home (kontekst: słabe/nowe słowa).
 - Preselekcja sesji w `/pronunciation` przez `setId`, `focus`, `length`.
-- Onboarding krok 3 na mobile (przycisk „Pomiń”, brak zasłaniania contentu).
 - Układ mobilny (390x844).
 
 ## Wymagania wstępne
@@ -31,11 +35,12 @@ lub `E2E_TEST=true` w `.env.local` i zrestartuj serwer dev.
 4) Upewnij się, że język UI to PL (przełącznik na /login).
 
 ## Gdy pojawia się onboarding
-1) Wybierz parę językową (np. Polski → Angielski).
-2) Wybierz cel nauki (np. „Szybka klasówka”).
-3) Wybierz dowolny styl przewodnika.
-4) Dodaj minimalny zestaw słówek, dokończ misję.
-5) Po ukończeniu wróć do `/`.
+1) Wybierz ścieżkę ucznia (PL → EN lub UA → PL).
+2) (Opcjonalnie) Skoryguj parę językową w kolejnym kroku.
+3) Wybierz cel nauki (np. „Szybka klasówka”).
+4) Wybierz dowolny styl przewodnika.
+5) W kroku „Dodaj pierwszy zestaw słówek” dodaj słówka lub wybierz zestaw startowy.
+6) Dokończ misję i wróć do `/`.
 
 ## Dane testowe (8 par)
 Użyj dokładnie tych 8 par:
@@ -44,7 +49,7 @@ aa - bb, cc - dd, ff - hh, ii - kk, ll - mm, pp - qq, xx - aa, bb - cc
 ```
 
 ## Dane testowe (12 par, onboarding)
-Użyj do testów kroku 3:
+Użyj do testów kroku 5 („Dodaj pierwszy zestaw słówek”):
 ```
 alpha - alfa, beta - beta, gamma - gamma, delta - delta, epsilon - epsilon, zeta - zeta,
 eta - eta, theta - theta, iota - iota, kappa - kappa, lambda - lambda, omega - omega
@@ -64,12 +69,12 @@ Kroki:
 Oczekiwane:
 - Przekierowanie do `/klasowka`.
 
-## TC-CL-02: Limit 8 słówek
+## TC-CL-02: Minimum 1 słówko
 Kroki:
-1) Na `/klasowka` wklej tylko 7 par (usuń jedną z listy).
-2) Sprawdź przycisk „Dodaj i przejdź do podsumowania”.
+1) Na `/klasowka` wklej 1 parę słówek (np. "test - test").
+2) Sprawdź przycisk „Dodaj i przejdź do podsumowania".
 Oczekiwane:
-- Przycisk jest nieaktywny (min. 8).
+- Przycisk jest aktywny (min. 1 słówko).
 
 ## TC-CL-03: Podsumowanie i start quizu
 Kroki:
@@ -110,6 +115,36 @@ Oczekiwane:
 - Karta pokazuje kontekst (np. „Słabe słowa: X” lub „Nowe słowa: szybka rozgrzewka”).
 - Przejście do `/pronunciation` z `focus` i `length=5`.
 
+## TC-HM-SP-01: Zestawy startowe na home
+Kroki:
+1) Wejdź na `/`.
+2) Znajdź sekcję „Zestawy startowe”.
+3) Kliknij „Dodaj zestaw” na jednym z zestawów.
+4) Wejdź na `/flashcards` i sprawdź listę zestawów.
+5) Wróć na `/` i kliknij „Dodaj i quiz” na innym zestawie.
+Oczekiwane:
+- Sekcja „Zestawy startowe” jest widoczna dla par PL → EN i UA → PL.
+- Po „Dodaj zestaw” nowy zestaw jest widoczny na liście (np. w filtrze zestawów).
+- Po „Dodaj i quiz” następuje przejście do `/quiz?setId=...` i nowy zestaw jest aktywny.
+
+## TC-HM-UA-01: Badge UA na home
+Kroki:
+1) Ustaw parę językową na UA → PL (np. w profilu).
+2) Wejdź na `/`.
+Oczekiwane:
+- Widoczny badge „Polski w Polsce” oraz krótka notka o nauce w Polsce.
+- Badge nie pojawia się dla pary PL → EN.
+
+## TC-FL-01: Preselekcja zestawu w `/flashcards`
+Kroki:
+1) Wejdź na `/flashcards?setId=<ID_ZESTAWU>` (np. skopiuj `setId` z URL `/quiz`).
+2) Sprawdź, czy wybrany zestaw jest aktywny.
+3) Rozpocznij krótką sesję fiszek i zakończ ją.
+4) Na ekranie podsumowania kliknij „Przejdź do quizu”.
+Oczekiwane:
+- Zestaw jest preselekcjonowany po wejściu na stronę.
+- Link „Przejdź do quizu” prowadzi do `/quiz?setId=<ID_ZESTAWU>`.
+
 ## TC-PR-01: Parametry w `/pronunciation`
 Kroki:
 1) Wejdź na `/pronunciation?focus=new_words&length=5`.
@@ -132,7 +167,18 @@ Oczekiwane:
 - UI nie jest przeładowany (brak dodatkowych dużych bloków).
 - Jeśli AI jest niedostępne, pojawia się lokalny fallback (to jest OK).
 
-## TC-OB-00: Onboarding – wybór celu nauki
+## TC-OB-00: Onboarding – wybór ścieżki ucznia
+Kroki:
+1) Wejdź w onboarding (nowe konto lub wyczyszczone dane).
+2) W kroku „Wybierz ścieżkę ucznia” kliknij „Uczeń w Polsce (PL → EN)”.
+3) Kliknij „Dalej”.
+4) Na kroku „Wybierz parę językową” sprawdź zaznaczoną parę.
+5) (Opcjonalnie) Wróć i wybierz „Uczeń z Ukrainy w Polsce (UA → PL)”.
+Oczekiwane:
+- Wybrana karta ścieżki jest wyróżniona.
+- Para językowa jest preselekcjonowana zgodnie ze ścieżką.
+
+## TC-OB-01: Onboarding – wybór celu nauki
 Kroki:
 1) Przejdź onboarding do kroku „Wybierz cel nauki”.
 2) Zaznacz „Szybka klasówka”.
@@ -143,38 +189,60 @@ Oczekiwane:
 Alternatywa:
 - Wybierz „Regularna nauka” → po onboardingu Quiz = 10 pytań, Fiszki = 10, Limit czasu = brak.
 
-## TC-OB-01: Onboarding krok 3 – „Pomiń” na mobile
+## TC-OB-02: Onboarding krok 5 – „Pomiń” na mobile
 Kroki:
 1) Włącz viewport 390x844.
 2) Przejdź onboarding do kroku „Dodaj pierwszy zestaw słówek”.
 3) Sprawdź dolny fixed footer.
 Oczekiwane:
 - Przycisk „Pomiń” jest widoczny w footerze.
-- W footerze są widoczne 3 akcje: „Pomiń”, „Anuluj”, „Dodaj”.
+- W footerze są widoczne 3 akcje: „Pomiń”, „Anuluj”, „Dodaj i przejdź dalej”.
 
-## TC-OB-02: Onboarding krok 3 – footer nie zasłania contentu
+## TC-OB-03: Onboarding krok 5 – footer nie zasłania contentu
 Kroki:
-1) W kroku 3 wklej 12 par z sekcji „Dane testowe (12 par, onboarding)”.
+1) W kroku 5 wklej 12 par z sekcji „Dane testowe (12 par, onboarding)”.
 2) Przewiń do listy słówek (na końcu).
 Oczekiwane:
 - Ostatnie elementy listy są w pełni widoczne (nie pod stopką).
 - Footer nie nachodzi na interaktywne elementy.
 
-## TC-OB-03: Onboarding krok 3 – układ kompaktowy
+## TC-OB-04: Onboarding krok 5 – układ kompaktowy
 Kroki:
-1) W kroku 3 oceń gęstość UI (panele wiadomości i lista słówek).
+1) W kroku 5 oceń gęstość UI (panele wiadomości i lista słówek).
 2) Dodaj 12 par i sprawdź długość scrolla.
 Oczekiwane:
 - Panele mają własne, ograniczone wysokości i własny scroll.
 - Przewijanie strony jest zauważalnie krótsze niż przed zmianą.
 
+## TC-OB-05: Onboarding – zestaw startowy
+Kroki:
+1) W kroku „Dodaj pierwszy zestaw słówek” znajdź sekcję „Zestawy startowe”.
+2) Kliknij „Dodaj i przejdź dalej” na jednym z zestawów.
+Oczekiwane:
+- Tworzy się nowy zestaw z nazwą zgodną z tytułem zestawu.
+- Następuje przejście do kroku „Pierwsza misja”.
+- Opis misji odnosi się do wybranego zestawu.
+
+## TC-OB-06: Onboarding – podpowiedź „Polskie litery”
+Kroki:
+1) Ustaw język UI na UA w nagłówku onboardingu.
+2) Ustaw parę UA → PL (np. przez wybór ścieżki).
+3) Przejdź do kroku „Dodaj pierwszy zestaw słówek”.
+Oczekiwane:
+- Widoczny box „Польські літери” z listą polskich znaków.
+
 ## Kryteria FAIL
 - 500 z `/api/ai/parse-text` w Network/Console.
-- Brak preselekcji zestawu w quizie.
+- Brak preselekcji zestawu w quizie lub w `/flashcards` (setId).
 - Brak CTA lub brak przejścia na `/klasowka`.
 - Widoczne błędy JS w Console.
-- Brak przycisku „Pomiń” w kroku 3 na mobile.
-- Content w kroku 3 zasłonięty przez fixed footer.
+- Brak kroku „Wybierz ścieżkę ucznia” w onboarding.
+- Brak sekcji „Zestawy startowe” na home lub w onboardingu dla par PL → EN lub UA → PL.
+- „Dodaj i przejdź dalej” w onboarding nie tworzy zestawu lub nie przenosi do misji.
+- Brak przycisku „Pomiń” w kroku 5 na mobile.
+- Content w kroku 5 zasłonięty przez fixed footer.
+- Brak podpowiedzi „Polskie litery” dla UI UA i pary UA → PL.
+- Brak badge „Polski w Polsce” na home dla pary UA → PL.
 - „Wymowa 3 min” nie ustawia parametrów sesji (focus/length/set).
 - Brak „Gotowość do kartkówki” po zakończeniu sesji wymowy.
 - Brak „AI podsumowanie” po kliknięciu „Podsumuj z AI”.
@@ -184,7 +252,45 @@ Oczekiwane:
 
 ---
 
-## Wyniki testów (28 gru 2025)
+## Wyniki testów (bieżące)
+
+### Podsumowanie testów manualnych
+
+PASS (11 testów)
+
+| Test        | Opis                                                 |
+|-------------|------------------------------------------------------|
+| TC-CL-01    | CTA "Klasówka w 5 min" przekierowuje do /klasowka    |
+| TC-CL-02    | Przycisk aktywny przy 1 słówku (nowy limit)          |
+| TC-CL-03    | Podsumowanie i start quizu działają                  |
+| TC-CL-03A   | Przycisk "Wymowa 3 min" z poprawnymi parametrami URL |
+| TC-CL-04    | Brak overflow na mobile (382px < 390px)              |
+| TC-HM-PR-01 | Karta Wymowa z kontekstem widoczna                   |
+| TC-HM-SP-01 | Zestawy startowe (Biologia, Geografia) działają      |
+| TC-HM-UA-01 | Badge UA "Польська в Польщі" widoczny                |
+| TC-PR-01    | Parametry URL w /pronunciation działają              |
+| TC-OB-00-05 | Onboarding wszystkie kroki działają                  |
+| TC-OB-06    | Wskazówka "Польські літери" widoczna dla UA→PL       |
+
+FAIL (1 test)
+
+| Test     | Problem                                               |
+|----------|-------------------------------------------------------|
+| TC-FL-01 | setId z URL nie preselekcjonuje zestawu w /flashcards |
+
+SKIP (2 testy)
+
+| Test     | Powód                                |
+|----------|--------------------------------------|
+| TC-PR-02 | Brak mikrofonu w środowisku testowym |
+| TC-PR-03 | Brak mikrofonu w środowisku testowym |
+
+### Do naprawy
+- TC-FL-01: preselekcja zestawu w `/flashcards` przez parametr `setId` nie działa.
+
+## Wyniki testów (28 gru 2025 — historyczne)
+Uwaga: poniższe wyniki dotyczą wersji sprzed dodania ścieżki ucznia i zestawów startowych.
+Wymagają ponownego wykonania po aktualizacjach.
 
 ### Środowisko
 - URL: http://localhost:3000

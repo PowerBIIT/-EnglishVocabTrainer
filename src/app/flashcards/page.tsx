@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, BookOpen, Shuffle, Filter, Check } from 'lucide-react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FlashcardSession } from '@/components/flashcard/Flashcard';
@@ -97,6 +98,9 @@ export default function FlashcardsPage() {
   const hydrated = useHydration();
   const language = useLanguage();
   const t = (flashcardsCopy[language] ?? flashcardsCopy.pl) as FlashcardsCopy;
+  const searchParams = useSearchParams();
+  const setIdParam = searchParams.get('setId')?.trim() ?? '';
+  const [appliedSetParam, setAppliedSetParam] = useState(false);
   const [sessionState, setSessionState] = useState<SessionState>('setup');
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
   const [selectedSetId, setSelectedSetId] = useState<'all' | 'unassigned' | string>('all');
@@ -160,6 +164,18 @@ export default function FlashcardsPage() {
     }
   }, [selectedSetId, sets]);
 
+  useEffect(() => {
+    if (!hydrated || appliedSetParam) return;
+    if (!setIdParam) {
+      setAppliedSetParam(true);
+      return;
+    }
+    if (sets.some((set) => set.id === setIdParam)) {
+      setSelectedSetId(setIdParam);
+    }
+    setAppliedSetParam(true);
+  }, [appliedSetParam, hydrated, setIdParam, sets]);
+
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     filterBySet(vocabulary).forEach((word) => {
@@ -172,6 +188,10 @@ export default function FlashcardsPage() {
     () => filterBySet(vocabulary).length,
     [filterBySet, vocabulary]
   );
+  const quizHref =
+    selectedSetId !== 'all' && selectedSetId !== 'unassigned'
+      ? `/quiz?setId=${encodeURIComponent(selectedSetId)}`
+      : '/quiz';
 
   if (!hydrated) {
     return (
@@ -244,7 +264,7 @@ export default function FlashcardsPage() {
             <Button onClick={() => setSessionState('setup')}>
               {t.newSession}
             </Button>
-            <Link href="/quiz">
+            <Link href={quizHref}>
               <Button variant="secondary" className="w-full">
                 {t.goToQuiz}
               </Button>

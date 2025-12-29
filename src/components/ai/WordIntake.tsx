@@ -177,10 +177,10 @@ export const wordIntakeCopy = {
   pl: {
     loading: 'Ładowanie...',
     welcomeMessage: (example: string) =>
-      `Witaj! Jestem Twoim asystentem AI do nauki słówek. Mogę:\n\n• Dodać słówka, które wpiszesz (np. "${example}")\n• Wygenerować słówka na temat\n• Wyciągnąć słówka ze zdjęcia lub pliku\n• Pokazać statystyki Twojej biblioteki\n\nJak mogę Ci pomóc?`,
+      `Witaj! Jestem Twoim asystentem do słówek szkolnych. Mogę:\n\n• Dodać słówka z kartkówki (np. "${example}")\n• Wygenerować słówka z tematu lekcji\n• Wyciągnąć słówka ze zdjęcia lub pliku\n• Pokazać statystyki Twojej biblioteki\n\nJak mogę Ci pomóc?`,
     defaultCategory: 'Moje słówka',
     defaultSetLabel: 'Nowy zestaw',
-    defaultTopic: 'ogólne',
+    defaultTopic: 'szkoła',
     imageCategoryFallback: 'Ze zdjęcia',
     statsIntro: (wordCount: number, categoryCount: number) =>
       `Masz łącznie **${wordCount}** słówek w **${categoryCount}** kategoriach:\n\n`,
@@ -251,10 +251,11 @@ export const wordIntakeCopy = {
     processing: 'Przetwarzam...',
     quickActionsLabel: 'Szybkie akcje:',
     quickActions: [
-      { label: 'Urząd', prompt: 'Wygeneruj 12 słówek o urzędach i dokumentach' },
-      { label: 'Praca', prompt: 'Wygeneruj 12 słówek o pracy' },
-      { label: 'Szkoła', prompt: 'Wygeneruj 12 słówek o szkole' },
-      { label: 'Zdrowie', prompt: 'Wygeneruj 12 słówek o zdrowiu i lekarzu' },
+      { label: 'Biologia', prompt: 'Wygeneruj 12 słówek z biologii' },
+      { label: 'Matematyka', prompt: 'Wygeneruj 12 słówek z matematyki' },
+      { label: 'Geografia', prompt: 'Wygeneruj 12 słówek z geografii' },
+      { label: 'Historia', prompt: 'Wygeneruj 12 słówek z historii' },
+      { label: 'Lektury', prompt: 'Wygeneruj 12 słówek z lektur' },
       { label: 'Statystyki', prompt: 'Ile mam słówek?' },
     ],
     imageButtonTitle: 'Wczytaj zdjęcie notatek',
@@ -269,10 +270,10 @@ export const wordIntakeCopy = {
   en: {
     loading: 'Loading...',
     welcomeMessage: (example: string) =>
-      `Hi! I am your AI vocabulary assistant. I can:\n\n• Add words you type (e.g. "${example}")\n• Generate words by topic\n• Extract words from a photo or file\n• Show stats from your library\n\nHow can I help?`,
+      `Hi! I am your school vocabulary assistant. I can:\n\n• Add words from a test (e.g. "${example}")\n• Generate words for a lesson topic\n• Extract words from a photo or file\n• Show stats from your library\n\nHow can I help?`,
     defaultCategory: 'My words',
     defaultSetLabel: 'New set',
-    defaultTopic: 'general',
+    defaultTopic: 'school',
     imageCategoryFallback: 'From photo',
     statsIntro: (wordCount: number, categoryCount: number) =>
       `You have **${wordCount}** words across **${categoryCount}** categories:\n\n`,
@@ -340,10 +341,11 @@ export const wordIntakeCopy = {
     processing: 'Working...',
     quickActionsLabel: 'Quick actions:',
     quickActions: [
-      { label: 'Documents', prompt: 'Generate 12 words about documents and offices' },
-      { label: 'Work', prompt: 'Generate 12 words about work' },
-      { label: 'School', prompt: 'Generate 12 words about school' },
-      { label: 'Health', prompt: 'Generate 12 words about health and doctor visits' },
+      { label: 'Biology', prompt: 'Generate 12 words about biology' },
+      { label: 'Math', prompt: 'Generate 12 words about math' },
+      { label: 'Geography', prompt: 'Generate 12 words about geography' },
+      { label: 'History', prompt: 'Generate 12 words about history' },
+      { label: 'Literature', prompt: 'Generate 12 words about literature' },
       { label: 'Stats', prompt: 'How many words do I have?' },
     ],
     imageButtonTitle: 'Upload notes photo',
@@ -358,10 +360,10 @@ export const wordIntakeCopy = {
   uk: {
     loading: 'Завантаження...',
     welcomeMessage: (example: string) =>
-      `Привіт! Я твій AI-асистент для вивчення слів. Я можу:\n\n• Додати слова, які ти введеш (наприклад "${example}")\n• Згенерувати слова за темою\n• Витягнути слова з фото або файлу\n• Показати статистику твоєї бібліотеки\n\nЧим можу допомогти?`,
+      `Привіт! Я твій асистент для польської в школі й повсякденних справах у Польщі. Я можу:\n\n• Додати слова з контрольної (наприклад "${example}")\n• Згенерувати слова за темою уроку\n• Витягнути слова з фото або файлу\n• Показати статистику твоєї бібліотеки\n\nЧим можу допомогти?`,
     defaultCategory: 'Мої слова',
     defaultSetLabel: 'Новий набір',
-    defaultTopic: 'загальні',
+    defaultTopic: 'школа',
     imageCategoryFallback: 'З фото',
     statsIntro: (wordCount: number, categoryCount: number) =>
       `У тебе всього **${wordCount}** слів у **${categoryCount}** категоріях:\n\n`,
@@ -431,10 +433,10 @@ export const wordIntakeCopy = {
     processing: 'Обробляю...',
     quickActionsLabel: 'Швидкі дії:',
     quickActions: [
-      { label: 'Документи', prompt: 'Згенеруй 12 слів на тему документи та уряд' },
-      { label: 'Робота', prompt: 'Згенеруй 12 слів на тему робота' },
       { label: 'Школа', prompt: 'Згенеруй 12 слів на тему школа' },
+      { label: 'Документи', prompt: 'Згенеруй 12 слів на тему документи та установи' },
       { label: 'Лікар', prompt: 'Згенеруй 12 слів на тему лікар і здоровʼя' },
+      { label: 'Транспорт', prompt: 'Згенеруй 12 слів на тему транспорт і місто' },
       { label: 'Статистика', prompt: 'Скільки в мене слів?' },
     ],
     imageButtonTitle: 'Завантажити фото нотаток',

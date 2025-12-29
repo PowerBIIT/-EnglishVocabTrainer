@@ -11,7 +11,7 @@ import { useHydration, useVocabStore } from '@/lib/store';
 import { useLanguage } from '@/lib/i18n';
 import { getCategoryLabel } from '@/lib/categories';
 
-const MIN_WORDS = 8;
+const MIN_WORDS = 1;
 
 const klasowkaCopy = {
   pl: {

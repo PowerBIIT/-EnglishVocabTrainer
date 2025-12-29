@@ -20,9 +20,12 @@ import { ProgressBar, CircularProgress } from '@/components/ui/ProgressBar';
 import { MascotAvatar } from '@/components/mascot/MascotAvatar';
 import { useVocabStore, useHydration } from '@/lib/store';
 import { useLanguage } from '@/lib/i18n';
-import { BADGES, getLevelProgress } from '@/lib/utils';
+import { BADGES, generateId, getLevelProgress } from '@/lib/utils';
 import { getCategoryLabel } from '@/lib/categories';
 import { getMissionCopy } from '@/lib/missions';
+import { getLearningPair, getLanguageLabel } from '@/lib/languages';
+import { getStarterPacksForPair, StarterPack } from '@/data/starterPacks';
+import { useRouter } from 'next/navigation';
 
 const badgeIcons = {
   flame: Flame,
@@ -37,28 +40,28 @@ const homeCopy = {
   pl: {
     loading: 'Ładowanie...',
     greeting: (name: string) => `Witaj, ${name}`,
-    todayAdventure: 'Twoja dzisiejsza przygoda',
+    todayAdventure: 'Dzisiejsza lekcja',
     streak: (days: number) => `Seria ${days}`,
-    dailyMission: 'Misja dnia',
-    missionContinue: 'Kontynuuj naukę',
-    missionStart: 'Start misji',
+    dailyMission: 'Zadanie dnia',
+    missionContinue: 'Kontynuuj zadanie',
+    missionStart: 'Start zadania',
     dueWords: (count: number) => `Do powtórki: ${count} słówek`,
     flashcards: 'Fiszki',
-    flashcardsDesc: 'Szybki sprint 3 min',
+    flashcardsDesc: 'Powtórka 3 min',
     quiz: 'Quiz',
-    quizDesc: 'Wyzwanie na czas',
+    quizDesc: 'Szybki sprawdzian',
     classTest: 'Klasówka w 5 min',
-    classTestDesc: 'Wklej słówka i od razu zacznij quiz',
+    classTestDesc: 'Wklej słówka z lekcji i od razu zacznij quiz',
     pronunciation: 'Wymowa',
-    pronunciationDesc: 'Trening głosu',
+    pronunciationDesc: (target: string) => `Czytanie na głos (${target.toLowerCase()})`,
     pronunciationStats: (avg: number, streak: number) =>
       `Średnia ${avg.toFixed(1)}/10 • Streak ${streak}`,
     pronunciationEmpty: 'Zrób 5 słów i złap pierwszy wynik.',
     pronunciationWeak: (count: number) => `Słabe słowa: ${count}`,
     pronunciationNew: 'Nowe słowa: szybka rozgrzewka',
     guide: 'Twój przewodnik',
-    adventureMode: 'Tryb przygody',
-    guideNote: 'Dzisiaj celem jest utrzymanie tempa. Wybierz misję i zdobądź nagrodę.',
+    adventureMode: 'Plan lekcji',
+    guideNote: 'Dziś cel: powtórka i krótki quiz. Zrób zadanie i zdobądź nagrodę.',
     levelLabel: (level: number) => `Poziom ${level}`,
     progressToNext: 'Postęp do następnego poziomu',
     progressByCategory: 'Postęp według kategorii',
@@ -68,33 +71,40 @@ const homeCopy = {
     longestStreak: 'Najdłuższa seria',
     sessionsCompleted: 'Sesji ukończonych',
     badges: 'Twoje odznaki',
-    defaultName: 'Odkrywco',
+    defaultName: 'Uczniu',
+    starterPacksTitle: 'Zestawy startowe',
+    starterPacksDesc: 'Wybierz temat i zacznij naukę od razu.',
+    starterPackWords: (count: number) => `${count} słówek`,
+    starterPackAdd: 'Dodaj zestaw',
+    starterPackAddQuiz: 'Dodaj i quiz',
+    uaFocusBadge: 'Polski w Polsce',
+    uaFocusNote: 'Szkoła i codzienne sprawy (UA → PL).',
   },
   en: {
     loading: 'Loading...',
     greeting: (name: string) => `Welcome, ${name}`,
-    todayAdventure: "Today's adventure",
+    todayAdventure: "Today's lesson",
     streak: (days: number) => `Streak ${days}`,
-    dailyMission: 'Daily mission',
-    missionContinue: 'Continue learning',
-    missionStart: 'Start mission',
+    dailyMission: 'Task of the day',
+    missionContinue: 'Continue task',
+    missionStart: 'Start task',
     dueWords: (count: number) => `Due: ${count} words`,
     flashcards: 'Flashcards',
-    flashcardsDesc: 'Quick 3‑min sprint',
+    flashcardsDesc: 'Quick 3‑min review',
     quiz: 'Quiz',
-    quizDesc: 'Time challenge',
+    quizDesc: 'Fast check',
     classTest: 'Test in 5 minutes',
-    classTestDesc: 'Paste words and start the quiz fast',
+    classTestDesc: 'Paste words from class and start the quiz fast',
     pronunciation: 'Pronunciation',
-    pronunciationDesc: 'Voice training',
+    pronunciationDesc: (target: string) => `Read aloud (${target.toLowerCase()})`,
     pronunciationStats: (avg: number, streak: number) =>
       `Avg ${avg.toFixed(1)}/10 • Streak ${streak}`,
     pronunciationEmpty: 'Do 5 words and get your first score.',
     pronunciationWeak: (count: number) => `Weak words: ${count}`,
     pronunciationNew: 'New words: quick warm-up',
     guide: 'Your guide',
-    adventureMode: 'Adventure mode',
-    guideNote: 'Today the goal is to keep momentum. Pick a mission and earn a reward.',
+    adventureMode: 'Lesson plan',
+    guideNote: 'Today: review and a short quiz. Finish the task to earn a reward.',
     levelLabel: (level: number) => `Level ${level}`,
     progressToNext: 'Progress to next level',
     progressByCategory: 'Progress by category',
@@ -104,33 +114,40 @@ const homeCopy = {
     longestStreak: 'Longest streak',
     sessionsCompleted: 'Sessions completed',
     badges: 'Your badges',
-    defaultName: 'Explorer',
+    defaultName: 'Student',
+    starterPacksTitle: 'Starter packs',
+    starterPacksDesc: 'Pick a topic and start right away.',
+    starterPackWords: (count: number) => `${count} words`,
+    starterPackAdd: 'Add pack',
+    starterPackAddQuiz: 'Add and quiz',
+    uaFocusBadge: 'Polish in Poland',
+    uaFocusNote: 'School and everyday life (UA → PL).',
   },
   uk: {
     loading: 'Завантаження...',
     greeting: (name: string) => `Вітаю, ${name}`,
-    todayAdventure: 'Твоя сьогоднішня пригода',
+    todayAdventure: 'Сьогоднішній урок',
     streak: (days: number) => `Серія ${days}`,
-    dailyMission: 'Місія дня',
-    missionContinue: 'Продовжити навчання',
-    missionStart: 'Почати місію',
+    dailyMission: 'Завдання дня',
+    missionContinue: 'Продовжити завдання',
+    missionStart: 'Почати завдання',
     dueWords: (count: number) => `До повторення: ${count} слів`,
     flashcards: 'Флешкарти',
-    flashcardsDesc: 'Швидкий спринт на 3 хв',
+    flashcardsDesc: 'Швидке повторення 3 хв',
     quiz: 'Квіз',
-    quizDesc: 'Часовий виклик',
+    quizDesc: 'Швидка перевірка',
     classTest: 'Контрольна за 5 хв',
-    classTestDesc: 'Встав слова й одразу почни квіз',
+    classTestDesc: 'Встав слова з уроку й одразу почни квіз',
     pronunciation: 'Вимова',
-    pronunciationDesc: 'Тренування голосу',
+    pronunciationDesc: (target: string) => `Читання вголос (${target.toLowerCase()})`,
     pronunciationStats: (avg: number, streak: number) =>
       `Середнє ${avg.toFixed(1)}/10 • Серія ${streak}`,
     pronunciationEmpty: 'Спробуй 5 слів і отримай перший результат.',
     pronunciationWeak: (count: number) => `Слабкі слова: ${count}`,
     pronunciationNew: 'Нові слова: швидка розминка',
     guide: 'Твій провідник',
-    adventureMode: 'Режим пригоди',
-    guideNote: 'Сьогодні мета — зберегти темп. Обери місію та здобудь нагороду.',
+    adventureMode: 'План уроку',
+    guideNote: 'Сьогодні: повторення та короткий квіз. Виконай завдання і здобудь нагороду.',
     levelLabel: (level: number) => `Рівень ${level}`,
     progressToNext: 'Прогрес до наступного рівня',
     progressByCategory: 'Прогрес за категоріями',
@@ -140,7 +157,14 @@ const homeCopy = {
     longestStreak: 'Найдовша серія',
     sessionsCompleted: 'Сесій завершено',
     badges: 'Твої відзнаки',
-    defaultName: 'Досліднику',
+    defaultName: 'Учню',
+    starterPacksTitle: 'Стартові набори',
+    starterPacksDesc: 'Обери тему й починай одразу.',
+    starterPackWords: (count: number) => `${count} слів`,
+    starterPackAdd: 'Додати набір',
+    starterPackAddQuiz: 'Додати і квіз',
+    uaFocusBadge: 'Польська в Польщі',
+    uaFocusNote: 'Школа та повсякденні справи (UA → PL).',
   },
 } as const;
 
@@ -148,9 +172,11 @@ type HomeCopy = typeof homeCopy.pl;
 
 export default function HomePage() {
   const hydrated = useHydration();
+  const router = useRouter();
   const { data: session } = useSession();
   const language = useLanguage();
   const t = (homeCopy[language] ?? homeCopy.pl) as HomeCopy;
+  const learning = useVocabStore((state) => state.settings.learning);
   const stats = useVocabStore((state) => state.stats);
   const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
   const progress = useVocabStore((state) => state.progress);
@@ -158,6 +184,13 @@ export default function HomePage() {
   const getNextReviewWords = useVocabStore((state) => state.getNextReviewWords);
   const getWeakPronunciationWords = useVocabStore((state) => state.getWeakPronunciationWords);
   const dailyMission = useVocabStore((state) => state.dailyMission);
+  const createSet = useVocabStore((state) => state.createSet);
+  const addVocabulary = useVocabStore((state) => state.addVocabulary);
+
+  const activePair = getLearningPair(learning.pairId);
+  const targetLabel = getLanguageLabel(activePair.target, language);
+  const starterPacks = getStarterPacksForPair(activePair.id);
+  const isUaStudent = activePair.id === 'uk-pl';
 
   const categorySummary = getCategorySummary();
   const dueWords = getNextReviewWords('all');
@@ -225,6 +258,33 @@ export default function HomePage() {
       ? '/pronunciation?focus=weak_words&length=5'
       : '/pronunciation?focus=new_words&length=5';
 
+  const addStarterPack = (pack: StarterPack, mode?: 'quiz') => {
+    const packTitle = pack.title[language] ?? pack.title.pl;
+    const packCategory = pack.category[language] ?? pack.category.pl;
+    const newSet = createSet(packTitle);
+    const now = new Date();
+    const newVocab = pack.words.map((word) => ({
+      id: generateId(),
+      en: word.target,
+      phonetic: '',
+      pl: word.native,
+      category: packCategory,
+      setIds: [newSet.id],
+      example_en: undefined,
+      example_pl: undefined,
+      difficulty: 'medium' as const,
+      created_at: now,
+      source: 'preset' as const,
+      languagePair: activePair.id,
+    }));
+
+    addVocabulary(newVocab);
+
+    if (mode === 'quiz') {
+      router.push(`/quiz?setId=${encodeURIComponent(newSet.id)}`);
+    }
+  };
+
   if (!hydrated) {
     return (
       <div className="p-4 flex items-center justify-center min-h-screen">
@@ -243,6 +303,14 @@ export default function HomePage() {
               <h1 className="font-display text-3xl text-slate-900 dark:text-white">
                 {t.todayAdventure}
               </h1>
+              {isUaStudent && (
+                <div className="mt-2 space-y-1">
+                  <span className="inline-flex items-center rounded-full bg-sky-100 text-sky-700 px-3 py-1 text-xs font-semibold">
+                    {t.uaFocusBadge}
+                  </span>
+                  <p className="text-sm text-slate-500">{t.uaFocusNote}</p>
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-1 text-amber-500">
@@ -349,7 +417,7 @@ export default function HomePage() {
                     <p className="font-semibold text-slate-800 dark:text-slate-100">
                       {t.pronunciation}
                     </p>
-                    <p className="text-sm text-slate-500">{t.pronunciationDesc}</p>
+                    <p className="text-sm text-slate-500">{t.pronunciationDesc(targetLabel)}</p>
                     <p className="text-xs text-slate-500 mt-2">{pronunciationMeta}</p>
                     <p className="text-xs text-slate-500">{pronunciationFocus}</p>
                   </div>
@@ -357,6 +425,77 @@ export default function HomePage() {
               </Card>
             </Link>
           </div>
+
+          {starterPacks.length > 0 && (
+            <section className="space-y-4">
+              <div className="flex flex-col gap-1">
+                <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+                  {t.starterPacksTitle}
+                </h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">
+                  {t.starterPacksDesc}
+                </p>
+              </div>
+              <div className="grid gap-4 md:grid-cols-2">
+                {starterPacks.map((pack) => {
+                  const packTitle = pack.title[language] ?? pack.title.pl;
+                  const packDesc = pack.description[language] ?? pack.description.pl;
+                  const packCategory = pack.category[language] ?? pack.category.pl;
+                  const previewWords = pack.words.slice(0, 6);
+
+                  return (
+                    <Card key={pack.id} className="h-full">
+                      <CardContent className="p-5 space-y-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xs uppercase tracking-wide text-slate-400">
+                              {packCategory}
+                            </p>
+                            <h3 className="mt-1 text-base font-semibold text-slate-800 dark:text-slate-100">
+                              {packTitle}
+                            </h3>
+                            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                              {packDesc}
+                            </p>
+                          </div>
+                          <span className="text-xs text-slate-500">
+                            {t.starterPackWords(pack.words.length)}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          {previewWords.map((word) => (
+                            <span
+                              key={`${pack.id}-${word.target}-${word.native}`}
+                              className="rounded-full bg-slate-100 dark:bg-slate-800 px-3 py-1 text-xs text-slate-600 dark:text-slate-300"
+                            >
+                              {word.target} · {word.native}
+                            </span>
+                          ))}
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => addStarterPack(pack)}
+                          >
+                            {t.starterPackAdd}
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => addStarterPack(pack, 'quiz')}
+                          >
+                            {t.starterPackAddQuiz}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
 
         <div className="space-y-6">
