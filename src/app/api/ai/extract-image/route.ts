@@ -68,8 +68,24 @@ export async function POST(request: NextRequest) {
 
     const safeTargetLanguage = normalizeTargetLanguage(targetLanguageRaw);
     const safeNativeLanguage = normalizeNativeLanguage(nativeLanguageRaw);
-    const allowedImageTypes = new Set(['image/jpeg', 'image/png', 'image/webp']);
-    const safeMimeType = allowedImageTypes.has(file.type) ? file.type : '';
+    const allowedImageTypes = new Set([
+      'image/jpeg',
+      'image/jpg',
+      'image/pjpeg',
+      'image/png',
+      'image/webp',
+    ]);
+    const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const extensionMimeMap: Record<string, string> = {
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+    };
+    const safeMimeType =
+      (allowedImageTypes.has(file.type) && file.type) ||
+      extensionMimeMap[extension] ||
+      '';
     if (!safeMimeType) {
       return NextResponse.json(
         { error: 'Unsupported image format' },

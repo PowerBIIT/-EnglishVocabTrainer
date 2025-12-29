@@ -211,6 +211,8 @@ export const wordIntakeCopy = {
       `Nie udało się rozpoznać słówek na zdjęciu. Upewnij się, że notatki są czytelne i zawierają słówka ${target.toLowerCase()} z tłumaczeniami ${native.toLowerCase()}.`,
     imageError:
       'Nie udało się przetworzyć zdjęcia. Spróbuj ponownie lub sprawdź konfigurację AI.',
+    imageTypeUnsupported:
+      'Nieobsługiwany format zdjęcia. Użyj JPG, PNG lub WEBP.',
     fileUploaded: (fileName: string) => `Wczytano plik: ${fileName}`,
     fileFound: (count: number, notes?: string) =>
       `Znalazłem **${count}** słówek w pliku.\n\n${notes ? `Uwagi: ${notes}\n\n` : ''}Zaznacz te, które chcesz dodać:`,
@@ -303,6 +305,8 @@ export const wordIntakeCopy = {
       `Could not recognize words in the image. Make sure your notes are readable and include ${target.toLowerCase()} words with ${native.toLowerCase()} translations.`,
     imageError:
       'Could not process the image. Try again or check your AI configuration.',
+    imageTypeUnsupported:
+      'Unsupported image format. Use JPG, PNG, or WEBP.',
     fileUploaded: (fileName: string) => `Uploaded file: ${fileName}`,
     fileFound: (count: number, notes?: string) =>
       `Found **${count}** words in the file.\n\n${notes ? `Notes: ${notes}\n\n` : ''}Select the ones you want to add:`,
@@ -394,6 +398,8 @@ export const wordIntakeCopy = {
       `Не вдалося розпізнати слова на фото. Переконайся, що нотатки читабельні й містять слова ${target.toLowerCase()} з перекладами ${native.toLowerCase()}.`,
     imageError:
       'Не вдалося обробити фото. Спробуй ще раз або перевір конфігурацію AI.',
+    imageTypeUnsupported:
+      'Непідтримуваний формат фото. Використай JPG, PNG або WEBP.',
     fileUploaded: (fileName: string) => `Завантажено файл: ${fileName}`,
     fileFound: (count: number, notes?: string) =>
       `Знайшов **${count}** слів у файлі.\n\n${notes ? `Нотатки: ${notes}\n\n` : ''}Обери ті, які хочеш додати:`,
@@ -951,6 +957,10 @@ export function WordIntake({
         if (!response.ok) {
           if (response.status === 413) {
             addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
+            continue;
+          }
+          if (response.status === 415) {
+            addAssistantMessage(t.imageTypeUnsupported);
             continue;
           }
           if (handleAiLimitError(data)) {
