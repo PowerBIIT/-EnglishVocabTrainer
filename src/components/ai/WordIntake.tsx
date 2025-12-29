@@ -227,7 +227,7 @@ export const wordIntakeCopy = {
     fileTypeUnsupported:
       'Nieobsługiwany format pliku. Użyj TXT, PDF, DOCX lub CSV.',
     fileSupportHint: (maxSize: number) =>
-      `Obsługiwane: TXT, PDF, DOCX, CSV (do ${maxSize} MB). Możesz wybrać kilka naraz.`,
+      `Zdjęcia: JPG/PNG/WEBP (do ${maxSize} MB, automatycznie zmniejszamy). Pliki: TXT, PDF, DOCX, CSV.`,
     fileReadError: 'Nie udało się wczytać pliku.',
     aiLimitReached:
       'Wykorzystałeś limit AI na ten miesiąc. Poczekaj na odnowienie limitu lub przejdź na plan Pro.',
@@ -322,7 +322,7 @@ export const wordIntakeCopy = {
       `File is too large. Maximum size is ${maxSize} MB.`,
     fileTypeUnsupported: 'Unsupported file format. Use TXT, PDF, DOCX, or CSV.',
     fileSupportHint: (maxSize: number) =>
-      `Supported: TXT, PDF, DOCX, CSV (up to ${maxSize} MB). You can select multiple at once.`,
+      `Images: JPG/PNG/WEBP (up to ${maxSize} MB, auto-resized). Files: TXT, PDF, DOCX, CSV.`,
     fileReadError: 'Could not read the file.',
     aiLimitReached:
       'You have reached your monthly AI limit. Wait for the next reset or upgrade to Pro.',
@@ -417,7 +417,7 @@ export const wordIntakeCopy = {
       `Файл завеликий. Максимальний розмір ${maxSize} МБ.`,
     fileTypeUnsupported: 'Непідтримуваний формат файлу. Використовуй TXT, PDF, DOCX або CSV.',
     fileSupportHint: (maxSize: number) =>
-      `Підтримуються: TXT, PDF, DOCX, CSV (до ${maxSize} МБ). Можна вибрати кілька одночасно.`,
+      `Фото: JPG/PNG/WEBP (до ${maxSize} МБ, автоматично зменшуємо). Файли: TXT, PDF, DOCX, CSV.`,
     fileReadError: 'Не вдалося прочитати файл.',
     aiLimitReached:
       'Ви вичерпали місячний ліміт AI. Зачекайте на оновлення або перейдіть на Pro.',
