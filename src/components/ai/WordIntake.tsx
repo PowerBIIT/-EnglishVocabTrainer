@@ -211,6 +211,8 @@ export const wordIntakeCopy = {
       `Nie udało się rozpoznać słówek na zdjęciu. Upewnij się, że notatki są czytelne i zawierają słówka ${target.toLowerCase()} z tłumaczeniami ${native.toLowerCase()}.`,
     imageError:
       'Nie udało się przetworzyć zdjęcia. Spróbuj ponownie lub sprawdź konfigurację AI.',
+    imageTips:
+      'Podpowiedź: zrób zdjęcie prosto z góry, bez cieni, z wyraźnym kontrastem. Najlepiej jedna sekcja tekstu na zdjęciu.',
     imageTypeUnsupported:
       'Nieobsługiwany format zdjęcia. Użyj JPG, PNG lub WEBP.',
     fileUploaded: (fileName: string) => `Wczytano plik: ${fileName}`,
@@ -305,6 +307,8 @@ export const wordIntakeCopy = {
       `Could not recognize words in the image. Make sure your notes are readable and include ${target.toLowerCase()} words with ${native.toLowerCase()} translations.`,
     imageError:
       'Could not process the image. Try again or check your AI configuration.',
+    imageTips:
+      'Tip: take the photo straight from above, avoid shadows, keep strong contrast. One section of text per photo works best.',
     imageTypeUnsupported:
       'Unsupported image format. Use JPG, PNG, or WEBP.',
     fileUploaded: (fileName: string) => `Uploaded file: ${fileName}`,
@@ -398,6 +402,8 @@ export const wordIntakeCopy = {
       `Не вдалося розпізнати слова на фото. Переконайся, що нотатки читабельні й містять слова ${target.toLowerCase()} з перекладами ${native.toLowerCase()}.`,
     imageError:
       'Не вдалося обробити фото. Спробуй ще раз або перевір конфігурацію AI.',
+    imageTips:
+      'Порада: знімай прямо зверху, без тіней, з чітким контрастом. Найкраще одна секція тексту на фото.',
     imageTypeUnsupported:
       'Непідтримуваний формат фото. Використай JPG, PNG або WEBP.',
     fileUploaded: (fileName: string) => `Завантажено файл: ${fileName}`,
@@ -623,6 +629,43 @@ export function WordIntake({
     const trimmed = base?.trim();
     const label = trimmed && trimmed.length > 0 ? trimmed : t.defaultSetLabel;
     return `${label} (${formatDate(new Date(), dateLocale)})`;
+  };
+
+  const prepareImageForUpload = async (file: File) => {
+    const maxDimension = 2400;
+    const shouldResize =
+      file.type.startsWith('image/') &&
+      typeof window !== 'undefined' &&
+      typeof createImageBitmap === 'function';
+
+    if (!shouldResize) return file;
+
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+      if (scale === 1 && file.type === 'image/jpeg') {
+        bitmap.close();
+        return file;
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(bitmap.width * scale);
+      canvas.height = Math.round(bitmap.height * scale);
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        bitmap.close();
+        return file;
+      }
+      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob(resolve, 'image/jpeg', 0.85)
+      );
+      if (!blob) return file;
+      const baseName = file.name.replace(/\.[^.]+$/, '') || 'upload';
+      return new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' });
+    } catch {
+      return file;
+    }
   };
 
   const mapParsedWords = (words: ParsedWord[]) =>
@@ -922,12 +965,16 @@ export function WordIntake({
     const collectedWords: ParsedWord[] = [];
     let suggestedCategory: string | null = null;
     let stopProcessing = false;
+    let hasProcessingIssues = false;
 
     for (const file of files) {
       if (stopProcessing) break;
 
-      if (file.size > MAX_UPLOAD_SIZE_BYTES) {
+      const preparedFile = await prepareImageForUpload(file);
+
+      if (preparedFile.size > MAX_UPLOAD_SIZE_BYTES) {
         addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
+        hasProcessingIssues = true;
         continue;
       }
 
@@ -943,7 +990,7 @@ export function WordIntake({
 
       try {
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('file', preparedFile);
         formData.append('targetLanguage', activePair.target);
         formData.append('nativeLanguage', activePair.native);
 
@@ -957,10 +1004,12 @@ export function WordIntake({
         if (!response.ok) {
           if (response.status === 413) {
             addAssistantMessage(t.fileTooLarge(MAX_UPLOAD_SIZE_MB));
+            hasProcessingIssues = true;
             continue;
           }
           if (response.status === 415) {
             addAssistantMessage(t.imageTypeUnsupported);
+            hasProcessingIssues = true;
             continue;
           }
           if (handleAiLimitError(data)) {
@@ -978,16 +1027,21 @@ export function WordIntake({
           addAssistantMessage(t.imageFound(data.words.length, data.notes));
         } else {
           addAssistantMessage(t.imageNoWords(targetLabel, nativeLabel));
+          hasProcessingIssues = true;
         }
       } catch (error) {
         console.error('Image extraction error:', error);
         addAssistantMessage(t.imageError);
+        hasProcessingIssues = true;
       }
     }
 
     if (collectedWords.length > 0) {
       const finalCategory = suggestedCategory ?? t.imageCategoryFallback;
       applyParsedWords(collectedWords, finalCategory);
+    }
+    if (hasProcessingIssues && collectedWords.length === 0) {
+      addAssistantMessage(t.imageTips);
     }
 
     setIsProcessing(false);
