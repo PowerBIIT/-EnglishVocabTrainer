@@ -170,8 +170,12 @@ export default function FlashcardsPage() {
       setAppliedSetParam(true);
       return;
     }
-    if (sets.some((set) => set.id === setIdParam)) {
-      setSelectedSetId(setIdParam);
+    // Check by id first, then by name (URL may contain either)
+    const matchById = sets.find((set) => set.id === setIdParam);
+    const matchByName = sets.find((set) => set.name === setIdParam);
+    const match = matchById || matchByName;
+    if (match) {
+      setSelectedSetId(match.id);
     }
     setAppliedSetParam(true);
   }, [appliedSetParam, hydrated, setIdParam, sets]);
