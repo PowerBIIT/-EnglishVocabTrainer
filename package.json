@@ -1,6 +1,6 @@
 {
   "name": "english-vocab-trainer",
-  "version": "1.0.21",
+  "version": "1.0.22",
   "private": true,
   "prisma": {
     "seed": "node prisma/seed.js"
