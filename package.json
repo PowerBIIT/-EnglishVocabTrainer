@@ -1,6 +1,6 @@
 {
   "name": "english-vocab-trainer",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "private": true,
   "prisma": {
     "seed": "node prisma/seed.js"
@@ -29,10 +29,11 @@
     "mammoth": "^1.8.0",
     "next": "14.2.15",
     "next-auth": "^4.24.7",
-    "prisma": "^5.19.1",
     "pdf-parse": "^1.1.1",
+    "prisma": "^5.19.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "stripe": "^20.1.0",
     "zustand": "^4.5.5"
   },
   "devDependencies": {

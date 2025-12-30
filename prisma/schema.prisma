@@ -31,6 +31,7 @@ model User {
   state    UserState?
   plan     UserPlan?
   usageCounters UsageCounter[]
+  subscription  Subscription?
 }
 
 model UserState {
@@ -88,6 +89,17 @@ enum AccessStatus {
   ACTIVE
   WAITLISTED
   SUSPENDED
+}
+
+enum SubscriptionStatus {
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  PAUSED
 }
 
 model UserPlan {
@@ -162,4 +174,25 @@ model RateLimitWindow {
   @@unique([key, windowStart])
   @@index([key])
   @@index([resetAt])
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String             @unique
+  stripeCustomerId     String             @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  status               SubscriptionStatus @default(INCOMPLETE)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  cancelAtPeriodEnd    Boolean            @default(false)
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
 }

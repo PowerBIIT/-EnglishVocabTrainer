@@ -27,6 +27,8 @@ import {
 import { Card, CardContent, CardHeader } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { CircularProgress, ProgressBar } from '@/components/ui/ProgressBar';
+import { PricingSection } from '@/components/billing/PricingSection';
+import { UsageDisplay } from '@/components/billing/UsageDisplay';
 import { useHydration, useVocabStore } from '@/lib/store';
 import { useLanguage } from '@/lib/i18n';
 import { mascotSkins } from '@/data/mascotSkins';
@@ -492,6 +494,12 @@ export default function ProfilePage() {
   const [isRestartingOnboarding, setIsRestartingOnboarding] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [subscriptionData, setSubscriptionData] = useState<{
+    plan: 'FREE' | 'PRO';
+    status?: string | null;
+    cancelAtPeriodEnd?: boolean;
+    usage?: { used: number; limit: number; resetDate: string };
+  } | null>(null);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasMountedRef = useRef(false);
@@ -518,6 +526,13 @@ export default function ProfilePage() {
       setSelectedSkin(session.user.mascotSkin);
     }
   }, [session?.user?.mascotSkin]);
+
+  useEffect(() => {
+    fetch('/api/user/subscription')
+      .then((res) => res.json())
+      .then(setSubscriptionData)
+      .catch(console.error);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -554,6 +569,24 @@ export default function ProfilePage() {
       }, AUTO_SAVE_IDLE_DELAY_MS);
     }, AUTO_SAVE_DEBOUNCE_MS);
   }, [settings]);
+
+  const handleUpgrade = async (priceType: 'monthly' | 'annual') => {
+    const res = await fetch('/api/stripe/create-checkout-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ priceType }),
+    });
+    const { url } = await res.json();
+    if (url) window.location.href = url;
+  };
+
+  const handleManageSubscription = async () => {
+    const res = await fetch('/api/stripe/create-portal-session', {
+      method: 'POST',
+    });
+    const { url } = await res.json();
+    if (url) window.location.href = url;
+  };
 
   const handleSkinSelect = async (skinId: string) => {
     setSelectedSkin(skinId);
@@ -1030,6 +1063,24 @@ export default function ProfilePage() {
           </p>
         </CardContent>
       </Card>
+
+      {/* Billing Section */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <PricingSection
+          currentPlan={subscriptionData?.plan ?? 'FREE'}
+          subscriptionStatus={subscriptionData?.status}
+          cancelAtPeriodEnd={subscriptionData?.cancelAtPeriodEnd}
+          onUpgrade={handleUpgrade}
+          onManage={handleManageSubscription}
+        />
+        {subscriptionData?.usage && (
+          <UsageDisplay
+            used={subscriptionData.usage.used}
+            limit={subscriptionData.usage.limit}
+            resetDate={subscriptionData.usage.resetDate}
+          />
+        )}
+      </div>
 
       <section id="settings" className="scroll-mt-24 space-y-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
