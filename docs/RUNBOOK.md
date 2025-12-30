@@ -40,12 +40,30 @@
 
 ## Custom Domain Setup (OVH + Azure)
 
-### Konfiguracja DNS w OVH
+### Aktualna konfiguracja UAT (2025-12-30)
+
+**DNS w OVH (powerbiit.com):**
+| Rekord | Typ | Target |
+|--------|-----|--------|
+| `evt.powerbiit.com` | CNAME | `vocab-trainer-uat.azurewebsites.net.` |
+| `asuid.evt.powerbiit.com` | TXT | `0831dfa87fe27397bca7230c02f57d4b445936d818144fbf1e69bf5cfa0a8d65` |
+
+**Azure Custom Domain:**
+- App: `vocab-trainer-uat`
+- Custom domain: `evt.powerbiit.com` (zweryfikowana)
+- SSL: App Service Managed Certificate (GeoTrust, ważny do 2026-04-14)
+- Thumbprint: `64AB5781F44D8FC672279EF133572180BBFF04C9`
+
+**GitHub Secrets (env: uat):**
+- `NEXTAUTH_URL`: `https://evt.powerbiit.com`
+
+### Jak dodać/zmienić custom domain
+
+#### 1. Konfiguracja DNS w OVH
 1. Zaloguj się do OVH Manager -> Domains -> powerbiit.com -> DNS Zone
 2. Dodaj rekord TXT (weryfikacja Azure):
-   - Subdomain: `asuid.evt`
-   - Wartość: `customDomainVerificationId` z Azure
-   - Wartość pobierzesz:
+   - Subdomain: `asuid.<subdomena>` (np. `asuid.evt` dla evt.powerbiit.com)
+   - Wartość: `customDomainVerificationId` z Azure:
      ```bash
      az webapp show --name vocab-trainer-uat --resource-group vocab-trainer-rg \
        --query customDomainVerificationId -o tsv
@@ -53,23 +71,54 @@
 3. Dodaj rekord CNAME:
    - Subdomain: `evt` (dla evt.powerbiit.com)
    - Target: `vocab-trainer-uat.azurewebsites.net.` (z kropką na końcu!)
-   - TTL: 3600
+   - TTL: domyślny
 4. Poczekaj na propagację DNS (5-30 min)
 
-### Konfiguracja Custom Domain w Azure
-1. Azure Portal -> vocab-trainer-uat -> Custom domains
-2. Add custom domain: `evt.powerbiit.com`
-3. Azure automatycznie sprawdzi DNS
-4. Włącz HTTPS (App Service Managed Certificate - darmowy)
-
-### Aktualizacja NEXTAUTH_URL
-1. GitHub -> Settings -> Environments -> uat -> Secrets
-2. Zmień `NEXTAUTH_URL` na `https://evt.powerbiit.com`
-3. Wykonaj redeploy
-
-### Weryfikacja
+#### 2. Konfiguracja Custom Domain w Azure (CLI)
 ```bash
+# Dodaj custom domain
+az webapp config hostname add --webapp-name vocab-trainer-uat \
+  --resource-group vocab-trainer-rg --hostname evt.powerbiit.com
+
+# Utwórz certyfikat SSL (może trwać kilka minut)
+az webapp config ssl create --resource-group vocab-trainer-rg \
+  --name vocab-trainer-uat --hostname evt.powerbiit.com
+
+# Sprawdź thumbprint certyfikatu
+az webapp config ssl show -g vocab-trainer-rg \
+  --certificate-name evt.powerbiit.com --query thumbprint -o tsv
+
+# Powiąż certyfikat
+az webapp config ssl bind --name vocab-trainer-uat \
+  --resource-group vocab-trainer-rg \
+  --certificate-thumbprint <THUMBPRINT> --ssl-type SNI
+```
+
+#### 3. Aktualizacja NEXTAUTH_URL
+```bash
+# GitHub secret
+gh secret set NEXTAUTH_URL --env uat --body "https://evt.powerbiit.com"
+
+# Azure app settings
+az webapp config appsettings set --name vocab-trainer-uat \
+  --resource-group vocab-trainer-rg \
+  --settings NEXTAUTH_URL=https://evt.powerbiit.com
+
+# Uruchom redeploy
+gh workflow run deploy-uat.yml --ref main
+```
+
+#### 4. Weryfikacja
+```bash
+# Sprawdź DNS
+dig evt.powerbiit.com CNAME +short
+
+# Sprawdź health
 curl https://evt.powerbiit.com/api/health
+
+# Sprawdź certyfikat SSL
+openssl s_client -connect evt.powerbiit.com:443 -servername evt.powerbiit.com \
+  </dev/null 2>/dev/null | openssl x509 -noout -dates
 ```
 
 ## Infra lifecycle
