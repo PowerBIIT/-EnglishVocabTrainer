@@ -68,6 +68,7 @@ jobs:
                 NODE_ENV=production \
                 WEBSITE_RUN_FROM_PACKAGE=0 \
                 SCM_DO_BUILD_DURING_DEPLOYMENT=false \
+                SCM_DISABLE_ORYX_BUILD=true \
                 WEBSITE_NODE_DEFAULT_VERSION=20 \
                 APP_VERSION="${{ steps.build_info.outputs.app_version }}" \
                 APP_COMMIT_SHA="${{ steps.build_info.outputs.app_commit }}" \
@@ -127,10 +128,12 @@ jobs:
         uses: azure/CLI@v2
         with:
           inlineScript: |
-            az webapp deployment source config-zip \
+            az webapp deploy \
               --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
               --name "${{ secrets.AZURE_WEBAPP_NAME_PRD }}" \
-              --src deploy.zip
+              --src-path deploy.zip \
+              --type zip \
+              --clean true
 
       - name: Ensure app running (apply settings)
         uses: azure/CLI@v2
