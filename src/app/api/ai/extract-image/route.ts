@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { GeminiService, AI_PROMPTS, parseAIResponse } from '@/lib/gemini';
-import { mapGeminiError } from '@/lib/aiErrors';
+import { GeminiApiError, mapGeminiError } from '@/lib/aiErrors';
 import { AI_RATE_LIMIT, MAX_UPLOAD_SIZE_BYTES } from '@/lib/apiLimits';
 import { normalizeNativeLanguage, normalizeTargetLanguage } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
@@ -22,6 +22,49 @@ interface ExtractResult {
   words: ExtractedWord[];
   notes?: string;
 }
+
+const IMAGE_FALLBACK_MODEL = 'gemini-2.5-pro';
+
+const IMAGE_RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    category_suggestion: { type: 'string' },
+    words: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          target: { type: 'string' },
+          phonetic: { type: 'string' },
+          native: { type: 'string' },
+          difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
+        },
+        required: ['target', 'phonetic', 'native', 'difficulty'],
+      },
+    },
+    notes: { type: 'string' },
+  },
+  required: ['category_suggestion', 'words'],
+};
+
+const shouldRetryImageExtraction = (
+  error: unknown,
+  modelId: string,
+  fallbackModel: string
+) => {
+  if (modelId === fallbackModel) return false;
+  if (error instanceof GeminiApiError) {
+    if (
+      error.type === 'invalid_api_key' ||
+      error.type === 'permission_denied' ||
+      error.type === 'rate_limited'
+    ) {
+      return false;
+    }
+    return true;
+  }
+  return true;
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -113,18 +156,40 @@ export async function POST(request: NextRequest) {
     );
     const finalPrompt = await buildPromptWithOverlays('extract-image', prompt);
 
-    const response = await gemini.generateWithImage(
-      finalPrompt,
-      imagePayload,
-      safeMimeType,
-      {
-        temperature: 0.3,
-        maxOutputTokens: 2048,
-        model,
-      }
-    );
+    const buildImageOptions = (modelId: string) => ({
+      temperature: 0.2,
+      maxOutputTokens: 8192,
+      model: modelId,
+      responseMimeType: 'application/json',
+      responseSchema: IMAGE_RESPONSE_SCHEMA,
+    });
 
-    const result = parseAIResponse<ExtractResult>(response);
+    const extractWithModel = async (modelId: string) => {
+      const response = await gemini.generateWithImage(
+        finalPrompt,
+        imagePayload,
+        safeMimeType,
+        buildImageOptions(modelId)
+      );
+      return parseAIResponse<ExtractResult>(response);
+    };
+
+    let result: ExtractResult;
+
+    try {
+      result = await extractWithModel(model);
+    } catch (error) {
+      if (!shouldRetryImageExtraction(error, model, IMAGE_FALLBACK_MODEL)) {
+        throw error;
+      }
+      console.warn(
+        'Image extraction failed for model',
+        model,
+        'retrying with',
+        IMAGE_FALLBACK_MODEL
+      );
+      result = await extractWithModel(IMAGE_FALLBACK_MODEL);
+    }
 
     return NextResponse.json(result);
   } catch (error) {
@@ -133,6 +198,16 @@ export async function POST(request: NextRequest) {
     if (mapped) {
       return NextResponse.json(mapped.body, { status: mapped.status });
     }
+
+    // Detect truncated JSON response (output token limit exceeded)
+    const errorMessage = error instanceof Error ? error.message : '';
+    if (errorMessage.includes('Invalid JSON') || errorMessage.includes('Expected')) {
+      return NextResponse.json(
+        { error: 'response_truncated', message: 'AI response was truncated - image has too many words' },
+        { status: 422 }
+      );
+    }
+
     return NextResponse.json(
       { error: 'Failed to extract words from image' },
       { status: 500 }

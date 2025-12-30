@@ -211,6 +211,8 @@ export const wordIntakeCopy = {
       `Nie udało się rozpoznać słówek na zdjęciu. Upewnij się, że notatki są czytelne i zawierają słówka ${target.toLowerCase()} z tłumaczeniami ${native.toLowerCase()}.`,
     imageError:
       'Nie udało się przetworzyć zdjęcia. Spróbuj ponownie lub sprawdź konfigurację AI.',
+    imageTruncated:
+      'Zdjęcie zawiera zbyt dużo słówek. Podziel notatki na mniejsze części (max 20-30 słówek na zdjęcie).',
     imageTips:
       'Podpowiedź: zrób zdjęcie prosto z góry, bez cieni, z wyraźnym kontrastem. Najlepiej jedna sekcja tekstu na zdjęciu.',
     imageTypeUnsupported:
@@ -307,6 +309,8 @@ export const wordIntakeCopy = {
       `Could not recognize words in the image. Make sure your notes are readable and include ${target.toLowerCase()} words with ${native.toLowerCase()} translations.`,
     imageError:
       'Could not process the image. Try again or check your AI configuration.',
+    imageTruncated:
+      'The image contains too many words. Split your notes into smaller parts (max 20-30 words per image).',
     imageTips:
       'Tip: take the photo straight from above, avoid shadows, keep strong contrast. One section of text per photo works best.',
     imageTypeUnsupported:
@@ -402,6 +406,8 @@ export const wordIntakeCopy = {
       `Не вдалося розпізнати слова на фото. Переконайся, що нотатки читабельні й містять слова ${target.toLowerCase()} з перекладами ${native.toLowerCase()}.`,
     imageError:
       'Не вдалося обробити фото. Спробуй ще раз або перевір конфігурацію AI.',
+    imageTruncated:
+      'Фото містить забагато слів. Розділи нотатки на менші частини (макс. 20-30 слів на фото).',
     imageTips:
       'Порада: знімай прямо зверху, без тіней, з чітким контрастом. Найкраще одна секція тексту на фото.',
     imageTypeUnsupported:
@@ -632,34 +638,104 @@ export function WordIntake({
   };
 
   const prepareImageForUpload = async (file: File) => {
-    const maxDimension = 2400;
-    const shouldResize =
-      file.type.startsWith('image/') &&
-      typeof window !== 'undefined' &&
-      typeof createImageBitmap === 'function';
+    const maxDimension = 3200;
+    const jpegQuality = 0.9;
+    const isImageFile =
+      file.type.startsWith('image/') || /\.(jpe?g|png|webp)$/i.test(file.name);
 
-    if (!shouldResize) return file;
+    if (!isImageFile || typeof window === 'undefined' || typeof document === 'undefined') {
+      return file;
+    }
+
+    const loadImageSource = async () => {
+      if (typeof createImageBitmap === 'function') {
+        try {
+          const bitmap = await createImageBitmap(file, { imageOrientation: 'from-image' });
+          return {
+            source: bitmap,
+            width: bitmap.width,
+            height: bitmap.height,
+            cleanup: () => bitmap.close(),
+          };
+        } catch {
+          try {
+            const bitmap = await createImageBitmap(file);
+            return {
+              source: bitmap,
+              width: bitmap.width,
+              height: bitmap.height,
+              cleanup: () => bitmap.close(),
+            };
+          } catch {
+            // fall through to Image element
+          }
+        }
+      }
+
+      return new Promise<{
+        source: HTMLImageElement;
+        width: number;
+        height: number;
+        cleanup: () => void;
+      }>((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve({
+            source: img,
+            width: img.naturalWidth || img.width,
+            height: img.naturalHeight || img.height,
+            cleanup: () => {},
+          });
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          reject(new Error('Failed to load image'));
+        };
+        img.src = url;
+      });
+    };
 
     try {
-      const bitmap = await createImageBitmap(file);
-      const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
-      if (scale === 1 && file.type === 'image/jpeg') {
-        bitmap.close();
+      const { source, width, height, cleanup } = await loadImageSource();
+      const scale = Math.min(1, maxDimension / Math.max(width, height));
+      const shouldReencode = scale < 1 || file.type !== 'image/jpeg';
+      if (!shouldReencode) {
+        cleanup();
         return file;
       }
+
       const canvas = document.createElement('canvas');
-      canvas.width = Math.round(bitmap.width * scale);
-      canvas.height = Math.round(bitmap.height * scale);
+      canvas.width = Math.max(1, Math.round(width * scale));
+      canvas.height = Math.max(1, Math.round(height * scale));
       const ctx = canvas.getContext('2d');
       if (!ctx) {
-        bitmap.close();
+        cleanup();
         return file;
       }
-      ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-      bitmap.close();
-      const blob = await new Promise<Blob | null>((resolve) =>
-        canvas.toBlob(resolve, 'image/jpeg', 0.85)
-      );
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = 'high';
+      ctx.filter = 'contrast(1.1) brightness(1.02)';
+      ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+      ctx.filter = 'none';
+      cleanup();
+
+      const blob = await new Promise<Blob | null>((resolve) => {
+        if (typeof canvas.toBlob !== 'function') {
+          const dataUrl = canvas.toDataURL('image/jpeg', jpegQuality);
+          const base64 = dataUrl.split(',')[1] ?? '';
+          const binary = atob(base64);
+          const buffer = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i += 1) {
+            buffer[i] = binary.charCodeAt(i);
+          }
+          resolve(new Blob([buffer], { type: 'image/jpeg' }));
+          return;
+        }
+        canvas.toBlob(resolve, 'image/jpeg', jpegQuality);
+      });
+
       if (!blob) return file;
       const baseName = file.name.replace(/\.[^.]+$/, '') || 'upload';
       return new File([blob], `${baseName}.jpg`, { type: 'image/jpeg' });
@@ -1009,6 +1085,11 @@ export function WordIntake({
           }
           if (response.status === 415) {
             addAssistantMessage(t.imageTypeUnsupported);
+            hasProcessingIssues = true;
+            continue;
+          }
+          if (response.status === 422 && data?.error === 'response_truncated') {
+            addAssistantMessage(t.imageTruncated);
             hasProcessingIssues = true;
             continue;
           }
