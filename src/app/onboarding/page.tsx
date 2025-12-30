@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, Flag, Sparkles, Target } from 'lucide-react';
+import Link from 'next/link';
+import { CheckCircle2, ExternalLink, Flag, Shield, Sparkles, Target } from 'lucide-react';
 import { mascotSkins } from '@/data/mascotSkins';
 import { MascotSkinCard } from '@/components/mascot/MascotSkinCard';
 import { Button } from '@/components/ui/Button';
@@ -23,7 +24,7 @@ import { getPersonaForPair } from '@/lib/persona';
 
 const MISSION_WORDS = 3;
 
-type Step = 'path' | 'pair' | 'goal' | 'skin' | 'words' | 'mission' | 'done';
+type Step = 'consent' | 'path' | 'pair' | 'goal' | 'skin' | 'words' | 'mission' | 'done';
 type OnboardingGoal = 'classTest' | 'daily';
 type OnboardingPath = 'pl_student' | 'ua_student' | 'custom';
 
@@ -88,6 +89,18 @@ const onboardingCopy = {
     noWords: 'Brak słówek do misji.',
     missionComplete: 'Misja zaliczona',
     redirectNote: 'Przenosimy Cię do głównej bazy.',
+    // Consent step
+    consentTitle: 'Zgody i regulamin',
+    consentDesc: 'Zanim zaczniesz, prosimy o akceptacje dokumentow.',
+    termsCheckbox: 'Akceptuje Regulamin i Polityke prywatnosci',
+    ageCheckbox: 'Mam ukonczono 16 lat lub mam zgode rodzica/opiekuna',
+    parentEmailLabel: 'E-mail rodzica/opiekuna (opcjonalnie)',
+    parentEmailPlaceholder: 'rodzic@example.com',
+    parentEmailHint: 'Jesli masz mniej niz 16 lat, mozesz podac email rodzica.',
+    privacyLink: 'Polityka prywatnosci',
+    termsLink: 'Regulamin',
+    consentAction: 'Akceptuje i kontynuuje',
+    consentRequired: 'Zaznacz obie zgody, aby kontynuowac.',
   },
   en: {
     loading: 'Loading...',
@@ -139,6 +152,18 @@ const onboardingCopy = {
     noWords: 'No words for the mission.',
     missionComplete: 'Mission complete',
     redirectNote: 'Taking you to the main base.',
+    // Consent step
+    consentTitle: 'Consent & Terms',
+    consentDesc: 'Before you start, please accept our documents.',
+    termsCheckbox: 'I accept the Terms of Service and Privacy Policy',
+    ageCheckbox: 'I am 16+ years old or have parental consent',
+    parentEmailLabel: 'Parent/guardian email (optional)',
+    parentEmailPlaceholder: 'parent@example.com',
+    parentEmailHint: 'If you are under 16, you may provide a parent email.',
+    privacyLink: 'Privacy Policy',
+    termsLink: 'Terms of Service',
+    consentAction: 'Accept and continue',
+    consentRequired: 'Please check both boxes to continue.',
   },
   uk: {
     loading: 'Завантаження...',
@@ -190,6 +215,18 @@ const onboardingCopy = {
     noWords: 'Немає слів для місії.',
     missionComplete: 'Місію виконано',
     redirectNote: 'Переносимо до головної бази.',
+    // Consent step
+    consentTitle: 'Zgody ta regulyamin',
+    consentDesc: 'Pered pochatkom pryymy nashi dokumenty.',
+    termsCheckbox: 'Pryymayu Umovy korystuvannya ta Polityku konfidencijnosti',
+    ageCheckbox: 'Meni 16+ rokiv abo ye zgoda batkiv',
+    parentEmailLabel: 'Email batkiv/opikuna (za bazhannyam)',
+    parentEmailPlaceholder: 'batkiv@example.com',
+    parentEmailHint: 'Yakscho tobi menshe 16 rokiv, mozheš podaty email batkiv.',
+    privacyLink: 'Polityka konfidencijnosti',
+    termsLink: 'Umovy korystuvannya',
+    consentAction: 'Pryymayu i prodovzhuju',
+    consentRequired: 'Postav obe galochky, shchob prodovzhyty.',
   },
 } as const;
 
@@ -222,7 +259,11 @@ export default function OnboardingPage() {
   const { data: session, update } = useSession();
   const language = useLanguage();
   const t = (onboardingCopy[language] ?? onboardingCopy.pl) as OnboardingCopy;
-  const [step, setStep] = useState<Step>('path');
+  const [step, setStep] = useState<Step>('consent');
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [parentEmail, setParentEmail] = useState('');
+  const [consentSaving, setConsentSaving] = useState(false);
   const [selectedSkin, setSelectedSkin] = useState(session?.user?.mascotSkin || 'explorer');
   const [onboardingSetId, setOnboardingSetId] = useState<string | null>(null);
   const [onboardingSetName, setOnboardingSetName] = useState('');
@@ -246,7 +287,7 @@ export default function OnboardingPage() {
     return vocabulary.slice(0, MISSION_WORDS);
   }, [onboardingSetId, vocabulary]);
 
-  const steps: Step[] = ['path', 'pair', 'goal', 'skin', 'words', 'mission', 'done'];
+  const steps: Step[] = ['consent', 'path', 'pair', 'goal', 'skin', 'words', 'mission', 'done'];
   const stepIndex = steps.indexOf(step) + 1;
   const totalSteps = steps.length;
 
@@ -346,6 +387,28 @@ export default function OnboardingPage() {
     setStep('mission');
   };
 
+  const handleConsentSubmit = async () => {
+    if (!termsAccepted || !ageConfirmed) return;
+
+    setConsentSaving(true);
+    try {
+      await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          termsAccepted: true,
+          ageConfirmed: true,
+          parentEmail: parentEmail.trim() || undefined,
+        }),
+      });
+      setStep('path');
+    } catch (error) {
+      console.error('Failed to save consent:', error);
+    } finally {
+      setConsentSaving(false);
+    }
+  };
+
   const completeOnboarding = async () => {
     await fetch('/api/user/profile', {
       method: 'PATCH',
@@ -436,6 +499,99 @@ export default function OnboardingPage() {
           </div>
         </header>
 
+        {step === 'consent' && (
+          <section className="space-y-6">
+            <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6 space-y-6">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                    {t.consentTitle}
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    {t.consentDesc}
+                  </p>
+                </div>
+                <Shield className="text-primary-600" size={24} />
+              </div>
+
+              <div className="space-y-4">
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    className="mt-1 w-5 h-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                    {t.termsCheckbox}
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-3 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={ageConfirmed}
+                    onChange={(e) => setAgeConfirmed(e.target.checked)}
+                    className="mt-1 w-5 h-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                  />
+                  <span className="text-sm text-slate-700 dark:text-slate-300">
+                    {t.ageCheckbox}
+                  </span>
+                </label>
+
+                <div className="pl-8 space-y-2">
+                  <label className="block text-sm text-slate-600 dark:text-slate-400">
+                    {t.parentEmailLabel}
+                  </label>
+                  <input
+                    type="email"
+                    value={parentEmail}
+                    onChange={(e) => setParentEmail(e.target.value)}
+                    placeholder={t.parentEmailPlaceholder}
+                    className="w-full max-w-sm px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                  <p className="text-xs text-slate-500">{t.parentEmailHint}</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-3 pt-2">
+                <Link
+                  href="/privacy"
+                  target="_blank"
+                  className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 transition"
+                >
+                  {t.privacyLink}
+                  <ExternalLink size={14} />
+                </Link>
+                <Link
+                  href="/terms"
+                  target="_blank"
+                  className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 transition"
+                >
+                  {t.termsLink}
+                  <ExternalLink size={14} />
+                </Link>
+              </div>
+
+              {(!termsAccepted || !ageConfirmed) && (
+                <p className="text-sm text-amber-600 dark:text-amber-400">
+                  {t.consentRequired}
+                </p>
+              )}
+            </div>
+
+            <OnboardingFooter>
+              <Button
+                onClick={handleConsentSubmit}
+                disabled={!termsAccepted || !ageConfirmed || consentSaving}
+                className="flex-1 md:flex-none"
+              >
+                {consentSaving ? '...' : t.consentAction}
+              </Button>
+            </OnboardingFooter>
+          </section>
+        )}
+
         {step === 'path' && (
           <section className="space-y-6">
             <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6 space-y-4">
@@ -452,20 +608,20 @@ export default function OnboardingPage() {
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
-                {[
+                {([
                   {
                     id: 'pl_student',
                     title: t.pathPolishStudent,
                     description: t.pathPolishStudentDesc,
-                    pairId: 'pl-en',
+                    pairId: 'pl-en' as const,
                   },
                   {
                     id: 'ua_student',
                     title: t.pathUkrainianStudent,
                     description: t.pathUkrainianStudentDesc,
-                    pairId: 'uk-pl',
+                    pairId: 'uk-pl' as const,
                   },
-                ].map((option) => {
+                ] as const).map((option) => {
                   const isSelected = selectedPath === option.id;
 
                   return (

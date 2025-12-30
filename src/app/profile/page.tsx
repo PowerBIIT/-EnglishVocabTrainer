@@ -239,6 +239,15 @@ const profileCopy = {
     restartOnboardingAction: 'Uruchom ponownie',
     restartOnboardingConfirm:
       'Na pewno chcesz ponownie uruchomić onboarding? Dane nie zostaną usunięte.',
+    deleteAccount: 'Usun konto',
+    deleteAccountDesc: 'Trwale usun wszystkie dane. Tej operacji nie mozna cofnac.',
+    deleteAccountAction: 'Usun konto',
+    deleteAccountConfirm: 'Na pewno chcesz usunac swoje konto?',
+    deleteAccountWarning:
+      'Wszystkie Twoje dane, w tym slowka, postepy i ustawienia zostana trwale usuniete. Tej operacji nie mozna cofnac.',
+    deleteAccountConfirmAction: 'Tak, usun moje konto',
+    deleteAccountCancel: 'Anuluj',
+    deletingAccount: 'Usuwanie...',
     deleteSetConfirm: (name: string) =>
       `Usunąć zestaw "${name}"? Słówka pozostaną w bibliotece bez przypisanego zestawu.`,
   },
@@ -342,6 +351,15 @@ const profileCopy = {
       'Go through the language pair, mascot, and first mission again. Your data will stay intact.',
     restartOnboardingAction: 'Restart',
     restartOnboardingConfirm: 'Restart onboarding now? Your data will not be deleted.',
+    deleteAccount: 'Delete account',
+    deleteAccountDesc: 'Permanently delete all data. This cannot be undone.',
+    deleteAccountAction: 'Delete account',
+    deleteAccountConfirm: 'Are you sure you want to delete your account?',
+    deleteAccountWarning:
+      'All your data, including vocabulary, progress, and settings will be permanently deleted. This cannot be undone.',
+    deleteAccountConfirmAction: 'Yes, delete my account',
+    deleteAccountCancel: 'Cancel',
+    deletingAccount: 'Deleting...',
     deleteSetConfirm: (name: string) =>
       `Delete set "${name}"? Words will stay in the library without a set.`,
   },
@@ -445,6 +463,15 @@ const profileCopy = {
       'Пройди вибір мовної пари, скіна та першої місії ще раз. Дані залишаться.',
     restartOnboardingAction: 'Повторити',
     restartOnboardingConfirm: 'Повторити онбординг? Дані не буде видалено.',
+    deleteAccount: 'Vydalyty akaunt',
+    deleteAccountDesc: 'Nazavzhdy vydalyty vsi dani. Tsoho ne mozhna skasuvaty.',
+    deleteAccountAction: 'Vydalyty akaunt',
+    deleteAccountConfirm: 'Vy vpevneni, shcho hochete vydalyty sviy akaunt?',
+    deleteAccountWarning:
+      'Vsi vashi dani, vklyuchayuchy slovnyk, prohres ta nalashtuvannya budut nazavzhdy vydaleni. Tsoho ne mozhna skasuvaty.',
+    deleteAccountConfirmAction: 'Tak, vydalyty miy akaunt',
+    deleteAccountCancel: 'Skasuvaty',
+    deletingAccount: 'Vydalennya...',
     deleteSetConfirm: (name: string) =>
       `Видалити набір "${name}"? Слова залишаться в бібліотеці без набору.`,
   },
@@ -463,6 +490,8 @@ export default function ProfilePage() {
   const t = (profileCopy[language] ?? profileCopy.pl) as ProfileCopy;
   const [selectedSkin, setSelectedSkin] = useState('explorer');
   const [isRestartingOnboarding, setIsRestartingOnboarding] = useState(false);
+  const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasMountedRef = useRef(false);
@@ -711,6 +740,27 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Unable to restart onboarding.', error);
       setIsRestartingOnboarding(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    try {
+      const response = await fetch('/api/user/account', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: true }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete account');
+      }
+
+      signOut({ callbackUrl: '/login' });
+    } catch (error) {
+      console.error('Unable to delete account.', error);
+      setIsDeletingAccount(false);
+      setShowDeleteAccountModal(false);
     }
   };
 
@@ -1368,8 +1418,49 @@ export default function ProfilePage() {
               {t.restartOnboardingAction}
             </Button>
           </SettingRow>
+          <div className="h-px bg-slate-100 dark:bg-slate-700" />
+          <SettingRow label={t.deleteAccount} description={t.deleteAccountDesc}>
+            <Button
+              variant="secondary"
+              onClick={() => setShowDeleteAccountModal(true)}
+              className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+            >
+              {t.deleteAccountAction}
+            </Button>
+          </SettingRow>
         </CardContent>
       </Card>
+
+      {/* Delete Account Confirmation Modal */}
+      {showDeleteAccountModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+              {t.deleteAccountConfirm}
+            </h3>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {t.deleteAccountWarning}
+            </p>
+            <div className="flex flex-col-reverse sm:flex-row gap-3 pt-2">
+              <Button
+                variant="secondary"
+                onClick={() => setShowDeleteAccountModal(false)}
+                disabled={isDeletingAccount}
+                className="flex-1"
+              >
+                {t.deleteAccountCancel}
+              </Button>
+              <Button
+                onClick={handleDeleteAccount}
+                disabled={isDeletingAccount}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+              >
+                {isDeletingAccount ? t.deletingAccount : t.deleteAccountConfirmAction}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

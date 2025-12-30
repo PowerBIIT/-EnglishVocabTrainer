@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useLanguage } from '@/lib/i18n';
 
-const PUBLIC_PATHS = new Set(['/login', '/onboarding', '/waitlist']);
+const PUBLIC_PATHS = new Set(['/login', '/onboarding', '/waitlist', '/privacy', '/terms']);
 
 export function ClientLayout() {
   const pathname = usePathname();

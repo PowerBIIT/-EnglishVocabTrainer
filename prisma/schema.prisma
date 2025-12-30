@@ -19,6 +19,13 @@ model User {
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
 
+  // Consent fields (GDPR/RODO compliance)
+  termsAcceptedAt    DateTime? // Date of terms acceptance
+  privacyAcceptedAt  DateTime? // Date of privacy policy acceptance
+  ageConfirmedAt     DateTime? // Confirmation of age >= 16 or parental consent
+  parentEmail        String?   // Parent email (optional, if < 16 years)
+  consentVersion     String?   // Version of accepted documents (e.g., "1.0")
+
   accounts Account[]
   sessions Session[]
   state    UserState?

@@ -4,7 +4,7 @@ import { type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
-const PUBLIC_PATHS = new Set(['/login', '/onboarding', '/waitlist']);
+const PUBLIC_PATHS = new Set(['/login', '/onboarding', '/waitlist', '/privacy', '/terms']);
 
 export function AuthGate({ children }: { children: ReactNode }) {
   const pathname = usePathname();

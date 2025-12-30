@@ -35,6 +35,10 @@ export async function GET() {
       image: true,
       mascotSkin: true,
       onboardingComplete: true,
+      termsAcceptedAt: true,
+      privacyAcceptedAt: true,
+      ageConfirmedAt: true,
+      consentVersion: true,
     },
   });
 
@@ -60,7 +64,15 @@ export async function PATCH(request: Request) {
   }
 
   const body = await request.json();
-  const updates: { mascotSkin?: string; onboardingComplete?: boolean } = {};
+  const updates: {
+    mascotSkin?: string;
+    onboardingComplete?: boolean;
+    termsAcceptedAt?: Date;
+    privacyAcceptedAt?: Date;
+    ageConfirmedAt?: Date;
+    parentEmail?: string | null;
+    consentVersion?: string;
+  } = {};
 
   if (typeof body?.mascotSkin === 'string') {
     const mascotSkinValue = body.mascotSkin.trim();
@@ -77,6 +89,23 @@ export async function PATCH(request: Request) {
     updates.onboardingComplete = body.onboardingComplete;
   }
 
+  // Handle consent fields
+  if (body?.termsAccepted === true) {
+    const now = new Date();
+    updates.termsAcceptedAt = now;
+    updates.privacyAcceptedAt = now;
+    updates.consentVersion = '1.0';
+  }
+
+  if (body?.ageConfirmed === true) {
+    updates.ageConfirmedAt = new Date();
+  }
+
+  if (typeof body?.parentEmail === 'string') {
+    const trimmed = body.parentEmail.trim();
+    updates.parentEmail = trimmed.length > 0 ? trimmed : null;
+  }
+
   if (Object.keys(updates).length === 0) {
     return NextResponse.json({ error: 'No updates provided' }, { status: 400 });
   }
@@ -91,6 +120,10 @@ export async function PATCH(request: Request) {
       image: true,
       mascotSkin: true,
       onboardingComplete: true,
+      termsAcceptedAt: true,
+      privacyAcceptedAt: true,
+      ageConfirmedAt: true,
+      consentVersion: true,
     },
   });
 

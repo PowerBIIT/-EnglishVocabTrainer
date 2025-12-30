@@ -28,7 +28,7 @@ type SummaryResult = {
 const normalizeWords = (words: unknown) => {
   if (!Array.isArray(words)) return [];
   return words
-    .map((item) => {
+    .map((item): SummaryWordInput | null => {
       if (!item || typeof item !== 'object') return null;
       const rawWord = (item as { word?: unknown }).word;
       if (typeof rawWord !== 'string') return null;
@@ -44,9 +44,12 @@ const normalizeWords = (words: unknown) => {
         typeof rawScore === 'number' && Number.isFinite(rawScore)
           ? Math.max(1, Math.min(10, rawScore))
           : null;
-      return { word, phonetic: phonetic || undefined, score };
+      const result: SummaryWordInput = { word };
+      if (phonetic) result.phonetic = phonetic;
+      if (score !== null) result.score = score;
+      return result;
     })
-    .filter((item): item is SummaryWordInput => Boolean(item))
+    .filter((item): item is SummaryWordInput => item !== null)
     .slice(0, MAX_AI_WORD_COUNT);
 };
 

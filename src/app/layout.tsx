@@ -6,6 +6,8 @@ import { ClientLayout } from '@/components/layout/ClientLayout';
 import { Providers } from '@/app/providers';
 import { AuthGate } from '@/components/layout/AuthGate';
 import { VersionBadge } from '@/components/layout/VersionBadge';
+import { Footer } from '@/components/layout/Footer';
+import { ConsentBanner } from '@/components/layout/ConsentBanner';
 
 const sans = localFont({
   src: [
@@ -51,9 +53,11 @@ export default function RootLayout({
           <AuthGate>
             <div className="min-h-screen">
               <Navigation />
-              <main className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-10 md:pl-24">
+              <main className="min-h-screen pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-16 md:pl-24">
                 {children}
               </main>
+              <Footer />
+              <ConsentBanner />
               <VersionBadge version={appVersion} />
             </div>
           </AuthGate>
