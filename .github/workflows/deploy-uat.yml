@@ -110,7 +110,7 @@ jobs:
             az webapp config set \
               --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
               --name "${{ secrets.AZURE_WEBAPP_NAME_UAT }}" \
-              --startup-file "npm start"
+              --startup-file "bash -c 'if [ -f node_modules.tar.gz ]; then rm -rf node_modules && tar -xzf node_modules.tar.gz; fi && npm start'"
 
       - name: Prune dev dependencies
         run: npm prune --omit=dev
