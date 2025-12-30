@@ -138,7 +138,8 @@ jobs:
               --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
               --name "${{ secrets.AZURE_WEBAPP_NAME_UAT }}" \
               --src-path deploy.zip \
-              --type zip
+              --type zip \
+              --track-status false
 
       - name: Restart app (apply settings)
         uses: azure/CLI@v2
