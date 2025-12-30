@@ -93,6 +93,8 @@ npm run dev
 Notes:
 - AI features need `GEMINI_API_KEY`.
 - Google login needs OAuth credentials. E2E uses a test login when `E2E_TEST=true`.
+- Image intake supports JPG/PNG/WEBP up to 30 MB and resizes photos to 2400px on upload.
+- Image extraction retries with `gemini-2.5-pro` if the active model fails on photos/handwriting.
 
 ## Access control & limits
 - Allowlist: `ALLOWLIST_EMAILS` (comma/space separated). If set, only listed emails are active.

@@ -365,10 +365,20 @@ Respond ONLY in JSON (no markdown):
 }`,
 
   extractFromImage: (targetLanguage: TargetLanguage, nativeLanguage: NativeLanguage) => `
-You are a vocabulary extraction assistant. Analyze the image of notes and extract vocabulary pairs.
-Do NOT invent words. Only extract what is clearly visible.
+You are a vocabulary extraction assistant. Analyze the photo of notes and extract vocabulary pairs.
+The notes may be handwritten and contain extra phonetic hints.
+Do NOT invent words. Only extract what is clearly visible. If something is unclear, skip it and mention it in "notes".
 
-Return ${getLanguageName(targetLanguage)} words/phrases and their ${getLanguageName(nativeLanguage)} translations.
+Look for lines like:
+"take photos /tejk fotos/ - robić zdjęcia"
+"do homework - odrobić lekcje"
+
+Rules:
+- Left side is ${getLanguageName(targetLanguage)}, right side is ${getLanguageName(nativeLanguage)}.
+- Ignore phonetic hints in / / or [ ].
+- Accept separators "-", "–", "—", ":", "->" (there may be extra spaces or dots).
+- If a line has no clear translation, skip it.
+
 Generate IPA for the ${getLanguageName(targetLanguage)} words (if unsure, use an empty string).
 
 Respond ONLY in JSON (no markdown):

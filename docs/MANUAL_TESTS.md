@@ -15,12 +15,14 @@ oraz szybkim startem wymowy.
 - CTA „Wymowa” na home (kontekst: słabe/nowe słowa).
 - Preselekcja sesji w `/pronunciation` przez `setId`, `focus`, `length`.
 - Układ mobilny (390x844).
+- WordIntake: rozpoznawanie słówek ze zdjęcia.
 
 ## Wymagania wstępne
 - Aplikacja uruchomiona (local/UAT/PRD).
 - Konto z dostępem `ACTIVE`.
 - Przeglądarka: Chrome.
 - Dostęp do DevTools (konsola + network).
+- Plik testowy: `IMG_20251220_105420.jpg` (zdjęcie notatek, lokalnie).
 
 ## Logowanie
 Jeśli nie widzisz „Test login (E2E)”, ustaw `NEXT_PUBLIC_E2E_TEST=true`
@@ -52,6 +54,9 @@ Użyj do testów kroku 5 („Dodaj pierwszy zestaw słówek”):
 alpha - alfa, beta - beta, gamma - gamma, delta - delta, epsilon - epsilon, zeta - zeta,
 eta - eta, theta - theta, iota - iota, kappa - kappa, lambda - lambda, omega - omega
 ```
+
+## Dane testowe (zdjęcie)
+Użyj pliku `IMG_20251220_105420.jpg` (notatki z frazami EN → PL, z fonetyką w `/.../`).
 
 ## Narzędzia (DevTools)
 1) Otwórz DevTools → Console + Network.
@@ -130,6 +135,17 @@ Kroki:
 Oczekiwane:
 - Zestaw jest preselekcjonowany po wejściu na stronę.
 - Link „Przejdź do quizu” prowadzi do `/quiz?setId=<ID_ZESTAWU>`.
+
+## TC-IMG-01: WordIntake — zdjęcie z notatkami
+Kroki:
+1) Wejdź na `/chat` (WordIntake).
+2) Wgraj zdjęcie `IMG_20251220_105420.jpg`.
+3) Poczekaj na wynik.
+Oczekiwane:
+- Brak komunikatu błędu o przetwarzaniu zdjęcia.
+- Zwrócone są pary słówek (min. 8).
+- Pary nie zawierają fonetyki z `/.../`.
+- Jeśli coś jest nieczytelne, pojawia się krótka notatka w odpowiedzi.
 
 ## TC-PR-01: Parametry w `/pronunciation`
 Kroki:
@@ -221,6 +237,7 @@ Oczekiwane:
 - „Wymowa 3 min” nie ustawia parametrów sesji (focus/length/set).
 - Brak „Gotowość do kartkówki” po zakończeniu sesji wymowy.
 - Brak „AI podsumowanie” po kliknięciu „Podsumuj z AI”.
+- Błąd przetwarzania zdjęcia w WordIntake.
 
 ## Sprzątanie (opcjonalnie)
 - Wejdź w `/vocabulary`, zaznacz dodane słówka i usuń, aby oczyścić konto testowe.
@@ -252,12 +269,13 @@ FAIL (1 test)
 |----------|-------------------------------------------------------|
 | TC-FL-01 | setId z URL nie preselekcjonuje zestawu w /flashcards |
 
-SKIP (2 testy)
+SKIP (3 testy)
 
 | Test     | Powód                                |
 |----------|--------------------------------------|
 | TC-PR-02 | Brak mikrofonu w środowisku testowym |
 | TC-PR-03 | Brak mikrofonu w środowisku testowym |
+| TC-IMG-01 | Brak weryfikacji po zmianach AI      |
 
 ### Do naprawy
 - TC-FL-01: preselekcja zestawu w `/flashcards` przez parametr `setId` nie działa.
