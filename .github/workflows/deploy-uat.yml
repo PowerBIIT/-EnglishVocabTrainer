@@ -74,11 +74,7 @@ jobs:
               --name "${{ secrets.AZURE_WEBAPP_NAME_UAT }}" \
               --settings \
                 NODE_ENV=production \
-                WEBSITE_RUN_FROM_PACKAGE=0 \
-                SCM_DO_BUILD_DURING_DEPLOYMENT=false \
-                SCM_DISABLE_ORYX_BUILD=true \
-                ENABLE_ORYX_BUILD=false \
-                WEBSITE_DISABLE_ZIP_DEPLOY_ORYX_TRANSFORM=true \
+                WEBSITE_RUN_FROM_PACKAGE=1 \
                 WEBSITE_NODE_DEFAULT_VERSION=20 \
                 APP_VERSION="${{ steps.build_info.outputs.app_version }}" \
                 APP_COMMIT_SHA="${{ steps.build_info.outputs.app_commit }}" \
@@ -142,8 +138,7 @@ jobs:
               --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
               --name "${{ secrets.AZURE_WEBAPP_NAME_UAT }}" \
               --src-path deploy.zip \
-              --type zip \
-              --clean true
+              --type zip
 
       - name: Restart app (apply settings)
         uses: azure/CLI@v2

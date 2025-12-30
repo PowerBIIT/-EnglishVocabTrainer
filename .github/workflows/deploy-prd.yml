@@ -66,11 +66,7 @@ jobs:
               --name "${{ secrets.AZURE_WEBAPP_NAME_PRD }}" \
               --settings \
                 NODE_ENV=production \
-                WEBSITE_RUN_FROM_PACKAGE=0 \
-                SCM_DO_BUILD_DURING_DEPLOYMENT=false \
-                SCM_DISABLE_ORYX_BUILD=true \
-                ENABLE_ORYX_BUILD=false \
-                WEBSITE_DISABLE_ZIP_DEPLOY_ORYX_TRANSFORM=true \
+                WEBSITE_RUN_FROM_PACKAGE=1 \
                 WEBSITE_NODE_DEFAULT_VERSION=20 \
                 APP_VERSION="${{ steps.build_info.outputs.app_version }}" \
                 APP_COMMIT_SHA="${{ steps.build_info.outputs.app_commit }}" \
@@ -105,7 +101,7 @@ jobs:
             az webapp config set \
               --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
               --name "${{ secrets.AZURE_WEBAPP_NAME_PRD }}" \
-              --startup-file "bash scripts/startup.sh"
+              --startup-file "npm start"
 
       - name: Prune dev dependencies
         run: npm prune --omit=dev
@@ -134,8 +130,7 @@ jobs:
               --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
               --name "${{ secrets.AZURE_WEBAPP_NAME_PRD }}" \
               --src-path deploy.zip \
-              --type zip \
-              --clean true
+              --type zip
 
       - name: Ensure app running (apply settings)
         uses: azure/CLI@v2
