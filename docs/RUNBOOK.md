@@ -1,9 +1,10 @@
 # Runbook (Ops + Deploy)
 
 ## Environments
-- **UAT**: https://evt.powerbiit.com (Azure: vocab-trainer-uat.azurewebsites.net)
-- **PRD**: https://evt.powerbiit.com (docelowo osobna subdomena, np. app.powerbiit.com)
+- **UAT**: https://evt.powerbiit.com (Azure fallback: https://vocab-trainer-uat.azurewebsites.net)
+- **PRD**: nieutworzone (docelowo osobna subdomena, np. https://app.powerbiit.com)
 - Custom domains hostowane w OVH, Azure Web App z custom domain binding.
+- Domeny `*.azurewebsites.net` bywają blokowane w sieciach firmowych, używaj domeny własnej.
 
 ## Pipeline behavior
 - CI: lint + typecheck + unit + e2e (Postgres service w CI).
@@ -28,22 +29,32 @@
 - Google Cloud Project: `angielski` (gen-lang-client-0315840383)
 - Redirect URIs (must match NEXTAUTH_URL):
   - `http://localhost:3000/api/auth/callback/google` (dev)
-  - `https://evt.powerbiit.com/api/auth/callback/google` (UAT/PRD)
-  - `https://vocab-trainer-uat.azurewebsites.net/api/auth/callback/google` (Azure direct)
+  - `https://evt.powerbiit.com/api/auth/callback/google` (UAT)
+  - `https://app.powerbiit.com/api/auth/callback/google` (PRD, docelowo)
+  - `https://vocab-trainer-uat.azurewebsites.net/api/auth/callback/google` (Azure direct, opcjonalnie)
 - JavaScript origins:
   - `http://localhost:3000`
   - `https://evt.powerbiit.com`
+  - `https://app.powerbiit.com` (PRD, docelowo)
   - `https://vocab-trainer-uat.azurewebsites.net`
 
 ## Custom Domain Setup (OVH + Azure)
 
 ### Konfiguracja DNS w OVH
 1. Zaloguj się do OVH Manager -> Domains -> powerbiit.com -> DNS Zone
-2. Dodaj rekord CNAME:
+2. Dodaj rekord TXT (weryfikacja Azure):
+   - Subdomain: `asuid.evt`
+   - Wartość: `customDomainVerificationId` z Azure
+   - Wartość pobierzesz:
+     ```bash
+     az webapp show --name vocab-trainer-uat --resource-group vocab-trainer-rg \
+       --query customDomainVerificationId -o tsv
+     ```
+3. Dodaj rekord CNAME:
    - Subdomain: `evt` (dla evt.powerbiit.com)
    - Target: `vocab-trainer-uat.azurewebsites.net.` (z kropką na końcu!)
    - TTL: 3600
-3. Poczekaj na propagację DNS (5-30 min)
+4. Poczekaj na propagację DNS (5-30 min)
 
 ### Konfiguracja Custom Domain w Azure
 1. Azure Portal -> vocab-trainer-uat -> Custom domains
