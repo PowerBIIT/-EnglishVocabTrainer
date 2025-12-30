@@ -9,7 +9,7 @@
     "dev": "next dev",
     "prebuild": "prisma generate",
     "build": "node --require ./scripts/rename-fallback.js node_modules/next/dist/bin/next build",
-    "start": "next start",
+    "start": "node ./node_modules/next/dist/bin/next start",
     "lint": "next lint",
     "test": "vitest",
     "test:unit": "vitest run",
