@@ -88,7 +88,7 @@ gh secret set AZURE_WEBAPP_NAME_UAT --env uat --body "evt-uat-pl-$SUFFIX"
 gh secret set AZURE_WEBAPP_PUBLISH_PROFILE_UAT --env uat --body "$UAT_PROFILE"
 gh secret set DATABASE_URL --env uat --body "postgresql://vocabadmin:${PG_PASS}@evt-pg-pl-${SUFFIX}.postgres.database.azure.com:5432/evt_uat?sslmode=require"
 gh secret set NEXTAUTH_URL --env uat --body "https://evt-uat-pl-${SUFFIX}.azurewebsites.net"
-# Jeśli używasz domeny własnej (np. https://uat.twojadomena.pl), ustaw ją tutaj.
+# Jeśli używasz domeny własnej (np. https://evt.powerbiit.com), ustaw ją tutaj.
 
 # Wygeneruj NEXTAUTH_SECRET
 NEXTAUTH_SECRET=$(openssl rand -base64 32)
@@ -125,6 +125,17 @@ Domeny `*.azurewebsites.net` bywają blokowane w sieciach firmowych. Jeśli logo
    - Ustaw `NEXTAUTH_URL` na domenę własną.
    - Dodaj redirect URI w Google OAuth (patrz kolejny krok).
 
+Aktualna konfiguracja UAT (OVH):
+```
+CNAME  evt.powerbiit.com            -> vocab-trainer-uat.azurewebsites.net
+TXT    asuid.evt.powerbiit.com      -> (customDomainVerificationId z Azure)
+```
+Pobierz `customDomainVerificationId`:
+```bash
+az webapp show --name vocab-trainer-uat --resource-group vocab-trainer-rg \
+  --query customDomainVerificationId -o tsv
+```
+
 ### Krok 5: Skonfiguruj Google OAuth
 
 1. Otwórz [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
@@ -133,15 +144,15 @@ Domeny `*.azurewebsites.net` bywają blokowane w sieciach firmowych. Jeśli logo
    ```
    https://evt-uat-pl-SUFFIX.azurewebsites.net
    https://evt-prd-pl-SUFFIX.azurewebsites.net
-   https://uat.twojadomena.pl
-   https://prd.twojadomena.pl
+   https://evt.powerbiit.com
+   # (opcjonalnie PRD) https://prd.twojadomena.pl
    ```
 4. Dodaj **Authorized redirect URIs** (Azure lub domena własna):
    ```
    https://evt-uat-pl-SUFFIX.azurewebsites.net/api/auth/callback/google
    https://evt-prd-pl-SUFFIX.azurewebsites.net/api/auth/callback/google
-   https://uat.twojadomena.pl/api/auth/callback/google
-   https://prd.twojadomena.pl/api/auth/callback/google
+   https://evt.powerbiit.com/api/auth/callback/google
+   # (opcjonalnie PRD) https://prd.twojadomena.pl/api/auth/callback/google
    ```
 5. Zapisz zmiany
 
@@ -174,17 +185,17 @@ curl https://<APP_UAT>/api/health
 
 ---
 
-## Aktualna infrastruktura (grudzień 2025)
+## Aktualna infrastruktura (stan obecny)
 
 | Zasób | Nazwa | URL/Szczegóły |
 |-------|-------|---------------|
-| Resource Group | `evt-rg-pl` | Poland Central |
-| App Service Plan | `evt-plan-pl` | B1 (~13 USD/mies.) |
-| UAT Web App | `evt-uat-pl-6e5d` | https://evt-uat-pl-6e5d.azurewebsites.net |
-| PRD Web App | `evt-prd-pl-6e5d` | https://evt-prd-pl-6e5d.azurewebsites.net |
-| PostgreSQL Server | `evt-pg-pl-6e5d` | Burstable B1ms (~12 USD/mies.) |
-| UAT Database | `evt_uat` | Reset przy każdym deploy |
-| PRD Database | `evt_prd` | Trwała (migracje) |
+| Resource Group | `vocab-trainer-rg` | Poland Central |
+| App Service Plan | `vocab-trainer-plan` | B1 (Basic) |
+| UAT Web App | `vocab-trainer-uat` | https://evt.powerbiit.com (custom), https://vocab-trainer-uat.azurewebsites.net |
+| PRD Web App | brak | nieutworzone |
+| PostgreSQL Server | `vocab-trainer-db` | Standard_B1ms, PostgreSQL 16 |
+| UAT Database | `vocabuat` | Reset przy każdym deploy |
+| Certyfikat TLS | GeoTrust | Ważny do 2026-04-14 |
 
 **Koszt:** ~25 USD/miesiąc (~100 PLN/miesiąc)
 
