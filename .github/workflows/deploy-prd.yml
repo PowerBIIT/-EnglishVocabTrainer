@@ -69,6 +69,8 @@ jobs:
                 WEBSITE_RUN_FROM_PACKAGE=0 \
                 SCM_DO_BUILD_DURING_DEPLOYMENT=false \
                 SCM_DISABLE_ORYX_BUILD=true \
+                ENABLE_ORYX_BUILD=false \
+                WEBSITE_DISABLE_ZIP_DEPLOY_ORYX_TRANSFORM=true \
                 WEBSITE_NODE_DEFAULT_VERSION=20 \
                 APP_VERSION="${{ steps.build_info.outputs.app_version }}" \
                 APP_COMMIT_SHA="${{ steps.build_info.outputs.app_commit }}" \
