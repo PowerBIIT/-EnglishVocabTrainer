@@ -88,6 +88,7 @@ gh secret set AZURE_WEBAPP_NAME_UAT --env uat --body "evt-uat-pl-$SUFFIX"
 gh secret set AZURE_WEBAPP_PUBLISH_PROFILE_UAT --env uat --body "$UAT_PROFILE"
 gh secret set DATABASE_URL --env uat --body "postgresql://vocabadmin:${PG_PASS}@evt-pg-pl-${SUFFIX}.postgres.database.azure.com:5432/evt_uat?sslmode=require"
 gh secret set NEXTAUTH_URL --env uat --body "https://evt-uat-pl-${SUFFIX}.azurewebsites.net"
+# Jeśli używasz domeny własnej (np. https://uat.twojadomena.pl), ustaw ją tutaj.
 
 # Wygeneruj NEXTAUTH_SECRET
 NEXTAUTH_SECRET=$(openssl rand -base64 32)
@@ -108,23 +109,43 @@ gh secret set GLOBAL_AI_REQUESTS_PER_MONTH --env uat --body "10000"
 gh secret set GLOBAL_AI_UNITS_PER_MONTH --env uat --body "1000000"
 ```
 
-### Krok 4: Skonfiguruj Google OAuth
+### Krok 4: Skonfiguruj domenę (OVH / własna) - zalecane
+
+Domeny `*.azurewebsites.net` bywają blokowane w sieciach firmowych. Jeśli logowanie pod
+`https://<APP_UAT>.azurewebsites.net/login` jest blokowane, ustaw domenę własną i używaj jej jako `NEXTAUTH_URL`.
+
+1. **DNS w OVH**
+   - Dla subdomeny: dodaj rekord CNAME, np. `uat` -> `<APP_UAT>.azurewebsites.net`
+   - Dla domeny głównej użyj rekordu A zgodnie z instrukcją Azure.
+2. **Azure App Service**
+   - Dodaj hostname (Custom domain) dla UAT/PRD w Azure App Service.
+3. **HTTPS**
+   - Włącz certyfikat (Managed Certificate lub własny).
+4. **Sekrety i OAuth**
+   - Ustaw `NEXTAUTH_URL` na domenę własną.
+   - Dodaj redirect URI w Google OAuth (patrz kolejny krok).
+
+### Krok 5: Skonfiguruj Google OAuth
 
 1. Otwórz [Google Cloud Console](https://console.cloud.google.com/apis/credentials)
 2. Znajdź swój OAuth 2.0 Client
-3. Dodaj **Authorized JavaScript origins**:
+3. Dodaj **Authorized JavaScript origins** (Azure lub domena własna):
    ```
    https://evt-uat-pl-SUFFIX.azurewebsites.net
    https://evt-prd-pl-SUFFIX.azurewebsites.net
+   https://uat.twojadomena.pl
+   https://prd.twojadomena.pl
    ```
-4. Dodaj **Authorized redirect URIs**:
+4. Dodaj **Authorized redirect URIs** (Azure lub domena własna):
    ```
    https://evt-uat-pl-SUFFIX.azurewebsites.net/api/auth/callback/google
    https://evt-prd-pl-SUFFIX.azurewebsites.net/api/auth/callback/google
+   https://uat.twojadomena.pl/api/auth/callback/google
+   https://prd.twojadomena.pl/api/auth/callback/google
    ```
 5. Zapisz zmiany
 
-### Krok 5: Wdróż aplikację
+### Krok 6: Wdróż aplikację
 
 ```bash
 # Zwiększ wersję w package.json
@@ -141,11 +162,11 @@ gh run list --workflow="Deploy UAT" --limit 1
 gh run watch  # monitoruj na żywo
 ```
 
-### Krok 6: Zweryfikuj wdrożenie
+### Krok 7: Zweryfikuj wdrożenie
 
 ```bash
 # Health check
-curl https://evt-uat-pl-SUFFIX.azurewebsites.net/api/health
+curl https://<APP_UAT>/api/health
 
 # Oczekiwana odpowiedź:
 # {"status":"ok","version":"1.0.16","commit":"abc123","buildTime":"...","env":"production"}
@@ -174,6 +195,7 @@ curl https://evt-uat-pl-SUFFIX.azurewebsites.net/api/health
 ### Deploy UAT (automatyczny)
 - **Trigger:** Push do `main` (bez zmian tylko w docs)
 - **Co robi:** lint, test, build, reset bazy UAT, deploy, health check
+- **Uwaga:** stabilność opiera się o health check (`/api/health`), a nie o status startu z Azure.
 
 ### Deploy PRD (manualny)
 ```bash
