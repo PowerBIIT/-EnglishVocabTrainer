@@ -4,7 +4,7 @@ Next.js app for school‑focused vocabulary learning (PL→EN for Polish student
 Ukrainian students in Poland). Includes onboarding, flashcards, quizzes, pronunciation practice,
 and AI‑powered word intake with multi‑file upload.
 
-## Status projektu (wersja 1.0.14 - stan na grudzień 2025)
+## Status projektu (wersja 1.0.20 - stan na grudzień 2025)
 
 ### Funkcje użytkownika (szkoła/UA)
 - Ścieżki onboardingu: „Uczeń w Polsce” (PL → EN) i „Uczeń z Ukrainy w Polsce” (UA → PL).
@@ -23,6 +23,15 @@ and AI‑powered word intake with multi‑file upload.
 
 ✅ **Widoczny numer wersji w UI** - badge pobiera wersję z `/api/health`
 - Plik: `src/components/layout/VersionBadge.tsx`
+
+### Zgodność z RODO/GDPR (NOWE w 1.0.20)
+✅ **Polityka prywatności** - `/privacy` (PL/EN/UA)
+✅ **Regulamin** - `/terms` (PL/EN/UA)
+✅ **Consent w onboardingu** - krok akceptacji jako pierwszy krok
+✅ **Potwierdzenie wieku** - checkbox 16+ lub zgoda rodzica
+✅ **Usunięcie konta** - przycisk w profilu (Art. 17 RODO)
+✅ **ConsentBanner** - przypomnienie dla istniejących użytkowników
+✅ **Footer** - linki do dokumentów prawnych
 
 ### Znane problemy
 - Brak krytycznych znanych problemów.

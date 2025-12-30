@@ -69,8 +69,16 @@ src/
 ### API Routes
 - `/api/ai/*` - AI endpoints (generate-words, extract-image, tutor, pronunciation)
 - `/api/admin/*` - Admin config, users, stats
-- `/api/user/*` - Profile and state sync
+- `/api/user/*` - Profile, state sync, account deletion (DELETE /api/user/account)
 - `/api/health` - Build metadata for deployment verification
+
+### Legal/GDPR Compliance
+- `/privacy` - Privacy Policy page (PL/EN/UA)
+- `/terms` - Terms of Service page (PL/EN/UA)
+- Consent step in onboarding (first step, requires terms + age confirmation)
+- Account deletion in profile page (GDPR Art. 17)
+- ConsentBanner for existing users without consent
+- User model fields: `termsAcceptedAt`, `privacyAcceptedAt`, `ageConfirmedAt`, `parentEmail`, `consentVersion`
 
 ## Testing
 
