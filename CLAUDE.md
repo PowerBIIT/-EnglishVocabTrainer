@@ -89,10 +89,14 @@ src/
 
 ## Deployment
 
-- **UAT**: Auto-deploy on push to `main`
-- **PRD**: Manual trigger via `gh workflow run deploy-prd.yml`
+- **UAT**: https://evt.powerbiit.com (Azure: vocab-trainer-uat.azurewebsites.net)
+  - Auto-deploy on push to `main`
+  - Custom domain via OVH DNS CNAME
+- **PRD**: docelowo osobna subdomena powerbiit.com
+  - Manual trigger via `gh workflow run deploy-prd.yml`
 - Migrations run on startup: `scripts/ensure-migrations.js` + `prisma migrate deploy`
-- Verify: `curl https://<APP>.azurewebsites.net/api/health`
+- Verify: `curl https://evt.powerbiit.com/api/health`
+- See `docs/RUNBOOK.md` for custom domain setup instructions
 
 ## Environment Variables
 
