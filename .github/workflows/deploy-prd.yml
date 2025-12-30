@@ -102,7 +102,7 @@ jobs:
             az webapp config set \
               --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
               --name "${{ secrets.AZURE_WEBAPP_NAME_PRD }}" \
-              --startup-file "bash -c 'if [ -f node_modules.tar.gz ]; then rm -rf node_modules && tar -xzf node_modules.tar.gz; fi && node scripts/ensure-migrations.js && npx prisma migrate deploy && npm start'"
+              --startup-file "bash scripts/startup.sh"
 
       - name: Prune dev dependencies
         run: npm prune --omit=dev
