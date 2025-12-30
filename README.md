@@ -48,23 +48,24 @@ and AI‑powered word intake with multi‑file upload.
 
 1. **Sprawdź wdrożenie UAT:**
    ```bash
-   curl https://<APP_UAT>.azurewebsites.net/api/health
+   curl https://evt.powerbiit.com/api/health
+   # fallback (Azure): https://vocab-trainer-uat.azurewebsites.net/api/health
    ```
    Oczekiwana odpowiedź: `"status":"ok"`, `version` zgodna z `package.json`, `commit` zgodny z deployem
 
 2. **Sprawdź panel admina:**
    - Zaloguj się kontem z `ADMIN_EMAILS`
-   - Otwórz https://<APP_UAT>.azurewebsites.net/admin
+   - Otwórz https://evt.powerbiit.com/admin
    - Przełącz język w nagłówku (PL/EN)
    - Sprawdź zakładkę "Zgłoszenia" i nadaj dostęp
    - Zmień np. `MAX_ACTIVE_USERS` i zapisz
 
 3. **Środowisko:**
    - Region: Poland Central
-   - UAT: https://<APP_UAT>.azurewebsites.net
-   - PRD: https://<APP_PRD>.azurewebsites.net
+   - UAT: https://evt.powerbiit.com (Azure fallback: https://vocab-trainer-uat.azurewebsites.net)
+   - PRD: nieutworzone (docelowo osobna subdomena, np. https://app.powerbiit.com)
    - Deployment: GitHub Actions (`.github/workflows/`)
-   - Aktualne adresy z outputu workflow `Provision Azure Infrastructure`
+   - Aktualne adresy i domeny: `docs/DEPLOYMENT_AZURE.md` i `docs/RUNBOOK.md`
 
 ## Stack
 - Next.js 14 / React 18
