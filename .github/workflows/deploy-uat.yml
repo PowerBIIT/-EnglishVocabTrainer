@@ -125,12 +125,22 @@ jobs:
           if [ -d prisma ]; then cp -R prisma .deploy/; fi
           if [ -d scripts ]; then cp -R scripts .deploy/; fi
 
+      - name: Create deployment zip
+        run: |
+          cd .deploy
+          zip -r ../deploy.zip .
+          cd ..
+
       - name: Deploy to Azure Web App (UAT)
-        uses: azure/webapps-deploy@v3
+        uses: azure/CLI@v2
         with:
-          app-name: ${{ secrets.AZURE_WEBAPP_NAME_UAT }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE_UAT }}
-          package: ./.deploy
+          inlineScript: |
+            az webapp deploy \
+              --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+              --name "${{ secrets.AZURE_WEBAPP_NAME_UAT }}" \
+              --src-path deploy.zip \
+              --type zip \
+              --async true
 
       - name: Restart app (apply settings)
         uses: azure/CLI@v2
