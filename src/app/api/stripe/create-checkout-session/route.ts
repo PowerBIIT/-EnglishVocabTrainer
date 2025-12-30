@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { stripe, STRIPE_PRICE_IDS, TRIAL_PERIOD_DAYS } from '@/lib/stripe';
+import { getStripe, STRIPE_PRICE_IDS, TRIAL_PERIOD_DAYS } from '@/lib/stripe';
 import { getOrCreateStripeCustomer } from '@/lib/subscription';
 
 export async function POST(request: Request) {
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       session.user.email
     );
 
-    const checkoutSession = await stripe.checkout.sessions.create({
+    const checkoutSession = await getStripe().checkout.sessions.create({
       customer: customerId,
       line_items: [{ price: priceId, quantity: 1 }],
       mode: 'subscription',

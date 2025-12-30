@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/db';
-import { stripe } from '@/lib/stripe';
+import { getStripe } from '@/lib/stripe';
 import { Plan, SubscriptionStatus } from '@prisma/client';
 import Stripe from 'stripe';
 
@@ -16,7 +16,7 @@ export async function getOrCreateStripeCustomer(
     return existing.stripeCustomerId;
   }
 
-  const customer = await stripe.customers.create({
+  const customer = await getStripe().customers.create({
     email,
     metadata: { userId },
   });
@@ -35,7 +35,7 @@ export async function getOrCreateStripeCustomer(
 export async function syncSubscriptionStatus(
   stripeSubscriptionId: string
 ): Promise<void> {
-  const stripeSubscription = (await stripe.subscriptions.retrieve(
+  const stripeSubscription = (await getStripe().subscriptions.retrieve(
     stripeSubscriptionId
   )) as Stripe.Subscription;
 
@@ -112,7 +112,7 @@ export async function cancelSubscription(userId: string): Promise<boolean> {
     return false;
   }
 
-  await stripe.subscriptions.update(subscription.stripeSubscriptionId, {
+  await getStripe().subscriptions.update(subscription.stripeSubscriptionId, {
     cancel_at_period_end: true,
   });
 

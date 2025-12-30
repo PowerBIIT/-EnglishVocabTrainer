@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { stripe, STRIPE_PRICE_IDS } from '@/lib/stripe';
+import { getStripe, STRIPE_PRICE_IDS } from '@/lib/stripe';
 
 export const revalidate = 3600; // Cache for 1 hour
 
 export async function GET() {
   try {
+    const stripe = getStripe();
     const [monthlyPrice, annualPrice] = await Promise.all([
       stripe.prices.retrieve(STRIPE_PRICE_IDS.PRO_MONTHLY, {
         expand: ['product'],
