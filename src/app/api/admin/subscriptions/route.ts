@@ -10,6 +10,13 @@ const parseNumber = (value: string | null, fallback: number) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+const sanitizeSearch = (value: string | null): string | null => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (trimmed.length < 2) return null;
+  return trimmed.slice(0, 100);
+};
+
 const SUBSCRIPTION_STATUSES: SubscriptionStatus[] = [
   'INCOMPLETE',
   'INCOMPLETE_EXPIRED',
@@ -32,6 +39,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const statusParam = searchParams.get('status');
+  const searchQuery = sanitizeSearch(searchParams.get('search'));
   const page = Math.max(0, Math.floor(parseNumber(searchParams.get('page'), 0)));
   const limitRaw = Math.floor(parseNumber(searchParams.get('limit'), 20));
   const limit = Math.min(100, Math.max(1, limitRaw));
@@ -39,6 +47,14 @@ export async function GET(request: Request) {
   const where: Prisma.SubscriptionWhereInput = {};
   if (statusParam && isSubscriptionStatus(statusParam)) {
     where.status = statusParam;
+  }
+  if (searchQuery) {
+    where.user = {
+      OR: [
+        { email: { contains: searchQuery, mode: 'insensitive' } },
+        { name: { contains: searchQuery, mode: 'insensitive' } },
+      ],
+    };
   }
 
   const [total, subscriptions] = await prisma.$transaction([

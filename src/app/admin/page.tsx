@@ -108,6 +108,16 @@ export default function AdminPage() {
     setSubscriptionsQuery,
     syncSubscription,
     cancelSubscription,
+    cancelSubscriptionImmediately,
+    extendTrial,
+    reactivateSubscription,
+    pauseSubscription,
+    resumeSubscription,
+    applyCouponToSubscription,
+    changeSubscriptionPlan,
+    refundSubscription,
+    getSubscriptionHistory,
+    exportSubscriptions,
     // Revenue
     revenueStats,
     revenueLoading,
@@ -304,7 +314,7 @@ export default function AdminPage() {
             page={subscriptionsQuery.page}
             limit={subscriptionsQuery.limit}
             total={subscriptionsTotal}
-            filters={{ status: subscriptionsQuery.status }}
+            filters={{ status: subscriptionsQuery.status, search: subscriptionsQuery.search }}
             onFiltersChange={(nextFilters) =>
               setSubscriptionsQuery((prev) => ({
                 ...prev,
@@ -320,6 +330,18 @@ export default function AdminPage() {
             }
             onSync={syncSubscription}
             onCancel={cancelSubscription}
+            onCancelImmediately={cancelSubscriptionImmediately}
+            onExtendTrial={extendTrial}
+            onReactivate={reactivateSubscription}
+            onPause={pauseSubscription}
+            onResume={resumeSubscription}
+            onApplyCoupon={applyCouponToSubscription}
+            onChangePlan={changeSubscriptionPlan}
+            onRefund={refundSubscription}
+            onGetHistory={getSubscriptionHistory}
+            onExport={exportSubscriptions}
+            coupons={coupons}
+            prices={prices}
           />
         </TabsContent>
 

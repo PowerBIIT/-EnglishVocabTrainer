@@ -1,6 +1,6 @@
 {
   "name": "henio",
-  "version": "1.0.31",
+  "version": "1.0.32",
   "private": true,
   "prisma": {
     "seed": "node prisma/seed.js"

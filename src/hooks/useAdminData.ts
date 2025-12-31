@@ -106,6 +106,21 @@ type SubscriptionsQuery = {
   page: number;
   limit: number;
   status: string;
+  search: string;
+};
+
+export type SubscriptionEvent = {
+  id: string;
+  type: string;
+  created: number;
+  description: string;
+};
+
+export type RefundResult = {
+  id: string;
+  amount: number;
+  currency: string;
+  status: string;
 };
 
 const fetchJson = async <T>(url: string, options?: RequestInit): Promise<T> => {
@@ -148,6 +163,7 @@ export function useAdminData(enabled: boolean = true) {
     page: 0,
     limit: 20,
     status: 'all',
+    search: '',
   });
 
   // Revenue stats state
@@ -190,6 +206,9 @@ export function useAdminData(enabled: boolean = true) {
     params.set('limit', String(subscriptionsQuery.limit));
     if (subscriptionsQuery.status !== 'all') {
       params.set('status', subscriptionsQuery.status);
+    }
+    if (subscriptionsQuery.search) {
+      params.set('search', subscriptionsQuery.search);
     }
     return params.toString();
   }, [subscriptionsQuery]);
@@ -438,6 +457,139 @@ export function useAdminData(enabled: boolean = true) {
     [enabled, loadSubscriptions, loadRevenueStats, loadStats]
   );
 
+  const cancelSubscriptionImmediately = useCallback(
+    async (subscriptionId: string) => {
+      if (!enabled) return;
+      await fetchJson(`/api/admin/subscriptions/${subscriptionId}`, {
+        method: 'DELETE',
+      });
+      await Promise.all([loadSubscriptions(), loadRevenueStats(), loadStats()]);
+    },
+    [enabled, loadSubscriptions, loadRevenueStats, loadStats]
+  );
+
+  const extendTrial = useCallback(
+    async (subscriptionId: string, days: number) => {
+      if (!enabled) return;
+      await fetchJson(`/api/admin/subscriptions/${subscriptionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'extendTrial', days }),
+      });
+      await loadSubscriptions();
+    },
+    [enabled, loadSubscriptions]
+  );
+
+  const reactivateSubscription = useCallback(
+    async (subscriptionId: string) => {
+      if (!enabled) return;
+      await fetchJson(`/api/admin/subscriptions/${subscriptionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reactivate' }),
+      });
+      await loadSubscriptions();
+    },
+    [enabled, loadSubscriptions]
+  );
+
+  const pauseSubscription = useCallback(
+    async (subscriptionId: string) => {
+      if (!enabled) return;
+      await fetchJson(`/api/admin/subscriptions/${subscriptionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'pause' }),
+      });
+      await loadSubscriptions();
+    },
+    [enabled, loadSubscriptions]
+  );
+
+  const resumeSubscription = useCallback(
+    async (subscriptionId: string) => {
+      if (!enabled) return;
+      await fetchJson(`/api/admin/subscriptions/${subscriptionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'resume' }),
+      });
+      await loadSubscriptions();
+    },
+    [enabled, loadSubscriptions]
+  );
+
+  const applyCouponToSubscription = useCallback(
+    async (subscriptionId: string, couponId: string) => {
+      if (!enabled) return;
+      await fetchJson(`/api/admin/subscriptions/${subscriptionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'applyCoupon', couponId }),
+      });
+      await loadSubscriptions();
+    },
+    [enabled, loadSubscriptions]
+  );
+
+  const changeSubscriptionPlan = useCallback(
+    async (subscriptionId: string, priceId: string) => {
+      if (!enabled) return;
+      await fetchJson(`/api/admin/subscriptions/${subscriptionId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'changePlan', priceId }),
+      });
+      await Promise.all([loadSubscriptions(), loadRevenueStats()]);
+    },
+    [enabled, loadSubscriptions, loadRevenueStats]
+  );
+
+  const refundSubscription = useCallback(
+    async (
+      subscriptionId: string,
+      amount?: number,
+      reason?: 'duplicate' | 'fraudulent' | 'requested_by_customer'
+    ): Promise<RefundResult> => {
+      if (!enabled) throw new Error('Not enabled');
+      const result = await fetchJson<{ success: boolean; refund: RefundResult }>(
+        `/api/admin/subscriptions/${subscriptionId}/refund`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ amount, reason }),
+        }
+      );
+      return result.refund;
+    },
+    [enabled]
+  );
+
+  const getSubscriptionHistory = useCallback(
+    async (subscriptionId: string): Promise<SubscriptionEvent[]> => {
+      if (!enabled) return [];
+      const result = await fetchJson<{ events: SubscriptionEvent[] }>(
+        `/api/admin/subscriptions/${subscriptionId}/history`
+      );
+      return result.events;
+    },
+    [enabled]
+  );
+
+  const exportSubscriptions = useCallback(
+    async (status?: string) => {
+      if (!enabled) return;
+      const params = new URLSearchParams();
+      if (status && status !== 'all') {
+        params.set('status', status);
+      }
+      const url = `/api/admin/subscriptions/export?${params.toString()}`;
+      window.open(url, '_blank');
+    },
+    [enabled]
+  );
+
   // Pricing actions
   const createPrice = useCallback(
     async (data: CreatePriceData) => {
@@ -529,6 +681,16 @@ export function useAdminData(enabled: boolean = true) {
     setSubscriptionsQuery,
     syncSubscription,
     cancelSubscription,
+    cancelSubscriptionImmediately,
+    extendTrial,
+    reactivateSubscription,
+    pauseSubscription,
+    resumeSubscription,
+    applyCouponToSubscription,
+    changeSubscriptionPlan,
+    refundSubscription,
+    getSubscriptionHistory,
+    exportSubscriptions,
     refreshSubscriptions: loadSubscriptions,
     // Revenue
     revenueStats,
