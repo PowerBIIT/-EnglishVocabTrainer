@@ -6,11 +6,18 @@
 - Custom domains hostowane w OVH, Azure Web App z custom domain binding.
 - Domeny `*.azurewebsites.net` bywają blokowane w sieciach firmowych, używaj domeny własnej.
 
+## Production checklist
+- See `docs/PRODUCTION_CHECKLIST.md` before Deploy PRD.
+
 ## Pipeline behavior
-- CI: lint + typecheck + unit + e2e (Postgres service w CI).
+- CI (`.github/workflows/ci.yml`): lint + typecheck + unit + e2e, runs on PR and push to `main` (Postgres service in CI).
 - UAT deploy: push to `main` (excluding doc-only changes) -> lint, unit -> build -> reset DB -> deploy -> restart -> health check.
 - PRD deploy: manual `Deploy PRD` -> lint, unit -> build -> apply migrations -> deploy -> start/restart -> health check.
 - PRD never resets data.
+
+## E2E test login
+- `E2E_TEST` and `NEXT_PUBLIC_E2E_TEST` must be **false** in PRD app settings.
+- UAT can keep them false; E2E login is intended only for local/CI.
 
 ## Health/version verification
 - `GET /api/health` returns `status`, `version`, `commit`, `buildTime`.

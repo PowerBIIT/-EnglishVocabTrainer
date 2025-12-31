@@ -331,9 +331,12 @@ az group delete --name henio-rg --yes --no-wait
 ## Checklist przed wdrożeniem PRD
 
 - [ ] Wszystkie testy przechodzą (`npm run test:unit`)
+- [ ] Typecheck przechodzi (`npm run typecheck`)
+- [ ] E2E przechodzi (`npm run test:e2e`)
 - [ ] Build działa lokalnie (`npm run build`)
 - [ ] UAT działa i przetestowany
 - [ ] Testy manualne wykonane (`docs/MANUAL_TESTS.md`)
+- [ ] Checklist produkcyjny sprawdzony (`docs/PRODUCTION_CHECKLIST.md`)
 - [ ] Wersja w package.json zaktualizowana
 - [ ] OAuth URIs dla PRD skonfigurowane w Google Cloud
 - [ ] Sekrety PRD skonfigurowane w GitHub

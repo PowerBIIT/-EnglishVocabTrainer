@@ -105,7 +105,8 @@ npm run dev
 
 Notes:
 - AI features need `GEMINI_API_KEY`.
-- Google login needs OAuth credentials. E2E uses a test login when `E2E_TEST=true`.
+- Google login needs OAuth credentials. E2E uses a test login only when `E2E_TEST=true`.
+- Keep `E2E_TEST` and `NEXT_PUBLIC_E2E_TEST` disabled in production.
 - Image intake supports JPG/PNG/WEBP up to 30 MB and resizes photos to 2400px on upload.
 - Image extraction retries with `gemini-2.5-pro` if the active model fails on photos/handwriting.
 
@@ -120,6 +121,7 @@ Notes:
 
 ## Testing
 - Unit tests: `npm run test:unit`
+- Typecheck: `npm run typecheck`
 - E2E tests: `npm run test:e2e`
 
 CI runs lint + typecheck + unit + e2e on PR and `main`.
@@ -130,6 +132,7 @@ Azure deployment (UAT + PRD) is documented in `docs/DEPLOYMENT_AZURE.md`.
 `/api/health` returns build metadata (`APP_VERSION`, `APP_COMMIT_SHA`, `APP_BUILD_TIME`)
 for post-deploy verification.
 Ops runbook: `docs/RUNBOOK.md`.
+Production checklist: `docs/PRODUCTION_CHECKLIST.md`.
 
 ## CI/CD
 - `CI`: `.github/workflows/ci.yml`
