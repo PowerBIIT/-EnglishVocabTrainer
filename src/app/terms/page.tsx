@@ -25,7 +25,7 @@ const termsCopy = {
         title: '2. Warunki korzystania',
         content: `Aby korzystac z Uslugi, musisz:
 
-• Miec ukonczono 16 lat LUB posiadac zgode rodzica/opiekuna prawnego
+• Miec ukonczono 16 lat
 • Posiadac konto Google do logowania
 • Zaakceptowac niniejszy Regulamin i Polityke Prywatnosci
 
@@ -35,9 +35,9 @@ Korzystanie z Uslugi jest bezplatne w wersji podstawowej. Niektore funkcje moga 
         title: '3. Ograniczenia wiekowe',
         content: `Usluga jest przeznaczona dla uczniow i osob uczacych sie jezykow.
 
-• Osoby ponizej 16 roku zycia moga korzystac z Uslugi wylacznie za zgoda rodzica lub opiekuna prawnego
-• Rodzic/opiekun odpowiada za korzystanie z Uslugi przez osobe niepelnoletnia
-• Mozemy poprosic o potwierdzenie zgody rodzica`,
+• Usluga jest dostepna wylacznie dla osob, ktore ukonczyly 16 lat
+• Osoby niepelnoletnie (16-18 lat) moga korzystac z Uslugi zgodnie z obowiazujacym prawem
+• Mozemy poprosic o potwierdzenie wieku`,
       },
       {
         title: '4. Zasady uzytkowania',
@@ -99,7 +99,7 @@ Zastrzegamy sobie prawo do zakonczenia Uslugi z 30-dniowym wyprzedzeniem.`,
 • Niewaznosc jednego postanowienia nie wplywa na pozostale
 • Wersja polska Regulaminu jest wiazaca
 
-W razie pytan: support@englishvocabtrainer.app`,
+W razie pytan: info@henio.app`,
       },
     ],
   },
@@ -120,7 +120,7 @@ W razie pytan: support@englishvocabtrainer.app`,
         title: '2. Terms of Use',
         content: `To use the Service, you must:
 
-• Be at least 16 years old OR have parental/guardian consent
+• Be at least 16 years old
 • Have a Google account for login
 • Accept these Terms and Privacy Policy
 
@@ -130,9 +130,9 @@ Basic use of the Service is free. Some features may require a PRO subscription.`
         title: '3. Age Restrictions',
         content: `The Service is designed for students and language learners.
 
-• Persons under 16 may use the Service only with parental or guardian consent
-• Parent/guardian is responsible for minor's use of the Service
-• We may request confirmation of parental consent`,
+• The Service is available only to persons who are 16 years of age or older
+• Minors (16-18 years) may use the Service in accordance with applicable law
+• We may request age verification`,
       },
       {
         title: '4. Rules of Use',
@@ -194,7 +194,7 @@ We reserve the right to terminate the Service with 30 days notice.`,
 • Invalidity of one provision does not affect others
 • The Polish version of Terms is binding
 
-For questions: support@englishvocabtrainer.app`,
+For questions: info@henio.app`,
       },
     ],
   },
@@ -215,7 +215,7 @@ For questions: support@englishvocabtrainer.app`,
         title: '2. Umovy korystuvannya',
         content: `Shchob korystuvatysya Posluhoyu, vy povynni:
 
-• Maty shchonaymensh 16 rokiv ABO maty zghodu batkiv/opikuna
+• Maty shchonaymensh 16 rokiv
 • Maty akaunt Google dlya vkhodu
 • Pryynyaty tsi Umovy ta Polityku Konfidenciynosti
 
@@ -225,9 +225,9 @@ Bazove korystuvannya Posluhoyu ye bezkoshtovnym. Deyaki funktsiyi mozhut vymagat
         title: '3. Vikovi obmezhennya',
         content: `Posluha pryznachena dlya uchniv ta osib, shcho vyvchayut movy.
 
-• Osoby molodshi 16 rokiv mozhut korystuvatysya Posluhoyu lyshe za zghodoyu batkiv abo opikuna
-• Batkiv/opikun vidpovidaye za korystuvannya Posluhoyu nepovnolotnim
-• My mozhemo poprosyty pidtverdzhennya zghody batkiv`,
+• Posluha dostupna lyshe dlya osib, yaki dosyahly 16 rokiv
+• Nepovnolitni (16-18 rokiv) mozhut korystuvatysya Posluhoyu zgidno z chynnym zakonodavstvom
+• My mozhemo poprosyty pidtverdzhennya viku`,
       },
       {
         title: '4. Pravyla korystuvannya',
@@ -289,7 +289,7 @@ My zalyshalemo za soboyu pravo prypynyty Posluhu z povidomlennyam za 30 dniv.`,
 • Nediysnist odnoho polozhennya ne vplyvaye na inshi
 • Polska versiya Umov ye obovyazkovoyu
 
-Z pytan: support@englishvocabtrainer.app`,
+Z pytan: info@henio.app`,
       },
     ],
   },

@@ -17,7 +17,7 @@ const privacyCopy = {
       {
         title: '1. Administrator danych',
         content: `Administratorem Twoich danych osobowych jest English Vocab Trainer.
-        Kontakt w sprawach ochrony danych: privacy@englishvocabtrainer.app`,
+        Kontakt w sprawach ochrony danych: info@henio.app`,
       },
       {
         title: '2. Jakie dane zbieramy',
@@ -48,7 +48,7 @@ Nagrania glosowe sa przetwarzane wylacznie w celu oceny wymowy i nie sa przechow
 • Art. 6 ust. 1 lit. a RODO - Twoja zgoda
 • Art. 6 ust. 1 lit. b RODO - wykonanie umowy (swiadczenie uslugi)
 
-W przypadku osob ponizej 16 roku zycia wymagana jest zgoda rodzica lub opiekuna prawnego (Art. 8 RODO).`,
+Usluga jest dostepna wylacznie dla osob, ktore ukonczyly 16 lat (Art. 8 RODO).`,
       },
       {
         title: '5. Odbiorcy danych i transfer do USA',
@@ -56,6 +56,7 @@ W przypadku osob ponizej 16 roku zycia wymagana jest zgoda rodzica lub opiekuna 
 
 • Google LLC (logowanie OAuth) - USA
 • Google Gemini API (funkcje AI) - USA
+• Microsoft Azure (hosting aplikacji) - UE/USA
 
 Transfer danych do USA odbywa sie na podstawie standardowych klauzul umownych (SCC) zatwierdzonych przez Komisje Europejska. Google LLC jest certyfikowany w ramach EU-U.S. Data Privacy Framework.`,
       },
@@ -75,7 +76,7 @@ Transfer danych do USA odbywa sie na podstawie standardowych klauzul umownych (S
 • Logi systemowe: 30 dni
 • Dane rozliczeniowe (jesli dotyczy): zgodnie z przepisami podatkowymi
 
-Po usunieciu konta wszystkie Twoje dane zostana trwale usuniete w ciagu 30 dni.`,
+Po usunieciu konta wszystkie Twoje dane zostana trwale usuniete w ciagu 14 dni.`,
       },
       {
         title: '8. Twoje prawa',
@@ -100,10 +101,30 @@ Mozesz usunac swoje konto w dowolnym momencie w ustawieniach profilu.`,
 Nie uzywamy cookies analitycznych ani reklamowych.`,
       },
       {
-        title: '10. Kontakt',
+        title: '10. Zabezpieczenia',
+        content: `Stosujemy odpowiednie srodki techniczne i organizacyjne:
+
+• Szyfrowanie polaczen (HTTPS/SSL)
+• Bezpieczne przechowywanie hasel (OAuth2)
+• Regularne kopie zapasowe
+• Ograniczony dostep do danych
+• Monitoring bezpieczenstwa`,
+      },
+      {
+        title: '11. Zautomatyzowane podejmowanie decyzji',
+        content: `Nasza aplikacja wykorzystuje sztuczna inteligencje do:
+
+• Oceny wymowy i generowania feedbacku
+• Generowania slowek i przykladow
+• Udzielania wyjasnier i wskazowek
+
+Decyzje AI maja charakter wylacznie pomocniczy i edukacyjny i nie wywoluja skutkow prawnych ani podobnych znaczacych skutkow wobec uzytkownika.`,
+      },
+      {
+        title: '12. Kontakt',
         content: `W sprawach ochrony danych osobowych mozesz sie z nami skontaktowac:
 
-E-mail: privacy@englishvocabtrainer.app
+E-mail: info@henio.app
 
 Mozesz rowniez zlozyc skarge do Prezesa Urzedu Ochrony Danych Osobowych (UODO).`,
       },
@@ -118,7 +139,7 @@ Mozesz rowniez zlozyc skarge do Prezesa Urzedu Ochrony Danych Osobowych (UODO).`
       {
         title: '1. Data Controller',
         content: `The controller of your personal data is English Vocab Trainer.
-        Contact for data protection matters: privacy@englishvocabtrainer.app`,
+        Contact for data protection matters: info@henio.app`,
       },
       {
         title: '2. Data We Collect',
@@ -149,7 +170,7 @@ Voice recordings are processed solely for pronunciation assessment and are not s
 • Art. 6(1)(a) GDPR - Your consent
 • Art. 6(1)(b) GDPR - Contract performance (service provision)
 
-For persons under 16 years of age, parental or guardian consent is required (Art. 8 GDPR).`,
+The Service is available only to persons who are 16 years of age or older (Art. 8 GDPR).`,
       },
       {
         title: '5. Data Recipients and Transfer to USA',
@@ -157,6 +178,7 @@ For persons under 16 years of age, parental or guardian consent is required (Art
 
 • Google LLC (OAuth login) - USA
 • Google Gemini API (AI features) - USA
+• Microsoft Azure (application hosting) - EU/USA
 
 Data transfer to the USA is based on Standard Contractual Clauses (SCC) approved by the European Commission. Google LLC is certified under the EU-U.S. Data Privacy Framework.`,
       },
@@ -176,7 +198,7 @@ Data transfer to the USA is based on Standard Contractual Clauses (SCC) approved
 • System logs: 30 days
 • Billing data (if applicable): according to tax regulations
 
-After account deletion, all your data will be permanently deleted within 30 days.`,
+After account deletion, all your data will be permanently deleted within 14 days.`,
       },
       {
         title: '8. Your Rights',
@@ -201,10 +223,30 @@ You can delete your account at any time in profile settings.`,
 We do not use analytical or advertising cookies.`,
       },
       {
-        title: '10. Contact',
+        title: '10. Security',
+        content: `We apply appropriate technical and organizational measures:
+
+• Connection encryption (HTTPS/SSL)
+• Secure password storage (OAuth2)
+• Regular backups
+• Restricted data access
+• Security monitoring`,
+      },
+      {
+        title: '11. Automated Decision Making',
+        content: `Our application uses artificial intelligence to:
+
+• Assess pronunciation and generate feedback
+• Generate vocabulary and examples
+• Provide explanations and guidance
+
+AI decisions are purely assistive and educational and do not produce legal or similarly significant effects on the user.`,
+      },
+      {
+        title: '12. Contact',
         content: `For data protection matters, you can contact us at:
 
-Email: privacy@englishvocabtrainer.app
+Email: info@henio.app
 
 You can also lodge a complaint with your local data protection authority.`,
       },
@@ -219,7 +261,7 @@ You can also lodge a complaint with your local data protection authority.`,
       {
         title: '1. Administrator danych',
         content: `Administratorom vashykh personalnykh danykh ye English Vocab Trainer.
-        Kontakt z pytan zakhystu danykh: privacy@englishvocabtrainer.app`,
+        Kontakt z pytan zakhystu danykh: info@henio.app`,
       },
       {
         title: '2. Yaki dani my zbyrayemo',
@@ -250,7 +292,7 @@ Holosovi zapysy obroblyayutsya lyshe dlya otsinky vymovy i ne zberigayutsya nado
 • St. 6(1)(a) GDPR - Vasha zgoda
 • St. 6(1)(b) GDPR - Vykonannya dohovoru (nadannya poslugy)
 
-Dlya osib molodshykh 16 rokiv neobkhidna zgoda batkiv abo opikuniv (St. 8 GDPR).`,
+Posluha dostupna lyshe dlya osib, yaki dosyahly 16 rokiv (St. 8 GDPR).`,
       },
       {
         title: '5. Oderzuvachi danykh ta transfer do SSHA',
@@ -258,6 +300,7 @@ Dlya osib molodshykh 16 rokiv neobkhidna zgoda batkiv abo opikuniv (St. 8 GDPR).
 
 • Google LLC (vkhid OAuth) - SSHA
 • Google Gemini API (funktsii AI) - SSHA
+• Microsoft Azure (hosting dodatku) - YeS/SSHA
 
 Transfer danykh do SSHA zdiysnuyetsya na pidstavi standartnykh dohovirnykh klauzul (SCC), zatverdzhenyky Yevropeyskoyu Komisiyeyu.`,
       },
@@ -277,7 +320,7 @@ Transfer danykh do SSHA zdiysnuyetsya na pidstavi standartnykh dohovirnykh klauz
 • Systemni logy: 30 dniv
 • Rozrakhunkovi dani (yakscho zastosovuyetsya): zgidno z podatkovymy normamy
 
-Pislya vydalennya akaunty vsi vashi dani budut ostatochno vydaleni protyagom 30 dniv.`,
+Pislya vydalennya akaunty vsi vashi dani budut ostatochno vydaleni protyagom 14 dniv.`,
       },
       {
         title: '8. Vashi prava',
@@ -302,10 +345,30 @@ Vy mozhete vydalyty sviy akaunt u bud-yaky chas u nalashtuvannyakh profilyu.`,
 My ne vykorystovuyemo analitychni chy reklamni cookies.`,
       },
       {
-        title: '10. Kontakt',
+        title: '10. Zabezpechennya',
+        content: `My zastosovuyemo vidpovidni tekhnichni ta orhanizatsiyni zakhody:
+
+• Shyfruvannya ziednan (HTTPS/SSL)
+• Bezpechne zberihannya paroliv (OAuth2)
+• Rehuliarni kopiyi
+• Obmezhenyi dostup do danykh
+• Monitorynh bezpeky`,
+      },
+      {
+        title: '11. Avtomatyzovane pryinnyattya rishen',
+        content: `Nash dodatok vykorystovuye shtuchnyy intelekt dlya:
+
+• Otsinky vymovy ta formuvannya vidhukyv
+• Heneruvannya slovnyka ta prykladiv
+• Nadannya poyasnen ta porad
+
+Rishennya AI mayut lyshe dopomozhnyy ta osvitniy kharakter i ne sprychydyut pravovykh abo podibykh znachnykh naslidkiv dlya korystuvacha.`,
+      },
+      {
+        title: '12. Kontakt',
         content: `Z pytan zakhystu danykh vy mozhete zvyazatysya z namy:
 
-Email: privacy@englishvocabtrainer.app
+Email: info@henio.app
 
 Vy takozh mozhete podaty skargu do mistsevogo organu zakhystu danykh.`,
       },
