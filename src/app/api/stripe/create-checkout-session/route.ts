@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { getStripe, STRIPE_PRICE_IDS, TRIAL_PERIOD_DAYS } from '@/lib/stripe';
+import { getStripe, getActivePriceIds, TRIAL_PERIOD_DAYS } from '@/lib/stripe';
 import { getOrCreateStripeCustomer } from '@/lib/subscription';
 
 export async function POST(request: Request) {
@@ -19,10 +19,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid price type' }, { status: 400 });
     }
 
+    const priceIds = await getActivePriceIds();
     const priceId =
-      priceType === 'monthly'
-        ? STRIPE_PRICE_IDS.PRO_MONTHLY
-        : STRIPE_PRICE_IDS.PRO_ANNUAL;
+      priceType === 'monthly' ? priceIds.PRO_MONTHLY : priceIds.PRO_ANNUAL;
 
     const customerId = await getOrCreateStripeCustomer(
       session.user.id,

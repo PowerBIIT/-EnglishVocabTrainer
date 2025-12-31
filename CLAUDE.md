@@ -68,13 +68,14 @@ src/
 - `MAX_ACTIVE_USERS` - capacity limit, excess goes to waitlist
 - `ADMIN_EMAILS` - grants access to `/admin` panel
 
-**User Plans**: `FREE` and `PRO` tiers with different AI limits. Managed via `UserPlan` model and Stripe subscriptions.
+**User Plans**: `FREE` and `PRO` tiers with different AI limits. Managed via `UserPlan` model and Stripe subscriptions. Prices managed via Admin Panel → Pricing tab (stored in AdminConfig, fallback to env vars).
 
 **Language Pairs**: Configured in onboarding, stored in user state. Main pairs: `pl-en` (Polish students), `uk-pl` (Ukrainian students).
 
 ### API Routes
 - `/api/ai/*` - AI endpoints (generate-words, extract-image, tutor, pronunciation, parse-text)
-- `/api/admin/*` - Admin config, users, stats
+- `/api/admin/*` - Admin config, users, stats, subscriptions, pricing
+- `/api/admin/pricing/*` - Price management (products, prices, coupons from Stripe)
 - `/api/user/*` - Profile, state sync, account deletion (DELETE /api/user/account), data export
 - `/api/stripe/*` - Checkout, portal, webhooks for subscription management
 - `/api/health` - Build metadata for deployment verification

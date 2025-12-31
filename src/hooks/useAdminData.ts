@@ -1,12 +1,20 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import type {
+  AdminPrice,
+  AdminCoupon,
+  AdminProduct,
+  CreatePriceData,
+  CreateCouponData,
+  ActivePriceIds,
+} from '@/types/pricing';
 
 export type AdminConfigItem = {
   key: string;
   label: string;
   description: string;
-  dataType: 'number' | 'list';
+  dataType: 'number' | 'list' | 'string';
   defaultValue: string;
   value: string;
   source: 'db' | 'env' | 'default';
@@ -45,11 +53,59 @@ export type AdminStats = {
   costs: { estimatedMonthly: number; projectedEndOfMonth: number };
 };
 
+export type AdminSubscription = {
+  id: string;
+  userId: string;
+  stripeCustomerId: string;
+  stripeSubscriptionId: string | null;
+  stripePriceId: string | null;
+  status: string;
+  currentPeriodStart: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  trialStart: string | null;
+  trialEnd: string | null;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    email: string | null;
+    name: string | null;
+    createdAt: string;
+    plan: {
+      plan: 'FREE' | 'PRO';
+      accessStatus: 'ACTIVE' | 'WAITLISTED' | 'SUSPENDED';
+    } | null;
+  };
+};
+
+export type RevenueStats = {
+  mrr: number;
+  arr: number;
+  activeSubscribers: number;
+  trialSubscribers: number;
+  pastDueSubscribers: number;
+  canceledSubscribers: number;
+  trialConversionRate: number;
+  churnRate: number;
+  revenueByPeriod: Array<{
+    period: string;
+    newSubscribers: number;
+    canceledSubscribers: number;
+    activeAtEnd: number;
+  }>;
+};
+
 type UsersQuery = {
   page: number;
   limit: number;
   status: string;
   plan: string;
+};
+
+type SubscriptionsQuery = {
+  page: number;
+  limit: number;
+  status: string;
 };
 
 const fetchJson = async <T>(url: string, options?: RequestInit): Promise<T> => {
@@ -83,6 +139,38 @@ export function useAdminData(enabled: boolean = true) {
     plan: 'all',
   });
 
+  // Subscriptions state
+  const [subscriptions, setSubscriptions] = useState<AdminSubscription[]>([]);
+  const [subscriptionsTotal, setSubscriptionsTotal] = useState(0);
+  const [subscriptionsLoading, setSubscriptionsLoading] = useState(true);
+  const [subscriptionsError, setSubscriptionsError] = useState<string | null>(null);
+  const [subscriptionsQuery, setSubscriptionsQuery] = useState<SubscriptionsQuery>({
+    page: 0,
+    limit: 20,
+    status: 'all',
+  });
+
+  // Revenue stats state
+  const [revenueStats, setRevenueStats] = useState<RevenueStats | null>(null);
+  const [revenueLoading, setRevenueLoading] = useState(true);
+  const [revenueError, setRevenueError] = useState<string | null>(null);
+
+  // Pricing state
+  const [prices, setPrices] = useState<AdminPrice[]>([]);
+  const [pricesLoading, setPricesLoading] = useState(true);
+  const [pricesError, setPricesError] = useState<string | null>(null);
+  const [activePriceIds, setActivePriceIds] = useState<ActivePriceIds>({
+    monthly: '',
+    annual: '',
+  });
+
+  const [coupons, setCoupons] = useState<AdminCoupon[]>([]);
+  const [couponsLoading, setCouponsLoading] = useState(true);
+  const [couponsError, setCouponsError] = useState<string | null>(null);
+
+  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
+
   const buildUsersQuery = useMemo(() => {
     const params = new URLSearchParams();
     params.set('page', String(usersQuery.page));
@@ -95,6 +183,16 @@ export function useAdminData(enabled: boolean = true) {
     }
     return params.toString();
   }, [usersQuery]);
+
+  const buildSubscriptionsQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('page', String(subscriptionsQuery.page));
+    params.set('limit', String(subscriptionsQuery.limit));
+    if (subscriptionsQuery.status !== 'all') {
+      params.set('status', subscriptionsQuery.status);
+    }
+    return params.toString();
+  }, [subscriptionsQuery]);
 
   const loadConfig = useCallback(async () => {
     if (!enabled) return;
@@ -150,6 +248,99 @@ export function useAdminData(enabled: boolean = true) {
     }
   }, [buildUsersQuery, enabled]);
 
+  const loadSubscriptions = useCallback(async () => {
+    if (!enabled) return;
+    setSubscriptionsLoading(true);
+    setSubscriptionsError(null);
+    try {
+      const data = await fetchJson<{
+        subscriptions: AdminSubscription[];
+        total: number;
+        page: number;
+        limit: number;
+      }>(`/api/admin/subscriptions?${buildSubscriptionsQuery}`);
+      setSubscriptions(data.subscriptions);
+      setSubscriptionsTotal(data.total);
+      setSubscriptionsQuery((prev) => {
+        if (prev.page === data.page && prev.limit === data.limit) {
+          return prev;
+        }
+        return { ...prev, page: data.page, limit: data.limit };
+      });
+    } catch (error) {
+      setSubscriptionsError(
+        error instanceof Error ? error.message : 'Failed to load subscriptions'
+      );
+    } finally {
+      setSubscriptionsLoading(false);
+    }
+  }, [buildSubscriptionsQuery, enabled]);
+
+  const loadRevenueStats = useCallback(async () => {
+    if (!enabled) return;
+    setRevenueLoading(true);
+    setRevenueError(null);
+    try {
+      const data = await fetchJson<RevenueStats>('/api/admin/stats/revenue');
+      setRevenueStats(data);
+    } catch (error) {
+      setRevenueError(
+        error instanceof Error ? error.message : 'Failed to load revenue stats'
+      );
+    } finally {
+      setRevenueLoading(false);
+    }
+  }, [enabled]);
+
+  const loadPrices = useCallback(async () => {
+    if (!enabled) return;
+    setPricesLoading(true);
+    setPricesError(null);
+    try {
+      const data = await fetchJson<{
+        prices: AdminPrice[];
+        activePriceIds: ActivePriceIds;
+      }>('/api/admin/pricing/prices');
+      setPrices(data.prices);
+      setActivePriceIds(data.activePriceIds);
+    } catch (error) {
+      setPricesError(error instanceof Error ? error.message : 'Failed to load prices');
+    } finally {
+      setPricesLoading(false);
+    }
+  }, [enabled]);
+
+  const loadCoupons = useCallback(async () => {
+    if (!enabled) return;
+    setCouponsLoading(true);
+    setCouponsError(null);
+    try {
+      const data = await fetchJson<{ coupons: AdminCoupon[] }>(
+        '/api/admin/pricing/coupons'
+      );
+      setCoupons(data.coupons);
+    } catch (error) {
+      setCouponsError(error instanceof Error ? error.message : 'Failed to load coupons');
+    } finally {
+      setCouponsLoading(false);
+    }
+  }, [enabled]);
+
+  const loadProducts = useCallback(async () => {
+    if (!enabled) return;
+    setProductsLoading(true);
+    try {
+      const data = await fetchJson<{ products: AdminProduct[] }>(
+        '/api/admin/pricing/products'
+      );
+      setProducts(data.products);
+    } catch {
+      // Products are optional, don't show error
+    } finally {
+      setProductsLoading(false);
+    }
+  }, [enabled]);
+
   useEffect(() => {
     if (!enabled) return;
     loadConfig();
@@ -164,6 +355,31 @@ export function useAdminData(enabled: boolean = true) {
     if (!enabled) return;
     loadUsers();
   }, [enabled, loadUsers]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    loadSubscriptions();
+  }, [enabled, loadSubscriptions]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    loadRevenueStats();
+  }, [enabled, loadRevenueStats]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    loadPrices();
+  }, [enabled, loadPrices]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    loadCoupons();
+  }, [enabled, loadCoupons]);
+
+  useEffect(() => {
+    if (!enabled) return;
+    loadProducts();
+  }, [enabled, loadProducts]);
 
   const updateConfig = useCallback(
     async (updates: { key: string; value: string }[]) => {
@@ -200,6 +416,92 @@ export function useAdminData(enabled: boolean = true) {
     [enabled, loadStats, loadUsers]
   );
 
+  const syncSubscription = useCallback(
+    async (subscriptionId: string) => {
+      if (!enabled) return;
+      await fetchJson(`/api/admin/subscriptions/${subscriptionId}/sync`, {
+        method: 'POST',
+      });
+      await Promise.all([loadSubscriptions(), loadRevenueStats()]);
+    },
+    [enabled, loadSubscriptions, loadRevenueStats]
+  );
+
+  const cancelSubscription = useCallback(
+    async (subscriptionId: string) => {
+      if (!enabled) return;
+      await fetchJson(`/api/admin/subscriptions/${subscriptionId}`, {
+        method: 'POST',
+      });
+      await Promise.all([loadSubscriptions(), loadRevenueStats(), loadStats()]);
+    },
+    [enabled, loadSubscriptions, loadRevenueStats, loadStats]
+  );
+
+  // Pricing actions
+  const createPrice = useCallback(
+    async (data: CreatePriceData) => {
+      if (!enabled) return;
+      await fetchJson('/api/admin/pricing/prices', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      await loadPrices();
+    },
+    [enabled, loadPrices]
+  );
+
+  const archivePrice = useCallback(
+    async (priceId: string) => {
+      if (!enabled) return;
+      await fetchJson(`/api/admin/pricing/prices/${priceId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ archive: true }),
+      });
+      await loadPrices();
+    },
+    [enabled, loadPrices]
+  );
+
+  const setActivePrice = useCallback(
+    async (priceId: string, type: 'monthly' | 'annual') => {
+      if (!enabled) return;
+      await fetchJson(`/api/admin/pricing/prices/${priceId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setActive: type }),
+      });
+      await Promise.all([loadPrices(), loadConfig()]);
+    },
+    [enabled, loadPrices, loadConfig]
+  );
+
+  const createCoupon = useCallback(
+    async (data: CreateCouponData) => {
+      if (!enabled) return;
+      await fetchJson('/api/admin/pricing/coupons', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      await loadCoupons();
+    },
+    [enabled, loadCoupons]
+  );
+
+  const deleteCoupon = useCallback(
+    async (couponId: string) => {
+      if (!enabled) return;
+      await fetchJson(`/api/admin/pricing/coupons/${couponId}`, {
+        method: 'DELETE',
+      });
+      await loadCoupons();
+    },
+    [enabled, loadCoupons]
+  );
+
   return {
     config,
     configLoading,
@@ -218,5 +520,40 @@ export function useAdminData(enabled: boolean = true) {
     deleteUser,
     refreshStats: loadStats,
     refreshUsers: loadUsers,
+    // Subscriptions
+    subscriptions,
+    subscriptionsTotal,
+    subscriptionsLoading,
+    subscriptionsError,
+    subscriptionsQuery,
+    setSubscriptionsQuery,
+    syncSubscription,
+    cancelSubscription,
+    refreshSubscriptions: loadSubscriptions,
+    // Revenue
+    revenueStats,
+    revenueLoading,
+    revenueError,
+    refreshRevenue: loadRevenueStats,
+    // Pricing
+    prices,
+    pricesLoading,
+    pricesError,
+    activePriceIds,
+    refreshPrices: loadPrices,
+    createPrice,
+    archivePrice,
+    setActivePrice,
+    // Coupons
+    coupons,
+    couponsLoading,
+    couponsError,
+    refreshCoupons: loadCoupons,
+    createCoupon,
+    deleteCoupon,
+    // Products
+    products,
+    productsLoading,
+    refreshProducts: loadProducts,
   };
 }

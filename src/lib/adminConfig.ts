@@ -9,7 +9,7 @@ export type AdminConfigField = {
   key: string;
   label: string;
   description: string;
-  dataType: 'number' | 'list';
+  dataType: 'number' | 'list' | 'string';
   defaultValue: string;
 };
 
@@ -71,6 +71,20 @@ export const ADMIN_CONFIG_FIELDS: AdminConfigField[] = [
     label: 'Allowlist emails',
     description: 'Comma, space, or semicolon separated list of allowed emails.',
     dataType: 'list',
+    defaultValue: '',
+  },
+  {
+    key: 'STRIPE_PRO_MONTHLY_PRICE_ID',
+    label: 'Stripe Monthly Price ID',
+    description: 'Active Stripe Price ID for PRO monthly subscription.',
+    dataType: 'string',
+    defaultValue: '',
+  },
+  {
+    key: 'STRIPE_PRO_ANNUAL_PRICE_ID',
+    label: 'Stripe Annual Price ID',
+    description: 'Active Stripe Price ID for PRO annual subscription.',
+    dataType: 'string',
     defaultValue: '',
   },
 ];

@@ -1,7 +1,7 @@
 'use client';
 
 import { Toast } from '@/components/ui/Toast';
-import type { AdminStats } from '@/hooks/useAdminData';
+import type { AdminStats, RevenueStats } from '@/hooks/useAdminData';
 import { useLanguage } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
@@ -9,6 +9,9 @@ type StatsSectionProps = {
   stats: AdminStats | null;
   loading: boolean;
   error?: string | null;
+  revenueStats?: RevenueStats | null;
+  revenueLoading?: boolean;
+  revenueError?: string | null;
 };
 
 const statsCopy = {
@@ -31,6 +34,19 @@ const statsCopy = {
     topUsersEmpty: 'Brak użycia AI.',
     planBreakdown: 'Podział planów',
     planBreakdownEmpty: 'Brak danych podziału planów.',
+    // Revenue
+    revenueTitle: 'Przychody',
+    mrr: 'MRR',
+    arr: 'ARR',
+    activeSubscribers: 'Aktywni subskrybenci',
+    trialSubscribers: 'W trial',
+    trialConversion: 'Konwersja trial',
+    churnRate: 'Churn rate',
+    revenueByPeriod: 'Przychody wg okresu',
+    newSubscribers: 'Nowi',
+    canceledSubscribers: 'Anulowani',
+    activeAtEnd: 'Aktywni',
+    noRevenue: 'Brak danych przychodów.',
   },
   en: {
     title: 'Statistics',
@@ -51,10 +67,30 @@ const statsCopy = {
     topUsersEmpty: 'No AI usage yet.',
     planBreakdown: 'Plan breakdown',
     planBreakdownEmpty: 'No plan breakdown data.',
+    // Revenue
+    revenueTitle: 'Revenue',
+    mrr: 'MRR',
+    arr: 'ARR',
+    activeSubscribers: 'Active subscribers',
+    trialSubscribers: 'In trial',
+    trialConversion: 'Trial conversion',
+    churnRate: 'Churn rate',
+    revenueByPeriod: 'Revenue by period',
+    newSubscribers: 'New',
+    canceledSubscribers: 'Canceled',
+    activeAtEnd: 'Active',
+    noRevenue: 'No revenue data.',
   },
 } as const;
 
-export function StatsSection({ stats, loading, error }: StatsSectionProps) {
+export function StatsSection({
+  stats,
+  loading,
+  error,
+  revenueStats,
+  revenueLoading,
+  revenueError,
+}: StatsSectionProps) {
   const language = useLanguage();
   const t = language === 'pl' ? statsCopy.pl : statsCopy.en;
   const locale = language === 'pl' ? 'pl-PL' : 'en-US';
@@ -233,6 +269,91 @@ export function StatsSection({ stats, loading, error }: StatsSectionProps) {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Revenue Section */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          {t.revenueTitle}
+        </h3>
+
+        {revenueError && <Toast variant="error" message={revenueError} />}
+
+        {revenueLoading && !revenueStats ? (
+          <div className="text-sm text-slate-500">{t.loading}</div>
+        ) : !revenueStats ? (
+          <div className="text-sm text-slate-500">{t.noRevenue}</div>
+        ) : (
+          <>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4">
+                <p className="text-sm text-slate-500">{t.mrr}</p>
+                <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                  {formatUsd(revenueStats.mrr / 100)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4">
+                <p className="text-sm text-slate-500">{t.arr}</p>
+                <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                  {formatUsd(revenueStats.arr / 100)}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4">
+                <p className="text-sm text-slate-500">{t.activeSubscribers}</p>
+                <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                  {formatNumber(revenueStats.activeSubscribers)}
+                </p>
+                <p className="text-xs text-slate-400">
+                  +{formatNumber(revenueStats.trialSubscribers)} {t.trialSubscribers}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4">
+                <p className="text-sm text-slate-500">{t.trialConversion}</p>
+                <p className="text-2xl font-semibold text-slate-900 dark:text-white">
+                  {revenueStats.trialConversionRate}%
+                </p>
+                <p className="text-xs text-slate-400">
+                  {t.churnRate}: {revenueStats.churnRate}%
+                </p>
+              </div>
+            </div>
+
+            {revenueStats.revenueByPeriod.length > 0 && (
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4">
+                <p className="text-sm text-slate-500 mb-3">{t.revenueByPeriod}</p>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead className="text-left text-slate-500">
+                      <tr>
+                        <th className="px-2 py-1">Period</th>
+                        <th className="px-2 py-1 text-right">{t.newSubscribers}</th>
+                        <th className="px-2 py-1 text-right">{t.canceledSubscribers}</th>
+                        <th className="px-2 py-1 text-right">{t.activeAtEnd}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="text-slate-700 dark:text-slate-200">
+                      {revenueStats.revenueByPeriod.map((period) => (
+                        <tr
+                          key={period.period}
+                          className="border-t border-slate-100 dark:border-slate-800"
+                        >
+                          <td className="px-2 py-2 font-medium">{period.period}</td>
+                          <td className="px-2 py-2 text-right text-green-600">
+                            +{period.newSubscribers}
+                          </td>
+                          <td className="px-2 py-2 text-right text-red-600">
+                            -{period.canceledSubscribers}
+                          </td>
+                          <td className="px-2 py-2 text-right">{period.activeAtEnd}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

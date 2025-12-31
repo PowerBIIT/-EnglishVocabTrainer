@@ -7,6 +7,8 @@ import { ConfigSection } from '@/components/admin/ConfigSection';
 import { AiModelSection } from '@/components/admin/AiModelSection';
 import { StatsSection } from '@/components/admin/StatsSection';
 import { UserManagementSection } from '@/components/admin/UserManagementSection';
+import { SubscriptionManagementSection } from '@/components/admin/SubscriptionManagementSection';
+import { PricingSection } from '@/components/admin/PricingSection';
 import { Badge } from '@/components/ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { useAdminData } from '@/hooks/useAdminData';
@@ -14,7 +16,7 @@ import { useLanguage } from '@/lib/i18n';
 import { useVocabStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'config' | 'ai' | 'users' | 'requests' | 'stats';
+type AdminTab = 'config' | 'ai' | 'users' | 'requests' | 'subscriptions' | 'pricing' | 'stats';
 
 const adminCopy = {
   pl: {
@@ -29,6 +31,8 @@ const adminCopy = {
       ai: 'Modele AI',
       users: 'Użytkownicy',
       requests: 'Zgłoszenia',
+      subscriptions: 'Subskrypcje',
+      pricing: 'Cennik',
       stats: 'Statystyki',
     },
     requestsTitle: 'Zgłoszenia',
@@ -47,6 +51,8 @@ const adminCopy = {
       ai: 'AI models',
       users: 'Users',
       requests: 'Requests',
+      subscriptions: 'Subscriptions',
+      pricing: 'Pricing',
       stats: 'Statistics',
     },
     requestsTitle: 'Requests',
@@ -93,6 +99,34 @@ export default function AdminPage() {
     updateConfig,
     updateUser,
     deleteUser,
+    // Subscriptions
+    subscriptions,
+    subscriptionsTotal,
+    subscriptionsLoading,
+    subscriptionsError,
+    subscriptionsQuery,
+    setSubscriptionsQuery,
+    syncSubscription,
+    cancelSubscription,
+    // Revenue
+    revenueStats,
+    revenueLoading,
+    revenueError,
+    // Pricing
+    prices,
+    pricesLoading,
+    pricesError,
+    activePriceIds,
+    createPrice,
+    archivePrice,
+    setActivePrice,
+    coupons,
+    couponsLoading,
+    couponsError,
+    createCoupon,
+    deleteCoupon,
+    products,
+    productsLoading,
   } = useAdminData(isAdmin);
 
   const handleTabChange = (value: string) => {
@@ -186,6 +220,8 @@ export default function AdminPage() {
           <TabsTrigger value="ai">{t.tabs.ai}</TabsTrigger>
           <TabsTrigger value="users">{t.tabs.users}</TabsTrigger>
           <TabsTrigger value="requests">{t.tabs.requests}</TabsTrigger>
+          <TabsTrigger value="subscriptions">{t.tabs.subscriptions}</TabsTrigger>
+          <TabsTrigger value="pricing">{t.tabs.pricing}</TabsTrigger>
           <TabsTrigger value="stats">{t.tabs.stats}</TabsTrigger>
         </TabsList>
 
@@ -260,8 +296,61 @@ export default function AdminPage() {
           />
         </TabsContent>
 
+        <TabsContent value="subscriptions">
+          <SubscriptionManagementSection
+            subscriptions={subscriptions}
+            loading={subscriptionsLoading}
+            error={subscriptionsError}
+            page={subscriptionsQuery.page}
+            limit={subscriptionsQuery.limit}
+            total={subscriptionsTotal}
+            filters={{ status: subscriptionsQuery.status }}
+            onFiltersChange={(nextFilters) =>
+              setSubscriptionsQuery((prev) => ({
+                ...prev,
+                ...nextFilters,
+                page: 0,
+              }))
+            }
+            onPageChange={(nextPage) =>
+              setSubscriptionsQuery((prev) => ({
+                ...prev,
+                page: nextPage,
+              }))
+            }
+            onSync={syncSubscription}
+            onCancel={cancelSubscription}
+          />
+        </TabsContent>
+
+        <TabsContent value="pricing">
+          <PricingSection
+            prices={prices}
+            pricesLoading={pricesLoading}
+            pricesError={pricesError}
+            activePriceIds={activePriceIds}
+            onCreatePrice={createPrice}
+            onArchivePrice={archivePrice}
+            onSetActivePrice={setActivePrice}
+            coupons={coupons}
+            couponsLoading={couponsLoading}
+            couponsError={couponsError}
+            onCreateCoupon={createCoupon}
+            onDeleteCoupon={deleteCoupon}
+            products={products}
+            productsLoading={productsLoading}
+          />
+        </TabsContent>
+
         <TabsContent value="stats">
-          <StatsSection stats={stats} loading={statsLoading} error={statsError} />
+          <StatsSection
+            stats={stats}
+            loading={statsLoading}
+            error={statsError}
+            revenueStats={revenueStats}
+            revenueLoading={revenueLoading}
+            revenueError={revenueError}
+          />
         </TabsContent>
       </Tabs>
     </div>

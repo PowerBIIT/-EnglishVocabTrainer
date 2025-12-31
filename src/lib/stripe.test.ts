@@ -11,6 +11,12 @@ vi.mock('stripe', () => ({
   },
 }));
 
+const getAppConfigMock = vi.fn();
+
+vi.mock('@/lib/config', () => ({
+  getAppConfig: (key: string) => getAppConfigMock(key),
+}));
+
 const loadStripeModule = async () => {
   vi.resetModules();
   return import('@/lib/stripe');
@@ -21,6 +27,7 @@ describe('stripe helpers', () => {
 
   beforeEach(() => {
     process.env = { ...originalEnv };
+    getAppConfigMock.mockReset();
   });
 
   afterEach(() => {
@@ -51,5 +58,89 @@ describe('stripe helpers', () => {
 
     expect(STRIPE_PRICE_IDS.PRO_MONTHLY).toBe('price_monthly');
     expect(STRIPE_PRICE_IDS.PRO_ANNUAL).toBe('price_annual');
+  });
+
+  describe('getActivePriceIds', () => {
+    it('returns price IDs from database when available', async () => {
+      getAppConfigMock.mockImplementation((key: string) => {
+        if (key === 'STRIPE_PRO_MONTHLY_PRICE_ID') return Promise.resolve('price_db_monthly');
+        if (key === 'STRIPE_PRO_ANNUAL_PRICE_ID') return Promise.resolve('price_db_annual');
+        return Promise.resolve(null);
+      });
+
+      const { getActivePriceIds } = await loadStripeModule();
+      const result = await getActivePriceIds();
+
+      expect(result.PRO_MONTHLY).toBe('price_db_monthly');
+      expect(result.PRO_ANNUAL).toBe('price_db_annual');
+    });
+
+    it('falls back to env vars when database returns null', async () => {
+      process.env.STRIPE_PRO_MONTHLY_PRICE_ID = 'price_env_monthly';
+      process.env.STRIPE_PRO_ANNUAL_PRICE_ID = 'price_env_annual';
+      getAppConfigMock.mockResolvedValue(null);
+
+      const { getActivePriceIds } = await loadStripeModule();
+      const result = await getActivePriceIds();
+
+      expect(result.PRO_MONTHLY).toBe('price_env_monthly');
+      expect(result.PRO_ANNUAL).toBe('price_env_annual');
+    });
+
+    it('falls back to env vars when database returns empty string', async () => {
+      process.env.STRIPE_PRO_MONTHLY_PRICE_ID = 'price_env_monthly';
+      process.env.STRIPE_PRO_ANNUAL_PRICE_ID = 'price_env_annual';
+      getAppConfigMock.mockResolvedValue('');
+
+      const { getActivePriceIds } = await loadStripeModule();
+      const result = await getActivePriceIds();
+
+      expect(result.PRO_MONTHLY).toBe('price_env_monthly');
+      expect(result.PRO_ANNUAL).toBe('price_env_annual');
+    });
+
+    it('returns empty strings when neither database nor env vars are set', async () => {
+      delete process.env.STRIPE_PRO_MONTHLY_PRICE_ID;
+      delete process.env.STRIPE_PRO_ANNUAL_PRICE_ID;
+      getAppConfigMock.mockResolvedValue(null);
+
+      const { getActivePriceIds } = await loadStripeModule();
+      const result = await getActivePriceIds();
+
+      expect(result.PRO_MONTHLY).toBe('');
+      expect(result.PRO_ANNUAL).toBe('');
+    });
+
+    it('prefers database value over env var when both exist', async () => {
+      process.env.STRIPE_PRO_MONTHLY_PRICE_ID = 'price_env_monthly';
+      process.env.STRIPE_PRO_ANNUAL_PRICE_ID = 'price_env_annual';
+      getAppConfigMock.mockImplementation((key: string) => {
+        if (key === 'STRIPE_PRO_MONTHLY_PRICE_ID') return Promise.resolve('price_db_monthly');
+        if (key === 'STRIPE_PRO_ANNUAL_PRICE_ID') return Promise.resolve('price_db_annual');
+        return Promise.resolve(null);
+      });
+
+      const { getActivePriceIds } = await loadStripeModule();
+      const result = await getActivePriceIds();
+
+      expect(result.PRO_MONTHLY).toBe('price_db_monthly');
+      expect(result.PRO_ANNUAL).toBe('price_db_annual');
+    });
+
+    it('handles mixed scenario (one from DB, one from env)', async () => {
+      process.env.STRIPE_PRO_MONTHLY_PRICE_ID = 'price_env_monthly';
+      process.env.STRIPE_PRO_ANNUAL_PRICE_ID = 'price_env_annual';
+      getAppConfigMock.mockImplementation((key: string) => {
+        if (key === 'STRIPE_PRO_MONTHLY_PRICE_ID') return Promise.resolve('price_db_monthly');
+        if (key === 'STRIPE_PRO_ANNUAL_PRICE_ID') return Promise.resolve(null);
+        return Promise.resolve(null);
+      });
+
+      const { getActivePriceIds } = await loadStripeModule();
+      const result = await getActivePriceIds();
+
+      expect(result.PRO_MONTHLY).toBe('price_db_monthly');
+      expect(result.PRO_ANNUAL).toBe('price_env_annual');
+    });
   });
 });
