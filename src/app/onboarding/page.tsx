@@ -93,10 +93,7 @@ const onboardingCopy = {
     consentTitle: 'Zgody i regulamin',
     consentDesc: 'Zanim zaczniesz, prosimy o akceptacje dokumentow.',
     termsCheckbox: 'Akceptuje Regulamin i Polityke prywatnosci',
-    ageCheckbox: 'Mam ukonczono 16 lat lub mam zgode rodzica/opiekuna',
-    parentEmailLabel: 'E-mail rodzica/opiekuna (opcjonalnie)',
-    parentEmailPlaceholder: 'rodzic@example.com',
-    parentEmailHint: 'Jesli masz mniej niz 16 lat, mozesz podac email rodzica.',
+    ageCheckbox: 'Mam ukonczono 16 lat',
     privacyLink: 'Polityka prywatnosci',
     termsLink: 'Regulamin',
     consentAction: 'Akceptuje i kontynuuje',
@@ -156,10 +153,7 @@ const onboardingCopy = {
     consentTitle: 'Consent & Terms',
     consentDesc: 'Before you start, please accept our documents.',
     termsCheckbox: 'I accept the Terms of Service and Privacy Policy',
-    ageCheckbox: 'I am 16+ years old or have parental consent',
-    parentEmailLabel: 'Parent/guardian email (optional)',
-    parentEmailPlaceholder: 'parent@example.com',
-    parentEmailHint: 'If you are under 16, you may provide a parent email.',
+    ageCheckbox: 'I am 16+ years old',
     privacyLink: 'Privacy Policy',
     termsLink: 'Terms of Service',
     consentAction: 'Accept and continue',
@@ -219,10 +213,7 @@ const onboardingCopy = {
     consentTitle: 'Zgody ta regulyamin',
     consentDesc: 'Pered pochatkom pryymy nashi dokumenty.',
     termsCheckbox: 'Pryymayu Umovy korystuvannya ta Polityku konfidencijnosti',
-    ageCheckbox: 'Meni 16+ rokiv abo ye zgoda batkiv',
-    parentEmailLabel: 'Email batkiv/opikuna (za bazhannyam)',
-    parentEmailPlaceholder: 'batkiv@example.com',
-    parentEmailHint: 'Yakscho tobi menshe 16 rokiv, mozheš podaty email batkiv.',
+    ageCheckbox: 'Meni 16+ rokiv',
     privacyLink: 'Polityka konfidencijnosti',
     termsLink: 'Umovy korystuvannya',
     consentAction: 'Pryymayu i prodovzhuju',
@@ -262,7 +253,6 @@ export default function OnboardingPage() {
   const [step, setStep] = useState<Step>('consent');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
-  const [parentEmail, setParentEmail] = useState('');
   const [consentSaving, setConsentSaving] = useState(false);
   const [selectedSkin, setSelectedSkin] = useState(session?.user?.mascotSkin || 'explorer');
   const [onboardingSetId, setOnboardingSetId] = useState<string | null>(null);
@@ -398,7 +388,6 @@ export default function OnboardingPage() {
         body: JSON.stringify({
           termsAccepted: true,
           ageConfirmed: true,
-          parentEmail: parentEmail.trim() || undefined,
         }),
       });
       setStep('path');
@@ -538,20 +527,6 @@ export default function OnboardingPage() {
                     {t.ageCheckbox}
                   </span>
                 </label>
-
-                <div className="pl-8 space-y-2">
-                  <label className="block text-sm text-slate-600 dark:text-slate-400">
-                    {t.parentEmailLabel}
-                  </label>
-                  <input
-                    type="email"
-                    value={parentEmail}
-                    onChange={(e) => setParentEmail(e.target.value)}
-                    placeholder={t.parentEmailPlaceholder}
-                    className="w-full max-w-sm px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                  <p className="text-xs text-slate-500">{t.parentEmailHint}</p>
-                </div>
               </div>
 
               <div className="flex flex-wrap gap-3 pt-2">

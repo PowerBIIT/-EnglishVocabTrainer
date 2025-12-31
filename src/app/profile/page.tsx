@@ -241,6 +241,10 @@ const profileCopy = {
     restartOnboardingAction: 'Uruchom ponownie',
     restartOnboardingConfirm:
       'Na pewno chcesz ponownie uruchomić onboarding? Dane nie zostaną usunięte.',
+    exportData: 'Eksportuj dane',
+    exportDataDesc: 'Pobierz wszystkie swoje dane w formacie JSON.',
+    exportDataAction: 'Pobierz dane',
+    exportingData: 'Eksportowanie...',
     deleteAccount: 'Usun konto',
     deleteAccountDesc: 'Trwale usun wszystkie dane. Tej operacji nie mozna cofnac.',
     deleteAccountAction: 'Usun konto',
@@ -353,6 +357,10 @@ const profileCopy = {
       'Go through the language pair, mascot, and first mission again. Your data will stay intact.',
     restartOnboardingAction: 'Restart',
     restartOnboardingConfirm: 'Restart onboarding now? Your data will not be deleted.',
+    exportData: 'Export data',
+    exportDataDesc: 'Download all your data in JSON format.',
+    exportDataAction: 'Download data',
+    exportingData: 'Exporting...',
     deleteAccount: 'Delete account',
     deleteAccountDesc: 'Permanently delete all data. This cannot be undone.',
     deleteAccountAction: 'Delete account',
@@ -465,6 +473,10 @@ const profileCopy = {
       'Пройди вибір мовної пари, скіна та першої місії ще раз. Дані залишаться.',
     restartOnboardingAction: 'Повторити',
     restartOnboardingConfirm: 'Повторити онбординг? Дані не буде видалено.',
+    exportData: 'Eksportuvaty dani',
+    exportDataDesc: 'Zavantazhyty vsi svoi dani u formati JSON.',
+    exportDataAction: 'Zavantazhyty dani',
+    exportingData: 'Eksportuvannya...',
     deleteAccount: 'Vydalyty akaunt',
     deleteAccountDesc: 'Nazavzhdy vydalyty vsi dani. Tsoho ne mozhna skasuvaty.',
     deleteAccountAction: 'Vydalyty akaunt',
@@ -494,6 +506,7 @@ export default function ProfilePage() {
   const [isRestartingOnboarding, setIsRestartingOnboarding] = useState(false);
   const [showDeleteAccountModal, setShowDeleteAccountModal] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [isExportingData, setIsExportingData] = useState(false);
   const [subscriptionData, setSubscriptionData] = useState<{
     plan: 'FREE' | 'PRO';
     status?: string | null;
@@ -773,6 +786,32 @@ export default function ProfilePage() {
     } catch (error) {
       console.error('Unable to restart onboarding.', error);
       setIsRestartingOnboarding(false);
+    }
+  };
+
+  const handleExportData = async () => {
+    setIsExportingData(true);
+    try {
+      const response = await fetch('/api/user/export');
+
+      if (!response.ok) {
+        throw new Error('Failed to export data');
+      }
+
+      // Trigger download
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `english-vocab-trainer-export-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Failed to export data:', error);
+    } finally {
+      setIsExportingData(false);
     }
   };
 
@@ -1467,6 +1506,17 @@ export default function ProfilePage() {
               className="w-full sm:w-auto"
             >
               {t.restartOnboardingAction}
+            </Button>
+          </SettingRow>
+          <div className="h-px bg-slate-100 dark:bg-slate-700" />
+          <SettingRow label={t.exportData} description={t.exportDataDesc}>
+            <Button
+              variant="secondary"
+              onClick={handleExportData}
+              disabled={isExportingData}
+              className="w-full sm:w-auto"
+            >
+              {isExportingData ? t.exportingData : t.exportDataAction}
             </Button>
           </SettingRow>
           <div className="h-px bg-slate-100 dark:bg-slate-700" />
