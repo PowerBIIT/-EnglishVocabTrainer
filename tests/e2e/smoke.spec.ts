@@ -1,6 +1,10 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const TEST_PASSWORD = 'e2e';
+const HOME_HEADING = /Dzisiejsza lekcja|Your lesson today|Твоя сьогоднішня пригода/i;
+const CHAT_HEADING = /Asystent AI|AI Assistant|AI Асистент/i;
+const CHAT_PLACEHOLDER = /Wpisz słówka|Type words|Введи слова/i;
+const PROFILE_HEADING = /Profil nauki|Learning profile|Профіль навчання/i;
 
 const login = async (page: Page, email: string) => {
   await page.goto('/login');
@@ -42,12 +46,12 @@ test('smoke: core pages load', async ({ page }, testInfo) => {
   await login(page, email);
 
   await page.goto('/');
-  await expect(page.getByText('Твоя сьогоднішня пригода')).toBeVisible();
+  await expect(page.getByRole('heading', { name: HOME_HEADING })).toBeVisible();
 
   await page.goto('/chat');
-  await expect(page.getByRole('heading', { name: 'AI Асистент' })).toBeVisible();
-  await expect(page.getByPlaceholder('Введи слова або запитай...')).toBeVisible();
+  await expect(page.getByRole('heading', { name: CHAT_HEADING })).toBeVisible();
+  await expect(page.getByPlaceholder(CHAT_PLACEHOLDER)).toBeVisible();
 
   await page.goto('/profile');
-  await expect(page.getByRole('heading', { name: 'Профіль навчання' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: PROFILE_HEADING })).toBeVisible();
 });

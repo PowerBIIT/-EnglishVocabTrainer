@@ -3,7 +3,9 @@ import { encode } from 'next-auth/jwt';
 import { prisma } from '@/lib/db';
 
 const ensureE2EEnabled = () => {
-  if (process.env.NODE_ENV === 'production' || process.env.E2E_TEST !== 'true') {
+  const isE2E =
+    process.env.E2E_TEST === 'true' || process.env.NEXT_PUBLIC_E2E_TEST === 'true';
+  if (!isE2E) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
   return null;

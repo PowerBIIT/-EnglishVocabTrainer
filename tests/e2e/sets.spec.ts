@@ -1,6 +1,31 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const TEST_PASSWORD = 'e2e';
+const HOME_HEADING = /Dzisiejsza lekcja|Your lesson today|Твоя сьогоднішня пригода/i;
+const CHAT_PLACEHOLDER = /Wpisz słówka|Type words|Введи слова/i;
+const SELECTION_HINT = /Zaznacz słówka|Select the words|Обери слова/i;
+const SET_NAME_PLACEHOLDER = /Nazwa zestawu|Set name|Назва набору/i;
+const ADD_BUTTON = /Dodaj|Add|Додати/i;
+const ADDED_MESSAGE = /Dodano|Added|Додано/i;
+const PROFILE_LINK = /Profil|Profile|Профіль/i;
+const HOME_LINK = /Start|Home|Старт/i;
+const QUIZ_LINK = /Quiz|Квіз/i;
+const UNASSIGNED_SET = /Bez zestawu|Unassigned|Без набору/i;
+const EIGHT_WORDS = /8\s+(słów|words|слів)/i;
+const DELETE_BUTTON = /Usuń|Delete|Видал/i;
+
+const dismissConsentBanner = async (page: Page) => {
+  const laterButton = page.getByRole('button', { name: /Przypomnij pozniej/i });
+  if (await laterButton.count()) {
+    await laterButton.first().click();
+    return;
+  }
+
+  const acceptButton = page.getByRole('button', { name: /Akceptuje/i });
+  if (await acceptButton.count()) {
+    await acceptButton.first().click();
+  }
+};
 
 const login = async (page: Page, email: string) => {
   await page.goto('/login');
@@ -37,7 +62,8 @@ const login = async (page: Page, email: string) => {
   ]);
 
   await page.goto('/');
-  await expect(page.getByText('Твоя сьогоднішня пригода')).toBeVisible();
+  await expect(page.getByRole('heading', { name: HOME_HEADING })).toBeVisible();
+  await dismissConsentBanner(page);
 };
 
 test('tworzy zestaw z czatu i filtruje w quizie', async ({ page }, testInfo) => {
@@ -61,39 +87,42 @@ test('tworzy zestaw z czatu i filtruje w quizie', async ({ page }, testInfo) => 
   });
 
   await page.goto('/chat');
-  await page.getByPlaceholder(/Введи/).fill(
+  await page.getByPlaceholder(CHAT_PLACEHOLDER).fill(
     'apple - jablko, banana - banan, carrot - marchew, pear - gruszka'
   );
   await page.keyboard.press('Enter');
 
   await expect(
-    page.getByText('Обери слова, які хочеш додати до бібліотеки.')
+    page.getByText(SELECTION_HINT)
   ).toBeVisible();
-  await page.getByPlaceholder('Назва набору').fill('Biologia - kartkowka');
-  await page.getByRole('button', { name: /Додати/ }).click();
-  await expect(page.getByText(/Додано/).last()).toBeVisible();
+  await page.getByPlaceholder(SET_NAME_PLACEHOLDER).fill('Biologia - kartkowka');
+  await dismissConsentBanner(page);
+  await page.getByRole('button', { name: ADD_BUTTON }).click();
+  await expect(page.getByText(ADDED_MESSAGE).last()).toBeVisible();
 
-  await page.getByPlaceholder(/Введи/).fill('plum - sliwka, peach - brzoskwinia');
+  await page.getByPlaceholder(CHAT_PLACEHOLDER).fill('plum - sliwka, peach - brzoskwinia');
   await page.keyboard.press('Enter');
   await expect(
-    page.getByText('Обери слова, які хочеш додати до бібліотеки.')
+    page.getByText(SELECTION_HINT)
   ).toBeVisible();
   await page.getByTestId('set-selector').selectOption({ label: 'Biologia - kartkowka' });
-  await page.getByRole('button', { name: /Додати/ }).click();
-  await expect(page.getByText(/Додано/).last()).toBeVisible();
+  await dismissConsentBanner(page);
+  await page.getByRole('button', { name: ADD_BUTTON }).click();
+  await expect(page.getByText(ADDED_MESSAGE).last()).toBeVisible();
 
-  await page.getByRole('link', { name: 'Профіль' }).click();
+  await page.getByRole('link', { name: PROFILE_LINK }).click();
   await expect(page).toHaveURL(/\/profile/);
   const setRow = page
     .getByTestId('set-row')
     .filter({ hasText: 'Biologia - kartkowka' });
   await expect(setRow).toBeVisible();
-  await expect(setRow.getByText(/8\s+слів/)).toBeVisible();
+  await expect(setRow.getByText(EIGHT_WORDS)).toBeVisible();
   await expect(setRow).toBeVisible();
 
-  await page.getByRole('link', { name: 'Старт', exact: true }).click();
+  const nav = page.getByRole('navigation');
+  await nav.getByRole('link', { name: HOME_LINK }).click();
   await expect(page).toHaveURL(/\/$/);
-  await page.getByRole('link', { name: 'Квіз' }).click();
+  await page.getByRole('link', { name: QUIZ_LINK }).first().click();
   await expect(page).toHaveURL(/\/quiz/);
   await expect(
     page.getByRole('button', { name: /Biologia - kartkowka \(8\)/ })
@@ -121,18 +150,19 @@ test('usuwa zestaw i pozostawia slowka bez przypisania', async ({ page }, testIn
   });
 
   await page.goto('/chat');
-  await page.getByPlaceholder(/Введи/).fill(
+  await page.getByPlaceholder(CHAT_PLACEHOLDER).fill(
     'acid - kwas, base - zasada, salt - sol, water - woda'
   );
   await page.keyboard.press('Enter');
   await expect(
-    page.getByText('Обери слова, які хочеш додати до бібліотеки.')
+    page.getByText(SELECTION_HINT)
   ).toBeVisible();
-  await page.getByPlaceholder('Назва набору').fill('Chemia - kartkowka');
-  await page.getByRole('button', { name: /Додати/ }).click();
-  await expect(page.getByText(/Додано/)).toBeVisible();
+  await page.getByPlaceholder(SET_NAME_PLACEHOLDER).fill('Chemia - kartkowka');
+  await dismissConsentBanner(page);
+  await page.getByRole('button', { name: ADD_BUTTON }).click();
+  await expect(page.getByText(ADDED_MESSAGE)).toBeVisible();
 
-  await page.getByRole('link', { name: 'Профіль' }).click();
+  await page.getByRole('link', { name: PROFILE_LINK }).click();
   await expect(page).toHaveURL(/\/profile/);
   const setRow = page
     .getByTestId('set-row')
@@ -140,18 +170,20 @@ test('usuwa zestaw i pozostawia slowka bez przypisania', async ({ page }, testIn
   await expect(setRow).toBeVisible();
 
   page.once('dialog', (dialog) => dialog.accept());
-  await setRow.getByRole('button', { name: /Видал/ }).click();
+  await dismissConsentBanner(page);
+  await setRow.getByRole('button', { name: DELETE_BUTTON }).click();
   await expect(setRow).toHaveCount(0);
 
-  await page.getByRole('link', { name: 'Старт', exact: true }).click();
+  const nav = page.getByRole('navigation');
+  await nav.getByRole('link', { name: HOME_LINK }).click();
   await expect(page).toHaveURL(/\/$/);
-  await page.getByRole('link', { name: 'Квіз' }).click();
+  await page.getByRole('link', { name: QUIZ_LINK }).first().click();
   await expect(page).toHaveURL(/\/quiz/);
   await expect(
     page.getByRole('button', { name: /Chemia - kartkowka/ })
   ).toHaveCount(0);
   await expect(
-    page.getByRole('button', { name: /Без набору \(/ })
+    page.getByRole('button', { name: new RegExp(`${UNASSIGNED_SET.source} \\(`, 'i') })
   ).toBeVisible();
   await expect(
     page.getByRole('button', { name: /Chemia \(4\)/ })

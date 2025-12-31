@@ -65,3 +65,44 @@ vi.mock('next-auth/react', () => ({
   })),
   signOut: vi.fn(),
 }));
+
+type StripePricesResponse = {
+  monthly: { id: string; unitAmount: number; currency: string };
+  annual: { id: string; unitAmount: number; currency: string; savings: number };
+  trialDays: number;
+};
+
+type MockResponse = {
+  ok: boolean;
+  status: number;
+  json: () => Promise<unknown>;
+  text: () => Promise<string>;
+};
+
+const defaultFetch = vi.fn(async (input: RequestInfo | URL): Promise<MockResponse> => {
+  const url =
+    typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+
+  if (url.includes('/api/stripe/prices')) {
+    return {
+      ok: true,
+      status: 200,
+      json: async (): Promise<StripePricesResponse> => ({
+        monthly: { id: 'price_monthly', unitAmount: 9900, currency: 'pln' },
+        annual: { id: 'price_annual', unitAmount: 99000, currency: 'pln', savings: 20 },
+        trialDays: 7,
+      }),
+      text: async (): Promise<string> => '',
+    };
+  }
+
+  return {
+    ok: true,
+    status: 200,
+    json: async (): Promise<null> => null,
+    text: async (): Promise<string> => '',
+  };
+});
+
+// Default fetch mock to avoid relative URL warnings in jsdom tests.
+vi.stubGlobal('fetch', defaultFetch);

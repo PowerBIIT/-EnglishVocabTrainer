@@ -19,4 +19,24 @@ describe('parseVocabularyInput', () => {
     expect(result).toHaveLength(1);
     expect(result[0].target).toBe('ok');
   });
+
+  it('adds phonetics and difficulty defaults', () => {
+    const input = 'Train - pociag';
+    const result = parseVocabularyInput(input);
+
+    expect(result[0]).toMatchObject({
+      target: 'Train',
+      native: 'pociag',
+      phonetic: '/train/',
+      difficulty: 'medium',
+    });
+  });
+
+  it('skips entries that are too short', () => {
+    const input = 'a - b, ok - good';
+    const result = parseVocabularyInput(input);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].target).toBe('ok');
+  });
 });
