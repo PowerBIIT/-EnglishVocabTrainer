@@ -2,16 +2,16 @@
 set -euo pipefail
 
 : "${AZ_LOCATION:=polandcentral}"
-: "${AZ_RESOURCE_GROUP:=evt-rg}"
-: "${AZ_PLAN_NAME:=evt-plan}"
+: "${AZ_RESOURCE_GROUP:=henio-rg}"
+: "${AZ_PLAN_NAME:=henio-plan}"
 : "${AZ_PLAN_SKU:=B1}"
-: "${AZ_APP_UAT:=evt-uat}"
-: "${AZ_APP_PRD:=evt-prd}"
-: "${AZ_PG_SERVER:=evt-postgres}"
-: "${AZ_PG_ADMIN_USER:=vocabadmin}"
+: "${AZ_APP_UAT:=henio-uat}"
+: "${AZ_APP_PRD:=henio-prd}"
+: "${AZ_PG_SERVER:=henio-db}"
+: "${AZ_PG_ADMIN_USER:=henioadmin}"
 : "${AZ_PG_ADMIN_PASSWORD:=}"
-: "${AZ_DB_UAT:=evt_uat}"
-: "${AZ_DB_PRD:=evt_prd}"
+: "${AZ_DB_UAT:=henio_uat}"
+: "${AZ_DB_PRD:=henio_prd}"
 : "${AZ_NODE_RUNTIME:=NODE|20-lts}"
 
 if [[ -z "${AZ_PG_ADMIN_PASSWORD}" ]]; then

@@ -24,13 +24,14 @@ Kompletny przewodnik wdrożenia aplikacji Henio na Azure.
 
 ```bash
 # Używane nazwy (aktualny naming); dla równoległych środowisk dodaj suffix.
-RG="vocab-trainer-rg"
-PLAN="vocab-trainer-plan"
-APP_UAT="vocab-trainer-uat"
-APP_PRD="vocab-trainer-prd" # opcjonalnie
-PG_SERVER="vocab-trainer-db"
-DB_UAT="vocabuat"
-DB_PRD="vocabprd"
+RG="henio-rg"
+PLAN="henio-plan"
+APP_UAT="henio-uat"
+APP_PRD="henio-prd" # opcjonalnie
+PG_SERVER="henio-db"
+PG_ADMIN="henioadmin"
+DB_UAT="henio_uat"
+DB_PRD="henio_prd"
 
 # 1. Utwórz resource group
 az group create --name "$RG" --location polandcentral
@@ -52,7 +53,7 @@ az postgres flexible-server create \
   --name "$PG_SERVER" \
   --resource-group "$RG" \
   --location polandcentral \
-  --admin-user vocabadmin \
+  --admin-user "$PG_ADMIN" \
   --admin-password "$PG_PASS" \
   --sku-name Standard_B1ms \
   --tier Burstable \
@@ -77,10 +78,11 @@ az postgres flexible-server firewall-rule create \
 
 ```bash
 # Pobierz wartości z kroku 2
-RG="vocab-trainer-rg"
-APP_UAT="vocab-trainer-uat"
-PG_SERVER="vocab-trainer-db"
-DB_UAT="vocabuat"
+RG="henio-rg"
+APP_UAT="henio-uat"
+PG_SERVER="henio-db"
+PG_ADMIN="henioadmin"
+DB_UAT="henio_uat"
 PG_PASS="TwojeHaslo"  # Hasło z kroku 2
 
 # Utwórz Service Principal dla deploymentu
@@ -95,9 +97,9 @@ gh secret set AZURE_CREDENTIALS --env uat --body "$SP_JSON"
 gh secret set AZURE_RESOURCE_GROUP --env uat --body "${RG}"
 gh secret set AZURE_WEBAPP_NAME_UAT --env uat --body "${APP_UAT}"
 gh secret set AZURE_WEBAPP_PUBLISH_PROFILE_UAT --env uat --body "$UAT_PROFILE"
-gh secret set DATABASE_URL --env uat --body "postgresql://vocabadmin:${PG_PASS}@${PG_SERVER}.postgres.database.azure.com:5432/${DB_UAT}?sslmode=require"
-gh secret set NEXTAUTH_URL --env uat --body "https://evt.powerbiit.com"
-# Fallback bez domeny: https://vocab-trainer-uat.azurewebsites.net
+gh secret set DATABASE_URL --env uat --body "postgresql://${PG_ADMIN}:${PG_PASS}@${PG_SERVER}.postgres.database.azure.com:5432/${DB_UAT}?sslmode=require"
+gh secret set NEXTAUTH_URL --env uat --body "https://henio-uat.azurewebsites.net"
+# Docelowo domena własna, np. https://uat.henio.app
 
 # Wygeneruj NEXTAUTH_SECRET
 NEXTAUTH_SECRET=$(openssl rand -base64 32)
@@ -134,14 +136,17 @@ Domeny `*.azurewebsites.net` bywają blokowane w sieciach firmowych. Jeśli logo
    - Ustaw `NEXTAUTH_URL` na domenę własną.
    - Dodaj redirect URI w Google OAuth (patrz kolejny krok).
 
-Aktualna konfiguracja UAT (OVH):
+Aktualna konfiguracja UAT:
+- Custom domain: brak (używamy https://henio-uat.azurewebsites.net)
+
+Planowana konfiguracja DNS (OVH, henio.app):
 ```
-CNAME  evt.powerbiit.com            -> vocab-trainer-uat.azurewebsites.net
-TXT    asuid.evt.powerbiit.com      -> (customDomainVerificationId z Azure)
+CNAME  uat.henio.app            -> henio-uat.azurewebsites.net
+TXT    asuid.uat.henio.app      -> (customDomainVerificationId z Azure)
 ```
 Pobierz `customDomainVerificationId`:
 ```bash
-az webapp show --name vocab-trainer-uat --resource-group vocab-trainer-rg \
+az webapp show --name henio-uat --resource-group henio-rg \
   --query customDomainVerificationId -o tsv
 ```
 
@@ -151,17 +156,17 @@ az webapp show --name vocab-trainer-uat --resource-group vocab-trainer-rg \
 2. Znajdź swój OAuth 2.0 Client
 3. Dodaj **Authorized JavaScript origins** (Azure lub domena własna):
    ```
-   https://vocab-trainer-uat.azurewebsites.net
-   https://vocab-trainer-prd.azurewebsites.net
-   https://evt.powerbiit.com
-   # (opcjonalnie PRD) https://app.powerbiit.com
+   https://henio-uat.azurewebsites.net
+   https://henio-prd.azurewebsites.net
+   https://uat.henio.app
+   # (opcjonalnie PRD) https://henio.app
    ```
 4. Dodaj **Authorized redirect URIs** (Azure lub domena własna):
    ```
-   https://vocab-trainer-uat.azurewebsites.net/api/auth/callback/google
-   https://vocab-trainer-prd.azurewebsites.net/api/auth/callback/google
-   https://evt.powerbiit.com/api/auth/callback/google
-   # (opcjonalnie PRD) https://app.powerbiit.com/api/auth/callback/google
+   https://henio-uat.azurewebsites.net/api/auth/callback/google
+   https://henio-prd.azurewebsites.net/api/auth/callback/google
+   https://uat.henio.app/api/auth/callback/google
+   # (opcjonalnie PRD) https://henio.app/api/auth/callback/google
    ```
 5. Zapisz zmiany
 
@@ -186,8 +191,8 @@ gh run watch  # monitoruj na żywo
 
 ```bash
 # Health check
-curl https://evt.powerbiit.com/api/health
-# fallback (Azure): https://vocab-trainer-uat.azurewebsites.net/api/health
+curl https://henio-uat.azurewebsites.net/api/health
+# docelowo (po domenie): https://uat.henio.app/api/health
 
 # Oczekiwana odpowiedź:
 # {"status":"ok","version":"1.0.16","commit":"abc123","buildTime":"...","env":"production"}
@@ -199,13 +204,14 @@ curl https://evt.powerbiit.com/api/health
 
 | Zasób | Nazwa | URL/Szczegóły |
 |-------|-------|---------------|
-| Resource Group | `vocab-trainer-rg` | Poland Central |
-| App Service Plan | `vocab-trainer-plan` | B1 (Basic) |
-| UAT Web App | `vocab-trainer-uat` | https://evt.powerbiit.com (custom), https://vocab-trainer-uat.azurewebsites.net |
-| PRD Web App | brak | nieutworzone |
-| PostgreSQL Server | `vocab-trainer-db` | Standard_B1ms, PostgreSQL 16 |
-| UAT Database | `vocabuat` | Reset przy każdym deploy |
-| Certyfikat TLS | GeoTrust | Ważny do 2026-04-14 |
+| Resource Group | `henio-rg` | Poland Central |
+| App Service Plan | `henio-plan` | B1 (Basic) |
+| UAT Web App | `henio-uat` | https://henio-uat.azurewebsites.net |
+| PRD Web App | brak | przygotowane nazewnictwo: `henio-prd` |
+| PostgreSQL Server | `henio-db` | Standard_B1ms, PostgreSQL 16 |
+| UAT Database | `henio_uat` | Reset przy każdym deploy |
+| PRD Database | `henio_prd` | Docelowo dla PRD |
+| Custom domain | `henio.app` | nie skonfigurowana |
 
 **Koszt:** ~25 USD/miesiąc (~100 PLN/miesiąc)
 
@@ -236,7 +242,7 @@ gh workflow run destroy-infra.yml
 
 ### Konfigurowane automatycznie przez provisioning:
 - `AZURE_CREDENTIALS` - Service Principal JSON
-- `AZURE_RESOURCE_GROUP` - vocab-trainer-rg
+- `AZURE_RESOURCE_GROUP` - henio-rg
 - `AZURE_WEBAPP_NAME_UAT` / `AZURE_WEBAPP_NAME_PRD`
 - `AZURE_WEBAPP_PUBLISH_PROFILE_UAT` / `AZURE_WEBAPP_PUBLISH_PROFILE_PRD`
 - `DATABASE_URL`
@@ -281,25 +287,25 @@ az ad sp show --id "CLIENT_ID_Z_AZURE_CREDENTIALS"
 
 # Jeśli wygasł, utwórz nowy:
 az ad sp create-for-rbac --name "henio-deploy-sp" --role contributor \
-  --scopes "/subscriptions/SUBSCRIPTION_ID/resourceGroups/vocab-trainer-rg" --sdk-auth
+  --scopes "/subscriptions/SUBSCRIPTION_ID/resourceGroups/henio-rg" --sdk-auth
 ```
 
 ### Health check fails
 ```bash
 # Sprawdź logi aplikacji
-az webapp log tail --name vocab-trainer-uat --resource-group vocab-trainer-rg
+az webapp log tail --name henio-uat --resource-group henio-rg
 
 # Sprawdź ustawienia
-az webapp config appsettings list --name vocab-trainer-uat --resource-group vocab-trainer-rg
+az webapp config appsettings list --name henio-uat --resource-group henio-rg
 ```
 
 ### Baza danych niedostępna
 ```bash
 # Sprawdź firewall PostgreSQL
-az postgres flexible-server firewall-rule list --resource-group vocab-trainer-rg --name vocab-trainer-db
+az postgres flexible-server firewall-rule list --resource-group henio-rg --name henio-db
 
 # Sprawdź status serwera
-az postgres flexible-server show --resource-group vocab-trainer-rg --name vocab-trainer-db --query "state"
+az postgres flexible-server show --resource-group henio-rg --name henio-db --query "state"
 ```
 
 ---
@@ -312,7 +318,7 @@ gh workflow run destroy-infra.yml
 # Wpisz: destroy
 
 # Opcja 2: Ręcznie (szybsze)
-az group delete --name vocab-trainer-rg --yes --no-wait
+az group delete --name henio-rg --yes --no-wait
 ```
 
 ---
