@@ -82,7 +82,7 @@ export async function GET() {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
-      'Content-Disposition': `attachment; filename="english-vocab-trainer-export-${userId}-${Date.now()}.json"`,
+      'Content-Disposition': `attachment; filename="henio-export-${userId}-${Date.now()}.json"`,
     },
   });
 }

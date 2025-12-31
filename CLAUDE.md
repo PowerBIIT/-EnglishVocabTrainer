@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-English Vocab Trainer - Next.js vocabulary learning app for Polish students (PL→EN) and Ukrainian students in Poland (UA→PL). Features onboarding, flashcards, quizzes, pronunciation practice, and AI-powered word intake with multi-file upload.
+Henio - Next.js vocabulary learning app for Polish students (PL→EN) and Ukrainian students in Poland (UA→PL). Features onboarding, flashcards, quizzes, pronunciation practice, and AI-powered word intake with multi-file upload.
 
 ## Common Commands
 

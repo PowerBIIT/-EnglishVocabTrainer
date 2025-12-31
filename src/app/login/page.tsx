@@ -22,8 +22,8 @@ const loginCopy = {
     testPasswordPlaceholder: 'Hasło testowe',
     testLoginError: 'Nieprawidłowe dane testowe.',
     testLoginButton: 'Zaloguj testowo',
-    guideLabel: 'Twój przewodnik',
-    guideNote: 'Wybierz swój styl w onboardingu',
+    guideLabel: 'Twój przyjaciel Henio',
+    guideNote: 'Wybierz styl Henia w onboardingu',
     languageLabel: 'Język',
   },
   en: {
@@ -37,8 +37,8 @@ const loginCopy = {
     testPasswordPlaceholder: 'Test password',
     testLoginError: 'Invalid test credentials.',
     testLoginButton: 'Sign in (test)',
-    guideLabel: 'Your guide',
-    guideNote: 'Choose your style in onboarding',
+    guideLabel: 'Your friend Henio',
+    guideNote: "Choose Henio's style in onboarding",
     languageLabel: 'Language',
   },
   uk: {
@@ -52,8 +52,8 @@ const loginCopy = {
     testPasswordPlaceholder: 'Тестовий пароль',
     testLoginError: 'Невірні тестові дані.',
     testLoginButton: 'Увійти (тест)',
-    guideLabel: 'Твій провідник',
-    guideNote: 'Обери стиль у онбордингу',
+    guideLabel: 'Твій друг Геньо',
+    guideNote: 'Обери стиль Геньо у онбордингу',
     languageLabel: 'Мова',
   },
 } as const;
@@ -232,7 +232,7 @@ export default function LoginPage() {
             </div>
           </div>
           <h1 className="font-display text-4xl md:text-5xl text-slate-900 dark:text-white">
-            English Vocab Trainer
+            Henio
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-300">
             {t.description}

@@ -16,7 +16,7 @@ const termsCopy = {
     sections: [
       {
         title: '1. Definicje',
-        content: `• Usluga - aplikacja English Vocab Trainer do nauki slownictwa
+        content: `• Usluga - aplikacja Henio do nauki slownictwa
 • Uzytkownik - osoba korzystajaca z Uslugi
 • Konto - indywidualne konto Uzytkownika w Usluldze
 • Tresc - slowka, postepy, ustawienia i inne dane Uzytkownika`,
@@ -111,7 +111,7 @@ W razie pytan: info@henio.app`,
     sections: [
       {
         title: '1. Definitions',
-        content: `• Service - English Vocab Trainer vocabulary learning application
+        content: `• Service - Henio vocabulary learning application
 • User - person using the Service
 • Account - User's individual account in the Service
 • Content - vocabulary, progress, settings and other User data`,
@@ -206,7 +206,7 @@ For questions: info@henio.app`,
     sections: [
       {
         title: '1. Vyznachennya',
-        content: `• Posluha - dodatok English Vocab Trainer dlya vyvchennya slovnyka
+        content: `• Posluha - dodatok Henio dlya vyvchennya slovnyka
 • Korystuvach - osoba, yaka korystuyetsya Posluhoyu
 • Akaunt - indyvidualnyy akaunt Korystuvacha v Posluzi
 • Vmist - slovnyk, prohres, nalashtuvannya ta inshi dani Korystuvacha`,
