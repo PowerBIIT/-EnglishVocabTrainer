@@ -17,25 +17,77 @@ export function MascotAvatar({ skinId, size = 120, className }: MascotAvatarProp
         height={size}
         viewBox="0 0 120 120"
         role="img"
-        aria-label={`Mascot ${skin.name}`}
+        aria-label={`Henio ${skin.name}`}
       >
         <defs>
-          <linearGradient id={`body-${skin.id}`} x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0%" stopColor={skin.colors.body} stopOpacity="0.95" />
-            <stop offset="100%" stopColor={skin.colors.accent} stopOpacity="0.9" />
+          <linearGradient id={`fur-${skin.id}`} x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#ffffff" />
+            <stop offset="100%" stopColor="#f8f8f8" />
+          </linearGradient>
+          <linearGradient id={`accent-${skin.id}`} x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stopColor={skin.colors.accent} />
+            <stop offset="100%" stopColor={skin.colors.body} />
           </linearGradient>
         </defs>
-        <circle cx="60" cy="60" r="52" fill="rgba(255,255,255,0.65)" />
-        <rect x="34" y="46" width="52" height="50" rx="18" fill={`url(#body-${skin.id})`} />
-        <rect x="40" y="20" width="40" height="34" rx="14" fill={skin.colors.body} />
-        <rect x="45" y="28" width="30" height="16" rx="8" fill={skin.colors.visor} />
-        <circle cx="52" cy="36" r="3" fill={skin.colors.gear} />
-        <circle cx="68" cy="36" r="3" fill={skin.colors.gear} />
-        <rect x="54" y="68" width="12" height="12" rx="4" fill={skin.colors.visor} />
-        <circle cx="86" cy="70" r="8" fill={skin.colors.accent} />
-        <circle cx="86" cy="70" r="4" fill={skin.colors.visor} />
-        <path d="M24 56 L34 64 L24 72 Z" fill={skin.colors.gear} />
-        <path d="M96 56 L86 64 L96 72 Z" fill={skin.colors.gear} />
+
+        {/* Background circle */}
+        <circle cx="60" cy="60" r="54" fill="rgba(255,255,255,0.7)" />
+
+        {/* Dog body */}
+        <ellipse cx="60" cy="75" rx="28" ry="24" fill={`url(#fur-${skin.id})`} stroke="#e0e0e0" strokeWidth="1" />
+
+        {/* Dog head */}
+        <ellipse cx="60" cy="50" rx="24" ry="26" fill={`url(#fur-${skin.id})`} stroke="#e0e0e0" strokeWidth="1" />
+
+        {/* Ears */}
+        <ellipse cx="42" cy="42" rx="8" ry="16" fill="#f5f5f5" stroke="#e0e0e0" strokeWidth="1" />
+        <ellipse cx="78" cy="42" rx="8" ry="16" fill="#f5f5f5" stroke="#e0e0e0" strokeWidth="1" />
+
+        {/* Snout */}
+        <ellipse cx="60" cy="58" rx="12" ry="10" fill="#fafafa" stroke="#e0e0e0" strokeWidth="0.5" />
+
+        {/* Nose */}
+        <ellipse cx="60" cy="60" rx="4" ry="3" fill="#2d2d2d" />
+
+        {/* Eyes */}
+        <circle cx="52" cy="48" r="3" fill="#2d2d2d" />
+        <circle cx="68" cy="48" r="3" fill="#2d2d2d" />
+        <circle cx="53" cy="47" r="1" fill="#ffffff" />
+        <circle cx="69" cy="47" r="1" fill="#ffffff" />
+
+        {/* Accessory/collar with skin colors */}
+        <ellipse cx="60" cy="70" rx="16" ry="4" fill={skin.colors.accent} opacity="0.8" />
+        <circle cx="60" cy="70" r="3" fill={skin.colors.gear} />
+
+        {/* Tail (curved) */}
+        <path d="M 80 78 Q 92 72 94 80 Q 92 84 86 82" fill="#f5f5f5" stroke="#e0e0e0" strokeWidth="1" />
+
+        {/* Front paws */}
+        <ellipse cx="50" cy="95" rx="5" ry="8" fill="#fafafa" stroke="#e0e0e0" strokeWidth="0.5" />
+        <ellipse cx="70" cy="95" rx="5" ry="8" fill="#fafafa" stroke="#e0e0e0" strokeWidth="0.5" />
+
+        {/* Decorative element (bow or accessory) based on skin */}
+        {skin.id === 'explorer' && (
+          <path d="M 52 35 L 48 32 L 52 29 L 56 32 Z M 68 35 L 72 32 L 68 29 L 64 32 Z" fill={skin.colors.accent} />
+        )}
+        {skin.id === 'forest-scout' && (
+          <circle cx="60" cy="32" r="4" fill={skin.colors.accent} />
+        )}
+        {skin.id === 'desert-nomad' && (
+          <rect x="54" y="30" width="12" height="3" rx="1.5" fill={skin.colors.accent} />
+        )}
+        {skin.id === 'arctic-ranger' && (
+          <>
+            <circle cx="56" cy="32" r="2.5" fill={skin.colors.accent} />
+            <circle cx="64" cy="32" r="2.5" fill={skin.colors.accent} />
+          </>
+        )}
+        {skin.id === 'sky-captain' && (
+          <path d="M 54 30 L 60 26 L 66 30 L 60 34 Z" fill={skin.colors.accent} />
+        )}
+        {skin.id === 'ruins-diver' && (
+          <rect x="56" y="29" width="8" height="5" rx="2" fill={skin.colors.accent} />
+        )}
       </svg>
     </div>
   );
