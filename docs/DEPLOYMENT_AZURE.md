@@ -216,6 +216,8 @@ curl https://uat.henio.app/api/health
 | PRD Database | `henio_prd` | Docelowo dla PRD |
 | Custom domains | `uat.henio.app`, `henio.app` | skonfigurowane (SSL SNI) |
 
+OAuth: skonfigurowany dla `uat.henio.app` i `henio.app` (login działa).
+
 **Koszt:** ~25 USD/miesiąc (~100 PLN/miesiąc)
 
 ---

@@ -4,7 +4,10 @@ Next.js app for school‑focused vocabulary learning (PL→EN for Polish student
 Ukrainian students in Poland). Includes onboarding, flashcards, quizzes, pronunciation practice,
 and AI‑powered word intake with multi‑file upload.
 
-## Status projektu (wersja 1.0.20 - stan na grudzień 2025)
+## Status projektu (wersja 1.0.30 - stan na 2025-12-31)
+
+- UAT: https://uat.henio.app (logowanie Google działa)
+- PRD: https://henio.app (domena + SSL OK, deploy manualny)
 
 ### Funkcje użytkownika (szkoła/UA)
 - Ścieżki onboardingu: „Uczeń w Polsce” (PL → EN) i „Uczeń z Ukrainy w Polsce” (UA → PL).

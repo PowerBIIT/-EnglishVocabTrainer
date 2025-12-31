@@ -39,6 +39,7 @@
   - `https://henio-prd.azurewebsites.net` (PRD, Azure)
   - `https://uat.henio.app` (UAT)
   - `https://henio.app` (PRD)
+Status: skonfigurowane dla `uat.henio.app` i `henio.app` (logowanie działa).
 
 ## Custom Domain Setup (OVH + Azure)
 
