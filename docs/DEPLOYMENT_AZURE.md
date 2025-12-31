@@ -23,28 +23,34 @@ Kompletny przewodnik wdrożenia aplikacji Henio na Azure.
 ### Krok 2: Utwórz infrastrukturę Azure
 
 ```bash
+# Używane nazwy (aktualny naming); dla równoległych środowisk dodaj suffix.
+RG="vocab-trainer-rg"
+PLAN="vocab-trainer-plan"
+APP_UAT="vocab-trainer-uat"
+APP_PRD="vocab-trainer-prd" # opcjonalnie
+PG_SERVER="vocab-trainer-db"
+DB_UAT="vocabuat"
+DB_PRD="vocabprd"
+
 # 1. Utwórz resource group
-az group create --name evt-rg-pl --location polandcentral
+az group create --name "$RG" --location polandcentral
 
 # 2. Utwórz App Service Plan
-az appservice plan create --name evt-plan-pl --resource-group evt-rg-pl --sku B1 --is-linux
+az appservice plan create --name "$PLAN" --resource-group "$RG" --sku B1 --is-linux
 
-# 3. Wygeneruj losowy suffix (np. 6e5d)
-SUFFIX=$(openssl rand -hex 2)
-echo "Suffix: $SUFFIX"
+# 3. Utwórz Web Apps
+az webapp create --name "$APP_UAT" --resource-group "$RG" --plan "$PLAN" --runtime "NODE|20-lts"
+# Opcjonalnie PRD:
+az webapp create --name "$APP_PRD" --resource-group "$RG" --plan "$PLAN" --runtime "NODE|20-lts"
 
-# 4. Utwórz Web Apps
-az webapp create --name evt-uat-pl-$SUFFIX --resource-group evt-rg-pl --plan evt-plan-pl --runtime "NODE|20-lts"
-az webapp create --name evt-prd-pl-$SUFFIX --resource-group evt-rg-pl --plan evt-plan-pl --runtime "NODE|20-lts"
-
-# 5. Wygeneruj hasło PostgreSQL
+# 4. Wygeneruj hasło PostgreSQL
 PG_PASS=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-20)
 echo "PostgreSQL password: $PG_PASS"  # ZAPISZ TO!
 
-# 6. Utwórz PostgreSQL Flexible Server (~5 min)
+# 5. Utwórz PostgreSQL Flexible Server (~5 min)
 az postgres flexible-server create \
-  --name evt-pg-pl-$SUFFIX \
-  --resource-group evt-rg-pl \
+  --name "$PG_SERVER" \
+  --resource-group "$RG" \
   --location polandcentral \
   --admin-user vocabadmin \
   --admin-password "$PG_PASS" \
@@ -54,14 +60,14 @@ az postgres flexible-server create \
   --version 16 \
   --public-access All
 
-# 7. Utwórz bazy danych
-az postgres flexible-server db create --resource-group evt-rg-pl --server-name evt-pg-pl-$SUFFIX --database-name evt_uat
-az postgres flexible-server db create --resource-group evt-rg-pl --server-name evt-pg-pl-$SUFFIX --database-name evt_prd
+# 6. Utwórz bazy danych
+az postgres flexible-server db create --resource-group "$RG" --server-name "$PG_SERVER" --database-name "$DB_UAT"
+az postgres flexible-server db create --resource-group "$RG" --server-name "$PG_SERVER" --database-name "$DB_PRD"
 
-# 8. Dodaj regułę firewall dla Azure
+# 7. Dodaj regułę firewall dla Azure
 az postgres flexible-server firewall-rule create \
-  --resource-group evt-rg-pl \
-  --name evt-pg-pl-$SUFFIX \
+  --resource-group "$RG" \
+  --name "$PG_SERVER" \
   --rule-name AllowAllAzureServices \
   --start-ip-address 0.0.0.0 \
   --end-ip-address 0.0.0.0
@@ -70,25 +76,28 @@ az postgres flexible-server firewall-rule create \
 ### Krok 3: Skonfiguruj GitHub Secrets
 
 ```bash
-# Pobierz wartości
-SUFFIX="6e5d"  # Twój suffix
+# Pobierz wartości z kroku 2
+RG="vocab-trainer-rg"
+APP_UAT="vocab-trainer-uat"
+PG_SERVER="vocab-trainer-db"
+DB_UAT="vocabuat"
 PG_PASS="TwojeHaslo"  # Hasło z kroku 2
 
 # Utwórz Service Principal dla deploymentu
-SP_JSON=$(az ad sp create-for-rbac --name "evt-deploy-sp" --role contributor \
-  --scopes "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/evt-rg-pl" --sdk-auth)
+SP_JSON=$(az ad sp create-for-rbac --name "henio-deploy-sp" --role contributor \
+  --scopes "/subscriptions/$(az account show --query id -o tsv)/resourceGroups/${RG}" --sdk-auth)
 
 # Pobierz publish profile
-UAT_PROFILE=$(az webapp deployment list-publishing-profiles --resource-group evt-rg-pl --name evt-uat-pl-$SUFFIX --xml)
+UAT_PROFILE=$(az webapp deployment list-publishing-profiles --resource-group "${RG}" --name "${APP_UAT}" --xml)
 
 # Ustaw sekrety dla środowiska UAT
 gh secret set AZURE_CREDENTIALS --env uat --body "$SP_JSON"
-gh secret set AZURE_RESOURCE_GROUP --env uat --body "evt-rg-pl"
-gh secret set AZURE_WEBAPP_NAME_UAT --env uat --body "evt-uat-pl-$SUFFIX"
+gh secret set AZURE_RESOURCE_GROUP --env uat --body "${RG}"
+gh secret set AZURE_WEBAPP_NAME_UAT --env uat --body "${APP_UAT}"
 gh secret set AZURE_WEBAPP_PUBLISH_PROFILE_UAT --env uat --body "$UAT_PROFILE"
-gh secret set DATABASE_URL --env uat --body "postgresql://vocabadmin:${PG_PASS}@evt-pg-pl-${SUFFIX}.postgres.database.azure.com:5432/evt_uat?sslmode=require"
-gh secret set NEXTAUTH_URL --env uat --body "https://evt-uat-pl-${SUFFIX}.azurewebsites.net"
-# Jeśli używasz domeny własnej (np. https://evt.powerbiit.com), ustaw ją tutaj.
+gh secret set DATABASE_URL --env uat --body "postgresql://vocabadmin:${PG_PASS}@${PG_SERVER}.postgres.database.azure.com:5432/${DB_UAT}?sslmode=require"
+gh secret set NEXTAUTH_URL --env uat --body "https://evt.powerbiit.com"
+# Fallback bez domeny: https://vocab-trainer-uat.azurewebsites.net
 
 # Wygeneruj NEXTAUTH_SECRET
 NEXTAUTH_SECRET=$(openssl rand -base64 32)
@@ -142,17 +151,17 @@ az webapp show --name vocab-trainer-uat --resource-group vocab-trainer-rg \
 2. Znajdź swój OAuth 2.0 Client
 3. Dodaj **Authorized JavaScript origins** (Azure lub domena własna):
    ```
-   https://evt-uat-pl-SUFFIX.azurewebsites.net
-   https://evt-prd-pl-SUFFIX.azurewebsites.net
+   https://vocab-trainer-uat.azurewebsites.net
+   https://vocab-trainer-prd.azurewebsites.net
    https://evt.powerbiit.com
-   # (opcjonalnie PRD) https://prd.twojadomena.pl
+   # (opcjonalnie PRD) https://app.powerbiit.com
    ```
 4. Dodaj **Authorized redirect URIs** (Azure lub domena własna):
    ```
-   https://evt-uat-pl-SUFFIX.azurewebsites.net/api/auth/callback/google
-   https://evt-prd-pl-SUFFIX.azurewebsites.net/api/auth/callback/google
+   https://vocab-trainer-uat.azurewebsites.net/api/auth/callback/google
+   https://vocab-trainer-prd.azurewebsites.net/api/auth/callback/google
    https://evt.powerbiit.com/api/auth/callback/google
-   # (opcjonalnie PRD) https://prd.twojadomena.pl/api/auth/callback/google
+   # (opcjonalnie PRD) https://app.powerbiit.com/api/auth/callback/google
    ```
 5. Zapisz zmiany
 
@@ -177,7 +186,8 @@ gh run watch  # monitoruj na żywo
 
 ```bash
 # Health check
-curl https://<APP_UAT>/api/health
+curl https://evt.powerbiit.com/api/health
+# fallback (Azure): https://vocab-trainer-uat.azurewebsites.net/api/health
 
 # Oczekiwana odpowiedź:
 # {"status":"ok","version":"1.0.16","commit":"abc123","buildTime":"...","env":"production"}
@@ -226,7 +236,7 @@ gh workflow run destroy-infra.yml
 
 ### Konfigurowane automatycznie przez provisioning:
 - `AZURE_CREDENTIALS` - Service Principal JSON
-- `AZURE_RESOURCE_GROUP` - evt-rg-pl
+- `AZURE_RESOURCE_GROUP` - vocab-trainer-rg
 - `AZURE_WEBAPP_NAME_UAT` / `AZURE_WEBAPP_NAME_PRD`
 - `AZURE_WEBAPP_PUBLISH_PROFILE_UAT` / `AZURE_WEBAPP_PUBLISH_PROFILE_PRD`
 - `DATABASE_URL`
@@ -270,26 +280,26 @@ node scripts/ensure-migrations.js && npx prisma migrate deploy
 az ad sp show --id "CLIENT_ID_Z_AZURE_CREDENTIALS"
 
 # Jeśli wygasł, utwórz nowy:
-az ad sp create-for-rbac --name "evt-deploy-sp" --role contributor \
-  --scopes "/subscriptions/SUBSCRIPTION_ID/resourceGroups/evt-rg-pl" --sdk-auth
+az ad sp create-for-rbac --name "henio-deploy-sp" --role contributor \
+  --scopes "/subscriptions/SUBSCRIPTION_ID/resourceGroups/vocab-trainer-rg" --sdk-auth
 ```
 
 ### Health check fails
 ```bash
 # Sprawdź logi aplikacji
-az webapp log tail --name evt-uat-pl-6e5d --resource-group evt-rg-pl
+az webapp log tail --name vocab-trainer-uat --resource-group vocab-trainer-rg
 
 # Sprawdź ustawienia
-az webapp config appsettings list --name evt-uat-pl-6e5d --resource-group evt-rg-pl
+az webapp config appsettings list --name vocab-trainer-uat --resource-group vocab-trainer-rg
 ```
 
 ### Baza danych niedostępna
 ```bash
 # Sprawdź firewall PostgreSQL
-az postgres flexible-server firewall-rule list --resource-group evt-rg-pl --name evt-pg-pl-6e5d
+az postgres flexible-server firewall-rule list --resource-group vocab-trainer-rg --name vocab-trainer-db
 
 # Sprawdź status serwera
-az postgres flexible-server show --resource-group evt-rg-pl --name evt-pg-pl-6e5d --query "state"
+az postgres flexible-server show --resource-group vocab-trainer-rg --name vocab-trainer-db --query "state"
 ```
 
 ---
@@ -302,7 +312,7 @@ gh workflow run destroy-infra.yml
 # Wpisz: destroy
 
 # Opcja 2: Ręcznie (szybsze)
-az group delete --name evt-rg-pl --yes --no-wait
+az group delete --name vocab-trainer-rg --yes --no-wait
 ```
 
 ---
