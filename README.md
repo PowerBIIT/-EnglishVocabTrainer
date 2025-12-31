@@ -48,22 +48,22 @@ and AI‑powered word intake with multi‑file upload.
 
 1. **Sprawdź wdrożenie UAT:**
    ```bash
-   curl https://henio-uat.azurewebsites.net/api/health
-   # docelowo (po domenie): https://uat.henio.app/api/health
+   curl https://uat.henio.app/api/health
+   # fallback (Azure): https://henio-uat.azurewebsites.net/api/health
    ```
    Oczekiwana odpowiedź: `"status":"ok"`, `version` zgodna z `package.json`, `commit` zgodny z deployem
 
 2. **Sprawdź panel admina:**
    - Zaloguj się kontem z `ADMIN_EMAILS`
-   - Otwórz https://henio-uat.azurewebsites.net/admin
+   - Otwórz https://uat.henio.app/admin
    - Przełącz język w nagłówku (PL/EN)
    - Sprawdź zakładkę "Zgłoszenia" i nadaj dostęp
    - Zmień np. `MAX_ACTIVE_USERS` i zapisz
 
 3. **Środowisko:**
    - Region: Poland Central
-   - UAT: https://henio-uat.azurewebsites.net (docelowo: https://uat.henio.app)
-   - PRD: nieutworzone (docelowo: https://henio.app)
+   - UAT: https://uat.henio.app (Azure fallback: https://henio-uat.azurewebsites.net)
+   - PRD: https://henio.app (Azure fallback: https://henio-prd.azurewebsites.net)
    - Deployment: GitHub Actions (`.github/workflows/`)
    - Aktualne adresy i domeny: `docs/DEPLOYMENT_AZURE.md` i `docs/RUNBOOK.md`
 

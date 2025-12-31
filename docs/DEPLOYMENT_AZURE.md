@@ -98,8 +98,8 @@ gh secret set AZURE_RESOURCE_GROUP --env uat --body "${RG}"
 gh secret set AZURE_WEBAPP_NAME_UAT --env uat --body "${APP_UAT}"
 gh secret set AZURE_WEBAPP_PUBLISH_PROFILE_UAT --env uat --body "$UAT_PROFILE"
 gh secret set DATABASE_URL --env uat --body "postgresql://${PG_ADMIN}:${PG_PASS}@${PG_SERVER}.postgres.database.azure.com:5432/${DB_UAT}?sslmode=require"
-gh secret set NEXTAUTH_URL --env uat --body "https://henio-uat.azurewebsites.net"
-# Docelowo domena własna, np. https://uat.henio.app
+gh secret set NEXTAUTH_URL --env uat --body "https://uat.henio.app"
+# Fallback (Azure): https://henio-uat.azurewebsites.net
 
 # Wygeneruj NEXTAUTH_SECRET
 NEXTAUTH_SECRET=$(openssl rand -base64 32)
@@ -136,13 +136,16 @@ Domeny `*.azurewebsites.net` bywają blokowane w sieciach firmowych. Jeśli logo
    - Ustaw `NEXTAUTH_URL` na domenę własną.
    - Dodaj redirect URI w Google OAuth (patrz kolejny krok).
 
-Aktualna konfiguracja UAT:
-- Custom domain: brak (używamy https://henio-uat.azurewebsites.net)
+Aktualna konfiguracja domen:
+- UAT: https://uat.henio.app (SSL włączony)
+- PRD: https://henio.app (SSL włączony)
 
-Planowana konfiguracja DNS (OVH, henio.app):
+Aktualna konfiguracja DNS (OVH, henio.app):
 ```
 CNAME  uat.henio.app            -> henio-uat.azurewebsites.net
 TXT    asuid.uat.henio.app      -> (customDomainVerificationId z Azure)
+TXT    asuid.henio.app          -> (customDomainVerificationId z Azure)
+A      henio.app                -> 20.215.12.2
 ```
 Pobierz `customDomainVerificationId`:
 ```bash
@@ -159,14 +162,14 @@ az webapp show --name henio-uat --resource-group henio-rg \
    https://henio-uat.azurewebsites.net
    https://henio-prd.azurewebsites.net
    https://uat.henio.app
-   # (opcjonalnie PRD) https://henio.app
+   https://henio.app
    ```
 4. Dodaj **Authorized redirect URIs** (Azure lub domena własna):
    ```
    https://henio-uat.azurewebsites.net/api/auth/callback/google
    https://henio-prd.azurewebsites.net/api/auth/callback/google
    https://uat.henio.app/api/auth/callback/google
-   # (opcjonalnie PRD) https://henio.app/api/auth/callback/google
+   https://henio.app/api/auth/callback/google
    ```
 5. Zapisz zmiany
 
@@ -191,8 +194,8 @@ gh run watch  # monitoruj na żywo
 
 ```bash
 # Health check
-curl https://henio-uat.azurewebsites.net/api/health
-# docelowo (po domenie): https://uat.henio.app/api/health
+curl https://uat.henio.app/api/health
+# fallback (Azure): https://henio-uat.azurewebsites.net/api/health
 
 # Oczekiwana odpowiedź:
 # {"status":"ok","version":"1.0.16","commit":"abc123","buildTime":"...","env":"production"}
@@ -207,11 +210,11 @@ curl https://henio-uat.azurewebsites.net/api/health
 | Resource Group | `henio-rg` | Poland Central |
 | App Service Plan | `henio-plan` | B1 (Basic) |
 | UAT Web App | `henio-uat` | https://henio-uat.azurewebsites.net |
-| PRD Web App | brak | przygotowane nazewnictwo: `henio-prd` |
+| PRD Web App | `henio-prd` | https://henio-prd.azurewebsites.net |
 | PostgreSQL Server | `henio-db` | Standard_B1ms, PostgreSQL 16 |
 | UAT Database | `henio_uat` | Reset przy każdym deploy |
 | PRD Database | `henio_prd` | Docelowo dla PRD |
-| Custom domain | `henio.app` | nie skonfigurowana |
+| Custom domains | `uat.henio.app`, `henio.app` | skonfigurowane (SSL SNI) |
 
 **Koszt:** ~25 USD/miesiąc (~100 PLN/miesiąc)
 
