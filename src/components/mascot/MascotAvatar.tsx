@@ -24,27 +24,32 @@ export function MascotAvatar({ skinId, size = 120, className }: MascotAvatarProp
             <stop offset="0%" stopColor="#ffffff" />
             <stop offset="100%" stopColor="#f8f8f8" />
           </linearGradient>
-          <linearGradient id={`accent-${skin.id}`} x1="0" x2="1" y1="0" y2="1">
-            <stop offset="0%" stopColor={skin.colors.accent} />
-            <stop offset="100%" stopColor={skin.colors.body} />
+          <linearGradient id={`bg-${skin.id}`} x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stopColor={skin.colors.accent} stopOpacity="0.15" />
+            <stop offset="100%" stopColor={skin.colors.body} stopOpacity="0.2" />
           </linearGradient>
+          <radialGradient id={`bg-radial-${skin.id}`} cx="50%" cy="50%">
+            <stop offset="0%" stopColor={skin.colors.accent} stopOpacity="0.25" />
+            <stop offset="70%" stopColor={skin.colors.body} stopOpacity="0.15" />
+            <stop offset="100%" stopColor={skin.colors.body} stopOpacity="0.3" />
+          </radialGradient>
         </defs>
 
-        {/* Background circle */}
-        <circle cx="60" cy="60" r="54" fill="rgba(255,255,255,0.7)" />
+        {/* Background circle with color */}
+        <circle cx="60" cy="60" r="54" fill={`url(#bg-radial-${skin.id})`} />
 
         {/* Dog body */}
-        <ellipse cx="60" cy="75" rx="28" ry="24" fill={`url(#fur-${skin.id})`} stroke="#e0e0e0" strokeWidth="1" />
+        <ellipse cx="60" cy="75" rx="28" ry="24" fill={`url(#fur-${skin.id})`} stroke="#d0d0d0" strokeWidth="1.5" />
 
         {/* Dog head */}
-        <ellipse cx="60" cy="50" rx="24" ry="26" fill={`url(#fur-${skin.id})`} stroke="#e0e0e0" strokeWidth="1" />
+        <ellipse cx="60" cy="50" rx="24" ry="26" fill={`url(#fur-${skin.id})`} stroke="#d0d0d0" strokeWidth="1.5" />
 
         {/* Ears */}
-        <ellipse cx="42" cy="42" rx="8" ry="16" fill="#f5f5f5" stroke="#e0e0e0" strokeWidth="1" />
-        <ellipse cx="78" cy="42" rx="8" ry="16" fill="#f5f5f5" stroke="#e0e0e0" strokeWidth="1" />
+        <ellipse cx="42" cy="42" rx="8" ry="16" fill="#f5f5f5" stroke="#d0d0d0" strokeWidth="1.5" />
+        <ellipse cx="78" cy="42" rx="8" ry="16" fill="#f5f5f5" stroke="#d0d0d0" strokeWidth="1.5" />
 
         {/* Snout */}
-        <ellipse cx="60" cy="58" rx="12" ry="10" fill="#fafafa" stroke="#e0e0e0" strokeWidth="0.5" />
+        <ellipse cx="60" cy="58" rx="12" ry="10" fill="#fafafa" stroke="#d0d0d0" strokeWidth="1" />
 
         {/* Nose */}
         <ellipse cx="60" cy="60" rx="4" ry="3" fill="#2d2d2d" />
@@ -60,11 +65,11 @@ export function MascotAvatar({ skinId, size = 120, className }: MascotAvatarProp
         <circle cx="60" cy="70" r="3" fill={skin.colors.gear} />
 
         {/* Tail (curved) */}
-        <path d="M 80 78 Q 92 72 94 80 Q 92 84 86 82" fill="#f5f5f5" stroke="#e0e0e0" strokeWidth="1" />
+        <path d="M 80 78 Q 92 72 94 80 Q 92 84 86 82" fill="#f5f5f5" stroke="#d0d0d0" strokeWidth="1.5" />
 
         {/* Front paws */}
-        <ellipse cx="50" cy="95" rx="5" ry="8" fill="#fafafa" stroke="#e0e0e0" strokeWidth="0.5" />
-        <ellipse cx="70" cy="95" rx="5" ry="8" fill="#fafafa" stroke="#e0e0e0" strokeWidth="0.5" />
+        <ellipse cx="50" cy="95" rx="5" ry="8" fill="#fafafa" stroke="#d0d0d0" strokeWidth="1" />
+        <ellipse cx="70" cy="95" rx="5" ry="8" fill="#fafafa" stroke="#d0d0d0" strokeWidth="1" />
 
         {/* Decorative element (bow or accessory) based on skin */}
         {skin.id === 'explorer' && (
