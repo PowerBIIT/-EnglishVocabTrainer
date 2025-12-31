@@ -16,7 +16,7 @@ const privacyCopy = {
     sections: [
       {
         title: '1. Administrator danych',
-        content: `Administratorem Twoich danych osobowych jest English Vocab Trainer.
+        content: `Administratorem Twoich danych osobowych jest PowerBIIT.
         Kontakt w sprawach ochrony danych: info@henio.app`,
       },
       {
@@ -138,7 +138,7 @@ Mozesz rowniez zlozyc skarge do Prezesa Urzedu Ochrony Danych Osobowych (UODO).`
     sections: [
       {
         title: '1. Data Controller',
-        content: `The controller of your personal data is English Vocab Trainer.
+        content: `The controller of your personal data is PowerBIIT.
         Contact for data protection matters: info@henio.app`,
       },
       {
@@ -260,7 +260,7 @@ You can also lodge a complaint with your local data protection authority.`,
     sections: [
       {
         title: '1. Administrator danych',
-        content: `Administratorom vashykh personalnykh danykh ye English Vocab Trainer.
+        content: `Administratorom vashykh personalnykh danykh ye PowerBIIT.
         Kontakt z pytan zakhystu danykh: info@henio.app`,
       },
       {
