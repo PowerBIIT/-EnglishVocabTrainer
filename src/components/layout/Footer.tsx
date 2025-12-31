@@ -8,17 +8,17 @@ const footerCopy = {
   pl: {
     privacy: 'Polityka Prywatnosci',
     terms: 'Regulamin',
-    copyright: (year: number) => `${year} English Vocab Trainer`,
+    copyright: (year: number) => `${year} Henio`,
   },
   en: {
     privacy: 'Privacy Policy',
     terms: 'Terms of Service',
-    copyright: (year: number) => `${year} English Vocab Trainer`,
+    copyright: (year: number) => `${year} Henio`,
   },
   uk: {
     privacy: 'Polityka Konfidencijnosti',
     terms: 'Umovy Korystuvannya',
-    copyright: (year: number) => `${year} English Vocab Trainer`,
+    copyright: (year: number) => `${year} Henio`,
   },
 };
 

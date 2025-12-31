@@ -803,7 +803,7 @@ export default function ProfilePage() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `english-vocab-trainer-export-${Date.now()}.json`;
+      a.download = `henio-export-${Date.now()}.json`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);

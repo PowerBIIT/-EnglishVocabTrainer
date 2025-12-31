@@ -1,4 +1,4 @@
-# English Vocab Trainer
+# Henio
 
 Next.js app for school‑focused vocabulary learning (PL→EN for Polish students, UA→PL for
 Ukrainian students in Poland). Includes onboarding, flashcards, quizzes, pronunciation practice,

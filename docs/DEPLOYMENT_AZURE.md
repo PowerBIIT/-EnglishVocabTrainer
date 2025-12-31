@@ -1,6 +1,6 @@
 # Azure Deployment (UAT + PRD)
 
-Kompletny przewodnik wdrożenia aplikacji English Vocab Trainer na Azure.
+Kompletny przewodnik wdrożenia aplikacji Henio na Azure.
 
 ## Szybki start - wdrożenie od zera
 
