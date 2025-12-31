@@ -124,7 +124,6 @@ Notes:
 - Typecheck: `npm run typecheck`
 - E2E tests: `npm run test:e2e`
 
-CI runs lint + typecheck + unit + e2e on PR and `main`.
 E2E wymaga działającego Postgresa i poprawnego `DATABASE_URL`.
 
 ## Deployment
@@ -134,10 +133,11 @@ for post-deploy verification.
 Ops runbook: `docs/RUNBOOK.md`.
 Production checklist: `docs/PRODUCTION_CHECKLIST.md`.
 
-## CI/CD
-- `CI`: `.github/workflows/ci.yml`
-- `Deploy UAT`: `.github/workflows/deploy-uat.yml` (push to `main`)
-- `Deploy PRD`: `.github/workflows/deploy-prd.yml` (manual)
+## GitHub Workflows
+- `deploy-uat.yml` - Auto-deploy to UAT on push to `main` (runs lint + unit tests)
+- `deploy-prd.yml` - Manual deploy to production
+- `provision-infra.yml` - One-time Azure infrastructure provisioning
+- `destroy-infra.yml` - Teardown Azure infrastructure
 
 ## Data model
 Migrations are stored in `prisma/migrations`. Deployments run
