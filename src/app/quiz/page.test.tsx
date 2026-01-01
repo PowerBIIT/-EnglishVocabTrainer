@@ -49,7 +49,7 @@ describe('QuizPage', () => {
 
     const setButton = screen.getByRole('button', { name: /Biologia/ });
     await waitFor(() => {
-      expect(setButton).toHaveClass('bg-primary-500');
+      expect(setButton).toHaveClass('from-primary-500');
     });
   });
 });
