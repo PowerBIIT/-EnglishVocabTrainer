@@ -12,17 +12,30 @@ const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models'
 const DEFAULT_MODEL = DEFAULT_GEMINI_MODEL;
 const GEMINI_TIMEOUT_MS = 20000;
 
+interface GeminiUsageMetadata {
+  promptTokenCount: number;
+  candidatesTokenCount: number;
+  totalTokenCount: number;
+}
+
 interface GeminiResponse {
   candidates?: {
     content: {
       parts: { text: string }[];
     };
   }[];
+  usageMetadata?: GeminiUsageMetadata;
   error?: {
     message: string;
     code: number;
     status?: string;
   };
+}
+
+export interface GeminiGenerateResult {
+  content: string;
+  usage: GeminiUsageMetadata;
+  model: string;
 }
 
 interface GenerateOptions {
@@ -40,10 +53,10 @@ export class GeminiService {
     this.apiKey = apiKey;
   }
 
-  private async request(
+  private async requestWithMetadata(
     body: Record<string, unknown>,
     options: GenerateOptions = {}
-  ): Promise<string> {
+  ): Promise<{ content: string; usage: GeminiUsageMetadata; model: string }> {
     const {
       temperature = 0.7,
       maxOutputTokens = 1024,
@@ -114,7 +127,13 @@ export class GeminiService {
         });
       }
 
-      return content;
+      const usage: GeminiUsageMetadata = data?.usageMetadata ?? {
+        promptTokenCount: 0,
+        candidatesTokenCount: 0,
+        totalTokenCount: 0,
+      };
+
+      return { content, usage, model };
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw createGeminiTimeoutError();
@@ -129,7 +148,20 @@ export class GeminiService {
     prompt: string,
     options: GenerateOptions = {}
   ): Promise<string> {
-    return this.request(
+    const result = await this.requestWithMetadata(
+      {
+        contents: [{ parts: [{ text: prompt }] }],
+      },
+      options
+    );
+    return result.content;
+  }
+
+  async generateWithMetadata(
+    prompt: string,
+    options: GenerateOptions = {}
+  ): Promise<GeminiGenerateResult> {
+    return this.requestWithMetadata(
       {
         contents: [{ parts: [{ text: prompt }] }],
       },
@@ -143,7 +175,34 @@ export class GeminiService {
     mimeType: string = 'image/jpeg',
     options: GenerateOptions = {}
   ): Promise<string> {
-    return this.request(
+    const result = await this.requestWithMetadata(
+      {
+        contents: [
+          {
+            parts: [
+              { text: prompt },
+              {
+                inlineData: {
+                  mimeType,
+                  data: imageBase64,
+                },
+              },
+            ],
+          },
+        ],
+      },
+      options
+    );
+    return result.content;
+  }
+
+  async generateWithImageAndMetadata(
+    prompt: string,
+    imageBase64: string,
+    mimeType: string = 'image/jpeg',
+    options: GenerateOptions = {}
+  ): Promise<GeminiGenerateResult> {
+    return this.requestWithMetadata(
       {
         contents: [
           {
@@ -450,6 +509,53 @@ Provide:
 6. A short memory tip
 
 Respond in ${getLanguageName(feedbackLanguage)}. Do not use emojis.`,
+
+  revenueStrategy: (
+    stats: {
+      mrr: number;
+      arr: number;
+      activeSubscribers: number;
+      trialConversion: number;
+      churnRate: number;
+      aiCostPerUser: number;
+      tokens: { input: number; output: number; cost: number };
+      topFeatures: Array<{ name: string; usage: number; cost: number }>;
+    },
+    userMessage: string,
+    feedbackLanguage: FeedbackLanguage
+  ) => `
+You are a SaaS revenue strategist for an AI-powered vocabulary learning app called "Henio".
+Your role is to analyze metrics and provide actionable revenue optimization recommendations.
+Keep responses concise and practical. Use bullet points when helpful. Avoid emojis.
+Consider the education context (students aged 11-16 in Poland and Ukraine).
+
+${SAFETY_RULES}
+
+Current business metrics:
+- MRR (Monthly Recurring Revenue): $${(stats.mrr / 100).toFixed(2)}
+- ARR (Annual Recurring Revenue): $${(stats.arr / 100).toFixed(2)}
+- Active subscribers: ${stats.activeSubscribers}
+- Trial conversion rate: ${stats.trialConversion.toFixed(1)}%
+- Monthly churn rate: ${stats.churnRate.toFixed(1)}%
+- AI cost per active user: $${stats.aiCostPerUser.toFixed(4)}/month
+
+AI token usage this month:
+- Input tokens: ${stats.tokens.input.toLocaleString()}
+- Output tokens: ${stats.tokens.output.toLocaleString()}
+- Total AI cost: $${stats.tokens.cost.toFixed(2)}
+
+Top features by AI cost:
+${stats.topFeatures.map((f) => `- ${f.name}: ${f.usage.toLocaleString()} requests, $${f.cost.toFixed(2)} cost`).join('\n')}
+
+Admin question: "${userMessage}"
+
+Provide specific, actionable recommendations. Consider:
+1. Pricing optimization (plan tiers, feature gating)
+2. Cost reduction (caching, model selection, usage limits)
+3. Growth opportunities (upselling, retention, expansion)
+4. Unit economics (LTV vs CAC, margin improvement)
+
+Respond in ${getLanguageName(feedbackLanguage)}.`,
 };
 
 // Helper to safely parse JSON from AI response

@@ -32,6 +32,8 @@ model User {
   plan     UserPlan?
   usageCounters UsageCounter[]
   subscription  Subscription?
+  aiRequestLogs AiRequestLog[]
+  aiDailyStats  AiDailyStats[]
 }
 
 model UserState {
@@ -195,4 +197,101 @@ model Subscription {
 
   @@index([stripeCustomerId])
   @@index([stripeSubscriptionId])
+}
+
+// AI Token Analytics - individual request logs
+model AiRequestLog {
+  id           String   @id @default(cuid())
+  userId       String
+  sessionId    String?
+  feature      String   // generate-words, tutor, pronunciation, etc.
+  model        String   // gemini-3-flash-preview, gemini-2.5-pro
+  languagePair String?  // pl-en, uk-pl
+
+  inputTokens  Int
+  outputTokens Int
+  totalTokens  Int
+
+  inputCost    Float    @default(0)
+  outputCost   Float    @default(0)
+  totalCost    Float    @default(0)
+
+  durationMs   Int
+  success      Boolean  @default(true)
+  errorType    String?
+  errorMessage String?
+
+  createdAt    DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([feature, createdAt])
+  @@index([createdAt])
+  @@index([sessionId])
+}
+
+// AI Token Analytics - daily aggregates per user/feature
+model AiDailyStats {
+  id           String   @id @default(cuid())
+  date         DateTime @db.Date
+  userId       String
+  feature      String
+  model        String
+  languagePair String?
+
+  requestCount Int      @default(0)
+  successCount Int      @default(0)
+  errorCount   Int      @default(0)
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  totalCost    Float    @default(0)
+  avgDurationMs Int     @default(0)
+  maxDurationMs Int     @default(0)
+  minDurationMs Int     @default(0)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([date, userId, feature, model])
+  @@index([date])
+  @@index([userId, date])
+}
+
+// AI Token Analytics - global daily aggregates
+model AiGlobalDailyStats {
+  id           String   @id @default(cuid())
+  date         DateTime @db.Date
+  feature      String
+  model        String
+
+  requestCount Int      @default(0)
+  successCount Int      @default(0)
+  errorCount   Int      @default(0)
+  uniqueUsers  Int      @default(0)
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  totalCost    Float    @default(0)
+  avgDurationMs Int     @default(0)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([date, feature, model])
+  @@index([date])
+}
+
+// Revenue Strategy Chat - message history
+model RevenueChatMessage {
+  id              String   @id @default(cuid())
+  sessionId       String
+  role            String   // 'user' | 'assistant'
+  content         String   @db.Text
+  contextSnapshot Json?
+
+  createdAt       DateTime @default(now())
+
+  @@index([sessionId, createdAt])
 }

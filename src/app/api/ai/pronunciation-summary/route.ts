@@ -13,6 +13,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
+import { logAiRequest } from '@/lib/aiTelemetry';
 
 type SummaryWordInput = {
   word: string;
@@ -128,13 +129,28 @@ export async function POST(request: NextRequest) {
     });
     const finalPrompt = await buildPromptWithOverlays('pronunciation-summary', prompt);
 
-    const response = await gemini.generate(finalPrompt, {
+    const startTime = Date.now();
+    const response = await gemini.generateWithMetadata(finalPrompt, {
       temperature: 0.4,
       maxOutputTokens: 256,
       model,
     });
+    const durationMs = Date.now() - startTime;
 
-    const result = parseAIResponse<SummaryResult>(response, { logErrors: false });
+    // Log telemetry (async, non-blocking)
+    const languagePair = `${safeNativeLanguage}-${safeTargetLanguage}`;
+    logAiRequest({
+      userId: session.user.id,
+      feature: 'pronunciation-summary',
+      model: response.model,
+      languagePair,
+      inputTokens: response.usage.promptTokenCount,
+      outputTokens: response.usage.candidatesTokenCount,
+      durationMs,
+      success: true,
+    }).catch(console.error);
+
+    const result = parseAIResponse<SummaryResult>(response.content, { logErrors: false });
 
     if (!result.summary || !Array.isArray(result.tips)) {
       throw new Error('Invalid response structure from Gemini');

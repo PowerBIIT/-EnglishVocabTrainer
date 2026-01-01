@@ -13,6 +13,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
+import { logAiRequest } from '@/lib/aiTelemetry';
 
 export async function POST(request: NextRequest) {
   try {
@@ -82,13 +83,28 @@ export async function POST(request: NextRequest) {
     );
     const finalPrompt = await buildPromptWithOverlays('explain-word', prompt);
 
-    const response = await gemini.generate(finalPrompt, {
+    const startTime = Date.now();
+    const result = await gemini.generateWithMetadata(finalPrompt, {
       temperature: 0.7,
       maxOutputTokens: 1024,
       model,
     });
+    const durationMs = Date.now() - startTime;
 
-    return NextResponse.json({ explanation: response });
+    // Log telemetry (async, non-blocking)
+    const languagePair = `${safeNativeLanguage}-${safeTargetLanguage}`;
+    logAiRequest({
+      userId: session.user.id,
+      feature: 'explain-word',
+      model: result.model,
+      languagePair,
+      inputTokens: result.usage.promptTokenCount,
+      outputTokens: result.usage.candidatesTokenCount,
+      durationMs,
+      success: true,
+    }).catch(console.error);
+
+    return NextResponse.json({ explanation: result.content });
   } catch (error) {
     console.error('Word explanation error:', error);
     const mapped = mapGeminiError(error);

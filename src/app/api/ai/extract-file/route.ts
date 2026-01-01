@@ -9,6 +9,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
+import { logAiRequest } from '@/lib/aiTelemetry';
 
 interface ExtractedWord {
   target: string;
@@ -161,13 +162,28 @@ export async function POST(request: NextRequest) {
     const prompt = AI_PROMPTS.parseText(safeText, targetLanguage, nativeLanguage);
     const finalPrompt = await buildPromptWithOverlays('parse-text', prompt);
 
-    const response = await gemini.generate(finalPrompt, {
+    const startTime = Date.now();
+    const response = await gemini.generateWithMetadata(finalPrompt, {
       temperature: 0.3,
       maxOutputTokens: 2048,
       model,
     });
+    const durationMs = Date.now() - startTime;
 
-    const result = parseAIResponse<ExtractResult>(response);
+    // Log telemetry (async, non-blocking)
+    const languagePair = `${nativeLanguage}-${targetLanguage}`;
+    logAiRequest({
+      userId: session.user.id,
+      feature: 'extract-file',
+      model: response.model,
+      languagePair,
+      inputTokens: response.usage.promptTokenCount,
+      outputTokens: response.usage.candidatesTokenCount,
+      durationMs,
+      success: true,
+    }).catch(console.error);
+
+    const result = parseAIResponse<ExtractResult>(response.content);
 
     return NextResponse.json({
       ...result,

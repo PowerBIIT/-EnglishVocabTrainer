@@ -9,6 +9,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
+import { logAiRequest } from '@/lib/aiTelemetry';
 
 interface ParsedWord {
   target: string;
@@ -85,14 +86,29 @@ export async function POST(request: NextRequest) {
     );
     const finalPrompt = await buildPromptWithOverlays('parse-text', prompt);
 
-    const response = await gemini.generate(finalPrompt, {
+    const startTime = Date.now();
+    const response = await gemini.generateWithMetadata(finalPrompt, {
       temperature: 0.3,
       maxOutputTokens: 1024,
       model,
     });
+    const durationMs = Date.now() - startTime;
+
+    // Log telemetry (async, non-blocking)
+    const languagePair = `${safeNativeLanguage}-${safeTargetLanguage}`;
+    logAiRequest({
+      userId: session.user.id,
+      feature: 'parse-text',
+      model: response.model,
+      languagePair,
+      inputTokens: response.usage.promptTokenCount,
+      outputTokens: response.usage.candidatesTokenCount,
+      durationMs,
+      success: true,
+    }).catch(console.error);
 
     try {
-      const result = parseAIResponse<ParseResult>(response, { logErrors: false });
+      const result = parseAIResponse<ParseResult>(response.content, { logErrors: false });
       return NextResponse.json(result);
     } catch {
       return NextResponse.json({

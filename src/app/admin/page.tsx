@@ -9,6 +9,8 @@ import { StatsSection } from '@/components/admin/StatsSection';
 import { UserManagementSection } from '@/components/admin/UserManagementSection';
 import { SubscriptionManagementSection } from '@/components/admin/SubscriptionManagementSection';
 import { PricingSection } from '@/components/admin/PricingSection';
+import { AiAnalyticsSection } from '@/components/admin/AiAnalyticsSection';
+import { RevenueStrategyChatSection } from '@/components/admin/RevenueStrategyChatSection';
 import { Badge } from '@/components/ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { useAdminData } from '@/hooks/useAdminData';
@@ -16,7 +18,7 @@ import { useLanguage } from '@/lib/i18n';
 import { useVocabStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'config' | 'ai' | 'users' | 'requests' | 'subscriptions' | 'pricing' | 'stats';
+type AdminTab = 'config' | 'ai' | 'users' | 'requests' | 'subscriptions' | 'pricing' | 'stats' | 'ai-analytics';
 
 const adminCopy = {
   pl: {
@@ -34,6 +36,7 @@ const adminCopy = {
       subscriptions: 'Subskrypcje',
       pricing: 'Cennik',
       stats: 'Statystyki',
+      'ai-analytics': 'AI Analytics',
     },
     requestsTitle: 'Zgłoszenia',
     requestsDescription: 'Użytkownicy oczekujący na dostęp.',
@@ -54,6 +57,7 @@ const adminCopy = {
       subscriptions: 'Subscriptions',
       pricing: 'Pricing',
       stats: 'Statistics',
+      'ai-analytics': 'AI Analytics',
     },
     requestsTitle: 'Requests',
     requestsDescription: 'Users waiting for access.',
@@ -233,6 +237,7 @@ export default function AdminPage() {
           <TabsTrigger value="subscriptions">{t.tabs.subscriptions}</TabsTrigger>
           <TabsTrigger value="pricing">{t.tabs.pricing}</TabsTrigger>
           <TabsTrigger value="stats">{t.tabs.stats}</TabsTrigger>
+          <TabsTrigger value="ai-analytics">{t.tabs['ai-analytics']}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="config">
@@ -365,14 +370,25 @@ export default function AdminPage() {
         </TabsContent>
 
         <TabsContent value="stats">
-          <StatsSection
-            stats={stats}
-            loading={statsLoading}
-            error={statsError}
-            revenueStats={revenueStats}
-            revenueLoading={revenueLoading}
-            revenueError={revenueError}
-          />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <StatsSection
+                stats={stats}
+                loading={statsLoading}
+                error={statsError}
+                revenueStats={revenueStats}
+                revenueLoading={revenueLoading}
+                revenueError={revenueError}
+              />
+            </div>
+            <div className="lg:col-span-1">
+              <RevenueStrategyChatSection />
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="ai-analytics">
+          <AiAnalyticsSection />
         </TabsContent>
       </Tabs>
     </div>

@@ -13,6 +13,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
+import { logAiRequest } from '@/lib/aiTelemetry';
 
 interface PhonemeAnalysis {
   phoneme: string;
@@ -125,17 +126,32 @@ export async function POST(request: NextRequest) {
       console.log('Expected:', expectedValue, '| Spoken:', spokenValue);
     }
 
-    const response = await gemini.generate(finalPrompt, {
+    const startTime = Date.now();
+    const response = await gemini.generateWithMetadata(finalPrompt, {
       temperature: 0.3,
       maxOutputTokens: 512,
       model,
     });
+    const durationMs = Date.now() - startTime;
+
+    // Log telemetry (async, non-blocking)
+    const languagePair = `${safeNativeLanguage}-${safeTargetLanguage}`;
+    logAiRequest({
+      userId: session.user.id,
+      feature: 'evaluate-pronunciation',
+      model: response.model,
+      languagePair,
+      inputTokens: response.usage.promptTokenCount,
+      outputTokens: response.usage.candidatesTokenCount,
+      durationMs,
+      success: true,
+    }).catch(console.error);
 
     if (process.env.NODE_ENV !== 'production') {
-      console.log('Gemini raw response:', response);
+      console.log('Gemini raw response:', response.content);
     }
 
-    const result = parseAIResponse<EvaluationResult>(response);
+    const result = parseAIResponse<EvaluationResult>(response.content);
 
     // Validate required fields
     if (typeof result.score !== 'number' || !result.feedback) {

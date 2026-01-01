@@ -9,6 +9,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
+import { logAiRequest } from '@/lib/aiTelemetry';
 
 interface ExtractedWord {
   target: string;
@@ -164,14 +165,31 @@ export async function POST(request: NextRequest) {
       responseSchema: IMAGE_RESPONSE_SCHEMA,
     });
 
+    const languagePair = `${safeNativeLanguage}-${safeTargetLanguage}`;
+
     const extractWithModel = async (modelId: string) => {
-      const response = await gemini.generateWithImage(
+      const startTime = Date.now();
+      const response = await gemini.generateWithImageAndMetadata(
         finalPrompt,
         imagePayload,
         safeMimeType,
         buildImageOptions(modelId)
       );
-      return parseAIResponse<ExtractResult>(response);
+      const durationMs = Date.now() - startTime;
+
+      // Log telemetry (async, non-blocking)
+      logAiRequest({
+        userId: session.user.id,
+        feature: 'extract-image',
+        model: response.model,
+        languagePair,
+        inputTokens: response.usage.promptTokenCount,
+        outputTokens: response.usage.candidatesTokenCount,
+        durationMs,
+        success: true,
+      }).catch(console.error);
+
+      return parseAIResponse<ExtractResult>(response.content);
     };
 
     let result: ExtractResult;

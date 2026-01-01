@@ -13,6 +13,7 @@ import { checkRateLimit } from '@/lib/rateLimit';
 import { enforceAiUsage } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
+import { logAiRequest } from '@/lib/aiTelemetry';
 
 interface GeneratedWord {
   target: string;
@@ -115,13 +116,28 @@ export async function POST(request: NextRequest) {
     );
     const finalPrompt = await buildPromptWithOverlays('generate-words', prompt);
 
-    const response = await gemini.generate(finalPrompt, {
+    const startTime = Date.now();
+    const response = await gemini.generateWithMetadata(finalPrompt, {
       temperature: 0.8,
       maxOutputTokens: 2048,
       model,
     });
+    const durationMs = Date.now() - startTime;
 
-    const result = parseAIResponse<GenerateResult>(response);
+    // Log telemetry (async, non-blocking)
+    const languagePair = `${safeNativeLanguage}-${safeTargetLanguage}`;
+    logAiRequest({
+      userId: session.user.id,
+      feature: 'generate-words',
+      model: response.model,
+      languagePair,
+      inputTokens: response.usage.promptTokenCount,
+      outputTokens: response.usage.candidatesTokenCount,
+      durationMs,
+      success: true,
+    }).catch(console.error);
+
+    const result = parseAIResponse<GenerateResult>(response.content);
 
     if (result.error === 'UNSAFE_TOPIC') {
       return NextResponse.json(
