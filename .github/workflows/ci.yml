@@ -3,14 +3,6 @@ name: CI
 on:
   pull_request:
     branches: [main]
-  push:
-    branches: [main]
-    paths-ignore:
-      - 'docs/**'
-      - '*.md'
-      - '.github/workflows/deploy-*.yml'
-      - '.github/workflows/provision-*.yml'
-      - '.github/workflows/destroy-*.yml'
 
 concurrency:
   group: ci-${{ github.ref }}

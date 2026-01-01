@@ -10,8 +10,8 @@
 - See `docs/PRODUCTION_CHECKLIST.md` before Deploy PRD.
 
 ## Pipeline behavior
-- CI (`.github/workflows/ci.yml`): lint + typecheck + unit tests + build, runs on PR and push to `main`.
-- UAT deploy: push to `main` -> lint, unit -> build -> reset DB -> deploy -> health check -> **E2E tests (blocking)**.
+- CI (`.github/workflows/ci.yml`): lint + typecheck + unit tests + build, runs **only on PRs** to `main`.
+- UAT deploy: push to `main` -> lint, typecheck, unit -> build -> reset DB -> deploy -> health check -> **E2E tests (blocking)**.
 - PRD deploy: manual `Deploy PRD` -> lint, unit -> build -> apply migrations -> deploy -> health check.
 - PRD never resets data.
 
