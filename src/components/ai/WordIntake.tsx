@@ -1389,10 +1389,10 @@ export function WordIntake({
             >
               <div
                 className={cn(
-                  'max-w-[85%] rounded-2xl px-4 py-3',
+                  'max-w-[85%] rounded-2xl px-4 py-3 shadow-md',
                   message.role === 'user'
-                    ? 'bg-primary-500 text-white rounded-br-md'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-bl-md'
+                    ? 'bg-gradient-to-br from-primary-500 to-pink-500 text-white rounded-br-md shadow-primary-500/20'
+                    : 'bg-gradient-to-br from-primary-50 to-blue-50 dark:from-slate-700 dark:to-slate-600 text-slate-800 dark:text-slate-100 rounded-bl-md border border-primary-100 dark:border-slate-600'
                 )}
               >
                 <p className="whitespace-pre-wrap text-sm">{message.content}</p>
@@ -1572,10 +1572,10 @@ export function WordIntake({
             >
               <div
                 className={cn(
-                  'max-w-[85%] rounded-2xl px-3 py-2 text-sm',
+                  'max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-md',
                   message.role === 'user'
-                    ? 'bg-primary-500 text-white rounded-br-md'
-                    : 'bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 rounded-bl-md'
+                    ? 'bg-gradient-to-br from-primary-500 to-pink-500 text-white rounded-br-md shadow-primary-500/20'
+                    : 'bg-gradient-to-br from-primary-50 to-blue-50 dark:from-slate-700 dark:to-slate-600 text-slate-800 dark:text-slate-100 rounded-bl-md border border-primary-100 dark:border-slate-600'
                 )}
               >
                 <p className="whitespace-pre-wrap">{message.content}</p>

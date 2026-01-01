@@ -61,14 +61,14 @@ export function Navigation() {
     : navItems;
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 md:top-0 md:left-0 md:right-auto md:h-screen md:w-24 bg-white/90 dark:bg-slate-900/90 border-t md:border-t-0 md:border-r border-slate-200 dark:border-slate-700 backdrop-blur z-50 pb-[env(safe-area-inset-bottom)] md:pb-0">
+    <nav className="fixed bottom-0 left-0 right-0 md:top-0 md:left-0 md:right-auto md:h-screen md:w-24 bg-white/80 dark:bg-slate-900/80 border-t md:border-t-0 md:border-r border-primary-100/50 dark:border-primary-900/50 backdrop-blur-xl z-50 pb-[env(safe-area-inset-bottom)] md:pb-0 shadow-lg shadow-primary-500/5">
       <div className="max-w-lg md:max-w-none mx-auto px-4 md:px-0 h-full">
         <div className="h-full flex md:flex-col md:items-center md:py-6 md:gap-6">
-          <div className="hidden md:flex flex-col items-center gap-2 text-primary-600">
-            <div className="w-10 h-10 rounded-2xl bg-primary-100 dark:bg-primary-900 flex items-center justify-center font-display text-lg">
-              EV
+          <div className="hidden md:flex flex-col items-center gap-2">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center font-display text-lg text-white shadow-lg shadow-primary-500/30">
+              H
             </div>
-            <span className="text-xs text-slate-500">{labels.brand}</span>
+            <span className="text-xs font-medium bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{labels.brand}</span>
           </div>
           <ul className="flex justify-around items-center h-[calc(4rem+env(safe-area-inset-bottom))] md:h-auto md:flex-col md:gap-3 md:mt-4 w-full">
             {items.map(({ href, icon: Icon, key }) => {
@@ -81,8 +81,8 @@ export function Navigation() {
                     className={cn(
                       'flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all',
                       isActive
-                        ? 'bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 shadow-sm'
-                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300'
+                        ? 'bg-gradient-to-br from-primary-100 to-pink-100 dark:from-primary-900/60 dark:to-pink-900/40 text-primary-700 dark:text-primary-300 shadow-md shadow-primary-500/20'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-900/20'
                     )}
                   >
                     <Icon size={22} className={cn(isActive && 'scale-110')} />

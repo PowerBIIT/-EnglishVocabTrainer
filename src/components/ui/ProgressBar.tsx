@@ -6,7 +6,7 @@ interface ProgressBarProps {
   value: number;
   max?: number;
   size?: 'sm' | 'md' | 'lg';
-  variant?: 'default' | 'success' | 'warning' | 'danger';
+  variant?: 'default' | 'success' | 'warning' | 'danger' | 'gradient';
   showLabel?: boolean;
   className?: string;
 }
@@ -37,7 +37,8 @@ export function ProgressBar({
             variant === 'default' && 'bg-primary-500',
             variant === 'success' && 'bg-success-500',
             variant === 'warning' && 'bg-amber-500',
-            variant === 'danger' && 'bg-error-500'
+            variant === 'danger' && 'bg-error-500',
+            variant === 'gradient' && 'bg-gradient-to-r from-primary-500 via-blue-500 to-pink-500'
           )}
           style={{ width: `${percentage}%` }}
         />
@@ -57,7 +58,7 @@ interface CircularProgressProps {
   max?: number;
   size?: number;
   strokeWidth?: number;
-  variant?: 'default' | 'success' | 'warning' | 'danger';
+  variant?: 'default' | 'success' | 'warning' | 'danger' | 'gradient';
   showLabel?: boolean;
   className?: string;
 }
@@ -79,6 +80,13 @@ export function CircularProgress({
   return (
     <div className={cn('relative inline-flex', className)}>
       <svg width={size} height={size} className="transform -rotate-90">
+        <defs>
+          <linearGradient id="progressGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#8b5cf6" />
+            <stop offset="50%" stopColor="#3b82f6" />
+            <stop offset="100%" stopColor="#ec4899" />
+          </linearGradient>
+        </defs>
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -97,6 +105,7 @@ export function CircularProgress({
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
+          stroke={variant === 'gradient' ? 'url(#progressGradient)' : undefined}
           className={cn(
             'transition-all duration-500 ease-out',
             variant === 'default' && 'stroke-primary-500',

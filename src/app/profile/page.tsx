@@ -845,50 +845,61 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="px-4 py-8 space-y-6 max-w-5xl mx-auto pb-28">
+    <div className="min-h-screen relative overflow-hidden pb-28">
+      {/* Gradient backdrop */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 opacity-5 dark:opacity-10" />
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/3 left-0 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl" />
+      <div className="absolute top-1/2 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl" />
+
+      <div className="relative z-10 px-4 py-8 space-y-6 max-w-5xl mx-auto">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
-          <div className="h-16 w-16 rounded-2xl overflow-hidden bg-primary-100 text-primary-700 flex items-center justify-center font-semibold text-lg">
-            {session?.user?.image ? (
-              <Image
-                src={session.user.image}
-                alt={userName}
-                width={64}
-                height={64}
-                className="h-full w-full object-cover"
-              />
-            ) : (
-              userInitials
-            )}
+          <div className="h-16 w-16 rounded-2xl overflow-hidden bg-gradient-to-br from-primary-500 via-blue-500 to-pink-500 p-0.5 shadow-xl shadow-primary-500/30">
+            <div className="h-full w-full rounded-[14px] overflow-hidden bg-white dark:bg-slate-900 flex items-center justify-center font-semibold text-lg text-primary-700">
+              {session?.user?.image ? (
+                <Image
+                  src={session.user.image}
+                  alt={userName}
+                  width={64}
+                  height={64}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{userInitials}</span>
+              )}
+            </div>
           </div>
           <div>
             <p className="text-sm text-slate-500">{t.profileLabel}</p>
-            <h1 className="font-display text-2xl text-slate-900 dark:text-white">
+            <h1 className="font-display text-2xl bg-gradient-to-r from-primary-600 via-blue-500 to-pink-500 bg-clip-text text-transparent">
               {userName}
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400">{userEmail}</p>
           </div>
         </div>
-        <Button variant="secondary" onClick={() => signOut({ callbackUrl: '/login' })}>
+        <Button variant="secondary" onClick={() => signOut({ callbackUrl: '/login' })} className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800">
           <LogOut size={18} className="mr-2" />
           {t.logout}
         </Button>
       </header>
 
       <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
-        <Card variant="elevated" className="overflow-hidden">
-          <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-primary-600 via-primary-500 to-amber-400 text-white">
+        <Card variant="glass" className="overflow-hidden">
+          <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 text-white">
             <div className="flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <div className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-white/80">
-                  <Compass size={14} />
+                  <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center">
+                    <Compass size={12} />
+                  </div>
                   {t.dailyMission}
                 </div>
                 <h2 className="mt-2 font-display text-xl sm:text-2xl">{missionCopy.title}</h2>
                 <p className="text-xs sm:text-sm text-white/80 mt-2">{missionCopy.description}</p>
               </div>
               <div className="text-right">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/20 px-3 py-1 text-xs">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/20 backdrop-blur-sm px-3 py-1 text-xs">
                   <Sparkles size={14} />
                   +{dailyMission.rewardXp} XP
                 </div>
@@ -900,61 +911,66 @@ export default function ProfilePage() {
             <ProgressBar value={missionProgress} size="sm" className="mt-3 sm:mt-4" />
             <div className="mt-4 sm:mt-5 flex flex-wrap items-center gap-3">
               <Link href={missionRoute.href}>
-                <Button variant="secondary" size="sm" className="sm:px-4 sm:py-2 sm:text-base">
+                <Button variant="secondary" size="sm" className="sm:px-4 sm:py-2 sm:text-base bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white border-white/20">
                   {dailyMission.completed ? t.missionContinue : t.missionStart} •{' '}
                   {missionRoute.label}
                 </Button>
               </Link>
-              <span className="text-xs text-white/80">
+              <span className="text-xs text-white/80 flex items-center gap-1">
+                <Flame size={12} />
                 {t.keepStreak(stats.currentStreak)}
               </span>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card variant="glass">
           <CardContent className="p-6 space-y-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-xs uppercase tracking-wide text-slate-500">{t.levelTitle}</p>
-                <p className="font-semibold text-slate-800 dark:text-slate-100">
+                <p className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                   {t.levelLabel(levelProgress.level)}
                 </p>
               </div>
-              <div className="flex items-center gap-2 text-amber-500">
-                <Star size={18} />
-                <span className="font-semibold">{stats.totalXp} XP</span>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                  <Star size={14} className="text-white" />
+                </div>
+                <span className="font-semibold text-amber-500">{stats.totalXp} XP</span>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <CircularProgress value={levelProgress.percentage} size={72} strokeWidth={6} />
               <div>
                 <p className="text-sm text-slate-500">{t.progressToNext}</p>
-                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                <p className="text-sm font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                   {levelProgress.currentXp} / {levelProgress.nextLevelXp} XP
                 </p>
                 <ProgressBar value={levelProgress.percentage} size="sm" className="mt-2" />
               </div>
             </div>
             <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-800 p-3">
+              <div className="rounded-xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-white/50 dark:border-slate-700/50 p-3">
                 <p className="text-slate-500">{t.masteredWords}</p>
-                <p className="font-semibold text-slate-800 dark:text-slate-100">{masteredCount}</p>
+                <p className="font-semibold text-success-500">{masteredCount}</p>
               </div>
-              <div className="rounded-xl bg-slate-50 dark:bg-slate-800 p-3">
+              <div className="rounded-xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-white/50 dark:border-slate-700/50 p-3">
                 <p className="text-slate-500">{t.allWords}</p>
-                <p className="font-semibold text-slate-800 dark:text-slate-100">{vocabulary.length}</p>
+                <p className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{vocabulary.length}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
+      <Card variant="glass">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <UserCircle size={20} className="text-primary-500" />
-            <h2 className="font-semibold text-slate-800 dark:text-slate-100">{t.collection}</h2>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
+              <UserCircle size={18} className="text-white" />
+            </div>
+            <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{t.collection}</h2>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -963,7 +979,7 @@ export default function ProfilePage() {
           </p>
 
           <div className="space-y-3">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100">{t.badges}</h3>
+            <h3 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{t.badges}</h3>
             {stats.badges.length > 0 ? (
               <div className="flex flex-wrap gap-3">
                 {stats.badges.map((badge) => {
@@ -971,10 +987,12 @@ export default function ProfilePage() {
                   return (
                     <div
                       key={badge.id}
-                      className="flex items-center gap-2 px-3 py-2 bg-amber-50 dark:bg-amber-900/40 rounded-xl"
+                      className="flex items-center gap-2 px-3 py-2 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/40 dark:to-orange-900/40 rounded-xl border border-amber-200 dark:border-amber-800"
                       title={getBadgeDescription(badge)}
                     >
-                      <Icon size={18} className="text-amber-600" />
+                      <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
+                        <Icon size={12} className="text-white" />
+                      </div>
                       <span className="text-sm font-medium text-amber-700 dark:text-amber-200">
                         {getBadgeName(badge)}
                       </span>
@@ -988,7 +1006,7 @@ export default function ProfilePage() {
           </div>
 
           <div className="space-y-3">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100">{t.skins}</h3>
+            <h3 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{t.skins}</h3>
             <div className="grid gap-3 md:grid-cols-2">
               {mascotSkins.map((skin) => (
                 <MascotSkinCard
@@ -1003,11 +1021,13 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card variant="glass">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <Folder size={20} className="text-primary-500" />
-            <h2 className="font-semibold text-slate-800 dark:text-slate-100">{t.setsTitle}</h2>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+              <Folder size={18} className="text-white" />
+            </div>
+            <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{t.setsTitle}</h2>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -1017,9 +1037,9 @@ export default function ProfilePage() {
               value={newSetName}
               onChange={(e) => setNewSetName(e.target.value)}
               placeholder={t.newSetPlaceholder}
-              className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="flex-1 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
-            <Button onClick={handleCreateSet} className="md:w-auto" disabled={!newSetName.trim()}>
+            <Button variant="gradient" onClick={handleCreateSet} className="md:w-auto shadow-lg shadow-primary-500/25" disabled={!newSetName.trim()}>
               <Plus size={18} className="mr-2" />
               {t.addSet}
             </Button>
@@ -1039,7 +1059,7 @@ export default function ProfilePage() {
                   <div
                     key={set.id}
                     data-testid="set-row"
-                    className="flex flex-col gap-3 rounded-2xl border border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-4 md:flex-row md:items-center"
+                    className="flex flex-col gap-3 rounded-2xl border border-white/50 dark:border-slate-700/50 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm p-4 md:flex-row md:items-center"
                   >
                     <div className="flex-1">
                       {isEditing ? (
@@ -1060,7 +1080,7 @@ export default function ProfilePage() {
                       {isEditing ? (
                         <>
                           <Button
-                            variant="secondary"
+                            variant="gradient"
                             size="sm"
                             onClick={handleSaveRename}
                             disabled={!editingSetName.trim()}
@@ -1124,7 +1144,7 @@ export default function ProfilePage() {
       <section id="settings" className="scroll-mt-24 space-y-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="font-semibold text-slate-800 dark:text-slate-100">{t.settingsTitle}</h2>
+            <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{t.settingsTitle}</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">{t.settingsDesc}</p>
           </div>
           <div className="flex items-center gap-3">
@@ -1142,25 +1162,28 @@ export default function ProfilePage() {
               </span>
             )}
             <Button
-              variant="secondary"
+              variant="gradient"
               onClick={handleSaveSettings}
               disabled={saveState === 'saving'}
+              className="shadow-lg shadow-primary-500/25"
             >
               {saveState === 'saving' ? t.saving : t.save}
             </Button>
           </div>
         </div>
         {saveStatusLabel && (
-          <div className="fixed right-4 top-[calc(1rem+env(safe-area-inset-top))] md:top-6 z-50 rounded-full bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-medium text-slate-600 dark:text-slate-300 shadow-lg">
+          <div className="fixed right-4 top-[calc(1rem+env(safe-area-inset-top))] md:top-6 z-50 rounded-full bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border border-primary-200 dark:border-primary-800 px-4 py-2 text-xs font-medium text-primary-600 dark:text-primary-300 shadow-lg shadow-primary-500/10">
             {saveStatusLabel}
           </div>
         )}
-        <Card>
+        <Card variant="glass">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Compass size={20} className="text-primary-500" />
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                <Compass size={18} className="text-white" />
+              </div>
               <div>
-                <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                   {t.learningProfile}
                 </h2>
                 <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -1182,13 +1205,18 @@ export default function ProfilePage() {
                     key={pair.id}
                     onClick={() => setLearningPair(pair.id)}
                     className={cn(
-                      'rounded-2xl border p-4 text-left transition-all',
+                      'rounded-2xl border-2 p-4 text-left transition-all',
                       isSelected
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/40 shadow-lg'
-                        : 'border-slate-200 dark:border-slate-700 hover:border-primary-300'
+                        ? 'border-transparent bg-gradient-to-br from-primary-50 to-pink-50 dark:from-primary-900/40 dark:to-pink-900/40 shadow-lg shadow-primary-500/20 ring-2 ring-primary-500'
+                        : 'border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 hover:border-primary-300 dark:hover:border-primary-600'
                     )}
                   >
-                    <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                    <div className={cn(
+                      'text-sm font-semibold',
+                      isSelected
+                        ? 'bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent'
+                        : 'text-slate-800 dark:text-slate-100'
+                    )}>
                       {label}
                     </div>
                     <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -1202,11 +1230,13 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card variant="glass">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Target size={20} className="text-primary-500" />
-              <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
+                <Target size={18} className="text-white" />
+              </div>
+              <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                 {t.sessionSettings}
               </h2>
             </div>
@@ -1291,11 +1321,13 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card variant="glass">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Volume2 size={20} className="text-primary-500" />
-              <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                <Volume2 size={18} className="text-white" />
+              </div>
+              <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                 {t.pronunciationSettings}
               </h2>
             </div>
@@ -1381,11 +1413,13 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card variant="glass">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Palette size={20} className="text-primary-500" />
-              <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center shadow-lg shadow-pink-500/30">
+                <Palette size={18} className="text-white" />
+              </div>
+              <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                 {t.appearanceSound}
               </h2>
             </div>
@@ -1426,11 +1460,13 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card variant="glass">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Wand2 size={20} className="text-primary-500" />
-              <h2 className="font-semibold text-slate-800 dark:text-slate-100">{t.aiAssistant}</h2>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 via-blue-500 to-pink-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
+                <Wand2 size={18} className="text-white" />
+              </div>
+              <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{t.aiAssistant}</h2>
             </div>
           </CardHeader>
           <CardContent className="divide-y divide-slate-100 dark:divide-slate-700">
@@ -1476,11 +1512,13 @@ export default function ProfilePage() {
         </Card>
       </section>
 
-      <Card>
+      <Card variant="glass">
         <CardHeader>
           <div className="flex items-center gap-2">
-            <ShieldCheck size={20} className="text-primary-500" />
-            <h2 className="font-semibold text-slate-800 dark:text-slate-100">{t.account}</h2>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-500 to-slate-600 flex items-center justify-center shadow-lg">
+              <ShieldCheck size={18} className="text-white" />
+            </div>
+            <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{t.account}</h2>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -1492,39 +1530,39 @@ export default function ProfilePage() {
             <Button
               variant="secondary"
               onClick={() => signOut({ callbackUrl: '/login' })}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800"
             >
               {t.logout}
             </Button>
           </div>
-          <div className="h-px bg-slate-100 dark:bg-slate-700" />
+          <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent" />
           <SettingRow label={t.restartOnboarding} description={t.restartOnboardingDesc}>
             <Button
               variant="secondary"
               onClick={handleRestartOnboarding}
               disabled={isRestartingOnboarding}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm"
             >
               {t.restartOnboardingAction}
             </Button>
           </SettingRow>
-          <div className="h-px bg-slate-100 dark:bg-slate-700" />
+          <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent" />
           <SettingRow label={t.exportData} description={t.exportDataDesc}>
             <Button
               variant="secondary"
               onClick={handleExportData}
               disabled={isExportingData}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm"
             >
               {isExportingData ? t.exportingData : t.exportDataAction}
             </Button>
           </SettingRow>
-          <div className="h-px bg-slate-100 dark:bg-slate-700" />
+          <div className="h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent" />
           <SettingRow label={t.deleteAccount} description={t.deleteAccountDesc}>
             <Button
               variant="secondary"
               onClick={() => setShowDeleteAccountModal(true)}
-              className="w-full sm:w-auto text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
+              className="w-full sm:w-auto text-red-600 hover:text-red-700 bg-red-50/70 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 backdrop-blur-sm"
             >
               {t.deleteAccountAction}
             </Button>
@@ -1535,8 +1573,8 @@ export default function ProfilePage() {
       {/* Delete Account Confirmation Modal */}
       {showDeleteAccountModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl max-w-md w-full p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+          <div className="bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-black/20 max-w-md w-full p-6 space-y-4 border border-white/50 dark:border-slate-700/50">
+            <h3 className="text-lg font-semibold bg-gradient-to-r from-red-600 to-rose-500 bg-clip-text text-transparent">
               {t.deleteAccountConfirm}
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -1547,14 +1585,14 @@ export default function ProfilePage() {
                 variant="secondary"
                 onClick={() => setShowDeleteAccountModal(false)}
                 disabled={isDeletingAccount}
-                className="flex-1"
+                className="flex-1 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm"
               >
                 {t.deleteAccountCancel}
               </Button>
               <Button
                 onClick={handleDeleteAccount}
                 disabled={isDeletingAccount}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                className="flex-1 bg-gradient-to-r from-red-600 to-rose-500 hover:from-red-700 hover:to-rose-600 text-white shadow-lg shadow-red-500/25"
               >
                 {isDeletingAccount ? t.deletingAccount : t.deleteAccountConfirmAction}
               </Button>
@@ -1562,6 +1600,7 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

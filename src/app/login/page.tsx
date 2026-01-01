@@ -186,19 +186,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-3xl grid gap-10 md:grid-cols-[1.1fr_0.9fr] items-center">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
+      {/* Gradient backdrop */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 opacity-10 dark:opacity-20" />
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-500/30 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-pink-500/20 rounded-full blur-3xl" />
+
+      <div className="w-full max-w-3xl grid gap-10 md:grid-cols-[1.1fr_0.9fr] items-center relative z-10">
         <div className="space-y-6">
+          {/* Language selector in top right */}
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/60 px-4 py-2 text-sm text-slate-600 dark:text-slate-300 shadow">
-              <Compass size={18} className="text-primary-600" />
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm px-4 py-2 text-sm text-slate-600 dark:text-slate-300 shadow-lg shadow-primary-500/10">
+              <Compass size={18} className="text-primary-500" />
               {t.tagline}
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs uppercase tracking-wide text-slate-400">
-                {t.languageLabel}
-              </span>
-              <div className="flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/60 p-1 shadow">
+              <div className="flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm p-1 shadow-lg shadow-primary-500/10">
                 {languageOptions.map((option) => {
                   const isActive = option.id === language;
                   return (
@@ -217,10 +220,10 @@ export default function LoginPage() {
                       aria-label={option.name}
                       aria-pressed={isActive}
                       title={option.name}
-                      className={`flex items-center gap-1.5 px-2 py-1 rounded-full text-xs font-semibold transition ${
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
                         isActive
-                          ? 'bg-white text-slate-900 shadow-sm dark:bg-slate-800 dark:text-slate-100'
-                          : 'text-slate-500 hover:text-slate-700 dark:text-slate-300'
+                          ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-md'
+                          : 'text-slate-500 hover:text-primary-600 dark:text-slate-300 dark:hover:text-primary-400'
                       }`}
                     >
                       <FlagIcon src={option.flagSrc} fallback={option.flagEmoji} />
@@ -231,7 +234,7 @@ export default function LoginPage() {
               </div>
             </div>
           </div>
-          <h1 className="font-display text-4xl md:text-5xl text-slate-900 dark:text-white">
+          <h1 className="font-display text-4xl md:text-5xl bg-gradient-to-r from-primary-600 via-blue-500 to-pink-500 bg-clip-text text-transparent">
             Henio
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-300">
@@ -240,13 +243,14 @@ export default function LoginPage() {
           <div className="space-y-3">
             <Button
               size="lg"
+              variant="gradient"
               className="w-full"
               onClick={() => signIn('google', { callbackUrl: '/' })}
             >
               {t.signInGoogle}
             </Button>
             <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
-              <ShieldCheck size={16} className="text-primary-600" />
+              <ShieldCheck size={16} className="text-primary-500" />
               {t.noGuest}
             </div>
           </div>
@@ -287,19 +291,25 @@ export default function LoginPage() {
           )}
         </div>
         <div className="relative">
-          <div className="absolute -top-8 -right-8 h-24 w-24 rounded-full bg-primary-100/70 blur-2xl" />
-          <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/40 p-6 shadow-xl">
+          <div className="absolute -top-8 -right-8 h-32 w-32 rounded-full bg-gradient-to-br from-primary-400 to-pink-400 opacity-40 blur-3xl" />
+          <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-blue-400/30 blur-2xl" />
+          <div className="rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 p-6 shadow-2xl shadow-primary-500/10">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
                 <p className="text-sm text-slate-500 dark:text-slate-400">{t.guideLabel}</p>
-                <p className="font-semibold text-slate-800 dark:text-slate-100">
+                <p className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                   {t.guideNote}
                 </p>
               </div>
-              <Sparkles className="text-amber-500" size={20} />
+              <div className="p-2 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-500/30">
+                <Sparkles className="text-white" size={20} />
+              </div>
             </div>
             <div className="mt-6 flex justify-center">
-              <MascotAvatar skinId="explorer" size={160} />
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary-400/20 to-pink-400/20 rounded-full blur-xl scale-110" />
+                <MascotAvatar skinId="explorer" size={160} />
+              </div>
             </div>
           </div>
         </div>

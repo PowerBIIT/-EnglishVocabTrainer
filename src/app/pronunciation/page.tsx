@@ -1087,216 +1087,256 @@ export default function PronunciationPage() {
   // SETUP SCREEN
   if (sessionState === 'setup') {
     return (
-      <div className="p-4 space-y-6 max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-4">
-          <Link href="/">
-            <button className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
-              <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
-            </button>
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-              {t.title}
-            </h1>
-            <p className="text-sm text-slate-500">{t.setupSubtitle}</p>
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Gradient backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 opacity-5 dark:opacity-10" />
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 left-0 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl" />
+
+        <div className="relative z-10 p-4 space-y-6 max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="flex items-center gap-4">
+            <Link href="/">
+              <button className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 shadow-lg shadow-primary-500/10 transition-all">
+                <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
+              </button>
+            </Link>
+            <div className="flex-1">
+              <h1 className="text-xl font-bold bg-gradient-to-r from-primary-600 via-blue-500 to-pink-500 bg-clip-text text-transparent">
+                {t.title}
+              </h1>
+              <p className="text-sm text-slate-500">{t.setupSubtitle}</p>
+            </div>
           </div>
-        </div>
 
-        {/* Stats summary */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Card className="p-3 text-center">
-            <div className="flex items-center justify-center gap-1 text-amber-500 mb-1">
-              <Flame size={18} />
-              <span className="font-bold">{stats.pronunciationStreak || 0}</span>
-            </div>
-            <p className="text-xs text-slate-500">{t.statsStreak}</p>
-          </Card>
-          <Card className="p-3 text-center">
-            <div className="flex items-center justify-center gap-1 text-primary-500 mb-1">
-              <BarChart3 size={18} />
-              <span className="font-bold">{(stats.averagePronunciationScore || 0).toFixed(1)}</span>
-            </div>
-            <p className="text-xs text-slate-500">{t.statsAverage}</p>
-          </Card>
-          <Card className="p-3 text-center">
-            <div className="flex items-center justify-center gap-1 text-success-500 mb-1">
-              <BookOpen size={18} />
-              <span className="font-bold">{stats.totalPronunciationSessions || 0}</span>
-            </div>
-            <p className="text-xs text-slate-500">{t.statsSessions}</p>
-          </Card>
-        </div>
+          {/* Stats summary */}
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Card variant="glass" className="p-3 text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                  <Flame size={14} className="text-white" />
+                </div>
+                <span className="font-bold text-amber-500">{stats.pronunciationStreak || 0}</span>
+              </div>
+              <p className="text-xs text-slate-500">{t.statsStreak}</p>
+            </Card>
+            <Card variant="glass" className="p-3 text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
+                  <BarChart3 size={14} className="text-white" />
+                </div>
+                <span className="font-bold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{(stats.averagePronunciationScore || 0).toFixed(1)}</span>
+              </div>
+              <p className="text-xs text-slate-500">{t.statsAverage}</p>
+            </Card>
+            <Card variant="glass" className="p-3 text-center">
+              <div className="flex items-center justify-center gap-2 mb-1">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                  <BookOpen size={14} className="text-white" />
+                </div>
+                <span className="font-bold text-success-500">{stats.totalPronunciationSessions || 0}</span>
+              </div>
+              <p className="text-xs text-slate-500">{t.statsSessions}</p>
+            </Card>
+          </div>
 
-        {/* Session length */}
-        <Card>
-          <CardContent className="p-4 space-y-3">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <Settings size={18} />
-              {t.sessionLength}
-            </h3>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {SESSION_LENGTHS.map((len) => (
-                <button
-                  key={len}
-                  onClick={() => setSelectedLength(len)}
-                  className={cn(
-                    'py-2 px-3 rounded-lg font-medium transition-colors',
-                    selectedLength === len
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                  )}
-                >
-                  {len}
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className="p-4 space-y-3">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <BookOpen size={18} />
-              {t.setLabel}
-            </h3>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedSetId('all')}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                  selectedSetId === 'all'
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                )}
-                >
-                {t.allSets(vocabulary.length)}
-              </button>
-              <button
-                onClick={() => setSelectedSetId('unassigned')}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                  selectedSetId === 'unassigned'
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                )}
-                >
-                {t.unassigned(unassignedCount)}
-              </button>
-              {sets.map((set) => (
-                <button
-                  key={set.id}
-                  onClick={() => setSelectedSetId(set.id)}
-                  className={cn(
-                    'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                    selectedSetId === set.id
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                  )}
-                >
-                  {set.name} ({setCounts[set.id] ?? 0})
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Focus mode */}
-        <Card>
-          <CardContent className="p-4 space-y-3">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <Target size={18} />
-              {t.focusMode}
-            </h3>
-            <div className="space-y-2">
-              {availableFocusModes.map((mode) => {
-                const { label, desc } = focusModes[mode];
-                const Icon = FOCUS_MODE_ICONS[mode];
-                const isDisabled = mode === 'weak_words' && weakWordsCount === 0;
-                return (
-                  <button
-                    key={mode}
-                    onClick={() => {
-                      setSelectedFocusMode(mode);
-                      if (mode !== 'phoneme_specific') {
-                        setSelectedPhoneme(undefined);
-                      }
-                    }}
-                    disabled={isDisabled}
-                    className={cn(
-                      'w-full p-3 rounded-lg text-left transition-colors flex items-center gap-3',
-                      selectedFocusMode === mode
-                        ? 'bg-primary-100 dark:bg-primary-900 border-2 border-primary-500'
-                        : 'bg-slate-50 dark:bg-slate-700 hover:bg-slate-100 dark:hover:bg-slate-600',
-                      isDisabled && 'opacity-50 cursor-not-allowed'
-                    )}
-                  >
-                    <Icon size={20} className="text-primary-600 dark:text-primary-400" />
-                    <div>
-                      <p className="font-medium text-slate-800 dark:text-slate-100">
-                        {label}
-                        {mode === 'weak_words' && weakWordsCount > 0 && (
-                          <span className="ml-2 text-sm text-error-500">({weakWordsCount})</span>
-                        )}
-                      </p>
-                      <p className="text-sm text-slate-500">{desc}</p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Phoneme selection (if phoneme_specific) */}
-        {enablePhonemeDrills && selectedFocusMode === 'phoneme_specific' && (
-          <Card>
+          {/* Session length */}
+          <Card variant="glass">
             <CardContent className="p-4 space-y-3">
-              <h3 className="font-semibold text-slate-800 dark:text-slate-100">
-                {t.selectPhoneme}
+              <h3 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center shadow-lg">
+                  <Settings size={14} className="text-white" />
+                </div>
+                {t.sessionLength}
               </h3>
-              <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto sm:grid-cols-2">
-                {phonemeDrills.map((drill) => (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {SESSION_LENGTHS.map((len) => (
                   <button
-                    key={drill.id}
-                    onClick={() => setSelectedPhoneme(drill.phonemeType)}
+                    key={len}
+                    onClick={() => setSelectedLength(len)}
                     className={cn(
-                      'p-2 rounded-lg text-left transition-colors',
-                      selectedPhoneme === drill.phonemeType
-                        ? 'bg-primary-100 dark:bg-primary-900 border-2 border-primary-500'
-                        : 'bg-slate-50 dark:bg-slate-700 hover:bg-slate-100'
+                      'py-2 px-3 rounded-xl font-medium transition-all',
+                      selectedLength === len
+                        ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                        : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
                     )}
                   >
-                    <p className="font-mono text-lg">{drill.phonemeSymbol}</p>
-                    <p className="text-xs text-slate-500">
-                      {language === 'en' ? drill.nameEn : drill.namePl}
-                    </p>
+                    {len}
                   </button>
                 ))}
               </div>
             </CardContent>
           </Card>
-        )}
 
-        {/* Start button */}
-        <Button
-          onClick={startSession}
-          className="w-full py-4 text-lg"
-          disabled={selectedFocusMode === 'phoneme_specific' && !selectedPhoneme}
-        >
-          <Mic size={24} className="mr-2" />
-          {t.startSession}
-        </Button>
+          <Card variant="glass">
+            <CardContent className="p-4 space-y-3">
+              <h3 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <BookOpen size={14} className="text-white" />
+                </div>
+                {t.setLabel}
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setSelectedSetId('all')}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-sm font-medium transition-all',
+                    selectedSetId === 'all'
+                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                      : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                  )}
+                  >
+                  {t.allSets(vocabulary.length)}
+                </button>
+                <button
+                  onClick={() => setSelectedSetId('unassigned')}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-sm font-medium transition-all',
+                    selectedSetId === 'unassigned'
+                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                      : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                  )}
+                  >
+                  {t.unassigned(unassignedCount)}
+                </button>
+                {sets.map((set) => (
+                  <button
+                    key={set.id}
+                    onClick={() => setSelectedSetId(set.id)}
+                    className={cn(
+                      'px-4 py-2 rounded-full text-sm font-medium transition-all',
+                      selectedSetId === set.id
+                        ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                        : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                    )}
+                  >
+                    {set.name} ({setCounts[set.id] ?? 0})
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Link to phoneme drills */}
-        {enablePhonemeDrills && (
-          <Link href="/pronunciation/drills">
-            <Button variant="secondary" className="w-full">
-              <BookOpen size={18} className="mr-2" />
-              {t.phonemeDrills}
-            </Button>
-          </Link>
-        )}
+          {/* Focus mode */}
+          <Card variant="glass">
+            <CardContent className="p-4 space-y-3">
+              <h3 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
+                  <Target size={14} className="text-white" />
+                </div>
+                {t.focusMode}
+              </h3>
+              <div className="space-y-2">
+                {availableFocusModes.map((mode) => {
+                  const { label, desc } = focusModes[mode];
+                  const Icon = FOCUS_MODE_ICONS[mode];
+                  const isDisabled = mode === 'weak_words' && weakWordsCount === 0;
+                  return (
+                    <button
+                      key={mode}
+                      onClick={() => {
+                        setSelectedFocusMode(mode);
+                        if (mode !== 'phoneme_specific') {
+                          setSelectedPhoneme(undefined);
+                        }
+                      }}
+                      disabled={isDisabled}
+                      className={cn(
+                        'w-full p-3 rounded-xl text-left transition-all flex items-center gap-3',
+                        selectedFocusMode === mode
+                          ? 'bg-gradient-to-br from-primary-50 to-pink-50 dark:from-primary-900/40 dark:to-pink-900/40 ring-2 ring-primary-500 shadow-lg shadow-primary-500/20'
+                          : 'bg-white/50 dark:bg-slate-700/50 hover:bg-white dark:hover:bg-slate-700',
+                        isDisabled && 'opacity-50 cursor-not-allowed'
+                      )}
+                    >
+                      <div className={cn(
+                        'w-10 h-10 rounded-xl flex items-center justify-center transition-all',
+                        selectedFocusMode === mode
+                          ? 'bg-gradient-to-br from-primary-500 to-pink-500 shadow-lg shadow-primary-500/30'
+                          : 'bg-slate-100 dark:bg-slate-600'
+                      )}>
+                        <Icon size={18} className={selectedFocusMode === mode ? 'text-white' : 'text-slate-600 dark:text-slate-300'} />
+                      </div>
+                      <div>
+                        <p className={cn(
+                          'font-medium',
+                          selectedFocusMode === mode
+                            ? 'bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent'
+                            : 'text-slate-800 dark:text-slate-100'
+                        )}>
+                          {label}
+                          {mode === 'weak_words' && weakWordsCount > 0 && (
+                            <span className="ml-2 text-sm text-error-500">({weakWordsCount})</span>
+                          )}
+                        </p>
+                        <p className="text-sm text-slate-500">{desc}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Phoneme selection (if phoneme_specific) */}
+          {enablePhonemeDrills && selectedFocusMode === 'phoneme_specific' && (
+            <Card variant="glass">
+              <CardContent className="p-4 space-y-3">
+                <h3 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                    <Target size={14} className="text-white" />
+                  </div>
+                  {t.selectPhoneme}
+                </h3>
+                <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto sm:grid-cols-3">
+                  {phonemeDrills.map((drill) => (
+                    <button
+                      key={drill.id}
+                      onClick={() => setSelectedPhoneme(drill.phonemeType)}
+                      className={cn(
+                        'p-3 rounded-xl text-left transition-all',
+                        selectedPhoneme === drill.phonemeType
+                          ? 'bg-gradient-to-br from-primary-50 to-pink-50 dark:from-primary-900/40 dark:to-pink-900/40 ring-2 ring-primary-500 shadow-lg shadow-primary-500/20'
+                          : 'bg-white/50 dark:bg-slate-700/50 hover:bg-white dark:hover:bg-slate-700'
+                      )}
+                    >
+                      <p className={cn(
+                        'font-mono text-xl',
+                        selectedPhoneme === drill.phonemeType
+                          ? 'bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent'
+                          : 'text-slate-800 dark:text-slate-100'
+                      )}>{drill.phonemeSymbol}</p>
+                      <p className="text-xs text-slate-500">
+                        {language === 'en' ? drill.nameEn : drill.namePl}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Start button */}
+          <Button
+            variant="gradient"
+            onClick={startSession}
+            className="w-full py-4 text-lg shadow-xl shadow-primary-500/25"
+            disabled={selectedFocusMode === 'phoneme_specific' && !selectedPhoneme}
+          >
+            <Mic size={24} className="mr-2" />
+            {t.startSession}
+          </Button>
+
+          {/* Link to phoneme drills */}
+          {enablePhonemeDrills && (
+            <Link href="/pronunciation/drills">
+              <Button variant="secondary" className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800">
+                <BookOpen size={18} className="mr-2" />
+                {t.phonemeDrills}
+              </Button>
+            </Link>
+          )}
+        </div>
       </div>
     );
   }
@@ -1308,117 +1348,147 @@ export default function PronunciationPage() {
     const readinessDelta = readinessSnapshot?.delta ?? 0;
     const readinessDeltaLabel = `${readinessDelta >= 0 ? '+' : ''}${readinessDelta}%`;
     return (
-      <div className="p-4 space-y-6 max-w-2xl mx-auto">
-        <Card variant="elevated" className="text-center p-8">
-          <div className="mx-auto mb-4 w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-900 flex items-center justify-center">
-            <Mic size={32} className="text-primary-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 mb-2">
-            {t.sessionComplete}
-          </h2>
-          <p className="text-slate-600 dark:text-slate-400 mb-4">
-            {t.averageScore(avgScore)}
-          </p>
-          <div className="flex justify-center gap-2 mb-6">{getScoreStars(avgScore)}</div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-            <span className="font-semibold text-slate-700 dark:text-slate-200">
-              {t.readinessTitle}
-            </span>{' '}
-            {readinessPercent}% ·{' '}
-            <span
-              className={cn(
-                'font-semibold',
-                readinessDelta >= 0
-                  ? 'text-success-600 dark:text-success-400'
-                  : 'text-error-600 dark:text-error-400'
-              )}
-            >
-              {t.readinessDelta(readinessDeltaLabel)}
-            </span>
-          </p>
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Gradient backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 opacity-5 dark:opacity-10" />
+        <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl" />
+        <div className="absolute bottom-1/4 left-0 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl" />
 
-          {aiSummary ? (
-            <div className="text-left mb-6">
-              <p className="text-xs uppercase tracking-wide text-slate-500">
-                {t.aiSummaryTitle}
-              </p>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
-                {aiSummary.summary}
-              </p>
-              {aiSummary.tips.length > 0 && (
-                <ul className="mt-2 text-sm text-slate-600 dark:text-slate-400 space-y-1">
-                  {aiSummary.tips.map((tip, index) => (
-                    <li key={`${tip}-${index}`} className="flex gap-2">
-                      <span className="text-slate-400">•</span>
-                      <span>{tip}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+        <div className="relative z-10 p-4 space-y-6 max-w-2xl mx-auto">
+          <Card variant="glass" className="text-center p-8">
+            <div className="mx-auto mb-4 w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-500 via-blue-500 to-pink-500 flex items-center justify-center shadow-xl shadow-primary-500/30">
+              <Mic size={36} className="text-white" />
             </div>
-          ) : (
-            <div className="flex justify-center mb-6">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={requestAiSummary}
-                disabled={aiSummaryStatus === 'loading'}
+            <h2 className="text-2xl font-bold bg-gradient-to-r from-primary-600 via-blue-500 to-pink-500 bg-clip-text text-transparent mb-2">
+              {t.sessionComplete}
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 mb-4">
+              {t.averageScore(avgScore)}
+            </p>
+            <div className="flex justify-center gap-2 mb-6">{getScoreStars(avgScore)}</div>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              <span className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
+                {t.readinessTitle}
+              </span>{' '}
+              {readinessPercent}% ·{' '}
+              <span
+                className={cn(
+                  'font-semibold',
+                  readinessDelta >= 0
+                    ? 'text-success-600 dark:text-success-400'
+                    : 'text-error-600 dark:text-error-400'
+                )}
               >
-                {aiSummaryStatus === 'loading'
-                  ? t.aiSummaryLoading
-                  : t.aiSummaryAction}
-              </Button>
-            </div>
-          )}
+                {t.readinessDelta(readinessDeltaLabel)}
+              </span>
+            </p>
 
-          {/* Session stats */}
-          <div className="grid grid-cols-1 gap-4 mb-6 text-left sm:grid-cols-2">
-            <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
-              <p className="text-sm text-slate-500">{t.wordsLabel}</p>
-              <p className="text-xl font-bold text-slate-800 dark:text-slate-100">
-                {sessionWords.length}
-              </p>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
-              <p className="text-sm text-slate-500">{t.goodPronunciation}</p>
-              <p className="text-xl font-bold text-success-500">
-                {scores.filter((s) => s >= passingScore).length}
-              </p>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
-              <p className="text-sm text-slate-500">{t.xpEarned}</p>
-              <p className="text-xl font-bold text-primary-500">
-                +{scores.filter((s) => s >= passingScore).length * XP_ACTIONS.pronunciation_good}
-              </p>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-700 p-3 rounded-lg">
-              <p className="text-sm text-slate-500">{t.pronunciationStreak}</p>
-              <p className="text-xl font-bold text-amber-500 flex items-center gap-1">
-                <Flame size={20} />
-                {stats.pronunciationStreak}
-              </p>
-            </div>
-          </div>
+            {aiSummary ? (
+              <div className="text-left mb-6 p-4 rounded-xl bg-gradient-to-br from-primary-50/50 to-pink-50/50 dark:from-primary-900/20 dark:to-pink-900/20 border border-primary-100 dark:border-primary-800">
+                <p className="text-xs uppercase tracking-wide bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent font-semibold">
+                  {t.aiSummaryTitle}
+                </p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                  {aiSummary.summary}
+                </p>
+                {aiSummary.tips.length > 0 && (
+                  <ul className="mt-2 text-sm text-slate-600 dark:text-slate-400 space-y-1">
+                    {aiSummary.tips.map((tip, index) => (
+                      <li key={`${tip}-${index}`} className="flex gap-2">
+                        <span className="text-primary-400">•</span>
+                        <span>{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            ) : (
+              <div className="flex justify-center mb-6">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={requestAiSummary}
+                  disabled={aiSummaryStatus === 'loading'}
+                  className="bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm"
+                >
+                  {aiSummaryStatus === 'loading'
+                    ? t.aiSummaryLoading
+                    : t.aiSummaryAction}
+                </Button>
+              </div>
+            )}
 
-          <div className="flex flex-col gap-3">
-            <Button
-              onClick={() => {
-                stopRecognition(true);
-                setAiSummary(null);
-                setAiSummaryStatus('idle');
-                setReadinessSnapshot(null);
-                setSessionState('setup');
-              }}
-            >
-              {t.newSession}
-            </Button>
-            <Link href="/">
-              <Button variant="secondary" className="w-full">
-                {t.backToMenu}
+            {/* Session stats */}
+            <div className="grid grid-cols-2 gap-3 mb-6 text-left">
+              <div className="p-4 rounded-xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-white/50 dark:border-slate-700/50">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center">
+                    <BookOpen size={14} className="text-white" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+                  {sessionWords.length}
+                </p>
+                <p className="text-xs text-slate-500">{t.wordsLabel}</p>
+              </div>
+              <div className="p-4 rounded-xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-white/50 dark:border-slate-700/50">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/30">
+                    <Star size={14} className="text-white" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-success-500">
+                  {scores.filter((s) => s >= passingScore).length}
+                </p>
+                <p className="text-xs text-slate-500">{t.goodPronunciation}</p>
+              </div>
+              <div className="p-4 rounded-xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-white/50 dark:border-slate-700/50">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
+                    <Sparkles size={14} className="text-white" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
+                  +{scores.filter((s) => s >= passingScore).length * XP_ACTIONS.pronunciation_good}
+                </p>
+                <p className="text-xs text-slate-500">{t.xpEarned}</p>
+              </div>
+              <div className="p-4 rounded-xl bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm border border-white/50 dark:border-slate-700/50">
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                    <Flame size={14} className="text-white" />
+                  </div>
+                </div>
+                <p className="text-2xl font-bold text-amber-500">
+                  {stats.pronunciationStreak}
+                </p>
+                <p className="text-xs text-slate-500">{t.pronunciationStreak}</p>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <Button
+                variant="gradient"
+                className="shadow-xl shadow-primary-500/25"
+                onClick={() => {
+                  stopRecognition(true);
+                  setAiSummary(null);
+                  setAiSummaryStatus('idle');
+                  setReadinessSnapshot(null);
+                  setSessionState('setup');
+                }}
+              >
+                {t.newSession}
               </Button>
-            </Link>
-          </div>
-        </Card>
+              <Link href="/">
+                <Button variant="secondary" className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800">
+                  {t.backToMenu}
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -1433,173 +1503,182 @@ export default function PronunciationPage() {
   }
 
   return (
-    <div className="p-4 space-y-6 max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <button
-          onClick={() => {
-            stopRecognition(true);
-            setSessionState('setup');
-          }}
-          className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
-        >
-          <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
-        </button>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-            {t.title}
-          </h1>
-          <p className="text-sm text-slate-500">
-            {t.progressLabel(currentIndex + 1, sessionWords.length)} • {focusModes[selectedFocusMode].label}
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Gradient backdrop */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 opacity-5 dark:opacity-10" />
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 left-0 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl" />
 
-      {/* Progress */}
-      <ProgressBar value={progress} size="sm" />
-
-      {/* Word card */}
-      <Card variant="elevated">
-        <CardContent className="p-6 text-center space-y-4">
-          <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
-            {getTargetText(currentWord)}
-          </h2>
-          <p className="text-lg text-slate-500 font-mono">{currentWord.phonetic}</p>
-          <p className="text-slate-600 dark:text-slate-400">{getNativeText(currentWord)}</p>
-
+      <div className="relative z-10 p-4 space-y-6 max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center gap-4">
           <button
-            onClick={handleSpeak}
-            className="mx-auto flex items-center gap-2 px-4 py-2 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors"
+            onClick={() => {
+              stopRecognition(true);
+              setSessionState('setup');
+            }}
+            className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 shadow-lg shadow-primary-500/10 transition-all"
           >
-            <Volume2 size={20} />
-            {t.listenPronunciation}
+            <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
           </button>
-        </CardContent>
-      </Card>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-primary-600 via-blue-500 to-pink-500 bg-clip-text text-transparent">
+              {t.title}
+            </h1>
+            <p className="text-sm text-slate-500">
+              {t.progressLabel(currentIndex + 1, sessionWords.length)} • {focusModes[selectedFocusMode].label}
+            </p>
+          </div>
+        </div>
 
-      {/* Recording section */}
-      <Card>
-        <CardContent className="p-6 space-y-4">
-          {!result ? (
-            <div className="text-center space-y-4">
-              <p className="text-slate-600 dark:text-slate-400">
-                {isRecording ? t.recordingPromptActive : t.recordingPromptIdle}
-              </p>
+        {/* Progress */}
+        <ProgressBar value={progress} size="sm" />
 
-              <button
-                onClick={isRecording ? stopRecording : startRecording}
-                disabled={isProcessing}
-                className={cn(
-                  'mx-auto w-20 h-20 rounded-full flex items-center justify-center transition-all',
-                  isRecording ? 'bg-error-500 animate-pulse scale-110' : 'bg-primary-500 hover:bg-primary-600',
-                  isProcessing && 'opacity-50 cursor-not-allowed'
-                )}
-              >
-                {isRecording ? (
-                  <Square size={32} className="text-white" />
-                ) : (
-                  <Mic size={32} className="text-white" />
-                )}
-              </button>
+        {/* Word card */}
+        <Card variant="glass">
+          <CardContent className="p-6 text-center space-y-4">
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-primary-600 via-blue-500 to-pink-500 bg-clip-text text-transparent">
+              {getTargetText(currentWord)}
+            </h2>
+            <p className="text-lg text-slate-500 font-mono">{currentWord.phonetic}</p>
+            <p className="text-slate-600 dark:text-slate-400">{getNativeText(currentWord)}</p>
 
-              {/* Status message */}
-              {recordingStatus && !isProcessing && (
-                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
-                  {recordingStatus}
-                </p>
-              )}
-
-              {/* Recognized text display */}
-              {recognizedText && !isProcessing && (
-                <div className="p-3 bg-success-50 dark:bg-success-900/30 rounded-lg">
-                  <p className="text-sm text-success-700 dark:text-success-300">
-                    {t.recognizedLabel(recognizedText)}
-                  </p>
-                </div>
-              )}
-
-              {isProcessing && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-center gap-2">
-                    <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                    <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                    <div className="w-2 h-2 bg-primary-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                  </div>
-                  <p className="text-sm text-primary-600 dark:text-primary-400">
-                    {t.aiAnalyzing}
-                  </p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="text-center">
-                <div className="flex justify-center gap-1 mb-2">{getScoreStars(result.score)}</div>
-                <p className={cn('text-3xl font-bold', getScoreColor(result.score))}>
-                  {result.score}/10
-                </p>
-              </div>
-
-              <div className="p-4 bg-slate-50 dark:bg-slate-700 rounded-xl space-y-3">
-                <p className="text-slate-800 dark:text-slate-100">{result.feedback}</p>
-                {result.tip && (
-                  <p className="text-sm text-primary-600 dark:text-primary-400">
-                    {t.hintLabel} {result.tip}
-                  </p>
-                )}
-                {result.errorPhonemes && result.errorPhonemes.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    <span className="text-xs text-slate-500">{t.errorPhonemes}</span>
-                    {result.errorPhonemes.map((phoneme, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-1 text-xs font-mono bg-error-100 dark:bg-error-900 text-error-700 dark:text-error-300 rounded"
-                      >
-                        {phoneme}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {result.nativeInterference && (
-                  <p className="text-xs text-amber-600 dark:text-amber-400">
-                    {t.polishInterference} {result.nativeInterference}
-                  </p>
-                )}
-                {result.recognized && (
-                  <p className="text-sm text-slate-500">
-                    {t.recognizedLabel(result.recognized)}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex gap-3">
-                <Button variant="secondary" onClick={handleRetry} className="flex-1">
-                  <RotateCcw size={18} className="mr-2" />
-                  {t.repeat}
-                </Button>
-                <Button onClick={handleNext} className="flex-1">
-                  {currentIndex + 1 < sessionWords.length ? t.next : t.finish}
-                  <ChevronRight size={18} className="ml-2" />
-                </Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Session stats */}
-      {scores.length > 0 && (
-        <Card className="bg-slate-50 dark:bg-slate-800">
-          <CardContent className="p-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-slate-600 dark:text-slate-400">{t.sessionAverageLabel}</span>
-              <span className={cn('font-semibold', getScoreColor(avgScore))}>
-                {avgScore.toFixed(1)}/10
-              </span>
-            </div>
+            <button
+              onClick={handleSpeak}
+              className="mx-auto flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary-100 to-pink-100 dark:from-primary-900/50 dark:to-pink-900/50 text-primary-600 dark:text-primary-400 hover:from-primary-200 hover:to-pink-200 dark:hover:from-primary-900 dark:hover:to-pink-900 transition-all shadow-lg shadow-primary-500/10"
+            >
+              <Volume2 size={20} />
+              {t.listenPronunciation}
+            </button>
           </CardContent>
         </Card>
-      )}
+
+        {/* Recording section */}
+        <Card variant="glass">
+          <CardContent className="p-6 space-y-4">
+            {!result ? (
+              <div className="text-center space-y-4">
+                <p className="text-slate-600 dark:text-slate-400">
+                  {isRecording ? t.recordingPromptActive : t.recordingPromptIdle}
+                </p>
+
+                <button
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={isProcessing}
+                  className={cn(
+                    'mx-auto w-24 h-24 rounded-full flex items-center justify-center transition-all shadow-xl',
+                    isRecording
+                      ? 'bg-gradient-to-br from-error-500 to-rose-600 animate-pulse scale-110 shadow-error-500/40'
+                      : 'bg-gradient-to-br from-primary-500 via-blue-500 to-pink-500 hover:scale-105 shadow-primary-500/40',
+                    isProcessing && 'opacity-50 cursor-not-allowed'
+                  )}
+                >
+                  {isRecording ? (
+                    <Square size={32} className="text-white" />
+                  ) : (
+                    <Mic size={32} className="text-white" />
+                  )}
+                </button>
+
+                {/* Status message */}
+                {recordingStatus && !isProcessing && (
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
+                    {recordingStatus}
+                  </p>
+                )}
+
+                {/* Recognized text display */}
+                {recognizedText && !isProcessing && (
+                  <div className="p-3 bg-gradient-to-br from-success-50 to-cyan-50 dark:from-success-900/30 dark:to-cyan-900/30 rounded-xl border border-success-200 dark:border-success-800">
+                    <p className="text-sm text-success-700 dark:text-success-300">
+                      {t.recognizedLabel(recognizedText)}
+                    </p>
+                  </div>
+                )}
+
+                {isProcessing && (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-2 h-2 bg-gradient-to-r from-primary-500 to-pink-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 bg-gradient-to-r from-primary-500 to-pink-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 bg-gradient-to-r from-primary-500 to-pink-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                    <p className="text-sm bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent font-medium">
+                      {t.aiAnalyzing}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <div className="flex justify-center gap-1 mb-2">{getScoreStars(result.score)}</div>
+                  <p className={cn('text-3xl font-bold', getScoreColor(result.score))}>
+                    {result.score}/10
+                  </p>
+                </div>
+
+                <div className="p-4 bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl border border-white/50 dark:border-slate-700/50 space-y-3">
+                  <p className="text-slate-800 dark:text-slate-100">{result.feedback}</p>
+                  {result.tip && (
+                    <p className="text-sm bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent font-medium">
+                      {t.hintLabel} {result.tip}
+                    </p>
+                  )}
+                  {result.errorPhonemes && result.errorPhonemes.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      <span className="text-xs text-slate-500">{t.errorPhonemes}</span>
+                      {result.errorPhonemes.map((phoneme, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-1 text-xs font-mono bg-gradient-to-r from-error-100 to-rose-100 dark:from-error-900/50 dark:to-rose-900/50 text-error-700 dark:text-error-300 rounded-lg"
+                        >
+                          {phoneme}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  {result.nativeInterference && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      {t.polishInterference} {result.nativeInterference}
+                    </p>
+                  )}
+                  {result.recognized && (
+                    <p className="text-sm text-slate-500">
+                      {t.recognizedLabel(result.recognized)}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex gap-3">
+                  <Button variant="secondary" onClick={handleRetry} className="flex-1 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm">
+                    <RotateCcw size={18} className="mr-2" />
+                    {t.repeat}
+                  </Button>
+                  <Button variant="gradient" onClick={handleNext} className="flex-1 shadow-lg shadow-primary-500/25">
+                    {currentIndex + 1 < sessionWords.length ? t.next : t.finish}
+                    <ChevronRight size={18} className="ml-2" />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Session stats */}
+        {scores.length > 0 && (
+          <Card variant="glass">
+            <CardContent className="p-4">
+              <div className="flex justify-between text-sm">
+                <span className="text-slate-600 dark:text-slate-400">{t.sessionAverageLabel}</span>
+                <span className={cn('font-semibold', getScoreColor(avgScore))}>
+                  {avgScore.toFixed(1)}/10
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   );
 }

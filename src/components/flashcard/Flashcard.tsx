@@ -115,19 +115,19 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
           {/* Front */}
           <Card
             variant="elevated"
-            className="flashcard-front flex flex-col items-center justify-center p-6"
+            className="flashcard-front flex flex-col items-center justify-center p-6 border-2 border-transparent hover:border-primary-200 dark:hover:border-primary-700 transition-colors"
           >
             <div className="absolute top-4 right-4">
               <button
                 onClick={handleSpeak}
-                className="p-2 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors"
+                className="p-2 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40 transition-all hover:-translate-y-0.5"
               >
                 <Volume2 size={24} />
               </button>
             </div>
 
             <div className="text-center space-y-4">
-              <h2 className="text-3xl font-bold text-slate-800 dark:text-slate-100">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                 {getTargetText(item)}
               </h2>
               <p className="text-lg text-slate-500 dark:text-slate-400 font-mono">
@@ -142,25 +142,25 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
 
           {/* Back */}
           <Card
-            variant="elevated"
-            className="flashcard-back flex flex-col items-center justify-center p-6 bg-primary-50 dark:bg-slate-700"
+            variant="gradient"
+            className="flashcard-back flex flex-col items-center justify-center p-6"
           >
             <div className="absolute top-4 right-4">
               <button
                 onClick={handleSpeak}
-                className="p-2 rounded-full bg-primary-100 dark:bg-primary-900 text-primary-600 dark:text-primary-400 hover:bg-primary-200 dark:hover:bg-primary-800 transition-colors"
+                className="p-2 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40 transition-all hover:-translate-y-0.5"
               >
                 <Volume2 size={24} />
               </button>
             </div>
 
             <div className="text-center space-y-4">
-              <h2 className="text-2xl font-bold text-primary-700 dark:text-primary-300">
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                 {getNativeText(item)}
               </h2>
 
               {getTargetExample(item) && (
-                <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded-xl">
+                <div className="mt-6 p-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl border border-primary-100 dark:border-primary-800/50">
                   <p className="text-slate-700 dark:text-slate-300 italic">
                     "{getTargetExample(item)}"
                   </p>
@@ -283,11 +283,11 @@ export function FlashcardSession({ words, onComplete }: FlashcardSessionProps) {
       <div className="mb-6">
         <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2">
           <span>{t.progressLabel(currentIndex + 1, allWords.length)}</span>
-          <span>{Math.round(progress)}%</span>
+          <span className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{Math.round(progress)}%</span>
         </div>
-        <div className="h-2 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
+        <div className="h-2.5 bg-slate-200 dark:bg-slate-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-primary-500 transition-all duration-300"
+            className="h-full bg-gradient-to-r from-primary-500 via-blue-500 to-pink-500 transition-all duration-300 rounded-full"
             style={{ width: `${progress}%` }}
           />
         </div>

@@ -24,10 +24,10 @@ export const mascotSkins: MascotSkin[] = [
     descriptionEn: 'Classic bow in warm colors.',
     descriptionUk: 'Класичний бантик у теплих кольорах.',
     colors: {
-      body: '#1f8a80',
+      body: '#8b5cf6',
       accent: '#f59e0b',
-      gear: '#0f3d39',
-      visor: '#f8fafc',
+      gear: '#4c1d95',
+      visor: '#f5f3ff',
     },
   },
   {
@@ -39,10 +39,10 @@ export const mascotSkins: MascotSkin[] = [
     descriptionEn: 'Green collar with spring accents.',
     descriptionUk: 'Зелений нашийник та весняні акценти.',
     colors: {
-      body: '#2f855a',
+      body: '#10b981',
       accent: '#38b2ac',
-      gear: '#1a202c',
-      visor: '#f0fff4',
+      gear: '#064e3b',
+      visor: '#ecfdf5',
     },
   },
   {
@@ -54,9 +54,9 @@ export const mascotSkins: MascotSkin[] = [
     descriptionEn: 'Golden bandana and summer style.',
     descriptionUk: 'Золота бандана та літній стиль.',
     colors: {
-      body: '#c2410c',
-      accent: '#f59e0b',
-      gear: '#7c2d12',
+      body: '#f97316',
+      accent: '#fbbf24',
+      gear: '#c2410c',
       visor: '#fff7ed',
     },
   },
@@ -69,10 +69,10 @@ export const mascotSkins: MascotSkin[] = [
     descriptionEn: 'Blue decorations and snowy accents.',
     descriptionUk: 'Сині прикраси та сніжні акценти.',
     colors: {
-      body: '#1d4ed8',
+      body: '#3b82f6',
       accent: '#38bdf8',
-      gear: '#0f172a',
-      visor: '#e0f2fe',
+      gear: '#1e3a8a',
+      visor: '#eff6ff',
     },
   },
   {

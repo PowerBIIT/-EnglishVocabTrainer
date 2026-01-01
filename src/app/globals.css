@@ -4,28 +4,41 @@
 
 :root {
   --foreground-rgb: 16, 24, 40;
-  --background-start-rgb: 238, 247, 246;
-  --background-end-rgb: 246, 249, 255;
+  --background-start-rgb: 245, 243, 255;
+  --background-end-rgb: 250, 245, 255;
   --surface-rgb: 255, 255, 255;
   --surface-border: 226, 232, 240;
   --shadow-color: 14, 30, 52;
+
+  /* Gradienty */
+  --gradient-hero: linear-gradient(135deg, #7c3aed 0%, #3b82f6 50%, #ec4899 100%);
+  --gradient-card: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+  --gradient-button: linear-gradient(90deg, #8b5cf6 0%, #ec4899 100%);
+  --gradient-accent: linear-gradient(135deg, #a78bfa 0%, #818cf8 100%);
 }
 
 .dark {
   --foreground-rgb: 248, 250, 252;
-  --background-start-rgb: 12, 19, 30;
-  --background-end-rgb: 20, 30, 45;
+  --background-start-rgb: 15, 10, 31;
+  --background-end-rgb: 26, 16, 37;
   --surface-rgb: 17, 24, 39;
   --surface-border: 51, 65, 85;
   --shadow-color: 0, 0, 0;
+
+  /* Gradienty dark */
+  --gradient-hero: linear-gradient(135deg, #4c1d95 0%, #1e3a8a 50%, #9d174d 100%);
+  --gradient-card: linear-gradient(135deg, #5b21b6 0%, #3730a3 100%);
+  --gradient-button: linear-gradient(90deg, #7c3aed 0%, #db2777 100%);
+  --gradient-accent: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
 }
 
 body {
   color: rgb(var(--foreground-rgb));
   background-color: rgb(var(--background-start-rgb));
   background-image:
-    radial-gradient(1200px 600px at 10% -10%, rgba(31, 138, 128, 0.12), transparent 65%),
-    radial-gradient(900px 500px at 90% 0%, rgba(245, 158, 11, 0.12), transparent 60%),
+    radial-gradient(1200px 600px at 10% -10%, rgba(139, 92, 246, 0.15), transparent 65%),
+    radial-gradient(900px 500px at 90% 0%, rgba(236, 72, 153, 0.12), transparent 60%),
+    radial-gradient(600px 400px at 50% 100%, rgba(59, 130, 246, 0.08), transparent 50%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0)),
     linear-gradient(180deg, rgb(var(--background-start-rgb)), rgb(var(--background-end-rgb)));
   min-height: 100vh;
@@ -203,4 +216,96 @@ body.chat-page main {
 
 .xp-gain {
   animation: xpGain 1s ease-out forwards;
+}
+
+/* Shimmer animation for progress bars */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Glow pulse for buttons */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(139, 92, 246, 0.6), 0 0 40px rgba(236, 72, 153, 0.3);
+  }
+}
+
+.glow-pulse {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+/* Gradient text */
+.gradient-text {
+  background: var(--gradient-button);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Gradient border */
+.gradient-border {
+  position: relative;
+  background: rgb(var(--surface-rgb));
+  border-radius: 1.5rem;
+}
+
+.gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: var(--gradient-button);
+  z-index: -1;
+}
+
+/* Glass effect */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass {
+  background: rgba(17, 24, 39, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Gradient hero card */
+.hero-gradient {
+  background: var(--gradient-hero);
+  color: white;
+}
+
+/* Interactive card hover */
+.card-hover {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.15);
+}
+
+.dark .card-hover:hover {
+  box-shadow: 0 20px 40px rgba(139, 92, 246, 0.25);
 }

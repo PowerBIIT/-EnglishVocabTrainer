@@ -275,8 +275,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          <Card variant="elevated" className="overflow-hidden">
-            <CardContent className="p-6 bg-gradient-to-br from-primary-600 via-primary-500 to-amber-400 text-white">
+          <Card variant="hero" className="overflow-hidden">
+            <CardContent className="p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                   <div className="inline-flex items-center gap-2 text-xs uppercase tracking-wide text-white/80">
@@ -298,7 +298,9 @@ export default function HomePage() {
                   </p>
                 </div>
               </div>
-              <ProgressBar value={missionProgress} size="sm" className="mt-4" />
+              <div className="mt-4 bg-white/20 rounded-full">
+                <ProgressBar value={missionProgress} size="sm" variant="gradient" />
+              </div>
               <div className="mt-5 flex flex-wrap items-center gap-3">
                 <Link href="/flashcards">
                   <Button variant="secondary">
@@ -314,9 +316,9 @@ export default function HomePage() {
 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Link href="/flashcards">
-              <Card className="h-full hover:shadow-md transition-shadow">
+              <Card className="h-full card-hover">
                 <CardContent className="p-5 space-y-3">
-                  <div className="w-10 h-10 rounded-2xl bg-primary-100 text-primary-600 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500 to-blue-500 text-white flex items-center justify-center shadow-lg shadow-primary-500/30">
                     <BookOpen size={22} />
                   </div>
                   <div>
@@ -329,9 +331,9 @@ export default function HomePage() {
               </Card>
             </Link>
             <Link href="/quiz">
-              <Card className="h-full hover:shadow-md transition-shadow">
+              <Card className="h-full card-hover">
                 <CardContent className="p-5 space-y-3">
-                  <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-lg shadow-amber-500/30">
                     <Target size={22} />
                   </div>
                   <div>
@@ -344,9 +346,9 @@ export default function HomePage() {
               </Card>
             </Link>
             <Link href="/klasowka">
-              <Card className="h-full hover:shadow-md transition-shadow">
+              <Card className="h-full card-hover">
                 <CardContent className="p-5 space-y-3">
-                  <div className="w-10 h-10 rounded-2xl bg-sky-100 text-sky-600 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-400 to-cyan-500 text-white flex items-center justify-center shadow-lg shadow-sky-500/30">
                     <Zap size={22} />
                   </div>
                   <div>
@@ -359,9 +361,9 @@ export default function HomePage() {
               </Card>
             </Link>
             <Link href={pronunciationHref}>
-              <Card className="h-full hover:shadow-md transition-shadow">
+              <Card className="h-full card-hover">
                 <CardContent className="p-5 space-y-3">
-                  <div className="w-10 h-10 rounded-2xl bg-success-100 text-success-600 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-cyan-400 to-blue-500 text-white flex items-center justify-center shadow-lg shadow-cyan-500/30">
                     <Mic size={22} />
                   </div>
                   <div>
@@ -380,36 +382,39 @@ export default function HomePage() {
         </div>
 
         <div className="space-y-6">
-          <Card className="bg-white/80 dark:bg-slate-900/70 border border-white/60">
+          <Card variant="glass">
             <CardContent className="p-6 space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p className="text-xs uppercase tracking-wide text-slate-500">{t.guide}</p>
-                  <p className="font-semibold text-slate-800 dark:text-slate-100">{userName}</p>
+                  <p className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{userName}</p>
                 </div>
-                <span className="text-xs text-primary-600">{t.adventureMode}</span>
+                <span className="text-xs px-2 py-1 rounded-full bg-gradient-to-r from-primary-100 to-pink-100 dark:from-primary-900/50 dark:to-pink-900/50 text-primary-600 dark:text-primary-300">{t.adventureMode}</span>
               </div>
               <div className="flex justify-center">
-                <MascotAvatar skinId={mascotSkin} size={160} />
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary-400/20 to-pink-400/20 rounded-full blur-xl scale-110" />
+                  <MascotAvatar skinId={mascotSkin} size={160} />
+                </div>
               </div>
-              <div className="rounded-2xl bg-primary-50 dark:bg-primary-900/30 p-4 text-sm text-primary-700 dark:text-primary-200">
+              <div className="rounded-2xl bg-gradient-to-br from-primary-50 to-pink-50 dark:from-primary-900/30 dark:to-pink-900/20 p-4 text-sm text-primary-700 dark:text-primary-200 border border-primary-100 dark:border-primary-800/50">
                 {t.guideNote}
               </div>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card variant="gradient">
             <CardContent className="p-5 flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-              <CircularProgress value={levelProgress.percentage} size={72} strokeWidth={6} />
+              <CircularProgress value={levelProgress.percentage} size={72} strokeWidth={6} variant="gradient" />
               <div>
-                <p className="font-semibold text-slate-800 dark:text-slate-100">
+                <p className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                   {t.levelLabel(levelProgress.level)}
                 </p>
                 <p className="text-sm text-slate-500">{t.progressToNext}</p>
                 <p className="text-sm text-slate-500">
                   {levelProgress.currentXp} / {levelProgress.nextLevelXp} XP
                 </p>
-                <ProgressBar value={levelProgress.percentage} size="sm" className="mt-2" />
+                <ProgressBar value={levelProgress.percentage} size="sm" variant="gradient" className="mt-2" />
               </div>
             </CardContent>
           </Card>

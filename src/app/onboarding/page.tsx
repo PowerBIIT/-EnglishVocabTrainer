@@ -231,7 +231,7 @@ function OnboardingFooter({ children }: OnboardingFooterProps) {
   return (
     <>
       {/* Mobile fixed footer */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-primary-100/50 dark:border-primary-900/50 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(139,92,246,0.1)] z-50">
         <div className="flex flex-wrap gap-3 max-w-4xl mx-auto">
           {children}
         </div>
@@ -422,31 +422,38 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen px-4 py-10 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-10">
-      <div className="mx-auto w-full max-w-4xl space-y-8">
+    <div className="min-h-screen px-4 py-10 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-10 relative overflow-hidden">
+      {/* Gradient backdrop */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 opacity-5 dark:opacity-10" />
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 left-0 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl" />
+
+      <div className="mx-auto w-full max-w-4xl space-y-8 relative z-10">
         <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="text-sm text-slate-500">{t.onboardingLabel}</p>
-            <h1 className="font-display text-3xl text-slate-900 dark:text-white">
+            <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">{t.onboardingLabel}</p>
+            <h1 className="font-display text-3xl bg-gradient-to-r from-primary-600 via-blue-500 to-pink-500 bg-clip-text text-transparent">
               {t.title}
             </h1>
           </div>
           <div className="flex flex-wrap items-center gap-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/70 dark:bg-slate-900/60 px-4 py-2 text-sm text-slate-600">
-              <Flag size={16} className="text-primary-600" />
-              {t.stepLabel(stepIndex, totalSteps)}
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm px-4 py-2 text-sm text-slate-600 dark:text-slate-300 shadow-lg shadow-primary-500/10">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center">
+                <Flag size={12} className="text-white" />
+              </div>
+              <span className="font-medium">{t.stepLabel(stepIndex, totalSteps)}</span>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/70 dark:bg-slate-900/60 px-3 py-2 text-xs text-slate-600">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm px-3 py-2 text-xs text-slate-600 dark:text-slate-300 shadow-lg shadow-primary-500/10">
               <span className="uppercase tracking-wide text-slate-500">{t.languageLabel}</span>
               <div className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 p-1">
                 <button
                   type="button"
                   onClick={() => updateSettings('general', { language: 'pl' })}
                   className={cn(
-                    'px-2.5 py-1 rounded-full text-xs font-semibold transition',
+                    'px-2.5 py-1 rounded-full text-xs font-semibold transition-all',
                     language === 'pl'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
+                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-md'
+                      : 'text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400'
                   )}
                 >
                   PL
@@ -455,10 +462,10 @@ export default function OnboardingPage() {
                   type="button"
                   onClick={() => updateSettings('general', { language: 'en' })}
                   className={cn(
-                    'px-2.5 py-1 rounded-full text-xs font-semibold transition',
+                    'px-2.5 py-1 rounded-full text-xs font-semibold transition-all',
                     language === 'en'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
+                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-md'
+                      : 'text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400'
                   )}
                 >
                   EN
@@ -467,10 +474,10 @@ export default function OnboardingPage() {
                   type="button"
                   onClick={() => updateSettings('general', { language: 'uk' })}
                   className={cn(
-                    'px-2.5 py-1 rounded-full text-xs font-semibold transition',
+                    'px-2.5 py-1 rounded-full text-xs font-semibold transition-all',
                     language === 'uk'
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-500 hover:text-slate-700'
+                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-md'
+                      : 'text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400'
                   )}
                 >
                   UA
@@ -490,38 +497,40 @@ export default function OnboardingPage() {
 
         {step === 'consent' && (
           <section className="space-y-6">
-            <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6 space-y-6">
+            <div className="rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-primary-500/5 p-6 space-y-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                  <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                     {t.consentTitle}
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {t.consentDesc}
                   </p>
                 </div>
-                <Shield className="text-primary-600" size={24} />
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500 to-blue-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
+                  <Shield className="text-white" size={20} />
+                </div>
               </div>
 
               <div className="space-y-4">
-                <label className="flex items-start gap-3 cursor-pointer group">
+                <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-xl hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-colors">
                   <input
                     type="checkbox"
                     checked={termsAccepted}
                     onChange={(e) => setTermsAccepted(e.target.checked)}
-                    className="mt-1 w-5 h-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                    className="mt-0.5 w-5 h-5 rounded-md border-slate-300 text-primary-600 focus:ring-primary-500 focus:ring-offset-0"
                   />
                   <span className="text-sm text-slate-700 dark:text-slate-300">
                     {t.termsCheckbox}
                   </span>
                 </label>
 
-                <label className="flex items-start gap-3 cursor-pointer group">
+                <label className="flex items-start gap-3 cursor-pointer group p-3 rounded-xl hover:bg-primary-50/50 dark:hover:bg-primary-900/20 transition-colors">
                   <input
                     type="checkbox"
                     checked={ageConfirmed}
                     onChange={(e) => setAgeConfirmed(e.target.checked)}
-                    className="mt-1 w-5 h-5 rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                    className="mt-0.5 w-5 h-5 rounded-md border-slate-300 text-primary-600 focus:ring-primary-500 focus:ring-offset-0"
                   />
                   <span className="text-sm text-slate-700 dark:text-slate-300">
                     {t.ageCheckbox}
@@ -533,7 +542,7 @@ export default function OnboardingPage() {
                 <Link
                   href="/privacy"
                   target="_blank"
-                  className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 transition"
+                  className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-pink-500 transition-colors"
                 >
                   {t.privacyLink}
                   <ExternalLink size={14} />
@@ -541,7 +550,7 @@ export default function OnboardingPage() {
                 <Link
                   href="/terms"
                   target="_blank"
-                  className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 transition"
+                  className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:text-pink-500 transition-colors"
                 >
                   {t.termsLink}
                   <ExternalLink size={14} />
@@ -557,6 +566,7 @@ export default function OnboardingPage() {
 
             <OnboardingFooter>
               <Button
+                variant="gradient"
                 onClick={handleConsentSubmit}
                 disabled={!termsAccepted || !ageConfirmed || consentSaving}
                 className="flex-1 md:flex-none"
@@ -569,17 +579,19 @@ export default function OnboardingPage() {
 
         {step === 'path' && (
           <section className="space-y-6">
-            <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6 space-y-4">
+            <div className="rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-primary-500/5 p-6 space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                  <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                     {t.choosePath}
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {t.choosePathDesc}
                   </p>
                 </div>
-                <Flag className="text-primary-600" size={20} />
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
+                  <Flag className="text-white" size={18} />
+                </div>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
@@ -605,13 +617,18 @@ export default function OnboardingPage() {
                       type="button"
                       onClick={() => setLearningPair(option.pairId)}
                       className={cn(
-                        'rounded-2xl border p-4 text-left transition-all',
+                        'rounded-2xl border-2 p-4 text-left transition-all',
                         isSelected
-                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/40 shadow-lg'
-                          : 'border-slate-200 dark:border-slate-700 hover:border-primary-300'
+                          ? 'border-transparent bg-gradient-to-br from-primary-50 to-pink-50 dark:from-primary-900/40 dark:to-pink-900/40 shadow-lg shadow-primary-500/20 ring-2 ring-primary-500'
+                          : 'border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-600 bg-white/50 dark:bg-slate-800/50'
                       )}
                     >
-                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      <div className={cn(
+                        'text-sm font-semibold',
+                        isSelected
+                          ? 'bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent'
+                          : 'text-slate-800 dark:text-slate-100'
+                      )}>
                         {option.title}
                       </div>
                       <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -629,7 +646,7 @@ export default function OnboardingPage() {
               <Button variant="ghost" onClick={skipOnboarding} className="md:flex-initial flex-1">
                 {t.skip}
               </Button>
-              <Button size="lg" onClick={() => setStep('pair')} className="md:flex-initial flex-1">
+              <Button variant="gradient" size="lg" onClick={() => setStep('pair')} className="md:flex-initial flex-1">
                 {t.choosePathAction}
               </Button>
             </OnboardingFooter>
@@ -638,17 +655,19 @@ export default function OnboardingPage() {
 
         {step === 'pair' && (
           <section className="space-y-6">
-            <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6 space-y-4">
+            <div className="rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-primary-500/5 p-6 space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                  <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                     {t.choosePair}
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {t.choosePairDesc}
                   </p>
                 </div>
-                <Sparkles className="text-primary-600" size={20} />
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                  <Sparkles className="text-white" size={18} />
+                </div>
               </div>
 
               <div className="grid gap-3 md:grid-cols-3">
@@ -663,13 +682,18 @@ export default function OnboardingPage() {
                       key={pair.id}
                       onClick={() => setLearningPair(pair.id)}
                       className={cn(
-                        'rounded-2xl border p-4 text-left transition-all',
+                        'rounded-2xl border-2 p-4 text-left transition-all',
                         isSelected
-                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/40 shadow-lg'
-                          : 'border-slate-200 dark:border-slate-700 hover:border-primary-300'
+                          ? 'border-transparent bg-gradient-to-br from-primary-50 to-pink-50 dark:from-primary-900/40 dark:to-pink-900/40 shadow-lg shadow-primary-500/20 ring-2 ring-primary-500'
+                          : 'border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-600 bg-white/50 dark:bg-slate-800/50'
                       )}
                     >
-                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      <div className={cn(
+                        'text-sm font-semibold',
+                        isSelected
+                          ? 'bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent'
+                          : 'text-slate-800 dark:text-slate-100'
+                      )}>
                         {label}
                       </div>
                       <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -687,7 +711,7 @@ export default function OnboardingPage() {
               <Button variant="ghost" onClick={skipOnboarding} className="md:flex-initial flex-1">
                 {t.skip}
               </Button>
-              <Button size="lg" onClick={() => setStep('goal')} className="md:flex-initial flex-1">
+              <Button variant="gradient" size="lg" onClick={() => setStep('goal')} className="md:flex-initial flex-1">
                 {t.choosePairAction}
               </Button>
             </OnboardingFooter>
@@ -696,17 +720,19 @@ export default function OnboardingPage() {
 
         {step === 'goal' && (
           <section className="space-y-6">
-            <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6 space-y-4">
+            <div className="rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-primary-500/5 p-6 space-y-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                  <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                     {t.chooseGoal}
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {t.chooseGoalDesc}
                   </p>
                 </div>
-                <Target className="text-primary-600" size={20} />
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <Target className="text-white" size={18} />
+                </div>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
@@ -719,13 +745,18 @@ export default function OnboardingPage() {
                       type="button"
                       onClick={() => setGoal(option.id)}
                       className={cn(
-                        'rounded-2xl border p-4 text-left transition-all',
+                        'rounded-2xl border-2 p-4 text-left transition-all',
                         isSelected
-                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/40 shadow-lg'
-                          : 'border-slate-200 dark:border-slate-700 hover:border-primary-300'
+                          ? 'border-transparent bg-gradient-to-br from-primary-50 to-pink-50 dark:from-primary-900/40 dark:to-pink-900/40 shadow-lg shadow-primary-500/20 ring-2 ring-primary-500'
+                          : 'border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-600 bg-white/50 dark:bg-slate-800/50'
                       )}
                     >
-                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      <div className={cn(
+                        'text-sm font-semibold',
+                        isSelected
+                          ? 'bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent'
+                          : 'text-slate-800 dark:text-slate-100'
+                      )}>
                         {option.label}
                       </div>
                       <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
@@ -744,6 +775,7 @@ export default function OnboardingPage() {
                 {t.skip}
               </Button>
               <Button
+                variant="gradient"
                 size="lg"
                 onClick={() => {
                   applyGoalSettings(goal);
@@ -759,17 +791,19 @@ export default function OnboardingPage() {
 
         {step === 'skin' && (
           <section className="space-y-6">
-            <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6">
+            <div className="rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-primary-500/5 p-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                  <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                     {t.chooseSkin}
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {t.chooseSkinDesc}
                   </p>
                 </div>
-                <Sparkles className="text-amber-500" size={20} />
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                  <Sparkles className="text-white" size={18} />
+                </div>
               </div>
               <div className="mt-6 grid gap-4 md:grid-cols-2">
                 {mascotSkins.map((skin) => (
@@ -788,6 +822,7 @@ export default function OnboardingPage() {
                 {t.skip}
               </Button>
               <Button
+                variant="gradient"
                 size="lg"
                 onClick={async () => {
                   await saveSkin();
@@ -803,26 +838,28 @@ export default function OnboardingPage() {
 
         {step === 'words' && (
           <section className="space-y-4 sm:space-y-6">
-            <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-4 sm:p-6 space-y-4 sm:space-y-6">
+            <div className="rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-primary-500/5 p-4 sm:p-6 space-y-4 sm:space-y-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                  <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                     {t.addFirstSet}
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {t.addFirstSetDesc}{' '}
-                    <span className="font-medium">
+                    <span className="font-medium text-primary-600">
                       {t.formatHint(`${examplePair.target} - ${examplePair.native}`)}
                     </span>
                     .
                   </p>
                 </div>
-                <Sparkles className="text-primary-600" size={20} />
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary-500 to-blue-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
+                  <Sparkles className="text-white" size={18} />
+                </div>
               </div>
 
               {showPolishHint && (
-                <div className="rounded-2xl border border-sky-100 dark:border-sky-900/60 bg-sky-50 dark:bg-sky-900/30 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
-                  <p className="font-semibold text-slate-700 dark:text-slate-100">
+                <div className="rounded-2xl border border-blue-100 dark:border-blue-900/60 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                  <p className="font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                     {t.polishHintTitle}
                   </p>
                   <p className="mt-1">{t.polishHintBody}</p>
@@ -855,17 +892,19 @@ export default function OnboardingPage() {
 
         {step === 'mission' && (
           <section className="space-y-6">
-            <div className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-6">
+            <div className="rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-primary-500/5 p-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h2 className="font-semibold text-slate-800 dark:text-slate-100">
+                  <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                     {t.firstMission}
                   </h2>
                   <p className="text-sm text-slate-500 dark:text-slate-400">
                     {t.firstMissionDesc(onboardingSetName)}
                   </p>
                 </div>
-                <Sparkles className="text-primary-600" size={20} />
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-success-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-success-500/30">
+                  <Sparkles className="text-white" size={18} />
+                </div>
               </div>
               <div className="mt-6">
                 {missionWords.length > 0 ? (
@@ -882,12 +921,14 @@ export default function OnboardingPage() {
         )}
 
         {step === 'done' && (
-          <section className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl p-8 text-center">
-            <CheckCircle2 className="mx-auto text-success-500" size={48} />
-            <h2 className="mt-4 text-2xl font-semibold text-slate-800 dark:text-slate-100">
+          <section className="rounded-3xl bg-gradient-to-br from-primary-500 via-blue-500 to-pink-500 p-8 text-center shadow-xl shadow-primary-500/20">
+            <div className="w-16 h-16 mx-auto rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+              <CheckCircle2 className="text-white" size={36} />
+            </div>
+            <h2 className="mt-4 text-2xl font-semibold text-white">
               {t.missionComplete}
             </h2>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-2 text-sm text-white/80">
               {t.redirectNote}
             </p>
           </section>

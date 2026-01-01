@@ -4,7 +4,7 @@ import { forwardRef, HTMLAttributes } from 'react';
 import { cn } from '@/lib/utils';
 
 interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'elevated' | 'outlined';
+  variant?: 'default' | 'elevated' | 'outlined' | 'glass' | 'gradient' | 'hero';
 }
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(
@@ -20,6 +20,12 @@ export const Card = forwardRef<HTMLDivElement, CardProps>(
             'bg-white/90 dark:bg-slate-800/90 shadow-lg hover:shadow-xl transition-shadow border border-white/60 dark:border-slate-700',
           variant === 'outlined' &&
             'bg-transparent border-2 border-slate-200 dark:border-slate-700',
+          variant === 'glass' &&
+            'bg-white/70 dark:bg-slate-800/70 backdrop-blur-xl border border-white/30 dark:border-slate-700/50 shadow-lg',
+          variant === 'gradient' &&
+            'bg-gradient-to-br from-primary-500/10 via-blue-500/10 to-pink-500/10 border border-primary-200/50 dark:border-primary-700/50 shadow-md',
+          variant === 'hero' &&
+            'bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 text-white shadow-xl shadow-primary-500/25',
           className
         )}
         {...props}

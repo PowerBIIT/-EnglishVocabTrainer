@@ -320,15 +320,18 @@ export default function QuizPage() {
 
   if (sessionState === 'active') {
     return (
-      <div className="min-h-screen">
-        <div className="p-4 flex items-center gap-4">
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Gradient backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 opacity-5 dark:opacity-10" />
+
+        <div className="relative z-10 p-4 flex items-center gap-4">
           <button
             onClick={() => setSessionState('setup')}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 shadow-lg shadow-primary-500/10 transition-all"
           >
             <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
           </button>
-          <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+          <h1 className="text-lg font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
             {t.quizWithMode(quizModes.find((m) => m.id === selectedMode)?.label ?? '')}
           </h1>
         </div>
@@ -344,15 +347,18 @@ export default function QuizPage() {
 
   if (sessionState === 'results') {
     return (
-      <div className="min-h-screen">
-        <div className="p-4 flex items-center gap-4">
+      <div className="min-h-screen relative overflow-hidden">
+        {/* Gradient backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 opacity-5 dark:opacity-10" />
+
+        <div className="relative z-10 p-4 flex items-center gap-4">
           <button
             onClick={() => setSessionState('setup')}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 shadow-lg shadow-primary-500/10 transition-all"
           >
             <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
           </button>
-          <h1 className="text-lg font-semibold text-slate-800 dark:text-slate-100">
+          <h1 className="text-lg font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
             {t.quizResults}
           </h1>
         </div>
@@ -368,179 +374,195 @@ export default function QuizPage() {
   }
 
   return (
-    <div className="p-4 space-y-6 max-w-2xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/">
-          <button className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
-            <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
-          </button>
-        </Link>
-        <div>
-          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-            {t.title}
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            {t.subtitle}
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Gradient backdrop */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 opacity-5 dark:opacity-10" />
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/4 left-0 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl" />
 
-      {/* Quiz mode selection */}
-      <Card>
-        <CardContent className="p-4 space-y-4">
-          <h3 className="font-medium text-slate-800 dark:text-slate-100">
-            {t.modeTitle}
-          </h3>
-          <div className="grid gap-2">
-            {quizModes.map((mode) => (
-              <button
-                key={mode.id}
-                onClick={() => setSelectedMode(mode.id)}
-                className={cn(
-                  'flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left',
-                  selectedMode === mode.id
-                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900'
-                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
-                )}
-              >
-                <div
+      <div className="relative z-10 p-4 space-y-6 max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <button className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 shadow-lg shadow-primary-500/10 transition-all">
+              <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
+            </button>
+          </Link>
+          <div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-primary-600 via-blue-500 to-pink-500 bg-clip-text text-transparent">
+              {t.title}
+            </h1>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t.subtitle}
+            </p>
+          </div>
+        </div>
+
+        {/* Quiz mode selection */}
+        <Card variant="glass">
+          <CardContent className="p-4 space-y-4">
+            <h3 className="font-medium bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
+              {t.modeTitle}
+            </h3>
+            <div className="grid gap-2">
+              {quizModes.map((mode) => (
+                <button
+                  key={mode.id}
+                  onClick={() => setSelectedMode(mode.id)}
                   className={cn(
-                    'p-2 rounded-lg',
+                    'flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left',
                     selectedMode === mode.id
-                      ? 'bg-primary-500 text-white'
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                      ? 'border-transparent bg-gradient-to-br from-primary-50 to-pink-50 dark:from-primary-900/40 dark:to-pink-900/40 shadow-lg shadow-primary-500/20 ring-2 ring-primary-500'
+                      : 'border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-600 bg-white/50 dark:bg-slate-800/50'
                   )}
                 >
-                  {mode.icon}
-                </div>
-                <div>
-                  <p className="font-medium text-slate-800 dark:text-slate-100">
-                    {mode.label}
-                  </p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    {mode.description}
-                  </p>
-                </div>
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Set selection */}
-      <Card>
-        <CardContent className="p-4 space-y-4">
-          <h3 className="font-medium text-slate-800 dark:text-slate-100">
-            {t.setTitle}
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedSetId('all')}
-              className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                selectedSetId === 'all'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-              )}
-            >
-              {t.all} ({vocabulary.length})
-            </button>
-            <button
-              onClick={() => setSelectedSetId('unassigned')}
-              className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                selectedSetId === 'unassigned'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-              )}
-            >
-              {t.unassigned} ({unassignedCount})
-            </button>
-            {sets.map((set) => (
-              <button
-                key={set.id}
-                onClick={() => setSelectedSetId(set.id)}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                  selectedSetId === set.id
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                )}
-              >
-                {set.name} ({setCounts[set.id] ?? 0})
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Category selection */}
-      <Card>
-        <CardContent className="p-4 space-y-4">
-          <h3 className="font-medium text-slate-800 dark:text-slate-100">
-            {t.categoryTitle}
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                selectedCategory === 'all'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-              )}
-            >
-              {t.all} ({filteredVocabularyCount})
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                  selectedCategory === cat
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                )}
-              >
-                {getCategoryLabel(cat, language)} ({categoryCounts[cat] ?? 0})
-              </button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Settings preview */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap items-center gap-4 text-sm">
-              <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                <Target size={16} />
-                <span>
-                  {t.questionsLabel(settings.session.quizQuestionCount)}
-                </span>
-              </div>
-              {settings.session.timeLimit && (
-                <div className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
-                  <Clock size={16} />
-                  <span>{settings.session.timeLimit}s</span>
-                </div>
-              )}
+                  <div
+                    className={cn(
+                      'p-2 rounded-xl transition-all',
+                      selectedMode === mode.id
+                        ? 'bg-gradient-to-br from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/30'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                    )}
+                  >
+                    {mode.icon}
+                  </div>
+                  <div>
+                    <p className={cn(
+                      'font-medium',
+                      selectedMode === mode.id
+                        ? 'bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent'
+                        : 'text-slate-800 dark:text-slate-100'
+                    )}>
+                      {mode.label}
+                    </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {mode.description}
+                    </p>
+                  </div>
+                </button>
+              ))}
             </div>
-            <Link href="/profile#settings" className="text-sm text-primary-500">
-              {t.change}
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Start button */}
-      <Button onClick={startQuiz} size="lg" className="w-full">
-        <Target size={20} className="mr-2" />
-        {t.startQuiz}
-      </Button>
+        {/* Set selection */}
+        <Card variant="glass">
+          <CardContent className="p-4 space-y-4">
+            <h3 className="font-medium bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
+              {t.setTitle}
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedSetId('all')}
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm font-medium transition-all',
+                  selectedSetId === 'all'
+                    ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                    : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                )}
+              >
+                {t.all} ({vocabulary.length})
+              </button>
+              <button
+                onClick={() => setSelectedSetId('unassigned')}
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm font-medium transition-all',
+                  selectedSetId === 'unassigned'
+                    ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                    : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                )}
+              >
+                {t.unassigned} ({unassignedCount})
+              </button>
+              {sets.map((set) => (
+                <button
+                  key={set.id}
+                  onClick={() => setSelectedSetId(set.id)}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-sm font-medium transition-all',
+                    selectedSetId === set.id
+                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                      : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                  )}
+                >
+                  {set.name} ({setCounts[set.id] ?? 0})
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Category selection */}
+        <Card variant="glass">
+          <CardContent className="p-4 space-y-4">
+            <h3 className="font-medium bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
+              {t.categoryTitle}
+            </h3>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedCategory('all')}
+                className={cn(
+                  'px-4 py-2 rounded-full text-sm font-medium transition-all',
+                  selectedCategory === 'all'
+                    ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                    : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                )}
+              >
+                {t.all} ({filteredVocabularyCount})
+              </button>
+              {categories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={cn(
+                    'px-4 py-2 rounded-full text-sm font-medium transition-all',
+                    selectedCategory === cat
+                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                      : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                  )}
+                >
+                  {getCategoryLabel(cat, language)} ({categoryCounts[cat] ?? 0})
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Settings preview */}
+        <Card variant="glass">
+          <CardContent className="p-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-wrap items-center gap-4 text-sm">
+                <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
+                    <Target size={14} className="text-white" />
+                  </div>
+                  <span>
+                    {t.questionsLabel(settings.session.quizQuestionCount)}
+                  </span>
+                </div>
+                {settings.session.timeLimit && (
+                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                      <Clock size={14} className="text-white" />
+                    </div>
+                    <span>{settings.session.timeLimit}s</span>
+                  </div>
+                )}
+              </div>
+              <Link href="/profile#settings" className="text-sm font-medium bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent hover:opacity-80 transition-opacity">
+                {t.change}
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Start button */}
+        <Button variant="gradient" onClick={startQuiz} size="lg" className="w-full">
+          <Target size={20} className="mr-2" />
+          {t.startQuiz}
+        </Button>
+      </div>
     </div>
   );
 }

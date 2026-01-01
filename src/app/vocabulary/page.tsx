@@ -324,16 +324,25 @@ export default function VocabularyPage() {
   }
 
   return (
-    <div className="p-4 space-y-4 max-w-3xl mx-auto pb-24">
+    <div className="min-h-screen relative overflow-hidden pb-24">
+      {/* Gradient backdrop */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 opacity-5 dark:opacity-10" />
+      <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl" />
+      <div className="absolute bottom-1/3 left-0 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl" />
+
+      <div className="relative z-10 p-4 space-y-4 max-w-3xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/">
-          <button className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800">
+          <button className="p-2 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors">
             <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
           </button>
         </Link>
+        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 via-blue-500 to-pink-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
+          <BookOpen size={22} className="text-white" />
+        </div>
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+          <h1 className="text-xl font-bold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
             {t.title}
           </h1>
           <p className="text-sm text-slate-500">
@@ -370,9 +379,9 @@ export default function VocabularyPage() {
       </div>
 
       {isSelecting && (
-        <Card>
+        <Card variant="glass">
           <CardContent className="p-4 space-y-3">
-            <div className="text-sm font-medium text-slate-700 dark:text-slate-200">
+            <div className="text-sm font-medium bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
               {t.moveSelected}
             </div>
             <div className="flex flex-col gap-3 md:flex-row md:items-end">
@@ -405,8 +414,9 @@ export default function VocabularyPage() {
                 </div>
               )}
               <Button
+                variant="gradient"
                 onClick={handleBulkAssign}
-                className="md:w-auto"
+                className="md:w-auto shadow-lg shadow-primary-500/25"
                 disabled={
                   selectedItems.size === 0 ||
                   (bulkSetTarget === NEW_SET_OPTION && !bulkSetName.trim())
@@ -423,14 +433,14 @@ export default function VocabularyPage() {
       <div className="relative">
         <Search
           size={20}
-          className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+          className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-400"
         />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder={t.searchPlaceholder}
-          className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="w-full pl-10 pr-4 py-3 rounded-xl border border-primary-100 dark:border-primary-800/50 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 shadow-sm"
         />
       </div>
 
@@ -441,10 +451,10 @@ export default function VocabularyPage() {
           <button
             onClick={() => setSelectedSetFilter('all')}
             className={cn(
-              'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+              'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all',
               selectedSetFilter === 'all'
-                ? 'bg-primary-500 text-white'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                : 'bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-slate-700/70'
             )}
           >
             {t.allSets(vocabulary.length)}
@@ -452,10 +462,10 @@ export default function VocabularyPage() {
           <button
             onClick={() => setSelectedSetFilter('unassigned')}
             className={cn(
-              'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+              'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all',
               selectedSetFilter === 'unassigned'
-                ? 'bg-primary-500 text-white'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                : 'bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-slate-700/70'
             )}
           >
             {t.unassigned} ({unassignedCount})
@@ -465,10 +475,10 @@ export default function VocabularyPage() {
               key={set.id}
               onClick={() => setSelectedSetFilter(set.id)}
               className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+                'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all',
                 selectedSetFilter === set.id
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                  ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                  : 'bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-slate-700/70'
               )}
             >
               {set.name} ({setCounts[set.id] ?? 0})
@@ -484,10 +494,10 @@ export default function VocabularyPage() {
           <button
             onClick={() => setSelectedCategory('all')}
             className={cn(
-              'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+              'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all',
               selectedCategory === 'all'
-                ? 'bg-primary-500 text-white'
-                : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                : 'bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-slate-700/70'
             )}
           >
             {t.allCategories}
@@ -497,10 +507,10 @@ export default function VocabularyPage() {
               key={cat}
               onClick={() => setSelectedCategory(cat)}
               className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors',
+                'px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all',
                 selectedCategory === cat
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                  ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
+                  : 'bg-white/50 dark:bg-slate-800/50 backdrop-blur-sm text-slate-600 dark:text-slate-300 hover:bg-white/70 dark:hover:bg-slate-700/70'
               )}
             >
               {getCategoryLabel(cat, language)}
@@ -540,9 +550,10 @@ export default function VocabularyPage() {
             return (
               <Card
                 key={word.id}
+                variant="glass"
                 className={cn(
                   'transition-all',
-                  isSelected && 'ring-2 ring-primary-500'
+                  isSelected && 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/20'
                 )}
                 onClick={() => isSelecting && toggleSelection(word.id)}
               >
@@ -623,7 +634,7 @@ export default function VocabularyPage() {
 
                       <button
                         onClick={(e) => handleSpeak(getTargetText(word), e)}
-                        className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 hover:text-primary-500"
+                        className="p-2 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30 text-slate-400 hover:text-primary-500 transition-colors"
                       >
                         <Volume2 size={18} />
                       </button>
@@ -638,7 +649,9 @@ export default function VocabularyPage() {
 
       {filteredVocabulary.length === 0 && (
         <div className="text-center py-12">
-          <BookOpen size={48} className="mx-auto text-slate-300 mb-4" />
+          <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-primary-100 to-pink-100 dark:from-primary-900/30 dark:to-pink-900/30 flex items-center justify-center">
+            <BookOpen size={36} className="text-primary-400" />
+          </div>
           <p className="text-slate-500">
             {searchQuery
               ? t.emptySearch
@@ -649,10 +662,11 @@ export default function VocabularyPage() {
 
       {/* Add button - positioned on left to avoid chatbot */}
       <Link href="/chat">
-        <Button className="fixed bottom-24 left-4 md:left-28 md:bottom-10 rounded-full w-14 h-14 shadow-lg">
+        <Button variant="gradient" className="fixed bottom-24 left-4 md:left-28 md:bottom-10 rounded-full w-14 h-14 shadow-xl shadow-primary-500/30">
           <Plus size={24} />
         </Button>
       </Link>
+      </div>
     </div>
   );
 }

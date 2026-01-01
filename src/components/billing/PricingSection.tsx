@@ -186,7 +186,7 @@ export function PricingSection({
                 }`}
               >
                 <span>{t.annual}</span>
-                <span className="ml-1 text-xs text-emerald-600 dark:text-emerald-400">
+                <span className="ml-1 text-xs text-success-600 dark:text-success-400">
                   -{prices.annual.savings}%
                 </span>
               </button>
@@ -223,7 +223,7 @@ export function PricingSection({
             <li key={i} className="flex items-center gap-2 text-sm">
               <Check
                 size={16}
-                className="text-emerald-500 dark:text-emerald-400 flex-shrink-0"
+                className="text-success-500 dark:text-success-400 flex-shrink-0"
               />
               <span className="text-slate-600 dark:text-slate-300">{feature}</span>
             </li>
