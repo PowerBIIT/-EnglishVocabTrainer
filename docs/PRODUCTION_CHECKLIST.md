@@ -3,10 +3,10 @@
 Use this list before running Deploy PRD.
 
 ## CI/CD Pipeline
-- [x] CI workflow runs on every PR (lint, typecheck, test, build)
-- [x] Branch protection requires passing CI before merge
+- [x] CI workflow runs on every push/PR (lint, typecheck, test, build)
 - [x] E2E tests run after UAT deployment (blocking)
 - [x] App Service Plan upgraded to S1 Standard (SLA 99.95%)
+- [ ] Branch protection (optional, requires GitHub Pro for private repos)
 
 ## Configuration
 - [ ] Domain `henio.app` resolves and SSL is valid.
