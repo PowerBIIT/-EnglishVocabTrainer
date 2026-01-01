@@ -188,3 +188,41 @@ jobs:
           echo "$response"
           echo "Health check failed after retries."
           exit 1
+
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: deploy
+    environment: uat
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Wait for app to stabilize
+        run: sleep 30
+
+      - name: Run E2E Tests
+        env:
+          BASE_URL: ${{ secrets.NEXTAUTH_URL }}
+          E2E_TEST: 'true'
+        run: npm run test:e2e -- --project=chromium
+
+      - name: Upload Playwright report on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
