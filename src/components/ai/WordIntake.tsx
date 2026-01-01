@@ -257,12 +257,12 @@ export const wordIntakeCopy = {
     processing: 'Przetwarzam...',
     quickActionsLabel: 'Szybkie akcje:',
     quickActions: [
-      { label: 'Biologia', prompt: 'Wygeneruj 12 słówek z biologii' },
-      { label: 'Matematyka', prompt: 'Wygeneruj 12 słówek z matematyki' },
-      { label: 'Geografia', prompt: 'Wygeneruj 12 słówek z geografii' },
-      { label: 'Historia', prompt: 'Wygeneruj 12 słówek z historii' },
-      { label: 'Lektury', prompt: 'Wygeneruj 12 słówek z lektur' },
-      { label: 'Statystyki', prompt: 'Ile mam słówek?' },
+      { label: 'Biologia', prompt: 'Wygeneruj 12 słówek z biologii', icon: '🧬' },
+      { label: 'Matematyka', prompt: 'Wygeneruj 12 słówek z matematyki', icon: '📐' },
+      { label: 'Geografia', prompt: 'Wygeneruj 12 słówek z geografii', icon: '🌍' },
+      { label: 'Historia', prompt: 'Wygeneruj 12 słówek z historii', icon: '📜' },
+      { label: 'Lektury', prompt: 'Wygeneruj 12 słówek z lektur', icon: '📚' },
+      { label: 'Statystyki', prompt: 'Ile mam słówek?', icon: '📊' },
     ],
     imageButtonTitle: 'Wczytaj zdjęcie notatek',
     fileButtonTitle: 'Wczytaj plik z notatkami',
@@ -272,6 +272,10 @@ export const wordIntakeCopy = {
     selectionHint: 'Zaznacz słówka, które chcesz dodać do biblioteki.',
     selectionHintOnboarding: 'Po dodaniu wybierz słówka do pierwszej misji.',
     minWords: (min: number) => `Wymagane min. ${min}`,
+    selectAll: 'Zaznacz wszystkie',
+    deselectAll: 'Odznacz',
+    imageLabel: 'Zdjęcie',
+    fileLabel: 'Plik',
   },
   en: {
     loading: 'Loading...',
@@ -353,12 +357,12 @@ export const wordIntakeCopy = {
     processing: 'Working...',
     quickActionsLabel: 'Quick actions:',
     quickActions: [
-      { label: 'Biology', prompt: 'Generate 12 words about biology' },
-      { label: 'Math', prompt: 'Generate 12 words about math' },
-      { label: 'Geography', prompt: 'Generate 12 words about geography' },
-      { label: 'History', prompt: 'Generate 12 words about history' },
-      { label: 'Literature', prompt: 'Generate 12 words about literature' },
-      { label: 'Stats', prompt: 'How many words do I have?' },
+      { label: 'Biology', prompt: 'Generate 12 words about biology', icon: '🧬' },
+      { label: 'Math', prompt: 'Generate 12 words about math', icon: '📐' },
+      { label: 'Geography', prompt: 'Generate 12 words about geography', icon: '🌍' },
+      { label: 'History', prompt: 'Generate 12 words about history', icon: '📜' },
+      { label: 'Literature', prompt: 'Generate 12 words about literature', icon: '📚' },
+      { label: 'Stats', prompt: 'How many words do I have?', icon: '📊' },
     ],
     imageButtonTitle: 'Upload notes photo',
     fileButtonTitle: 'Upload notes file',
@@ -368,6 +372,10 @@ export const wordIntakeCopy = {
     selectionHint: 'Select the words you want to add to your library.',
     selectionHintOnboarding: 'After adding, pick words for the first mission.',
     minWords: (min: number) => `Required min. ${min}`,
+    selectAll: 'Select all',
+    deselectAll: 'Deselect',
+    imageLabel: 'Photo',
+    fileLabel: 'File',
   },
   uk: {
     loading: 'Завантаження...',
@@ -451,11 +459,11 @@ export const wordIntakeCopy = {
     processing: 'Обробляю...',
     quickActionsLabel: 'Швидкі дії:',
     quickActions: [
-      { label: 'Школа', prompt: 'Згенеруй 12 слів на тему школа' },
-      { label: 'Документи', prompt: 'Згенеруй 12 слів на тему документи та установи' },
-      { label: 'Лікар', prompt: 'Згенеруй 12 слів на тему лікар і здоровʼя' },
-      { label: 'Транспорт', prompt: 'Згенеруй 12 слів на тему транспорт і місто' },
-      { label: 'Статистика', prompt: 'Скільки в мене слів?' },
+      { label: 'Школа', prompt: 'Згенеруй 12 слів на тему школа', icon: '🏫' },
+      { label: 'Документи', prompt: 'Згенеруй 12 слів на тему документи та установи', icon: '📋' },
+      { label: 'Лікар', prompt: 'Згенеруй 12 слів на тему лікар і здоровʼя', icon: '🏥' },
+      { label: 'Транспорт', prompt: 'Згенеруй 12 слів на тему транспорт і місто', icon: '🚌' },
+      { label: 'Статистика', prompt: 'Скільки в мене слів?', icon: '📊' },
     ],
     imageButtonTitle: 'Завантажити фото нотаток',
     fileButtonTitle: 'Завантажити файл нотаток',
@@ -465,6 +473,10 @@ export const wordIntakeCopy = {
     selectionHint: 'Обери слова, які хочеш додати до бібліотеки.',
     selectionHintOnboarding: 'Після додавання обери слова для першої місії.',
     minWords: (min: number) => `Потрібно мін. ${min}`,
+    selectAll: 'Вибрати всі',
+    deselectAll: 'Зняти вибір',
+    imageLabel: 'Фото',
+    fileLabel: 'Файл',
   },
 } as const;
 
@@ -1299,14 +1311,17 @@ export function WordIntake({
     : 'pb-[calc(10rem+env(safe-area-inset-bottom))] sm:pb-[calc(12rem+env(safe-area-inset-bottom))]';
   const inputPanel = (
     <>
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 mb-2 sm:flex-wrap sm:overflow-visible">
+      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">
         {t.quickActions.map((action) => (
           <button
             key={action.label}
             onClick={() => setInput(action.prompt)}
-            className="flex-shrink-0 px-3 py-1 rounded-full text-xs sm:text-sm bg-primary-50 dark:bg-primary-900 text-primary-600 dark:text-primary-400 hover:bg-primary-100"
+            className="flex flex-col items-center gap-1 p-2 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
           >
-            {action.label}
+            <span className="text-lg sm:text-xl">{action.icon}</span>
+            <span className="text-[10px] sm:text-xs font-medium text-slate-700 dark:text-slate-300 truncate w-full text-center">
+              {action.label}
+            </span>
           </button>
         ))}
       </div>
@@ -1326,10 +1341,11 @@ export function WordIntake({
         <button
           onClick={() => imageInputRef.current?.click()}
           disabled={isProcessing}
-          className="p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
+          className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
           title={t.imageButtonTitle}
         >
           <ImageIcon size={18} className="sm:size-5" />
+          <span className="hidden sm:inline text-sm">{t.imageLabel}</span>
         </button>
 
         <input
@@ -1343,10 +1359,11 @@ export function WordIntake({
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isProcessing}
-          className="p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
+          className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
           title={t.fileButtonTitle}
         >
           <FileText size={18} className="sm:size-5" />
+          <span className="hidden sm:inline text-sm">{t.fileLabel}</span>
         </button>
 
         <input
@@ -1407,7 +1424,29 @@ export function WordIntake({
                   <p className="text-xs text-slate-500">{selectionHint}</p>
                   <div className="flex items-center justify-between text-xs text-slate-500">
                     <span>{t.selectedCount(selectedWordCount)}</span>
-                    {minWords > 1 && <span>{t.minWords(minWords)}</span>}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setParsedWords(w => w.map(x => ({ ...x, selected: true })))}
+                        className="text-primary-600 dark:text-primary-400 hover:underline"
+                      >
+                        {t.selectAll}
+                      </button>
+                      <span className="text-slate-300 dark:text-slate-600">|</span>
+                      <button
+                        type="button"
+                        onClick={() => setParsedWords(w => w.map(x => ({ ...x, selected: false })))}
+                        className="text-slate-500 hover:underline"
+                      >
+                        {t.deselectAll}
+                      </button>
+                      {minWords > 1 && (
+                        <>
+                          <span className="text-slate-300 dark:text-slate-600">|</span>
+                          <span>{t.minWords(minWords)}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <p className="text-sm font-medium text-slate-600 dark:text-slate-400 min-w-[80px]">
@@ -1596,14 +1635,17 @@ export function WordIntake({
         </div>
 
         <div className={cn('space-y-3', isCompact && 'space-y-2')}>
-          <div className={cn('flex flex-wrap gap-2', isCompact && 'gap-1.5')}>
+          <div className={cn('grid gap-2', isCompact ? 'grid-cols-3' : 'grid-cols-3 sm:grid-cols-5')}>
             {t.quickActions.map((action) => (
               <button
                 key={action.label}
                 onClick={() => setInput(action.prompt)}
-                className="px-3 py-1.5 rounded-full text-xs font-medium bg-primary-50 dark:bg-primary-900 text-primary-600 dark:text-primary-300 hover:bg-primary-100"
+                className="flex flex-col items-center gap-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
               >
-                {action.label}
+                <span className="text-lg">{action.icon}</span>
+                <span className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate w-full text-center">
+                  {action.label}
+                </span>
               </button>
             ))}
           </div>
@@ -1622,10 +1664,11 @@ export function WordIntake({
             <button
               onClick={() => imageInputRef.current?.click()}
               disabled={isProcessing}
-              className="p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
+              className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
               title={t.imageButtonTitle}
             >
               <ImageIcon size={20} />
+              <span className="hidden sm:inline text-sm">{t.imageLabel}</span>
             </button>
 
             <input
@@ -1639,10 +1682,11 @@ export function WordIntake({
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={isProcessing}
-              className="p-2.5 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
+              className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
               title={t.fileButtonTitle}
             >
               <FileText size={20} />
+              <span className="hidden sm:inline text-sm">{t.fileLabel}</span>
             </button>
 
             <input
@@ -1676,7 +1720,29 @@ export function WordIntake({
           <p className="text-xs text-slate-500">{selectionHint}</p>
           <div className="flex items-center justify-between text-xs text-slate-500">
             <span>{t.selectedCount(selectedWordCount)}</span>
-            {minWords > 1 && <span>{t.minWords(minWords)}</span>}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setParsedWords(w => w.map(x => ({ ...x, selected: true })))}
+                className="text-primary-600 dark:text-primary-400 hover:underline"
+              >
+                {t.selectAll}
+              </button>
+              <span className="text-slate-300 dark:text-slate-600">|</span>
+              <button
+                type="button"
+                onClick={() => setParsedWords(w => w.map(x => ({ ...x, selected: false })))}
+                className="text-slate-500 hover:underline"
+              >
+                {t.deselectAll}
+              </button>
+              {minWords > 1 && (
+                <>
+                  <span className="text-slate-300 dark:text-slate-600">|</span>
+                  <span>{t.minWords(minWords)}</span>
+                </>
+              )}
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-xs uppercase tracking-wide text-slate-400">
