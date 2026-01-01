@@ -88,7 +88,14 @@ export function MascotAvatar({ skinId, size = 120, className }: MascotAvatarProp
           </>
         )}
         {skin.id === 'sky-captain' && (
-          <path d="M 54 30 L 60 26 L 66 30 L 60 34 Z" fill={skin.colors.accent} />
+          <>
+            {/* Bow tie - left wing */}
+            <path d="M 44 70 L 54 66 L 54 74 Z" fill={skin.colors.accent} />
+            {/* Bow tie - right wing */}
+            <path d="M 76 70 L 66 66 L 66 74 Z" fill={skin.colors.accent} />
+            {/* Bow tie - center knot */}
+            <rect x="54" y="67" width="12" height="6" rx="1" fill={skin.colors.gear} />
+          </>
         )}
         {skin.id === 'ruins-diver' && (
           <rect x="56" y="29" width="8" height="5" rx="2" fill={skin.colors.accent} />
