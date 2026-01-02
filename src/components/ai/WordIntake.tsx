@@ -10,7 +10,18 @@ import {
   FileText,
   Send,
   Wand2,
+  Microscope,
+  Calculator,
+  Globe,
+  Landmark,
+  BookOpen,
+  BarChart3,
+  GraduationCap,
+  ClipboardList,
+  Stethoscope,
+  Bus,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { useVocabStore } from '@/lib/store';
@@ -257,12 +268,12 @@ export const wordIntakeCopy = {
     processing: 'Przetwarzam...',
     quickActionsLabel: 'Szybkie akcje:',
     quickActions: [
-      { label: 'Biologia', prompt: 'Wygeneruj 12 słówek z biologii', icon: '🧬' },
-      { label: 'Matematyka', prompt: 'Wygeneruj 12 słówek z matematyki', icon: '📐' },
-      { label: 'Geografia', prompt: 'Wygeneruj 12 słówek z geografii', icon: '🌍' },
-      { label: 'Historia', prompt: 'Wygeneruj 12 słówek z historii', icon: '📜' },
-      { label: 'Lektury', prompt: 'Wygeneruj 12 słówek z lektur', icon: '📚' },
-      { label: 'Statystyki', prompt: 'Ile mam słówek?', icon: '📊' },
+      { label: 'Biologia', prompt: 'Wygeneruj 12 słówek z biologii', icon: Microscope },
+      { label: 'Matematyka', prompt: 'Wygeneruj 12 słówek z matematyki', icon: Calculator },
+      { label: 'Geografia', prompt: 'Wygeneruj 12 słówek z geografii', icon: Globe },
+      { label: 'Historia', prompt: 'Wygeneruj 12 słówek z historii', icon: Landmark },
+      { label: 'Lektury', prompt: 'Wygeneruj 12 słówek z lektur', icon: BookOpen },
+      { label: 'Statystyki', prompt: 'Ile mam słówek?', icon: BarChart3 },
     ],
     imageButtonTitle: 'Wczytaj zdjęcie notatek',
     fileButtonTitle: 'Wczytaj plik z notatkami',
@@ -357,12 +368,12 @@ export const wordIntakeCopy = {
     processing: 'Working...',
     quickActionsLabel: 'Quick actions:',
     quickActions: [
-      { label: 'Biology', prompt: 'Generate 12 words about biology', icon: '🧬' },
-      { label: 'Math', prompt: 'Generate 12 words about math', icon: '📐' },
-      { label: 'Geography', prompt: 'Generate 12 words about geography', icon: '🌍' },
-      { label: 'History', prompt: 'Generate 12 words about history', icon: '📜' },
-      { label: 'Literature', prompt: 'Generate 12 words about literature', icon: '📚' },
-      { label: 'Stats', prompt: 'How many words do I have?', icon: '📊' },
+      { label: 'Biology', prompt: 'Generate 12 words about biology', icon: Microscope },
+      { label: 'Math', prompt: 'Generate 12 words about math', icon: Calculator },
+      { label: 'Geography', prompt: 'Generate 12 words about geography', icon: Globe },
+      { label: 'History', prompt: 'Generate 12 words about history', icon: Landmark },
+      { label: 'Literature', prompt: 'Generate 12 words about literature', icon: BookOpen },
+      { label: 'Stats', prompt: 'How many words do I have?', icon: BarChart3 },
     ],
     imageButtonTitle: 'Upload notes photo',
     fileButtonTitle: 'Upload notes file',
@@ -459,11 +470,11 @@ export const wordIntakeCopy = {
     processing: 'Обробляю...',
     quickActionsLabel: 'Швидкі дії:',
     quickActions: [
-      { label: 'Школа', prompt: 'Згенеруй 12 слів на тему школа', icon: '🏫' },
-      { label: 'Документи', prompt: 'Згенеруй 12 слів на тему документи та установи', icon: '📋' },
-      { label: 'Лікар', prompt: 'Згенеруй 12 слів на тему лікар і здоровʼя', icon: '🏥' },
-      { label: 'Транспорт', prompt: 'Згенеруй 12 слів на тему транспорт і місто', icon: '🚌' },
-      { label: 'Статистика', prompt: 'Скільки в мене слів?', icon: '📊' },
+      { label: 'Школа', prompt: 'Згенеруй 12 слів на тему школа', icon: GraduationCap },
+      { label: 'Документи', prompt: 'Згенеруй 12 слів на тему документи та установи', icon: ClipboardList },
+      { label: 'Лікар', prompt: 'Згенеруй 12 слів на тему лікар і здоровʼя', icon: Stethoscope },
+      { label: 'Транспорт', prompt: 'Згенеруй 12 слів на тему транспорт і місто', icon: Bus },
+      { label: 'Статистика', prompt: 'Скільки в мене слів?', icon: BarChart3 },
     ],
     imageButtonTitle: 'Завантажити фото нотаток',
     fileButtonTitle: 'Завантажити файл нотаток',
@@ -1318,7 +1329,7 @@ export function WordIntake({
             onClick={() => setInput(action.prompt)}
             className="flex flex-col items-center gap-1 p-2 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
           >
-            <span className="text-lg sm:text-xl">{action.icon}</span>
+            <action.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 dark:text-primary-400" />
             <span className="text-[10px] sm:text-xs font-medium text-slate-700 dark:text-slate-300 truncate w-full text-center">
               {action.label}
             </span>
@@ -1642,7 +1653,7 @@ export function WordIntake({
                 onClick={() => setInput(action.prompt)}
                 className="flex flex-col items-center gap-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
               >
-                <span className="text-lg">{action.icon}</span>
+                <action.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 <span className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate w-full text-center">
                   {action.label}
                 </span>
