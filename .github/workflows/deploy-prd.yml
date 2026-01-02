@@ -103,7 +103,8 @@ jobs:
                 WAITLIST_CONFIRM_RESEND_MINUTES="${{ secrets.WAITLIST_CONFIRM_RESEND_MINUTES }}" \
                 WAITLIST_CRON_SECRET="${{ secrets.WAITLIST_CRON_SECRET }}" \
                 E2E_TEST=false \
-                NEXT_PUBLIC_E2E_TEST=false
+                NEXT_PUBLIC_E2E_TEST=false \
+                E2E_LOGIN_ENABLED=false
 
       - name: Configure startup command
         uses: azure/CLI@v2
