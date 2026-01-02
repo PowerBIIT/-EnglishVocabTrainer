@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, type FormEvent } from 'react';
+import { Suspense, useMemo, useState, type FormEvent } from 'react';
 import { useSession, signOut } from 'next-auth/react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
@@ -31,6 +31,7 @@ const waitlistCopy = {
     invalidLink: 'Link jest nieprawidłowy. Spróbuj zapisać się ponownie.',
     expiredLink: 'Link wygasł. Zapisz się ponownie, aby otrzymać nowy.',
     login: 'Zaloguj się',
+    loading: 'Ładowanie...',
   },
   en: {
     title: 'You are on the waitlist',
@@ -54,11 +55,12 @@ const waitlistCopy = {
     invalidLink: 'This link is invalid. Please sign up again.',
     expiredLink: 'This link has expired. Please sign up again to receive a new one.',
     login: 'Sign in',
+    loading: 'Loading...',
   },
   uk: {
     title: 'Ви у списку очікування',
     message:
-      'Дякуємо! Зараз кількість місць обмежена. Ми активуємо доступ, щойно з’являться місця.',
+      "Дякуємо! Зараз кількість місць обмежена. Ми активуємо доступ, щойно з'являться місця.",
     suspendedTitle: 'Акаунт призупинено',
     suspendedMessage:
       'Ваш акаунт тимчасово призупинений. Зверніться до адміністратора для деталей.',
@@ -66,7 +68,7 @@ const waitlistCopy = {
     refresh: 'Перевірити ще раз',
     signOut: 'Вийти',
     joinTitle: 'Приєднатися до списку очікування',
-    joinMessage: 'Залиште e-mail і ми повідомимо, коли зʼявиться місце.',
+    joinMessage: "Залиште e-mail і ми повідомимо, коли з'явиться місце.",
     joinLabel: 'Email',
     joinAction: 'Приєднатися',
     joining: 'Надсилаємо…',
@@ -77,6 +79,7 @@ const waitlistCopy = {
     invalidLink: 'Посилання недійсне. Спробуйте ще раз.',
     expiredLink: 'Посилання прострочене. Заповніть форму повторно.',
     login: 'Увійти',
+    loading: 'Завантаження...',
   },
 } as const;
 
@@ -88,7 +91,7 @@ type FormState =
   | { status: 'success'; message: string }
   | { status: 'error'; message: string };
 
-export default function WaitlistPage() {
+function WaitlistContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
   const language = useLanguage();
@@ -151,91 +154,110 @@ export default function WaitlistPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-2xl rounded-3xl bg-white/85 dark:bg-slate-800/80 shadow-sm border border-white/60 dark:border-slate-700 p-8 text-center space-y-6">
-        {session?.user ? (
-          <>
-            <div className="space-y-3">
-              <h1 className="font-display text-3xl md:text-4xl text-slate-900 dark:text-white">
-                {isSuspended ? t.suspendedTitle : t.title}
-              </h1>
-              <p className="text-slate-600 dark:text-slate-300">
-                {isSuspended ? t.suspendedMessage : t.message}
-              </p>
+    <div className="w-full max-w-2xl rounded-3xl bg-white/85 dark:bg-slate-800/80 shadow-sm border border-white/60 dark:border-slate-700 p-8 text-center space-y-6">
+      {session?.user ? (
+        <>
+          <div className="space-y-3">
+            <h1 className="font-display text-3xl md:text-4xl text-slate-900 dark:text-white">
+              {isSuspended ? t.suspendedTitle : t.title}
+            </h1>
+            <p className="text-slate-600 dark:text-slate-300">
+              {isSuspended ? t.suspendedMessage : t.message}
+            </p>
+          </div>
+          {session.user.email ? (
+            <div className="text-sm text-slate-500 dark:text-slate-400">
+              {t.emailLabel} <span className="font-semibold">{session.user.email}</span>
             </div>
-            {session.user.email ? (
-              <div className="text-sm text-slate-500 dark:text-slate-400">
-                {t.emailLabel} <span className="font-semibold">{session.user.email}</span>
-              </div>
-            ) : null}
-            {statusMessage ? (
-              <div className="rounded-2xl border border-primary-100 bg-primary-50/70 px-4 py-3 text-sm text-primary-900">
-                {statusMessage}
-              </div>
-            ) : null}
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Button
-                type="button"
-                onClick={() => {
-                  window.location.reload();
-                }}
+          ) : null}
+          {statusMessage ? (
+            <div className="rounded-2xl border border-primary-100 bg-primary-50/70 px-4 py-3 text-sm text-primary-900">
+              {statusMessage}
+            </div>
+          ) : null}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Button
+              type="button"
+              onClick={() => {
+                window.location.reload();
+              }}
+            >
+              {t.refresh}
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => signOut({ callbackUrl: '/login' })}>
+              {t.signOut}
+            </Button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="space-y-3">
+            <h1 className="font-display text-3xl md:text-4xl text-slate-900 dark:text-white">
+              {t.joinTitle}
+            </h1>
+            <p className="text-slate-600 dark:text-slate-300">{t.joinMessage}</p>
+          </div>
+          {statusMessage ? (
+            <div className="rounded-2xl border border-primary-100 bg-primary-50/70 px-4 py-3 text-sm text-primary-900">
+              {statusMessage}
+            </div>
+          ) : null}
+          <form onSubmit={onSubmit} className="space-y-4">
+            <div className="text-left space-y-2">
+              <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                {t.joinLabel}
+              </label>
+              <Input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="email@example.com"
+                required
+              />
+            </div>
+            <Button type="submit" disabled={formState.status === 'loading'}>
+              {formState.status === 'loading' ? t.joining : t.joinAction}
+            </Button>
+            {formState.status === 'success' || formState.status === 'error' ? (
+              <div
+                className={`rounded-2xl px-4 py-3 text-sm ${
+                  formState.status === 'success'
+                    ? 'border border-emerald-200 bg-emerald-50 text-emerald-900'
+                    : 'border border-error-200 bg-error-50 text-error-900'
+                }`}
               >
-                {t.refresh}
-              </Button>
-              <Button type="button" variant="ghost" onClick={() => signOut({ callbackUrl: '/login' })}>
-                {t.signOut}
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div className="space-y-3">
-              <h1 className="font-display text-3xl md:text-4xl text-slate-900 dark:text-white">
-                {t.joinTitle}
-              </h1>
-              <p className="text-slate-600 dark:text-slate-300">{t.joinMessage}</p>
-            </div>
-            {statusMessage ? (
-              <div className="rounded-2xl border border-primary-100 bg-primary-50/70 px-4 py-3 text-sm text-primary-900">
-                {statusMessage}
+                {formState.message}
               </div>
             ) : null}
-            <form onSubmit={onSubmit} className="space-y-4">
-              <div className="text-left space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-200">
-                  {t.joinLabel}
-                </label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="email@example.com"
-                  required
-                />
-              </div>
-              <Button type="submit" disabled={formState.status === 'loading'}>
-                {formState.status === 'loading' ? t.joining : t.joinAction}
-              </Button>
-              {formState.status === 'success' || formState.status === 'error' ? (
-                <div
-                  className={`rounded-2xl px-4 py-3 text-sm ${
-                    formState.status === 'success'
-                      ? 'border border-emerald-200 bg-emerald-50 text-emerald-900'
-                      : 'border border-error-200 bg-error-50 text-error-900'
-                  }`}
-                >
-                  {formState.message}
-                </div>
-              ) : null}
-            </form>
-            {status === 'approved' ? (
-              <Button type="button" variant="ghost" onClick={() => (window.location.href = '/login')}>
-                {t.login}
-              </Button>
-            ) : null}
-          </>
-        )}
-      </div>
+          </form>
+          {status === 'approved' ? (
+            <Button type="button" variant="ghost" onClick={() => (window.location.href = '/login')}>
+              {t.login}
+            </Button>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
+}
+
+function WaitlistLoading() {
+  const language = useLanguage();
+  const t = (waitlistCopy[language] ?? waitlistCopy.pl) as WaitlistCopy;
+
+  return (
+    <div className="w-full max-w-2xl rounded-3xl bg-white/85 dark:bg-slate-800/80 shadow-sm border border-white/60 dark:border-slate-700 p-8 text-center">
+      <p className="text-slate-600 dark:text-slate-300">{t.loading}</p>
+    </div>
+  );
+}
+
+export default function WaitlistPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      <Suspense fallback={<WaitlistLoading />}>
+        <WaitlistContent />
+      </Suspense>
     </div>
   );
 }
