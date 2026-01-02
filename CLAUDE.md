@@ -116,11 +116,17 @@ src/
 
 ## Environment Variables
 
-Required for full functionality:
+Required:
 - `DATABASE_URL` - PostgreSQL connection
 - `NEXTAUTH_SECRET`, `NEXTAUTH_URL` - NextAuth config
 - `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` - OAuth
 - `GEMINI_API_KEY` - AI features
-- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET` - Stripe (optional)
 
-See `.env.example` for complete list including AI limits and access control.
+Email (OVH SMTP):
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`
+
+Optional:
+- `STRIPE_*` - Stripe subscriptions
+- `ADMIN_EMAILS`, `ALLOWLIST_EMAILS`, `MAX_ACTIVE_USERS` - access control
+
+See `.env.example` for complete list.

@@ -14,8 +14,8 @@ Use this list before running Deploy PRD.
 - [ ] Google OAuth: origins + redirect URIs include `https://henio.app`.
 - [ ] `GEMINI_API_KEY` set (or AI features explicitly disabled).
 - [ ] `ADMIN_EMAILS`, `ALLOWLIST_EMAILS`, `MAX_ACTIVE_USERS` set to intended values.
-- [ ] Waitlist email config set: `RESEND_API_KEY`, `RESEND_FROM_EMAIL` (optional `RESEND_REPLY_TO`).
-- [ ] `WAITLIST_CRON_SECRET` set and scheduler calling `/api/waitlist/auto-approve`.
+- [ ] Email SMTP config set: `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
+- [ ] Waitlist cron active (GitHub Actions `waitlist-cron.yml` runs hourly).
 
 ---
 
