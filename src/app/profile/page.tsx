@@ -911,7 +911,7 @@ export default function ProfilePage() {
             <ProgressBar value={missionProgress} size="sm" className="mt-3 sm:mt-4" />
             <div className="mt-4 sm:mt-5 flex flex-wrap items-center gap-3">
               <Link href={missionRoute.href}>
-                <Button variant="secondary" size="sm" className="sm:px-4 sm:py-2 sm:text-base bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white border-white/20">
+                <Button variant="ghost" size="sm" className="sm:px-4 sm:py-2 sm:text-base bg-slate-900/30 hover:bg-slate-900/40 backdrop-blur-sm text-white border border-white/30">
                   {dailyMission.completed ? t.missionContinue : t.missionStart} •{' '}
                   {missionRoute.label}
                 </Button>
