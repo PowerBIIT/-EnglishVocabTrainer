@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
-const TEST_PASSWORD = 'e2e';
+const TEST_PASSWORD = process.env.E2E_TEST_PASSWORD || 'e2e';
 const HOME_HEADING = /Dzisiejsza lekcja|Your lesson today|Твоя сьогоднішня пригода/i;
 const CHAT_HEADING = /Asystent AI|AI Assistant|AI Асистент/i;
 const CHAT_PLACEHOLDER = /Wpisz słówka|Type words|Введи слова/i;

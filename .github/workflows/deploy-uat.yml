@@ -241,6 +241,7 @@ jobs:
         env:
           BASE_URL: ${{ secrets.NEXTAUTH_URL }}
           E2E_TEST: 'true'
+          E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
         run: npm run test:e2e -- --project=chromium
 
       - name: Upload Playwright report on failure
