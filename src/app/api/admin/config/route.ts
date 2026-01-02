@@ -58,7 +58,7 @@ export async function PATCH(request: Request) {
 
   const allowed = new Map(ADMIN_CONFIG_FIELDS.map((field) => [field.key, field]));
   const shouldRecheckWaitlist = updates.some(
-    (update) => typeof update?.key === 'string' && update.key === 'MAX_ACTIVE_USERS'
+    (update: { key?: string }) => typeof update?.key === 'string' && update.key === 'MAX_ACTIVE_USERS'
   );
 
   for (const update of updates) {

@@ -81,7 +81,7 @@ export const createWaitlistEntry = async ({
         confirmationSentAt: now,
         source: source ?? existing.source,
         language: language ?? existing.language,
-        metadata: metadata ?? existing.metadata,
+        metadata: (metadata ?? existing.metadata) as object | undefined,
       },
     });
 
@@ -102,7 +102,7 @@ export const createWaitlistEntry = async ({
       confirmationSentAt: now,
       source: source ?? undefined,
       language: language ?? undefined,
-      metadata: metadata ?? undefined,
+      metadata: metadata as object | undefined,
     },
   });
 
