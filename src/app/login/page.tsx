@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
-import { Compass, ShieldCheck, Sparkles } from 'lucide-react';
+import { Compass, ShieldCheck, Sparkles, Eye, EyeOff, CheckCircle2, AlertCircle, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { MascotAvatar } from '@/components/mascot/MascotAvatar';
 import { useLanguage, isAppLanguage, type AppLanguage } from '@/lib/i18n';
@@ -14,7 +15,7 @@ const loginCopy = {
   pl: {
     loading: 'Ładowanie...',
     tagline: 'Nowy dzień, nowa misja',
-    description: 'Zaloguj się przez Google i kontynuuj przygodę z nowoczesną nauką słówek.',
+    description: 'Zaloguj się i kontynuuj przygodę z nowoczesną nauką słówek.',
     signInGoogle: 'Zaloguj się przez Google',
     noGuest: 'Bez trybu gościa, dane zawsze zsynchronizowane.',
     testLoginTitle: 'Logowanie testowe (E2E)',
@@ -25,11 +26,29 @@ const loginCopy = {
     guideLabel: 'Twój przyjaciel Henio',
     guideNote: 'Wybierz styl Henia w onboardingu',
     languageLabel: 'Język',
+    // Email/password login
+    orDivider: 'lub',
+    emailPlaceholder: 'Email',
+    passwordPlaceholder: 'Hasło',
+    signIn: 'Zaloguj się',
+    forgotPassword: 'Zapomniałeś hasła?',
+    noAccount: 'Nie masz konta?',
+    register: 'Zarejestruj się',
+    invalidCredentials: 'Nieprawidłowy email lub hasło',
+    emailNotVerified: 'Potwierdź swój adres email przed zalogowaniem. Sprawdź skrzynkę odbiorczą.',
+    emailVerified: 'Email potwierdzony! Możesz się teraz zalogować.',
+    invalidToken: 'Link weryfikacyjny jest nieprawidłowy lub wygasł.',
+    tokenExpired: 'Link weryfikacyjny wygasł. Zarejestruj się ponownie.',
+    userNotFound: 'Użytkownik nie został znaleziony.',
+    verificationFailed: 'Weryfikacja nie powiodła się. Spróbuj ponownie.',
+    resendVerification: 'Wyślij ponownie email weryfikacyjny',
+    resendSuccess: 'Email weryfikacyjny został wysłany.',
+    resendError: 'Nie udało się wysłać emaila. Spróbuj ponownie.',
   },
   en: {
     loading: 'Loading...',
     tagline: 'New day, new mission',
-    description: 'Sign in with Google and continue your modern vocab journey.',
+    description: 'Sign in and continue your modern vocab journey.',
     signInGoogle: 'Sign in with Google',
     noGuest: 'No guest mode, your data is always synced.',
     testLoginTitle: 'Test login (E2E)',
@@ -40,11 +59,29 @@ const loginCopy = {
     guideLabel: 'Your friend Henio',
     guideNote: "Choose Henio's style in onboarding",
     languageLabel: 'Language',
+    // Email/password login
+    orDivider: 'or',
+    emailPlaceholder: 'Email',
+    passwordPlaceholder: 'Password',
+    signIn: 'Sign in',
+    forgotPassword: 'Forgot password?',
+    noAccount: "Don't have an account?",
+    register: 'Register',
+    invalidCredentials: 'Invalid email or password',
+    emailNotVerified: 'Please confirm your email before signing in. Check your inbox.',
+    emailVerified: 'Email confirmed! You can now sign in.',
+    invalidToken: 'The verification link is invalid or has expired.',
+    tokenExpired: 'The verification link has expired. Please register again.',
+    userNotFound: 'User not found.',
+    verificationFailed: 'Verification failed. Please try again.',
+    resendVerification: 'Resend verification email',
+    resendSuccess: 'Verification email sent.',
+    resendError: 'Failed to send email. Please try again.',
   },
   uk: {
     loading: 'Завантаження...',
     tagline: 'Новий день, нова місія',
-    description: 'Увійди через Google і продовжуй сучасну пригоду зі словами.',
+    description: 'Увійди і продовжуй сучасну пригоду зі словами.',
     signInGoogle: 'Увійти через Google',
     noGuest: 'Без гостьового режиму, дані завжди синхронізовані.',
     testLoginTitle: 'Тестовий вхід (E2E)',
@@ -55,6 +92,24 @@ const loginCopy = {
     guideLabel: 'Твій друг Геньо',
     guideNote: 'Обери стиль Геньо у онбордингу',
     languageLabel: 'Мова',
+    // Email/password login
+    orDivider: 'або',
+    emailPlaceholder: 'Email',
+    passwordPlaceholder: 'Пароль',
+    signIn: 'Увійти',
+    forgotPassword: 'Забули пароль?',
+    noAccount: 'Немає акаунту?',
+    register: 'Зареєструватися',
+    invalidCredentials: 'Невірний email або пароль',
+    emailNotVerified: 'Підтвердіть свою електронну пошту перед входом. Перевірте вхідні.',
+    emailVerified: 'Email підтверджено! Тепер можете увійти.',
+    invalidToken: 'Посилання для підтвердження недійсне або застаріле.',
+    tokenExpired: 'Посилання для підтвердження застаріло. Зареєструйтеся знову.',
+    userNotFound: 'Користувача не знайдено.',
+    verificationFailed: 'Перевірка не вдалася. Спробуйте ще раз.',
+    resendVerification: 'Надіслати лист підтвердження знову',
+    resendSuccess: 'Лист підтвердження надіслано.',
+    resendError: 'Не вдалося надіслати email. Спробуйте ще раз.',
   },
 } as const;
 
@@ -121,8 +176,9 @@ function FlagIcon({ src, fallback }: { src: string; fallback: string }) {
   );
 }
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   const hydrated = useHydration();
   const language = useLanguage();
@@ -134,6 +190,19 @@ export default function LoginPage() {
   const [e2eEmail, setE2eEmail] = useState('');
   const [e2ePassword, setE2ePassword] = useState('');
   const [e2eError, setE2eError] = useState('');
+
+  // Email/password login state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
+
+  // URL params for verification status
+  const verified = searchParams.get('verified');
+  const urlError = searchParams.get('error');
 
   useEffect(() => {
     if (status !== 'authenticated') return;
@@ -175,6 +244,71 @@ export default function LoginPage() {
     }
 
     router.replace(result?.url ?? '/');
+  };
+
+  const handleEmailLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setIsLoading(true);
+
+    const result = await signIn('credentials', {
+      redirect: false,
+      email: email.trim(),
+      password,
+      callbackUrl: '/',
+    });
+
+    setIsLoading(false);
+
+    if (result?.error) {
+      if (result.error === 'EMAIL_NOT_VERIFIED') {
+        setError(t.emailNotVerified);
+      } else {
+        setError(t.invalidCredentials);
+      }
+      return;
+    }
+
+    router.replace(result?.url ?? '/');
+  };
+
+  const handleResendVerification = async () => {
+    if (!email.trim()) return;
+    setResendLoading(true);
+    setResendSuccess(false);
+
+    try {
+      const res = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim(), language }),
+      });
+
+      if (res.ok) {
+        setResendSuccess(true);
+      } else {
+        setError(t.resendError);
+      }
+    } catch {
+      setError(t.resendError);
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  const getUrlErrorMessage = () => {
+    switch (urlError) {
+      case 'invalid_token':
+        return t.invalidToken;
+      case 'token_expired':
+        return t.tokenExpired;
+      case 'user_not_found':
+        return t.userNotFound;
+      case 'verification_failed':
+        return t.verificationFailed;
+      default:
+        return null;
+    }
   };
 
   if (!hydrated) {
@@ -240,6 +374,20 @@ export default function LoginPage() {
           <p className="text-lg text-slate-600 dark:text-slate-300">
             {t.description}
           </p>
+          {/* Success/Error messages from URL params */}
+          {verified === 'true' && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-success-50 dark:bg-success-900/30 text-success-700 dark:text-success-300 text-sm">
+              <CheckCircle2 size={18} />
+              {t.emailVerified}
+            </div>
+          )}
+          {getUrlErrorMessage() && (
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-error-50 dark:bg-error-900/30 text-error-700 dark:text-error-300 text-sm">
+              <AlertCircle size={18} />
+              {getUrlErrorMessage()}
+            </div>
+          )}
+
           <div className="space-y-3">
             <Button
               size="lg"
@@ -249,6 +397,101 @@ export default function LoginPage() {
             >
               {t.signInGoogle}
             </Button>
+
+            {/* Divider */}
+            <div className="flex items-center gap-4">
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+              <span className="text-sm text-slate-400 dark:text-slate-500">{t.orDivider}</span>
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-700" />
+            </div>
+
+            {/* Email/Password form */}
+            <form onSubmit={handleEmailLogin} className="space-y-3">
+              <div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t.emailPlaceholder}
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  required
+                />
+              </div>
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={t.passwordPlaceholder}
+                  className="w-full px-4 py-3 pr-12 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+
+              {error && (
+                <div className="flex items-start gap-2 p-3 rounded-xl bg-error-50 dark:bg-error-900/30 text-error-700 dark:text-error-300 text-sm">
+                  <AlertCircle size={18} className="flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <p>{error}</p>
+                    {error === t.emailNotVerified && email.trim() && (
+                      <button
+                        type="button"
+                        onClick={handleResendVerification}
+                        disabled={resendLoading}
+                        className="mt-2 flex items-center gap-1 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
+                      >
+                        <Mail size={14} />
+                        {resendLoading ? '...' : t.resendVerification}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {resendSuccess && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-success-50 dark:bg-success-900/30 text-success-700 dark:text-success-300 text-sm">
+                  <CheckCircle2 size={18} />
+                  {t.resendSuccess}
+                </div>
+              )}
+
+              <Button
+                type="submit"
+                size="lg"
+                variant="secondary"
+                className="w-full"
+                disabled={isLoading || !email.trim() || !password}
+              >
+                {isLoading ? '...' : t.signIn}
+              </Button>
+            </form>
+
+            {/* Links */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 text-sm">
+              <Link
+                href="/forgot-password"
+                className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300"
+              >
+                {t.forgotPassword}
+              </Link>
+              <span className="text-slate-500 dark:text-slate-400">
+                {t.noAccount}{' '}
+                <Link
+                  href="/register"
+                  className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
+                >
+                  {t.register}
+                </Link>
+              </span>
+            </div>
+
             <div className="flex items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
               <ShieldCheck size={16} className="text-primary-500" />
               {t.noGuest}
@@ -315,5 +558,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="p-4 flex items-center justify-center min-h-screen"><p className="text-slate-500">Loading...</p></div>}>
+      <LoginContent />
+    </Suspense>
   );
 }

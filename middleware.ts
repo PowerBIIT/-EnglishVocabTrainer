@@ -17,6 +17,20 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Auth pages (public when not logged in, redirect when logged in)
+  const authPages = ['/register', '/forgot-password', '/reset-password'];
+  if (authPages.includes(pathname)) {
+    if (!token) {
+      return NextResponse.next();
+    }
+    // Logged-in users should go to home or onboarding
+    const redirectUrl = new URL(
+      token.onboardingComplete ? '/' : ONBOARDING_PATH,
+      req.url
+    );
+    return NextResponse.redirect(redirectUrl);
+  }
+
   // Login page: redirect logged-in users to home or onboarding
   if (pathname === '/login') {
     if (!token) {

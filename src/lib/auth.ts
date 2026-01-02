@@ -7,6 +7,7 @@ import type { AccessStatus, Plan } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { ensureUserPlan } from '@/lib/userPlan';
 import { isAdminEmail } from '@/lib/access';
+import { verifyPassword } from '@/lib/passwordAuth';
 
 const isEnvEnabled = (value?: string) => value === 'true' || value === '1';
 // E2E login requires explicit opt-in via E2E_LOGIN_ENABLED=true (set only in UAT)
@@ -20,6 +21,42 @@ const providers: NextAuthOptions['providers'] = [
   GoogleProvider({
     clientId: process.env.GOOGLE_CLIENT_ID ?? '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+  }),
+  CredentialsProvider({
+    id: 'credentials',
+    name: 'Email',
+    credentials: {
+      email: { label: 'Email', type: 'email' },
+      password: { label: 'Password', type: 'password' },
+    },
+    async authorize(credentials) {
+      if (!credentials?.email || !credentials?.password) {
+        return null;
+      }
+
+      const email = credentials.email.trim().toLowerCase();
+      const user = await prisma.user.findUnique({
+        where: { email },
+      });
+
+      // User not found or has no password (OAuth-only user)
+      if (!user || !user.password) {
+        return null;
+      }
+
+      // Verify password
+      const isValid = await verifyPassword(credentials.password, user.password);
+      if (!isValid) {
+        return null;
+      }
+
+      // Check if email is verified
+      if (!user.emailVerified) {
+        throw new Error('EMAIL_NOT_VERIFIED');
+      }
+
+      return user;
+    },
   }),
 ];
 

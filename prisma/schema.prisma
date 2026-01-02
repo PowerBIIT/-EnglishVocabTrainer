@@ -26,6 +26,11 @@ model User {
   parentEmail        String?   // Parent email (optional, if < 16 years)
   consentVersion     String?   // Version of accepted documents (e.g., "1.0")
 
+  // Password authentication fields
+  password             String?   // bcrypt hash, null for OAuth-only users
+  passwordResetToken   String?   @unique
+  passwordResetExpires DateTime?
+
   accounts Account[]
   sessions Session[]
   state    UserState?
@@ -80,6 +85,17 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique  // hashed SHA256
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([expires])
 }
 
 enum Plan {
