@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
-const PUBLIC_PATHS = ['/login'];
 const ONBOARDING_PATH = '/onboarding';
 const WAITLIST_PATH = '/waitlist';
 
@@ -13,7 +12,13 @@ export async function middleware(req: NextRequest) {
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
-  if (PUBLIC_PATHS.includes(pathname)) {
+  // Allow public pages for all users
+  if (pathname === '/privacy' || pathname === '/terms') {
+    return NextResponse.next();
+  }
+
+  // Login page: redirect logged-in users to home or onboarding
+  if (pathname === '/login') {
     if (!token) {
       return NextResponse.next();
     }

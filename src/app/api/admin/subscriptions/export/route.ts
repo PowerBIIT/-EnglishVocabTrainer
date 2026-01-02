@@ -20,8 +20,16 @@ const isSubscriptionStatus = (value: string): value is SubscriptionStatus =>
 
 const escapeCSV = (value: string | null | undefined): string => {
   if (value === null || value === undefined) return '';
-  const str = String(value);
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+  let str = String(value);
+
+  // Prevent CSV injection: neutralize formula-triggering characters
+  // by prefixing with a single quote (which Excel treats as text indicator)
+  const formulaChars = ['=', '+', '-', '@', '\t', '\r'];
+  if (formulaChars.some((char) => str.startsWith(char))) {
+    str = `'${str}`;
+  }
+
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes("'")) {
     return `"${str.replace(/"/g, '""')}"`;
   }
   return str;

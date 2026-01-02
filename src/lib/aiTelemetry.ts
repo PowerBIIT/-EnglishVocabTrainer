@@ -61,82 +61,102 @@ export async function logAiRequest(data: AiRequestLogData): Promise<void> {
 }
 
 /**
- * Update daily aggregation stats
+ * Update daily aggregation stats using raw SQL for proper aggregate calculations
  */
 async function updateDailyStats(data: AiRequestLogData, totalCost: number): Promise<void> {
   const today = new Date();
   today.setUTCHours(0, 0, 0, 0);
 
-  const uniqueKey = {
-    date: today,
-    userId: data.userId,
-    feature: data.feature,
-    model: data.model,
-  };
+  const successIncrement = data.success ? 1 : 0;
+  const errorIncrement = data.success ? 0 : 1;
 
-  // Upsert user daily stats
-  await prisma.aiDailyStats.upsert({
+  // Upsert user daily stats with proper aggregate calculations
+  await prisma.$executeRaw`
+    INSERT INTO "AiDailyStats" (
+      "id", "date", "userId", "feature", "model", "languagePair",
+      "requestCount", "successCount", "errorCount",
+      "inputTokens", "outputTokens", "totalCost",
+      "avgDurationMs", "minDurationMs", "maxDurationMs",
+      "createdAt", "updatedAt"
+    ) VALUES (
+      gen_random_uuid()::text,
+      ${today}::date,
+      ${data.userId},
+      ${data.feature},
+      ${data.model},
+      ${data.languagePair ?? null},
+      1,
+      ${successIncrement},
+      ${errorIncrement},
+      ${data.inputTokens},
+      ${data.outputTokens},
+      ${totalCost},
+      ${data.durationMs},
+      ${data.durationMs},
+      ${data.durationMs},
+      NOW(),
+      NOW()
+    )
+    ON CONFLICT ("date", "userId", "feature", "model")
+    DO UPDATE SET
+      "requestCount" = "AiDailyStats"."requestCount" + 1,
+      "successCount" = "AiDailyStats"."successCount" + ${successIncrement},
+      "errorCount" = "AiDailyStats"."errorCount" + ${errorIncrement},
+      "inputTokens" = "AiDailyStats"."inputTokens" + ${data.inputTokens},
+      "outputTokens" = "AiDailyStats"."outputTokens" + ${data.outputTokens},
+      "totalCost" = "AiDailyStats"."totalCost" + ${totalCost},
+      "avgDurationMs" = (("AiDailyStats"."avgDurationMs" * "AiDailyStats"."requestCount") + ${data.durationMs}) / ("AiDailyStats"."requestCount" + 1),
+      "minDurationMs" = LEAST("AiDailyStats"."minDurationMs", ${data.durationMs}),
+      "maxDurationMs" = GREATEST("AiDailyStats"."maxDurationMs", ${data.durationMs}),
+      "updatedAt" = NOW()
+  `;
+
+  // Upsert global daily stats with proper aggregate calculations
+  // First, count unique users for this date/feature/model combination
+  const uniqueUsersResult = await prisma.aiDailyStats.groupBy({
+    by: ['userId'],
     where: {
-      date_userId_feature_model: uniqueKey,
-    },
-    create: {
-      ...uniqueKey,
-      languagePair: data.languagePair,
-      requestCount: 1,
-      successCount: data.success ? 1 : 0,
-      errorCount: data.success ? 0 : 1,
-      inputTokens: data.inputTokens,
-      outputTokens: data.outputTokens,
-      totalCost,
-      avgDurationMs: data.durationMs,
-      maxDurationMs: data.durationMs,
-      minDurationMs: data.durationMs,
-    },
-    update: {
-      requestCount: { increment: 1 },
-      successCount: data.success ? { increment: 1 } : undefined,
-      errorCount: data.success ? undefined : { increment: 1 },
-      inputTokens: { increment: data.inputTokens },
-      outputTokens: { increment: data.outputTokens },
-      totalCost: { increment: totalCost },
-      // For avg/max/min, we'll need to recalculate in the query
-      // This is a simplified version - just update avgDurationMs
-      avgDurationMs: data.durationMs, // Will be overwritten, not ideal but simple
+      date: today,
+      feature: data.feature,
+      model: data.model,
     },
   });
+  const uniqueUsersCount = uniqueUsersResult.length;
 
-  // Upsert global daily stats
-  const globalKey = {
-    date: today,
-    feature: data.feature,
-    model: data.model,
-  };
-
-  await prisma.aiGlobalDailyStats.upsert({
-    where: {
-      date_feature_model: globalKey,
-    },
-    create: {
-      ...globalKey,
-      requestCount: 1,
-      successCount: data.success ? 1 : 0,
-      errorCount: data.success ? 0 : 1,
-      uniqueUsers: 1,
-      inputTokens: data.inputTokens,
-      outputTokens: data.outputTokens,
-      totalCost,
-      avgDurationMs: data.durationMs,
-    },
-    update: {
-      requestCount: { increment: 1 },
-      successCount: data.success ? { increment: 1 } : undefined,
-      errorCount: data.success ? undefined : { increment: 1 },
-      inputTokens: { increment: data.inputTokens },
-      outputTokens: { increment: data.outputTokens },
-      totalCost: { increment: totalCost },
-      avgDurationMs: data.durationMs, // Simplified
-    },
-  });
+  await prisma.$executeRaw`
+    INSERT INTO "AiGlobalDailyStats" (
+      "id", "date", "feature", "model",
+      "requestCount", "successCount", "errorCount", "uniqueUsers",
+      "inputTokens", "outputTokens", "totalCost", "avgDurationMs",
+      "createdAt", "updatedAt"
+    ) VALUES (
+      gen_random_uuid()::text,
+      ${today}::date,
+      ${data.feature},
+      ${data.model},
+      1,
+      ${successIncrement},
+      ${errorIncrement},
+      1,
+      ${data.inputTokens},
+      ${data.outputTokens},
+      ${totalCost},
+      ${data.durationMs},
+      NOW(),
+      NOW()
+    )
+    ON CONFLICT ("date", "feature", "model")
+    DO UPDATE SET
+      "requestCount" = "AiGlobalDailyStats"."requestCount" + 1,
+      "successCount" = "AiGlobalDailyStats"."successCount" + ${successIncrement},
+      "errorCount" = "AiGlobalDailyStats"."errorCount" + ${errorIncrement},
+      "uniqueUsers" = ${uniqueUsersCount},
+      "inputTokens" = "AiGlobalDailyStats"."inputTokens" + ${data.inputTokens},
+      "outputTokens" = "AiGlobalDailyStats"."outputTokens" + ${data.outputTokens},
+      "totalCost" = "AiGlobalDailyStats"."totalCost" + ${totalCost},
+      "avgDurationMs" = (("AiGlobalDailyStats"."avgDurationMs" * "AiGlobalDailyStats"."requestCount") + ${data.durationMs}) / ("AiGlobalDailyStats"."requestCount" + 1),
+      "updatedAt" = NOW()
+  `;
 }
 
 /**
