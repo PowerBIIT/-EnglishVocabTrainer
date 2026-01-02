@@ -46,14 +46,25 @@ describe('auth options', () => {
   it('includes the E2E credentials provider when enabled', async () => {
     process.env.NODE_ENV = 'test';
     process.env.E2E_TEST = 'true';
+    process.env.E2E_LOGIN_ENABLED = 'true';
 
     const { authOptions } = await loadAuth();
     expect(authOptions.providers?.length).toBe(2);
   });
 
+  it('exposes only Google provider when E2E_LOGIN_ENABLED is missing', async () => {
+    process.env.NODE_ENV = 'test';
+    process.env.E2E_TEST = 'true';
+    delete process.env.E2E_LOGIN_ENABLED;
+
+    const { authOptions } = await loadAuth();
+    expect(authOptions.providers?.length).toBe(1);
+  });
+
   it('exposes only Google provider when E2E is disabled', async () => {
     process.env.NODE_ENV = 'production';
     delete process.env.E2E_TEST;
+    delete process.env.E2E_LOGIN_ENABLED;
 
     const { authOptions } = await loadAuth();
     expect(authOptions.providers?.length).toBe(1);
