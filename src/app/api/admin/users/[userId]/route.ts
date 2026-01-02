@@ -4,6 +4,7 @@ import { AccessStatus, Plan } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getAdminEmails, getMaxActiveUsers, isAdminEmail } from '@/lib/access';
 import { requireAdmin } from '@/middleware/adminAuth';
+import { autoApproveWaitlistAndNotify } from '@/lib/waitlist';
 
 const isPlan = (value: string): value is Plan => value === 'FREE' || value === 'PRO';
 const isAccessStatus = (value: string): value is AccessStatus =>
@@ -95,6 +96,8 @@ export async function PATCH(
     update: updates,
   });
 
+  void autoApproveWaitlistAndNotify().catch(console.error);
+
   return NextResponse.json({
     user: {
       userId,
@@ -133,6 +136,7 @@ export async function DELETE(
   }
 
   await prisma.user.delete({ where: { id: userId } });
+  void autoApproveWaitlistAndNotify().catch(console.error);
 
   return NextResponse.json({
     user: {

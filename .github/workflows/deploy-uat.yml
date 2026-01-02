@@ -102,6 +102,14 @@ jobs:
                 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}" \
                 STRIPE_PRO_MONTHLY_PRICE_ID="${{ secrets.STRIPE_PRO_MONTHLY_PRICE_ID }}" \
                 STRIPE_PRO_ANNUAL_PRICE_ID="${{ secrets.STRIPE_PRO_ANNUAL_PRICE_ID }}" \
+                SMTP_HOST="${{ secrets.SMTP_HOST }}" \
+                SMTP_PORT="${{ secrets.SMTP_PORT }}" \
+                SMTP_USER="${{ secrets.SMTP_USER }}" \
+                SMTP_PASS="${{ secrets.SMTP_PASS }}" \
+                SMTP_FROM="${{ secrets.SMTP_FROM }}" \
+                WAITLIST_CONFIRM_TTL_HOURS="${{ secrets.WAITLIST_CONFIRM_TTL_HOURS }}" \
+                WAITLIST_CONFIRM_RESEND_MINUTES="${{ secrets.WAITLIST_CONFIRM_RESEND_MINUTES }}" \
+                WAITLIST_CRON_SECRET="${{ secrets.WAITLIST_CRON_SECRET }}" \
                 E2E_TEST=true \
                 NEXT_PUBLIC_E2E_TEST=true \
                 E2E_LOGIN_ENABLED=true \

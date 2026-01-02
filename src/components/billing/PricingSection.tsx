@@ -13,6 +13,29 @@ type PriceData = {
   trialDays: number;
 };
 
+const normalizePriceData = (data: unknown): PriceData | null => {
+  if (!data || typeof data !== 'object') return null;
+  const raw = data as PriceData;
+  if (!raw.monthly || !raw.annual) return null;
+  if (
+    typeof raw.monthly.id !== 'string' ||
+    typeof raw.monthly.currency !== 'string' ||
+    typeof raw.monthly.unitAmount !== 'number' ||
+    typeof raw.annual.id !== 'string' ||
+    typeof raw.annual.currency !== 'string' ||
+    typeof raw.annual.unitAmount !== 'number'
+  ) {
+    return null;
+  }
+  const savings = Number.isFinite(raw.annual.savings) ? raw.annual.savings : 0;
+  const trialDays = Number.isFinite(raw.trialDays) ? raw.trialDays : 7;
+  return {
+    monthly: raw.monthly,
+    annual: { ...raw.annual, savings },
+    trialDays,
+  };
+};
+
 const pricingCopy = {
   pl: {
     title: 'Plan PRO',
@@ -33,6 +56,7 @@ const pricingCopy = {
     upgrade: 'Rozpocznij okres probny',
     manage: 'Zarzadzaj subskrypcja',
     loading: 'Ladowanie...',
+    loadError: 'Nie udalo sie pobrac cennika. Sprobuj ponownie pozniej.',
     active: 'Aktywny',
     cancelPending: 'Anulowano (aktywny do konca okresu)',
   },
@@ -55,6 +79,7 @@ const pricingCopy = {
     upgrade: 'Start free trial',
     manage: 'Manage subscription',
     loading: 'Loading...',
+    loadError: 'Pricing is unavailable right now. Please try again later.',
     active: 'Active',
     cancelPending: 'Cancelled (active until period end)',
   },
@@ -77,6 +102,7 @@ const pricingCopy = {
     upgrade: 'Почати пробний період',
     manage: 'Керувати підпискою',
     loading: 'Завантаження...',
+    loadError: 'Прайс тимчасово недоступний. Спробуйте пізніше.',
     active: 'Активний',
     cancelPending: 'Скасовано (активний до кінця періоду)',
   },
@@ -104,13 +130,36 @@ export function PricingSection({
     'monthly'
   );
   const [loading, setLoading] = useState(false);
+  const [pricingError, setPricingError] = useState<string | null>(null);
+  const loadErrorMessage = t.loadError;
 
   useEffect(() => {
+    let mounted = true;
+    setPricingError(null);
     fetch('/api/stripe/prices')
-      .then((res) => res.json())
-      .then(setPrices)
-      .catch(console.error);
-  }, []);
+      .then(async (res) => {
+        if (!res.ok) {
+          throw new Error(`Pricing fetch failed: ${res.status}`);
+        }
+        const data = await res.json();
+        const normalized = normalizePriceData(data);
+        if (!normalized) {
+          throw new Error('Pricing response invalid');
+        }
+        if (mounted) {
+          setPrices(normalized);
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        if (mounted) {
+          setPricingError(loadErrorMessage);
+        }
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [loadErrorMessage]);
 
   const handleUpgrade = async () => {
     setLoading(true);
@@ -128,6 +177,16 @@ export function PricingSection({
     }).format(amount / 100);
   };
 
+  if (pricingError) {
+    return (
+      <Card>
+        <CardContent className="py-8 text-center">
+          <p className="text-sm text-slate-500">{pricingError}</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (!prices) {
     return (
       <Card>
@@ -141,6 +200,10 @@ export function PricingSection({
 
   const isPro = currentPlan === 'PRO';
   const isTrialing = subscriptionStatus === 'TRIALING';
+  const annualSavings =
+    Number.isFinite(prices.annual?.savings) && prices.annual.savings > 0
+      ? prices.annual.savings
+      : null;
 
   return (
     <Card variant="elevated">
@@ -186,9 +249,11 @@ export function PricingSection({
                 }`}
               >
                 <span>{t.annual}</span>
-                <span className="ml-1 text-xs text-success-600 dark:text-success-400">
-                  -{prices.annual.savings}%
-                </span>
+                {annualSavings !== null ? (
+                  <span className="ml-1 text-xs text-success-600 dark:text-success-400">
+                    -{annualSavings}%
+                  </span>
+                ) : null}
               </button>
             </div>
 

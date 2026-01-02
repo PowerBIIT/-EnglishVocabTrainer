@@ -1,4 +1,5 @@
 import { getAppConfig, getAppConfigNumber } from '@/lib/config';
+import { prisma } from '@/lib/db';
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
@@ -24,7 +25,15 @@ export const isEmailAllowed = async (email?: string | null) => {
   if (allowlist.length === 0) return true;
   if (!email) return false;
   if (isAdminEmail(email)) return true;
-  return allowlist.includes(normalizeEmail(email));
+  const normalized = normalizeEmail(email);
+  if (allowlist.includes(normalized)) return true;
+
+  const approved = await prisma.waitlistEntry.findFirst({
+    where: { email: normalized, status: 'APPROVED' },
+    select: { id: true },
+  });
+
+  return Boolean(approved);
 };
 
 export const getAllowlistEmails = async () => {

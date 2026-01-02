@@ -13,3 +13,13 @@ export const AI_RATE_LIMIT = {
   limit: 30,
   windowMs: 60_000,
 } as const;
+
+export const WAITLIST_RATE_LIMIT_IP = {
+  limit: 20,
+  windowMs: 60 * 60 * 1000,
+} as const;
+
+export const WAITLIST_RATE_LIMIT_EMAIL = {
+  limit: 5,
+  windowMs: 60 * 60 * 1000,
+} as const;

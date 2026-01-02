@@ -93,6 +93,13 @@ enum AccessStatus {
   SUSPENDED
 }
 
+enum WaitlistStatus {
+  PENDING
+  CONFIRMED
+  APPROVED
+  DECLINED
+}
+
 enum SubscriptionStatus {
   INCOMPLETE
   INCOMPLETE_EXPIRED
@@ -112,6 +119,24 @@ model UserPlan {
   updatedAt    DateTime     @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model WaitlistEntry {
+  id                      String         @id @default(cuid())
+  email                   String         @unique
+  status                  WaitlistStatus @default(PENDING)
+  confirmationTokenHash   String?
+  confirmationExpiresAt  DateTime?
+  confirmationSentAt     DateTime?
+  confirmedAt            DateTime?
+  approvedAt             DateTime?
+  source                 String?
+  language               String?
+  metadata               Json?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  @@index([status, confirmedAt])
 }
 
 model UsageCounter {

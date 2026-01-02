@@ -8,6 +8,8 @@ const WAITLIST_PATH = '/waitlist';
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
+  const isWaitlistPath =
+    pathname === WAITLIST_PATH || pathname.startsWith(`${WAITLIST_PATH}/`);
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
 
@@ -23,6 +25,9 @@ export async function middleware(req: NextRequest) {
   }
 
   if (!token) {
+    if (isWaitlistPath) {
+      return NextResponse.next();
+    }
     const loginUrl = new URL('/login', req.url);
     loginUrl.searchParams.set('from', pathname);
     return NextResponse.redirect(loginUrl);
@@ -31,13 +36,13 @@ export async function middleware(req: NextRequest) {
   const accessStatus = (token?.accessStatus as string | undefined) ?? 'ACTIVE';
 
   if (accessStatus !== 'ACTIVE') {
-    if (pathname !== WAITLIST_PATH) {
+    if (!isWaitlistPath) {
       return NextResponse.redirect(new URL(WAITLIST_PATH, req.url));
     }
     return NextResponse.next();
   }
 
-  if (pathname === WAITLIST_PATH) {
+  if (isWaitlistPath) {
     return NextResponse.redirect(new URL('/', req.url));
   }
 

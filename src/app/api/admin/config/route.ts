@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { ADMIN_CONFIG_FIELDS } from '@/lib/adminConfig';
 import { deleteAppConfig, getAllAppConfig, setAppConfig } from '@/lib/config';
 import { requireAdmin } from '@/middleware/adminAuth';
+import { autoApproveWaitlistAndNotify } from '@/lib/waitlist';
 
 const readEnvValue = (key: string) => {
   const value = process.env[key];
@@ -56,6 +57,9 @@ export async function PATCH(request: Request) {
   }
 
   const allowed = new Map(ADMIN_CONFIG_FIELDS.map((field) => [field.key, field]));
+  const shouldRecheckWaitlist = updates.some(
+    (update) => typeof update?.key === 'string' && update.key === 'MAX_ACTIVE_USERS'
+  );
 
   for (const update of updates) {
     const key = typeof update?.key === 'string' ? update.key : '';
@@ -90,6 +94,10 @@ export async function PATCH(request: Request) {
       });
     })
   );
+
+  if (shouldRecheckWaitlist) {
+    void autoApproveWaitlistAndNotify().catch(console.error);
+  }
 
   return NextResponse.json({ success: true });
 }

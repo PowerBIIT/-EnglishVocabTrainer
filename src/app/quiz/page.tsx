@@ -336,11 +336,13 @@ export default function QuizPage() {
           </h1>
         </div>
 
-        <QuizSession
-          words={sessionWords}
-          mode={selectedMode}
-          onComplete={handleComplete}
-        />
+        <div className="relative z-10">
+          <QuizSession
+            words={sessionWords}
+            mode={selectedMode}
+            onComplete={handleComplete}
+          />
+        </div>
       </div>
     );
   }
@@ -363,12 +365,14 @@ export default function QuizPage() {
           </h1>
         </div>
 
-        <QuizResults
-          results={quizResults}
-          words={sessionWords}
-          onRetry={handleRetry}
-          onClose={() => setSessionState('setup')}
-        />
+        <div className="relative z-10">
+          <QuizResults
+            results={quizResults}
+            words={sessionWords}
+            onRetry={handleRetry}
+            onClose={() => setSessionState('setup')}
+          />
+        </div>
       </div>
     );
   }

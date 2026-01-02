@@ -31,6 +31,14 @@
 - If a user is still waitlisted after allowlist update, log out and clear cookies or use incognito to refresh the JWT.
 - Required admin: `radekbroniszewski@gmail.com` (must be present in `ADMIN_EMAILS` for all environments).
 
+## Waitlist signup (public)
+- Public waitlist signup is available at `/waitlist` when the user is not authenticated.
+- Double opt-in: users must confirm via email link before joining the queue.
+- Auto-approve runs when slots are available (`MAX_ACTIVE_USERS`) and sends an access email.
+- For periodic auto-approve, call `POST /api/waitlist/auto-approve` with `Authorization: Bearer <WAITLIST_CRON_SECRET>`.
+- Required email config: `RESEND_API_KEY`, `RESEND_FROM_EMAIL` (optional: `RESEND_REPLY_TO`).
+- Optional tuning: `WAITLIST_CONFIRM_TTL_HOURS`, `WAITLIST_CONFIRM_RESEND_MINUTES`, `WAITLIST_CRON_SECRET`.
+
 ## Google OAuth
 - OAuth Client ID: `8637723384-klt7n7hoekdpo0bhlk52a450n9gkv6b7.apps.googleusercontent.com`
 - Google Cloud Project: `angielski` (gen-lang-client-0315840383)

@@ -93,6 +93,12 @@ A      henio.app      ->  20.215.12.2
 | `STRIPE_*` | Klucze Stripe (patrz wyżej) |
 | `ADMIN_EMAILS` | Lista adminów |
 | `ALLOWLIST_EMAILS` | Lista dozwolonych (puste = wszyscy) |
+| `RESEND_API_KEY` | API key dla wysyłki maili (waitlista) |
+| `RESEND_FROM_EMAIL` | Adres nadawcy (np. `Henio <hello@henio.app>`) |
+| `RESEND_REPLY_TO` | Opcjonalny adres reply-to |
+| `WAITLIST_CONFIRM_TTL_HOURS` | Opcjonalnie: ważność linku potwierdzenia (domyślnie 24h) |
+| `WAITLIST_CONFIRM_RESEND_MINUTES` | Opcjonalnie: cooldown wysyłki ponownej (domyślnie 10 min) |
+| `WAITLIST_CRON_SECRET` | Secret do cron wywołania auto-approve waitlisty |
 
 ---
 

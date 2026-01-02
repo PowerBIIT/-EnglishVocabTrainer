@@ -6,6 +6,16 @@ vi.mock('@/lib/config', () => ({
   getAppConfigNumber: vi.fn(),
 }));
 
+const prismaMock = {
+  waitlistEntry: {
+    findFirst: vi.fn(),
+  },
+};
+
+vi.mock('@/lib/db', () => ({
+  prisma: prismaMock,
+}));
+
 const loadAccess = async () => {
   vi.resetModules();
   return import('@/lib/access');
@@ -17,6 +27,7 @@ describe('access helpers', () => {
   beforeEach(() => {
     vi.mocked(getAppConfig).mockReset();
     vi.mocked(getAppConfigNumber).mockReset();
+    prismaMock.waitlistEntry.findFirst.mockReset();
   });
 
   afterEach(() => {
@@ -52,6 +63,15 @@ describe('access helpers', () => {
     await expect(isEmailAllowed('user@example.com')).resolves.toBe(true);
     await expect(isEmailAllowed('admin@example.com')).resolves.toBe(true);
     await expect(isEmailAllowed('blocked@example.com')).resolves.toBe(false);
+  });
+
+  it('allows approved waitlist emails when allowlist is enforced', async () => {
+    process.env.ADMIN_EMAILS = '';
+    vi.mocked(getAppConfig).mockResolvedValue('user@example.com');
+    prismaMock.waitlistEntry.findFirst.mockResolvedValue({ id: 'waitlist-1' });
+    const { isEmailAllowed } = await loadAccess();
+
+    await expect(isEmailAllowed('waitlist@example.com')).resolves.toBe(true);
   });
 
   it('allows all emails when allowlist is empty', async () => {

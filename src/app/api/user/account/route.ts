@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { autoApproveWaitlistAndNotify } from '@/lib/waitlist';
 
 export async function DELETE(request: Request) {
   const session = await getServerSession(authOptions);
@@ -43,6 +44,7 @@ export async function DELETE(request: Request) {
   // - UserPlan
   // - UsageCounter
   await prisma.user.delete({ where: { id: userId } });
+  void autoApproveWaitlistAndNotify().catch(console.error);
 
   return NextResponse.json({
     success: true,

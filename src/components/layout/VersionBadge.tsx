@@ -22,8 +22,12 @@ const normalizeVersion = (value?: string) => {
 
 export function VersionBadge({ version }: VersionBadgeProps) {
   const [label, setLabel] = useState(() => normalizeVersion(version) ?? '...');
+  const shouldFetch = !normalizeVersion(version);
 
   useEffect(() => {
+    if (!shouldFetch) {
+      return;
+    }
     let cancelled = false;
     const controller = new AbortController();
 
@@ -51,7 +55,7 @@ export function VersionBadge({ version }: VersionBadgeProps) {
       cancelled = true;
       controller.abort();
     };
-  }, []);
+  }, [shouldFetch]);
 
   const title =
     label === '...'
