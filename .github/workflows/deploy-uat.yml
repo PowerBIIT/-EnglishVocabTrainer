@@ -104,6 +104,7 @@ jobs:
                 STRIPE_PRO_ANNUAL_PRICE_ID="${{ secrets.STRIPE_PRO_ANNUAL_PRICE_ID }}" \
                 E2E_TEST=true \
                 NEXT_PUBLIC_E2E_TEST=true \
+                E2E_LOGIN_ENABLED=true \
                 E2E_TEST_PASSWORD="${{ secrets.E2E_TEST_PASSWORD }}"
 
       - name: Configure startup command

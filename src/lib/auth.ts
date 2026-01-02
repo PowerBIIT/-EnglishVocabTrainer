@@ -9,9 +9,9 @@ import { ensureUserPlan } from '@/lib/userPlan';
 import { isAdminEmail } from '@/lib/access';
 
 const isEnvEnabled = (value?: string) => value === 'true' || value === '1';
-const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+// E2E login requires explicit opt-in via E2E_LOGIN_ENABLED=true (set only in UAT)
 const E2E_ENABLED =
-  !IS_PRODUCTION &&
+  isEnvEnabled(process.env.E2E_LOGIN_ENABLED) &&
   (isEnvEnabled(process.env.E2E_TEST) ||
     isEnvEnabled(process.env.NEXT_PUBLIC_E2E_TEST));
 const PLAN_SYNC_INTERVAL_MS = 60_000;
