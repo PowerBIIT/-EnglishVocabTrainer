@@ -3,13 +3,27 @@ import { prisma } from '@/lib/db';
 import { hashToken } from '@/lib/passwordAuth';
 import { ensureUserPlan } from '@/lib/userPlan';
 
+const getBaseUrl = (request: NextRequest): string => {
+  // Use NEXTAUTH_URL if available (most reliable for production)
+  if (process.env.NEXTAUTH_URL) {
+    return process.env.NEXTAUTH_URL;
+  }
+  // Fallback to x-forwarded headers (Azure/reverse proxy)
+  const forwardedHost = request.headers.get('x-forwarded-host');
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https';
+  if (forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+  // Last resort: use request.url
+  return new URL(request.url).origin;
+};
+
 export async function GET(request: NextRequest) {
+  const baseUrl = getBaseUrl(request);
   const token = request.nextUrl.searchParams.get('token');
 
   if (!token) {
-    return NextResponse.redirect(
-      new URL('/login?error=invalid_token', request.url)
-    );
+    return NextResponse.redirect(new URL('/login?error=invalid_token', baseUrl));
   }
 
   try {
@@ -21,9 +35,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!verificationToken) {
-      return NextResponse.redirect(
-        new URL('/login?error=invalid_token', request.url)
-      );
+      return NextResponse.redirect(new URL('/login?error=invalid_token', baseUrl));
     }
 
     // Check if token is expired
@@ -32,9 +44,7 @@ export async function GET(request: NextRequest) {
       await prisma.emailVerificationToken.delete({
         where: { id: verificationToken.id },
       });
-      return NextResponse.redirect(
-        new URL('/login?error=token_expired', request.url)
-      );
+      return NextResponse.redirect(new URL('/login?error=token_expired', baseUrl));
     }
 
     // Find and update the user
@@ -43,9 +53,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.redirect(
-        new URL('/login?error=user_not_found', request.url)
-      );
+      return NextResponse.redirect(new URL('/login?error=user_not_found', baseUrl));
     }
 
     // Update user's emailVerified timestamp
@@ -63,13 +71,9 @@ export async function GET(request: NextRequest) {
     });
 
     // Redirect to login with success message
-    return NextResponse.redirect(
-      new URL('/login?verified=true', request.url)
-    );
+    return NextResponse.redirect(new URL('/login?verified=true', baseUrl));
   } catch (error) {
     console.error('Email verification error:', error);
-    return NextResponse.redirect(
-      new URL('/login?error=verification_failed', request.url)
-    );
+    return NextResponse.redirect(new URL('/login?error=verification_failed', baseUrl));
   }
 }
