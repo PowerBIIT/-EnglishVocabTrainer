@@ -49,25 +49,28 @@ describe('auth options', () => {
     process.env.E2E_LOGIN_ENABLED = 'true';
 
     const { authOptions } = await loadAuth();
-    expect(authOptions.providers?.length).toBe(2);
+    // Google + Credentials (email/password) + E2E Credentials = 3
+    expect(authOptions.providers?.length).toBe(3);
   });
 
-  it('exposes only Google provider when E2E_LOGIN_ENABLED is missing', async () => {
+  it('exposes Google and Credentials providers when E2E_LOGIN_ENABLED is missing', async () => {
     process.env.NODE_ENV = 'test';
     process.env.E2E_TEST = 'true';
     delete process.env.E2E_LOGIN_ENABLED;
 
     const { authOptions } = await loadAuth();
-    expect(authOptions.providers?.length).toBe(1);
+    // Google + Credentials (email/password) = 2
+    expect(authOptions.providers?.length).toBe(2);
   });
 
-  it('exposes only Google provider when E2E is disabled', async () => {
+  it('exposes Google and Credentials providers when E2E is disabled', async () => {
     process.env.NODE_ENV = 'production';
     delete process.env.E2E_TEST;
     delete process.env.E2E_LOGIN_ENABLED;
 
     const { authOptions } = await loadAuth();
-    expect(authOptions.providers?.length).toBe(1);
+    // Google + Credentials (email/password) = 2
+    expect(authOptions.providers?.length).toBe(2);
   });
 
   it('hydrates token on user login', async () => {
