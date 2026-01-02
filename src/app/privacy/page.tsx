@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { useVocabStore } from '@/lib/store';
 
-const CURRENT_VERSION = '1.0';
-const LAST_UPDATED = '2024-12-30';
+const CURRENT_VERSION = '1.1';
+const LAST_UPDATED = '2026-01-02';
 
 const privacyCopy = {
   pl: {
@@ -76,7 +76,7 @@ Transfer danych do USA odbywa sie na podstawie standardowych klauzul umownych (S
 • Logi systemowe: 30 dni
 • Dane rozliczeniowe (jesli dotyczy): zgodnie z przepisami podatkowymi
 
-Po usunieciu konta wszystkie Twoje dane zostana trwale usuniete w ciagu 14 dni.`,
+Po usunieciu konta wszystkie Twoje dane zostana trwale usuniete.`,
       },
       {
         title: '8. Twoje prawa',
@@ -198,7 +198,7 @@ Data transfer to the USA is based on Standard Contractual Clauses (SCC) approved
 • System logs: 30 days
 • Billing data (if applicable): according to tax regulations
 
-After account deletion, all your data will be permanently deleted within 14 days.`,
+After account deletion, all your data will be permanently deleted.`,
       },
       {
         title: '8. Your Rights',
@@ -253,124 +253,124 @@ You can also lodge a complaint with your local data protection authority.`,
     ],
   },
   uk: {
-    title: 'Polityka Konfidencijnosti',
-    version: `Versiya ${CURRENT_VERSION}`,
-    lastUpdated: `Ostannie onovlennya: ${LAST_UPDATED}`,
-    back: 'Nazad',
+    title: 'Політика Конфіденційності',
+    version: `Версія ${CURRENT_VERSION}`,
+    lastUpdated: `Останнє оновлення: ${LAST_UPDATED}`,
+    back: 'Назад',
     sections: [
       {
-        title: '1. Administrator danych',
-        content: `Administratorom vashykh personalnykh danykh ye PowerBIIT.
-        Kontakt z pytan zakhystu danykh: info@henio.app`,
+        title: '1. Адміністратор даних',
+        content: `Адміністратором ваших персональних даних є PowerBIIT.
+        Контакт з питань захисту даних: info@henio.app`,
       },
       {
-        title: '2. Yaki dani my zbyrayemo',
-        content: `My zbyrayemo nastupni dani:
+        title: '2. Які дані ми збираємо',
+        content: `Ми збираємо наступні дані:
 
-• Adresa elektronnoi poshty (z vashogo akaunty Google pid chas vkhodu)
-• Imya ta foto profilyu (z vashogo akaunty Google)
-• Progres navchannya (slovnyky, rezultaty testiv, riven)
-• Holosovi zapysy (pid chas vprav z vymovy)
-• Nalashtuvannya dodatku (mova, vpobobannya)
+• Адреса електронної пошти (з вашого акаунту Google під час входу)
+• Ім'я та фото профілю (з вашого акаунту Google)
+• Прогрес навчання (словники, результати тестів, рівень)
+• Голосові записи (під час вправ з вимови)
+• Налаштування додатку (мова, вподобання)
 
-Holosovi zapysy obroblyayutsya lyshe dlya otsinky vymovy i ne zberigayutsya nadovgo.`,
+Голосові записи обробляються лише для оцінки вимови і не зберігаються надовго.`,
       },
       {
-        title: '3. Tsili obrobky danykh',
-        content: `My obroblyayemo vashi dani dlya:
+        title: '3. Цілі обробки даних',
+        content: `Ми обробляємо ваші дані для:
 
-• Nadannya poslug z vyvchennya slovnyka
-• Personalizatsiyi protsesu navchannya
-• Otsinky vymovy za dopomohoyu shtuchnoho intelektu
-• Vidstezhennya progresu ta statystyky
-• Komunikatsiyi z korystuvachamy`,
+• Надання послуг з вивчення словника
+• Персоналізації процесу навчання
+• Оцінки вимови за допомогою штучного інтелекту
+• Відстеження прогресу та статистики
+• Комунікації з користувачами`,
       },
       {
-        title: '4. Pravova osnova',
-        content: `My obroblyayemo dani na pidstavi:
+        title: '4. Правова основа',
+        content: `Ми обробляємо дані на підставі:
 
-• St. 6(1)(a) GDPR - Vasha zgoda
-• St. 6(1)(b) GDPR - Vykonannya dohovoru (nadannya poslugy)
+• Ст. 6(1)(a) GDPR - Ваша згода
+• Ст. 6(1)(b) GDPR - Виконання договору (надання послуги)
 
-Posluha dostupna lyshe dlya osib, yaki dosyahly 16 rokiv (St. 8 GDPR).`,
+Послуга доступна лише для осіб, які досягли 16 років (Ст. 8 GDPR).`,
       },
       {
-        title: '5. Oderzuvachi danykh ta transfer do SSHA',
-        content: `Vashi dani mozhut buty peredani:
+        title: '5. Одержувачі даних та трансфер до США',
+        content: `Ваші дані можуть бути передані:
 
-• Google LLC (vkhid OAuth) - SSHA
-• Google Gemini API (funktsii AI) - SSHA
-• Microsoft Azure (hosting dodatku) - YeS/SSHA
+• Google LLC (вхід OAuth) - США
+• Google Gemini API (функції AI) - США
+• Microsoft Azure (хостинг додатку) - ЄС/США
 
-Transfer danykh do SSHA zdiysnuyetsya na pidstavi standartnykh dohovirnykh klauzul (SCC), zatverdzhenyky Yevropeyskoyu Komisiyeyu.`,
+Трансфер даних до США здійснюється на підставі стандартних договірних клаузул (SCC), затверджених Європейською Комісією.`,
       },
       {
-        title: '6. Biometrychni dani',
-        content: `Holosovi zapysy, stvoreni pid chas vprav z vymovy, ye biometrychnymy danymy zgidno zi St. 9 GDPR.
+        title: '6. Біометричні дані',
+        content: `Голосові записи, створені під час вправ з вимови, є біометричними даними згідно зі Ст. 9 GDPR.
 
-• Zapysy nadsilayutsya do AI API lyshe dlya otsinky vymovy
-• Vony ne zberigayutsya na nashykh serverakh
-• Obrobka zdiysnuyetsya na pidstavi vashoi chytkoi zgody`,
+• Записи надсилаються до AI API лише для оцінки вимови
+• Вони не зберігаються на наших серверах
+• Обробка здійснюється на підставі вашої чіткої згоди`,
       },
       {
-        title: '7. Period zberigannya danykh',
-        content: `My zberigayemo vashi dani:
+        title: '7. Період зберігання даних',
+        content: `Ми зберігаємо ваші дані:
 
-• Do momentu vydalennya akaunty
-• Systemni logy: 30 dniv
-• Rozrakhunkovi dani (yakscho zastosovuyetsya): zgidno z podatkovymy normamy
+• До моменту видалення акаунту
+• Системні логи: 30 днів
+• Розрахункові дані (якщо застосовується): згідно з податковими нормами
 
-Pislya vydalennya akaunty vsi vashi dani budut ostatochno vydaleni protyagom 14 dniv.`,
+Після видалення акаунту всі ваші дані будуть остаточно видалені.`,
       },
       {
-        title: '8. Vashi prava',
-        content: `Vy mayete nastupni prava:
+        title: '8. Ваші права',
+        content: `Ви маєте наступні права:
 
-• Pravo dostupu (St. 15 GDPR)
-• Pravo na vypravlennya (St. 16 GDPR)
-• Pravo na vydalennya (St. 17 GDPR)
-• Pravo na perenosennya danykh (St. 20 GDPR)
-• Pravo vidklykannya zgody
-• Pravo podaty skargu do naglyadovogo organu
+• Право доступу (Ст. 15 GDPR)
+• Право на виправлення (Ст. 16 GDPR)
+• Право на видалення (Ст. 17 GDPR)
+• Право на перенесення даних (Ст. 20 GDPR)
+• Право відкликання згоди
+• Право подати скаргу до наглядового органу
 
-Vy mozhete vydalyty sviy akaunt u bud-yaky chas u nalashtuvannyakh profilyu.`,
+Ви можете видалити свій акаунт у будь-який час у налаштуваннях профілю.`,
       },
       {
-        title: '9. Fayly cookies',
-        content: `My vykorystovuyemo lyshe neobkhidni sesiyi cookies dlya:
+        title: '9. Файли cookies',
+        content: `Ми використовуємо лише необхідні сесійні cookies для:
 
-• Pidtrymannya sesiyi vkhodu
-• Zapamyatovuvannya movnykh vpodoban
+• Підтримання сесії входу
+• Запам'ятовування мовних вподобань
 
-My ne vykorystovuyemo analitychni chy reklamni cookies.`,
+Ми не використовуємо аналітичні чи рекламні cookies.`,
       },
       {
-        title: '10. Zabezpechennya',
-        content: `My zastosovuyemo vidpovidni tekhnichni ta orhanizatsiyni zakhody:
+        title: '10. Забезпечення',
+        content: `Ми застосовуємо відповідні технічні та організаційні заходи:
 
-• Shyfruvannya ziednan (HTTPS/SSL)
-• Bezpechne zberihannya paroliv (OAuth2)
-• Rehuliarni kopiyi
-• Obmezhenyi dostup do danykh
-• Monitorynh bezpeky`,
+• Шифрування з'єднань (HTTPS/SSL)
+• Безпечне зберігання паролів (OAuth2)
+• Регулярні копії
+• Обмежений доступ до даних
+• Моніторинг безпеки`,
       },
       {
-        title: '11. Avtomatyzovane pryinnyattya rishen',
-        content: `Nash dodatok vykorystovuye shtuchnyy intelekt dlya:
+        title: '11. Автоматизоване прийняття рішень',
+        content: `Наш додаток використовує штучний інтелект для:
 
-• Otsinky vymovy ta formuvannya vidhukyv
-• Heneruvannya slovnyka ta prykladiv
-• Nadannya poyasnen ta porad
+• Оцінки вимови та формування відгуків
+• Генерування словника та прикладів
+• Надання пояснень та порад
 
-Rishennya AI mayut lyshe dopomozhnyy ta osvitniy kharakter i ne sprychydyut pravovykh abo podibykh znachnykh naslidkiv dlya korystuvacha.`,
+Рішення AI мають лише допоміжний та освітній характер і не спричиняють правових або подібних значних наслідків для користувача.`,
       },
       {
-        title: '12. Kontakt',
-        content: `Z pytan zakhystu danykh vy mozhete zvyazatysya z namy:
+        title: '12. Контакт',
+        content: `З питань захисту даних ви можете зв'язатися з нами:
 
 Email: info@henio.app
 
-Vy takozh mozhete podaty skargu do mistsevogo organu zakhystu danykh.`,
+Ви також можете подати скаргу до місцевого органу захисту даних.`,
       },
     ],
   },

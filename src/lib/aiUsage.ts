@@ -45,73 +45,16 @@ export const checkAndConsumeAiUsage = async ({
   const safeRequests = Math.max(1, Math.round(requests));
   const safeUnits = Math.max(1, Math.round(units));
   const period = getCurrentPeriod();
-
-  const [userUsage, globalUsage] = await prisma.$transaction([
-    prisma.usageCounter.findUnique({
-      where: {
-        userId_period_feature: {
-          userId,
-          period,
-          feature: AI_FEATURE,
-        },
-      },
-    }),
-    prisma.globalUsage.findUnique({
-      where: {
-        period_feature: {
-          period,
-          feature: AI_FEATURE,
-        },
-      },
-    }),
-  ]);
+  const resetAt = getNextPeriodResetAt();
 
   const planLimits = await getPlanLimits(plan);
   const globalLimits = await getGlobalLimits();
 
-  const nextUserUsage: UsageSnapshot = {
-    count: (userUsage?.count ?? 0) + safeRequests,
-    units: (userUsage?.units ?? 0) + safeUnits,
-  };
-  const nextGlobalUsage: UsageSnapshot = {
-    count: (globalUsage?.count ?? 0) + safeRequests,
-    units: (globalUsage?.units ?? 0) + safeUnits,
-  };
-
-  const resetAt = getNextPeriodResetAt();
-
-  if (
-    (globalLimits.maxRequests !== Number.POSITIVE_INFINITY &&
-      nextGlobalUsage.count > globalLimits.maxRequests) ||
-    (globalLimits.maxUnits !== Number.POSITIVE_INFINITY &&
-      nextGlobalUsage.units > globalLimits.maxUnits)
-  ) {
-    return {
-      ok: false,
-      scope: 'global',
-      limit: globalLimits,
-      usage: nextGlobalUsage,
-      resetAt,
-    };
-  }
-
-  if (
-    (planLimits.maxRequests !== Number.POSITIVE_INFINITY &&
-      nextUserUsage.count > planLimits.maxRequests) ||
-    (planLimits.maxUnits !== Number.POSITIVE_INFINITY &&
-      nextUserUsage.units > planLimits.maxUnits)
-  ) {
-    return {
-      ok: false,
-      scope: 'user',
-      limit: planLimits,
-      usage: nextUserUsage,
-      resetAt,
-    };
-  }
-
-  await prisma.$transaction([
-    prisma.usageCounter.upsert({
+  // ATOMIC: Increment first, then check limits within transaction
+  // This prevents race conditions where parallel requests pass limit check
+  const result = await prisma.$transaction(async (tx) => {
+    // Atomically increment user usage
+    const userUsage = await tx.usageCounter.upsert({
       where: {
         userId_period_feature: {
           userId,
@@ -130,8 +73,10 @@ export const checkAndConsumeAiUsage = async ({
         count: { increment: safeRequests },
         units: { increment: safeUnits },
       },
-    }),
-    prisma.globalUsage.upsert({
+    });
+
+    // Atomically increment global usage
+    const globalUsage = await tx.globalUsage.upsert({
       where: {
         period_feature: {
           period,
@@ -148,8 +93,87 @@ export const checkAndConsumeAiUsage = async ({
         count: { increment: safeRequests },
         units: { increment: safeUnits },
       },
-    }),
-  ]);
+    });
 
-  return { ok: true };
+    const userSnapshot: UsageSnapshot = {
+      count: userUsage.count,
+      units: userUsage.units,
+    };
+    const globalSnapshot: UsageSnapshot = {
+      count: globalUsage.count,
+      units: globalUsage.units,
+    };
+
+    // Check global limits (after increment)
+    if (
+      (globalLimits.maxRequests !== Number.POSITIVE_INFINITY &&
+        globalSnapshot.count > globalLimits.maxRequests) ||
+      (globalLimits.maxUnits !== Number.POSITIVE_INFINITY &&
+        globalSnapshot.units > globalLimits.maxUnits)
+    ) {
+      // Rollback by decrementing
+      await tx.usageCounter.update({
+        where: {
+          userId_period_feature: { userId, period, feature: AI_FEATURE },
+        },
+        data: {
+          count: { decrement: safeRequests },
+          units: { decrement: safeUnits },
+        },
+      });
+      await tx.globalUsage.update({
+        where: { period_feature: { period, feature: AI_FEATURE } },
+        data: {
+          count: { decrement: safeRequests },
+          units: { decrement: safeUnits },
+        },
+      });
+
+      return {
+        ok: false as const,
+        scope: 'global' as const,
+        limit: globalLimits,
+        usage: globalSnapshot,
+        resetAt,
+      };
+    }
+
+    // Check user limits (after increment)
+    if (
+      (planLimits.maxRequests !== Number.POSITIVE_INFINITY &&
+        userSnapshot.count > planLimits.maxRequests) ||
+      (planLimits.maxUnits !== Number.POSITIVE_INFINITY &&
+        userSnapshot.units > planLimits.maxUnits)
+    ) {
+      // Rollback by decrementing
+      await tx.usageCounter.update({
+        where: {
+          userId_period_feature: { userId, period, feature: AI_FEATURE },
+        },
+        data: {
+          count: { decrement: safeRequests },
+          units: { decrement: safeUnits },
+        },
+      });
+      await tx.globalUsage.update({
+        where: { period_feature: { period, feature: AI_FEATURE } },
+        data: {
+          count: { decrement: safeRequests },
+          units: { decrement: safeUnits },
+        },
+      });
+
+      return {
+        ok: false as const,
+        scope: 'user' as const,
+        limit: planLimits,
+        usage: userSnapshot,
+        resetAt,
+      };
+    }
+
+    return { ok: true as const };
+  });
+
+  return result;
 };

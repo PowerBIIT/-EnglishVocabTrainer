@@ -9,9 +9,11 @@ import { ensureUserPlan } from '@/lib/userPlan';
 import { isAdminEmail } from '@/lib/access';
 
 const isEnvEnabled = (value?: string) => value === 'true' || value === '1';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const E2E_ENABLED =
-  isEnvEnabled(process.env.E2E_TEST) ||
-  isEnvEnabled(process.env.NEXT_PUBLIC_E2E_TEST);
+  !IS_PRODUCTION &&
+  (isEnvEnabled(process.env.E2E_TEST) ||
+    isEnvEnabled(process.env.NEXT_PUBLIC_E2E_TEST));
 const PLAN_SYNC_INTERVAL_MS = 60_000;
 
 const providers: NextAuthOptions['providers'] = [
@@ -30,7 +32,12 @@ if (E2E_ENABLED) {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        const expectedPassword = process.env.E2E_TEST_PASSWORD ?? 'e2e';
+        const expectedPassword = process.env.E2E_TEST_PASSWORD;
+        // SECURITY: Require explicit password, no default
+        if (!expectedPassword) {
+          console.error('E2E_TEST_PASSWORD not set');
+          return null;
+        }
         const email = credentials?.email?.trim() || 'e2e@local.test';
         const password = credentials?.password ?? '';
 

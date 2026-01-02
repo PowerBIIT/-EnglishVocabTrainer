@@ -14,7 +14,21 @@ export const GEMINI_PRICING: Record<string, { input: number; output: number }> =
     input: 0.075 / 1_000_000,
     output: 0.30 / 1_000_000,
   },
+  // Gemini 2.5 Flash family
+  'gemini-2.5-flash': {
+    input: 0.15 / 1_000_000,
+    output: 0.60 / 1_000_000,
+  },
+  'gemini-2.5-flash-lite': {
+    input: 0.075 / 1_000_000,
+    output: 0.30 / 1_000_000,
+  },
   'gemini-2.5-flash-preview-05-20': {
+    input: 0.15 / 1_000_000,
+    output: 0.60 / 1_000_000,
+  },
+  // Gemini 3 Flash (preview)
+  'gemini-3-flash-preview': {
     input: 0.15 / 1_000_000,
     output: 0.60 / 1_000_000,
   },
@@ -22,6 +36,10 @@ export const GEMINI_PRICING: Record<string, { input: number; output: number }> =
   'gemini-1.5-pro': {
     input: 1.25 / 1_000_000,
     output: 5.00 / 1_000_000,
+  },
+  'gemini-2.5-pro': {
+    input: 1.25 / 1_000_000,
+    output: 10.00 / 1_000_000,
   },
   'gemini-2.5-pro-preview-05-06': {
     input: 1.25 / 1_000_000,

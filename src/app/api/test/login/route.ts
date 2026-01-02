@@ -3,6 +3,11 @@ import { encode } from 'next-auth/jwt';
 import { prisma } from '@/lib/db';
 
 const ensureE2EEnabled = () => {
+  // SECURITY: Never allow E2E login in production
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
   const isE2E =
     process.env.E2E_TEST === 'true' || process.env.NEXT_PUBLIC_E2E_TEST === 'true';
   if (!isE2E) {
@@ -17,7 +22,11 @@ const buildSessionResponse = async (email: string, password: string) => {
     return NextResponse.json({ error: 'Missing secret' }, { status: 500 });
   }
 
-  const expectedPassword = process.env.E2E_TEST_PASSWORD ?? 'e2e';
+  const expectedPassword = process.env.E2E_TEST_PASSWORD;
+  // SECURITY: Require explicit password, no default
+  if (!expectedPassword) {
+    return NextResponse.json({ error: 'E2E not configured' }, { status: 500 });
+  }
   if (password !== expectedPassword) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

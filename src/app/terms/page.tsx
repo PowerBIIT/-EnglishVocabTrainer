@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { useVocabStore } from '@/lib/store';
 
-const CURRENT_VERSION = '1.0';
-const LAST_UPDATED = '2024-12-30';
+const CURRENT_VERSION = '1.1';
+const LAST_UPDATED = '2026-01-02';
 
 const termsCopy = {
   pl: {
@@ -199,97 +199,97 @@ For questions: info@henio.app`,
     ],
   },
   uk: {
-    title: 'Umovy Korystuvannya',
-    version: `Versiya ${CURRENT_VERSION}`,
-    lastUpdated: `Ostannie onovlennya: ${LAST_UPDATED}`,
-    back: 'Nazad',
+    title: 'Умови Користування',
+    version: `Версія ${CURRENT_VERSION}`,
+    lastUpdated: `Останнє оновлення: ${LAST_UPDATED}`,
+    back: 'Назад',
     sections: [
       {
-        title: '1. Vyznachennya',
-        content: `• Posluha - dodatok Henio dlya vyvchennya slovnyka
-• Korystuvach - osoba, yaka korystuyetsya Posluhoyu
-• Akaunt - indyvidualnyy akaunt Korystuvacha v Posluzi
-• Vmist - slovnyk, prohres, nalashtuvannya ta inshi dani Korystuvacha`,
+        title: '1. Визначення',
+        content: `• Послуга - додаток Henio для вивчення словника
+• Користувач - особа, яка користується Послугою
+• Акаунт - індивідуальний акаунт Користувача в Послузі
+• Вміст - словник, прогрес, налаштування та інші дані Користувача`,
       },
       {
-        title: '2. Umovy korystuvannya',
-        content: `Shchob korystuvatysya Posluhoyu, vy povynni:
+        title: '2. Умови користування',
+        content: `Щоб користуватися Послугою, ви повинні:
 
-• Maty shchonaymensh 16 rokiv
-• Maty akaunt Google dlya vkhodu
-• Pryynyaty tsi Umovy ta Polityku Konfidenciynosti
+• Мати щонайменш 16 років
+• Мати акаунт Google для входу
+• Прийняти ці Умови та Політику Конфіденційності
 
-Bazove korystuvannya Posluhoyu ye bezkoshtovnym. Deyaki funktsiyi mozhut vymagaty pidpysky PRO.`,
+Базове користування Послугою є безкоштовним. Деякі функції можуть вимагати підписки PRO.`,
       },
       {
-        title: '3. Vikovi obmezhennya',
-        content: `Posluha pryznachena dlya uchniv ta osib, shcho vyvchayut movy.
+        title: '3. Вікові обмеження',
+        content: `Послуга призначена для учнів та осіб, що вивчають мови.
 
-• Posluha dostupna lyshe dlya osib, yaki dosyahly 16 rokiv
-• Nepovnolitni (16-18 rokiv) mozhut korystuvatysya Posluhoyu zgidno z chynnym zakonodavstvom
-• My mozhemo poprosyty pidtverdzhennya viku`,
+• Послуга доступна лише для осіб, які досягли 16 років
+• Неповнолітні (16-18 років) можуть користуватися Послугою згідно з чинним законодавством
+• Ми можемо попросити підтвердження віку`,
       },
       {
-        title: '4. Pravyla korystuvannya',
-        content: `Korystuvach zobovyazuyetsya:
+        title: '4. Правила користування',
+        content: `Користувач зобов'язується:
 
-• Korystuvatysya Posluhoyu za pryznachennyam (vyvchennya slovnyka)
-• Ne namahatysya obiyty zakhyst abo limity
-• Ne vykorystovuvaty Posluhu dlya nezakonnykh tsiley
-• Ne peredavaty dostup do akaunty tretim osobam
+• Користуватися Послугою за призначенням (вивчення словника)
+• Не намагатися обійти захист або ліміти
+• Не використовувати Послугу для незаконних цілей
+• Не передавати доступ до акаунту третім особам
 
-My zalyshalemo za soboyu pravo pryzupynyty abo vydalyty akaunt za porushennya Umov.`,
+Ми залишаємо за собою право призупинити або видалити акаунт за порушення Умов.`,
       },
       {
-        title: '5. Funktsiyi AI',
-        content: `Posluha vykorystovuye shtuchnyy intelekt (AI) dlya:
+        title: '5. Функції AI',
+        content: `Послуга використовує штучний інтелект (AI) для:
 
-• Heneruvannya slovnyka ta prykladiv
-• Otsinky vymovy
-• Nadannya poyasnen ta porad
+• Генерування словника та прикладів
+• Оцінки вимови
+• Надання пояснень та порад
 
-Vmist, shcho heneruyetsya AI, maye osvitniy kharakter i mozhe mistyty pomylky. My ne nesemo vidpovidalnosti za rishennya, pryynyati na osnovi vmistu AI.`,
+Вміст, що генерується AI, має освітній характер і може містити помилки. Ми не несемо відповідальності за рішення, прийняті на основі вмісту AI.`,
       },
       {
-        title: '6. Intelektualna vlasnist',
-        content: `• Posluha, yiyi kod, dyzayn ta funktsiyi ye nashoyu vlasnistyu
-• Vmist, dodanyy Korystuvachem (slovnyk, nabory), zalyshayetsya vlasnistyu Korystuvacha
-• My nadayemo Korystuvachu litsenziyu na korystuvannya Posluhoyu zgidno z Umovamy`,
+        title: '6. Інтелектуальна власність',
+        content: `• Послуга, її код, дизайн та функції є нашою власністю
+• Вміст, доданий Користувачем (словник, набори), залишається власністю Користувача
+• Ми надаємо Користувачу ліцензію на користування Послугою згідно з Умовами`,
       },
       {
-        title: '7. Vidpovidalnist',
-        content: `• My doklaydayemo zusyl, shchob Posluha pratsyuvala naleznym chynom
-• My ne harantuyemo bezperervonoyi roboty Posluhy
-• My ne nesemo vidpovidalnosti za vtratu danykh cherez zboi
-• My rekomenduyemo rehularne eksportuvannya vazhlyvykh danykh
+        title: '7. Відповідальність',
+        content: `• Ми докладаємо зусиль, щоб Послуга працювала належним чином
+• Ми не гарантуємо безперервної роботи Послуги
+• Ми не несемо відповідальності за втрату даних через збої
+• Ми рекомендуємо регулярне експортування важливих даних
 
-Vidpovidalnist za zbytkiv obmezhuetsya maksymalnoyu sumoyu pidpysky, splachenoi za ostanni 12 misyatsiv.`,
+Відповідальність за збитки обмежується максимальною сумою підписки, сплаченої за останні 12 місяців.`,
       },
       {
-        title: '8. Zminy Umov',
-        content: `• My mozhemo zminyuvaty tsi Umovy v bud-yaky chas
-• Pro istotni zminy my povidomymo za 14 dniv
-• Podalshe korystuvannya Posluhoyu oznachaye pryynyattya zmin
-• Yaksho vy ne pryymayte zminy, vy mozhete vydalyty sviy akaunt`,
+        title: '8. Зміни Умов',
+        content: `• Ми можемо змінювати ці Умови в будь-який час
+• Про істотні зміни ми повідомимо за 14 днів
+• Подальше користування Послугою означає прийняття змін
+• Якщо ви не приймаєте зміни, ви можете видалити свій акаунт`,
       },
       {
-        title: '9. Rozirvannya',
-        content: `Vy mozhete vidmovytysya vid Posluhy v bud-yaky chas:
+        title: '9. Розірвання',
+        content: `Ви можете відмовитися від Послуги в будь-який час:
 
-• Vydalit sviy akaunt u nalashtuvannyakh profilyu
-• Vsi vashi dani budut ostatochno vydaleni
-• Aktyvna pidpyska PRO ne bude povernuta
+• Видаліть свій акаунт у налаштуваннях профілю
+• Всі ваші дані будуть остаточно видалені
+• Активна підписка PRO не буде повернута
 
-My zalyshalemo za soboyu pravo prypynyty Posluhu z povidomlennyam za 30 dniv.`,
+Ми залишаємо за собою право припинити Послугу з повідомленням за 30 днів.`,
       },
       {
-        title: '10. Prykintsevi polozhennya',
-        content: `• Tsi Umovy rehulyuyutsya polskym zakonodavstvom
-• Spory budut vyrishuvaty polski sudy
-• Nediysnist odnoho polozhennya ne vplyvaye na inshi
-• Polska versiya Umov ye obovyazkovoyu
+        title: '10. Прикінцеві положення',
+        content: `• Ці Умови регулюються польським законодавством
+• Спори будуть вирішувати польські суди
+• Недійсність одного положення не впливає на інші
+• Польська версія Умов є обов'язковою
 
-Z pytan: info@henio.app`,
+З питань: info@henio.app`,
       },
     ],
   },

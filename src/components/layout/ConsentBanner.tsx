@@ -28,12 +28,12 @@ const bannerCopy = {
     terms: 'Terms of Service',
   },
   uk: {
-    title: 'Onovlennya Umov',
-    message: 'My onovyly Umovy korystuvannya ta Polityku konfidencijnosti. Pryymy, shchob prodovzhyty.',
-    accept: 'Pryymayu',
-    later: 'Nahday piznishe',
-    privacy: 'Polityka konfidencijnosti',
-    terms: 'Umovy korystuvannya',
+    title: 'Оновлення Умов',
+    message: 'Ми оновили Умови користування та Політику конфіденційності. Прийми, щоб продовжити.',
+    accept: 'Приймаю',
+    later: 'Нагадай пізніше',
+    privacy: 'Політика конфіденційності',
+    terms: 'Умови користування',
   },
 };
 

@@ -210,14 +210,14 @@ const onboardingCopy = {
     missionComplete: 'Місію виконано',
     redirectNote: 'Переносимо до головної бази.',
     // Consent step
-    consentTitle: 'Zgody ta regulyamin',
-    consentDesc: 'Pered pochatkom pryymy nashi dokumenty.',
-    termsCheckbox: 'Pryymayu Umovy korystuvannya ta Polityku konfidencijnosti',
-    ageCheckbox: 'Meni 16+ rokiv',
-    privacyLink: 'Polityka konfidencijnosti',
-    termsLink: 'Umovy korystuvannya',
-    consentAction: 'Pryymayu i prodovzhuju',
-    consentRequired: 'Postav obe galochky, shchob prodovzhyty.',
+    consentTitle: 'Згоди та регламент',
+    consentDesc: 'Перед початком прийми наші документи.',
+    termsCheckbox: 'Приймаю Умови користування та Політику конфіденційності',
+    ageCheckbox: 'Мені 16+ років',
+    privacyLink: 'Політика конфіденційності',
+    termsLink: 'Умови користування',
+    consentAction: 'Приймаю і продовжую',
+    consentRequired: 'Постав обі галочки, щоб продовжити.',
   },
 } as const;
 
