@@ -1,0 +1,32 @@
+name: Waitlist Auto-Approve
+
+on:
+  schedule:
+    # Run every hour at minute 0
+    - cron: '0 * * * *'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  auto-approve:
+    runs-on: ubuntu-latest
+    env:
+      CRON_SECRET: ${{ secrets.WAITLIST_CRON_SECRET }}
+    steps:
+      - name: Call auto-approve endpoint (PRD)
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            https://henio.app/api/waitlist/auto-approve)
+
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+
+          echo "Response: $body"
+          echo "HTTP Code: $http_code"
+
+          if [ "$http_code" -ge 200 ] && [ "$http_code" -lt 300 ]; then
+            echo "Auto-approve completed successfully"
+          else
+            echo "Auto-approve failed with status $http_code"
+            exit 1
+          fi
