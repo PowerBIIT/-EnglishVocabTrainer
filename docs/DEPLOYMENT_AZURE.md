@@ -173,6 +173,65 @@ az webapp show --name henio-uat --resource-group henio-rg \
    ```
 5. Zapisz zmiany
 
+### Krok 5b: Skonfiguruj Stripe (dla płatności PRO)
+
+Stripe jest wymagany dla funkcjonalności płatnych planów PRO.
+
+#### Konfiguracja Stripe Live
+
+1. **Utwórz konto Stripe** na https://dashboard.stripe.com
+2. **Aktywuj konto Live** (wymagane: dane firmy, IBAN, 2FA)
+3. **Utwórz produkt i ceny:**
+   - Produkt: "Henio PRO"
+   - Cena miesięczna: 19,99 PLN/mies (recurring)
+   - Cena roczna: 149,99 PLN/rok (recurring)
+4. **Skonfiguruj webhook:**
+   - URL: `https://henio.app/api/stripe/webhook`
+   - Zdarzenia:
+     - `checkout.session.completed`
+     - `customer.subscription.created`
+     - `customer.subscription.updated`
+     - `customer.subscription.deleted`
+     - `invoice.paid`
+     - `invoice.payment_failed`
+
+#### Sekrety Stripe (GitHub Secrets dla środowiska prd)
+
+```bash
+# Pobierz klucze z Stripe Dashboard
+gh secret set STRIPE_SECRET_KEY --env prd --body "sk_live_..."
+gh secret set STRIPE_WEBHOOK_SECRET --env prd --body "whsec_..."
+gh secret set NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY --env prd --body "pk_live_..."
+gh secret set STRIPE_PRO_MONTHLY_PRICE_ID --env prd --body "price_..."
+gh secret set STRIPE_PRO_ANNUAL_PRICE_ID --env prd --body "price_..."
+```
+
+#### Sekrety Stripe (Azure App Settings - bezpośrednio)
+
+Jeśli workflow nie ustawia sekretów automatycznie, dodaj je ręcznie do Azure:
+
+```bash
+az webapp config appsettings set --name henio-prd --resource-group henio-rg --settings \
+  "STRIPE_SECRET_KEY=sk_live_..." \
+  "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_..." \
+  "STRIPE_WEBHOOK_SECRET=whsec_..." \
+  "STRIPE_PRO_MONTHLY_PRICE_ID=price_..." \
+  "STRIPE_PRO_ANNUAL_PRICE_ID=price_..."
+```
+
+**WAŻNE:** Nigdy nie ustawiaj pustych wartości dla zmiennych Stripe! Puste `STRIPE_SECRET_KEY` powoduje crash aplikacji przy starcie (exit code 254).
+
+#### Aktualna konfiguracja Stripe PRD
+
+| Element | Wartość |
+|---------|---------|
+| Konto | PowerBIIT (acct_1RaGav07Eywajbxh) |
+| Produkt | Henio PRO (prod_TiWa58JPu0rg1j) |
+| Cena miesięczna | 19,99 PLN (price_1Sl5Wr07EywajbxhNr0DRQ9p) |
+| Cena roczna | 149,99 PLN (price_1Sl5Y907Eywajbxh4kcmhZw8) |
+| Webhook | https://henio.app/api/stripe/webhook |
+| Webhook ID | we_1Sl5dY07EywajbxhfjkcGfBW |
+
 ### Krok 6: Wdróż aplikację
 
 ```bash
@@ -311,6 +370,43 @@ az postgres flexible-server firewall-rule list --resource-group henio-rg --name 
 
 # Sprawdź status serwera
 az postgres flexible-server show --resource-group henio-rg --name henio-db --query "state"
+```
+
+### Kontener crashuje z exit code 254
+
+**Objawy:**
+- Aplikacja pokazuje "Application Error"
+- W logach Docker: `Container has finished running with exit code: 254`
+- Może być: `Container get mounts received unexpected exception`
+
+**Diagnoza:**
+```bash
+# Pobierz logi
+az webapp log download --name henio-prd --resource-group henio-rg --log-file /tmp/logs.zip
+unzip /tmp/logs.zip -d /tmp/logs
+cat /tmp/logs/LogFiles/*_docker.log | tail -50
+
+# Sprawdź czy zmienne Stripe są puste
+az webapp config appsettings list --name henio-prd --resource-group henio-rg -o json | grep -A1 STRIPE
+```
+
+**Przyczyna:** Puste zmienne środowiskowe Stripe (`STRIPE_SECRET_KEY=""`) powodują crash przy inicjalizacji klienta Stripe.
+
+**Rozwiązanie:**
+```bash
+# Ustaw poprawne wartości (NIE puste!)
+az webapp config appsettings set --name henio-prd --resource-group henio-rg --settings \
+  "STRIPE_SECRET_KEY=sk_live_..." \
+  "STRIPE_WEBHOOK_SECRET=whsec_..." \
+  "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_..." \
+  "STRIPE_PRO_MONTHLY_PRICE_ID=price_..." \
+  "STRIPE_PRO_ANNUAL_PRICE_ID=price_..."
+
+# Zrestartuj aplikację
+az webapp restart --name henio-prd --resource-group henio-rg
+
+# Zweryfikuj
+curl https://henio.app/api/health
 ```
 
 ---
