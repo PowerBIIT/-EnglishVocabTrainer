@@ -33,11 +33,14 @@ interface GenerateResult {
 }
 
 const estimateWordOutputTokens = (count: number) => {
-  const baseTokens = 200;
-  const perWordTokens = 55;
+  const baseTokens = 220;
+  const perWordTokens = 60;
   const estimate = baseTokens + count * perWordTokens;
   return Math.max(512, Math.min(2048, estimate));
 };
+
+const buildRetryTokenBudget = (initialBudget: number) =>
+  Math.min(3072, Math.max(768, Math.round(initialBudget * 1.5)));
 
 const WORDS_RESPONSE_SCHEMA = {
   type: 'object',
@@ -154,40 +157,56 @@ export async function POST(request: NextRequest) {
     );
     const finalPrompt = await buildPromptWithOverlays('generate-words', prompt);
 
-    const startTime = Date.now();
-    const response = await gemini.generateWithMetadata(finalPrompt, {
-      temperature: 0.8,
-      maxOutputTokens: estimateWordOutputTokens(requestedCount),
-      model,
-      responseMimeType: 'application/json',
-      responseSchema: WORDS_RESPONSE_SCHEMA,
-    });
-    const durationMs = Date.now() - startTime;
-    const totalTokens = response.usage.promptTokenCount + response.usage.candidatesTokenCount;
-
-    await recordAiUsage({ userId: session.user.id, units: totalTokens }).catch(console.error);
-
-    // Log telemetry (async, non-blocking)
     const languagePair = `${safeNativeLanguage}-${safeTargetLanguage}`;
-    logAiRequest({
-      userId: session.user.id,
-      feature: 'generate-words',
-      model: response.model,
-      languagePair,
-      inputTokens: response.usage.promptTokenCount,
-      outputTokens: response.usage.candidatesTokenCount,
-      durationMs,
-      success: true,
-    }).catch(console.error);
+    const requestGeneration = async (maxOutputTokens: number, temperature: number) => {
+      const startTime = Date.now();
+      const response = await gemini.generateWithMetadata(finalPrompt, {
+        temperature,
+        maxOutputTokens,
+        model,
+        responseMimeType: 'application/json',
+        responseSchema: WORDS_RESPONSE_SCHEMA,
+      });
+      const durationMs = Date.now() - startTime;
+      const totalTokens = response.usage.promptTokenCount + response.usage.candidatesTokenCount;
 
-    let result: GenerateResult;
+      await recordAiUsage({ userId: session.user.id, units: totalTokens }).catch(console.error);
+
+      logAiRequest({
+        userId: session.user.id,
+        feature: 'generate-words',
+        model: response.model,
+        languagePair,
+        inputTokens: response.usage.promptTokenCount,
+        outputTokens: response.usage.candidatesTokenCount,
+        durationMs,
+        success: true,
+      }).catch(console.error);
+
+      return response;
+    };
+
+    const initialBudget = estimateWordOutputTokens(requestedCount);
+    let response = await requestGeneration(initialBudget, 0.8);
+    let result: GenerateResult | null = null;
+
     try {
       result = parseAIResponse<GenerateResult>(response.content, { logErrors: false });
     } catch {
-      return NextResponse.json(
-        { error: 'response_truncated' },
-        { status: 422 }
-      );
+      result = null;
+    }
+
+    if (!result) {
+      const retryBudget = buildRetryTokenBudget(initialBudget);
+      response = await requestGeneration(retryBudget, 0.6);
+      try {
+        result = parseAIResponse<GenerateResult>(response.content, { logErrors: false });
+      } catch {
+        return NextResponse.json(
+          { error: 'response_truncated' },
+          { status: 422 }
+        );
+      }
     }
 
     if (result.error === 'UNSAFE_TOPIC') {
