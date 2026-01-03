@@ -6,12 +6,6 @@ import { getMaxActiveUsers, getAdminEmails } from '@/lib/access';
 export async function GET() {
   try {
     const maxActiveUsers = await getMaxActiveUsers();
-
-    // If unlimited, always allow
-    if (maxActiveUsers === Number.POSITIVE_INFINITY) {
-      return NextResponse.json({ hasCapacity: true });
-    }
-
     const adminEmails = getAdminEmails();
     const activeCount = await prisma.userPlan.count({
       where: {
@@ -24,19 +18,22 @@ export async function GET() {
       },
     });
 
-    const hasCapacity = activeCount < maxActiveUsers;
+    // If unlimited, always allow
+    const hasCapacity = maxActiveUsers === Number.POSITIVE_INFINITY
+      ? true
+      : activeCount < maxActiveUsers;
 
     // Debug info (temporary - remove after testing)
-    console.log('check-capacity debug:', { maxActiveUsers, activeCount, adminEmails, hasCapacity });
-
     return NextResponse.json({
       hasCapacity,
-      // Debug info (temporary - remove after testing)
-      _debug: { maxActiveUsers, activeCount, adminEmailsCount: adminEmails.length },
+      _debug: {
+        maxActiveUsers: maxActiveUsers === Number.POSITIVE_INFINITY ? 'INFINITY' : maxActiveUsers,
+        activeCount,
+        adminEmailsCount: adminEmails.length
+      },
     });
   } catch (error) {
     console.error('Check capacity error:', error);
-    // On error, assume capacity available to not block registration
-    return NextResponse.json({ hasCapacity: true });
+    return NextResponse.json({ hasCapacity: true, _error: String(error) });
   }
 }
