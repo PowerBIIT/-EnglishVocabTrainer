@@ -55,10 +55,42 @@ jobs:
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
+      - name: Allow GitHub Actions IP (DB firewall)
+        id: db_firewall
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+            RULE_NAME="gh-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            IP=$(curl -s https://api.ipify.org)
+            echo "rule=${RULE_NAME}" >> "$GITHUB_OUTPUT"
+            echo "ip=${IP}" >> "$GITHUB_OUTPUT"
+            az postgres flexible-server firewall-rule create \
+              --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+              --name "henio-db" \
+              --rule-name "${RULE_NAME}" \
+              --start-ip-address "${IP}" \
+              --end-ip-address "${IP}"
+
       - name: Apply database migrations
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: npx prisma migrate deploy --schema=prisma/schema.prisma
+
+      - name: Remove GitHub Actions IP (DB firewall)
+        if: always()
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            set -euo pipefail
+            RULE_NAME="${{ steps.db_firewall.outputs.rule }}"
+            if [ -n "${RULE_NAME}" ]; then
+              az postgres flexible-server firewall-rule delete \
+                --resource-group "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+                --name "henio-db" \
+                --rule-name "${RULE_NAME}" \
+                --yes
+            fi
 
       - name: Configure app settings
         uses: azure/CLI@v2
