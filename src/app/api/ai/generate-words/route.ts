@@ -32,6 +32,38 @@ interface GenerateResult {
   error?: 'UNSAFE_TOPIC' | 'NEEDS_CLARIFICATION';
 }
 
+const WORDS_RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    topic: { type: 'string' },
+    level: { type: 'string' },
+    words: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          target: { type: 'string' },
+          phonetic: { type: 'string' },
+          native: { type: 'string' },
+          example_target: { type: 'string' },
+          example_native: { type: 'string' },
+          difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
+        },
+        required: [
+          'target',
+          'phonetic',
+          'native',
+          'example_target',
+          'example_native',
+          'difficulty',
+        ],
+      },
+    },
+    error: { type: 'string', enum: ['UNSAFE_TOPIC', 'NEEDS_CLARIFICATION'] },
+  },
+  required: ['topic', 'level', 'words'],
+};
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -120,6 +152,8 @@ export async function POST(request: NextRequest) {
       temperature: 0.8,
       maxOutputTokens: 2048,
       model,
+      responseMimeType: 'application/json',
+      responseSchema: WORDS_RESPONSE_SCHEMA,
     });
     const durationMs = Date.now() - startTime;
     const totalTokens = response.usage.promptTokenCount + response.usage.candidatesTokenCount;

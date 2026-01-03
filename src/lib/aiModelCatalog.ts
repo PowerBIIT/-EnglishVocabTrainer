@@ -9,7 +9,7 @@ export type AiModelInfo = {
 };
 
 export const GEMINI_MODEL_CONFIG_KEY = 'GEMINI_MODEL';
-export const DEFAULT_GEMINI_MODEL = 'gemini-3-flash-preview';
+export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
 
 export const GEMINI_MODELS: AiModelInfo[] = [
   {
