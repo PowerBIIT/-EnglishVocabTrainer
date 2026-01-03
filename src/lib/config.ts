@@ -96,7 +96,12 @@ export const getAppConfig = async (key: string) => {
 
 const parseNumericConfig = (value: string | null, fallback: number) => {
   if (!value) return fallback;
-  const normalized = value.trim().toLowerCase();
+  // Remove surrounding quotes if present (e.g., "1" -> 1)
+  let normalized = value.trim().toLowerCase();
+  if ((normalized.startsWith('"') && normalized.endsWith('"')) ||
+      (normalized.startsWith("'") && normalized.endsWith("'"))) {
+    normalized = normalized.slice(1, -1).trim();
+  }
   if (!normalized) return fallback;
   if (['unlimited', 'infinity', 'inf', '-1'].includes(normalized)) {
     return Number.POSITIVE_INFINITY;
@@ -113,6 +118,32 @@ export const getAppConfigNumber = async (key: string, fallback: number) => {
   return parseNumericConfig(value, fallback);
 };
 
+const sanitizeConfigValue = (value: string, dataType: ConfigValueType): string => {
+  let sanitized = value.trim();
+
+  // Remove surrounding quotes for all types
+  if ((sanitized.startsWith('"') && sanitized.endsWith('"')) ||
+      (sanitized.startsWith("'") && sanitized.endsWith("'"))) {
+    sanitized = sanitized.slice(1, -1).trim();
+  }
+
+  // Additional validation for number type
+  if (dataType === 'number') {
+    const lower = sanitized.toLowerCase();
+    // Allow special values
+    if (['unlimited', 'infinity', 'inf', '-1', ''].includes(lower)) {
+      return sanitized;
+    }
+    // Validate it's a valid number
+    const num = Number(sanitized);
+    if (!Number.isFinite(num)) {
+      throw new Error(`Invalid number value: ${value}`);
+    }
+  }
+
+  return sanitized;
+};
+
 export const setAppConfig = async ({
   key,
   value,
@@ -125,7 +156,7 @@ export const setAppConfig = async ({
   dataType?: ConfigValueType;
 }) => {
   const normalizedKey = normalizeKey(key);
-  const normalizedValue = value.trim();
+  const normalizedValue = sanitizeConfigValue(value, dataType);
   const existing = await prisma.appConfig.findUnique({ where: { key: normalizedKey } });
   const oldValue = existing?.value ?? null;
 
