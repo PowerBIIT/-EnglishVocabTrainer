@@ -8,15 +8,21 @@ import { ensureUserPlan } from '@/lib/userPlan';
 
 const allowedMascotSkins = new Set(mascotSkins.map((skin) => skin.id));
 
-export async function GET() {
+export async function GET(request: Request) {
   const session = await getServerSession(authOptions);
 
   if (!session?.user?.id) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
+  // Check if this is a consent-only check (used by onboarding to skip consent step)
+  const url = new URL(request.url);
+  const consentOnly = url.searchParams.get('consentOnly') === 'true';
+
   const plan = await ensureUserPlan(session.user.id, session.user.email);
-  if (plan.accessStatus !== AccessStatus.ACTIVE) {
+
+  // For consent-only checks, allow waitlisted users to check their consent status
+  if (!consentOnly && plan.accessStatus !== AccessStatus.ACTIVE) {
     return NextResponse.json(
       {
         error:

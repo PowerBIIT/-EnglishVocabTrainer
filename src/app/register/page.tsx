@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -32,6 +32,14 @@ const registerCopy = {
     successMessage: 'Sprawdź swoją skrzynkę email i kliknij link potwierdzający.',
     backToLogin: 'Wróć do logowania',
     passwordHint: 'Min. 8 znaków, litera i cyfra',
+    // Waitlist copy
+    waitlistTitle: 'Zapisz się na listę oczekujących',
+    waitlistSubtitle: 'Obecnie liczba miejsc jest ograniczona. Zostaw email, a damy znać gdy zwolni się miejsce.',
+    waitlistEmailLabel: 'Twój email',
+    waitlistJoin: 'Zapisz się',
+    waitlistJoining: 'Zapisywanie...',
+    waitlistSuccess: 'Sprawdź skrzynkę email i potwierdź zapis klikając w link.',
+    waitlistError: 'Nie udało się zapisać. Spróbuj ponownie.',
   },
   en: {
     loading: 'Loading...',
@@ -54,6 +62,14 @@ const registerCopy = {
     successMessage: 'Check your email and click the confirmation link.',
     backToLogin: 'Back to login',
     passwordHint: 'Min. 8 chars, letter and number',
+    // Waitlist copy
+    waitlistTitle: 'Join the waitlist',
+    waitlistSubtitle: 'Access is limited right now. Leave your email and we will notify you when a spot opens up.',
+    waitlistEmailLabel: 'Your email',
+    waitlistJoin: 'Join waitlist',
+    waitlistJoining: 'Joining...',
+    waitlistSuccess: 'Check your email and click the confirmation link.',
+    waitlistError: 'Could not submit. Please try again.',
   },
   uk: {
     loading: 'Завантаження...',
@@ -76,6 +92,14 @@ const registerCopy = {
     successMessage: 'Перевірте свою електронну пошту та натисніть посилання для підтвердження.',
     backToLogin: 'Повернутися до входу',
     passwordHint: 'Мін. 8 символів, літера і цифра',
+    // Waitlist copy
+    waitlistTitle: 'Приєднатися до списку очікування',
+    waitlistSubtitle: "Зараз кількість місць обмежена. Залиште email і ми повідомимо, коли з'явиться місце.",
+    waitlistEmailLabel: 'Ваш email',
+    waitlistJoin: 'Приєднатися',
+    waitlistJoining: 'Надсилаємо...',
+    waitlistSuccess: 'Перевірте пошту та підтвердіть адресу.',
+    waitlistError: 'Не вдалося надіслати. Спробуйте ще раз.',
   },
 } as const;
 
@@ -120,6 +144,31 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [capacityChecked, setCapacityChecked] = useState(false);
+  const [hasCapacity, setHasCapacity] = useState(true);
+  const [waitlistEmail, setWaitlistEmail] = useState('');
+  const [waitlistLoading, setWaitlistLoading] = useState(false);
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false);
+  const [waitlistError, setWaitlistError] = useState('');
+
+  // Check if there's capacity for new users
+  useEffect(() => {
+    const checkCapacity = async () => {
+      try {
+        const res = await fetch('/api/auth/check-capacity');
+        if (res.ok) {
+          const data = await res.json();
+          setHasCapacity(data.hasCapacity);
+        }
+      } catch {
+        // On error, assume capacity available
+        setHasCapacity(true);
+      } finally {
+        setCapacityChecked(true);
+      }
+    };
+    checkCapacity();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,10 +204,161 @@ export default function RegisterPage() {
     }
   };
 
-  if (!hydrated) {
+  const handleWaitlistSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setWaitlistError('');
+    setWaitlistLoading(true);
+
+    try {
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: waitlistEmail,
+          language,
+          source: 'register_page_capacity_full',
+        }),
+      });
+
+      if (!response.ok) {
+        setWaitlistError(t.waitlistError);
+        return;
+      }
+
+      setWaitlistSuccess(true);
+    } catch {
+      setWaitlistError(t.waitlistError);
+    } finally {
+      setWaitlistLoading(false);
+    }
+  };
+
+  if (!hydrated || !capacityChecked) {
     return (
       <div className="p-4 flex items-center justify-center min-h-screen">
         <p className="text-slate-500">{t.loading}</p>
+      </div>
+    );
+  }
+
+  // Show waitlist form when no capacity available
+  if (!hasCapacity) {
+    return (
+      <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 opacity-10 dark:opacity-20" />
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary-500/30 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-pink-500/20 rounded-full blur-3xl" />
+
+        <div className="w-full max-w-md relative z-10">
+          {/* Language selector */}
+          <div className="flex justify-end mb-4">
+            <div className="flex items-center gap-1 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm p-1 shadow-lg shadow-primary-500/10">
+              {languageOptions.map((option) => {
+                const isActive = option.id === language;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => {
+                      updateSettings('general', { language: option.id as AppLanguage });
+                      try {
+                        window.localStorage.setItem('uiLanguage', option.id);
+                      } catch {}
+                    }}
+                    title={option.name}
+                    className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                      isActive
+                        ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-md'
+                        : 'text-slate-500 hover:text-primary-600'
+                    }`}
+                  >
+                    <FlagIcon src={option.flagSrc} fallback={option.flagEmoji} />
+                    <span>{option.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 p-6 sm:p-8 shadow-2xl shadow-primary-500/10">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h1 className="text-2xl font-display bg-gradient-to-r from-primary-600 via-blue-500 to-pink-500 bg-clip-text text-transparent">
+                  {t.waitlistTitle}
+                </h1>
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                  {t.waitlistSubtitle}
+                </p>
+              </div>
+              <MascotAvatar skinId="explorer" size={56} />
+            </div>
+
+            {waitlistSuccess ? (
+              <div className="text-center space-y-4">
+                <div className="w-16 h-16 mx-auto rounded-full bg-success-100 dark:bg-success-900/30 flex items-center justify-center">
+                  <Mail size={32} className="text-success-600" />
+                </div>
+                <p className="text-slate-600 dark:text-slate-300">{t.waitlistSuccess}</p>
+                <Link href="/login">
+                  <Button variant="ghost" className="w-full">
+                    {t.login}
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <form onSubmit={handleWaitlistSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                    {t.waitlistEmailLabel}
+                  </label>
+                  <input
+                    type="email"
+                    value={waitlistEmail}
+                    onChange={(e) => setWaitlistEmail(e.target.value)}
+                    placeholder={t.emailPlaceholder}
+                    required
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+
+                {waitlistError && (
+                  <div className="p-3 rounded-xl bg-error-50 dark:bg-error-900/30 border border-error-200 dark:border-error-800">
+                    <p className="text-sm text-error-600 dark:text-error-400">{waitlistError}</p>
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  variant="gradient"
+                  size="lg"
+                  className="w-full"
+                  disabled={waitlistLoading}
+                >
+                  {waitlistLoading ? (
+                    <>
+                      <Loader2 size={20} className="animate-spin mr-2" />
+                      {t.waitlistJoining}
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus size={20} className="mr-2" />
+                      {t.waitlistJoin}
+                    </>
+                  )}
+                </Button>
+              </form>
+            )}
+
+            <div className="mt-6 text-center">
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {t.haveAccount}{' '}
+                <Link href="/login" className="text-primary-600 hover:underline font-medium">
+                  {t.login}
+                </Link>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

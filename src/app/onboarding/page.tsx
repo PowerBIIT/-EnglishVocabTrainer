@@ -296,7 +296,8 @@ export default function OnboardingPage() {
     if (consentChecked || step !== 'consent') return;
     const checkConsent = async () => {
       try {
-        const res = await fetch('/api/user/profile');
+        // Use consentOnly=true to allow waitlisted users to check consent status
+        const res = await fetch('/api/user/profile?consentOnly=true');
         if (res.ok) {
           const data = await res.json();
           if (data.user?.termsAcceptedAt) {
