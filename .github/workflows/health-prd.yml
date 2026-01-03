@@ -1,0 +1,31 @@
+name: PRD Health Check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Check health endpoint
+        run: |
+          set -euo pipefail
+          response=$(curl -sSf --max-time 10 https://henio.app/api/health)
+          echo "$response"
+          echo "$response" | node -e '
+            const fs = require("fs");
+            const data = JSON.parse(fs.readFileSync(0, "utf8"));
+            if (data.status !== "ok") process.exit(1);
+            if (data.env && data.env !== "production") process.exit(1);
+            if (!data.version || !data.commit) process.exit(1);
+            const subsystems = data.subsystems || {};
+            for (const [name, info] of Object.entries(subsystems)) {
+              if (!info || info.status !== "ok") process.exit(1);
+            }
+          ';
