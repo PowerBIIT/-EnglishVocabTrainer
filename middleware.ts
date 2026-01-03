@@ -23,7 +23,11 @@ export async function middleware(req: NextRequest) {
     if (!token) {
       return NextResponse.next();
     }
-    // Logged-in users should go to home or onboarding
+    // Logged-in users: check waitlist first, then onboarding
+    const accessStatus = (token?.accessStatus as string | undefined) ?? 'ACTIVE';
+    if (accessStatus !== 'ACTIVE') {
+      return NextResponse.redirect(new URL(WAITLIST_PATH, req.url));
+    }
     const redirectUrl = new URL(
       token.onboardingComplete ? '/' : ONBOARDING_PATH,
       req.url
@@ -31,10 +35,15 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Login page: redirect logged-in users to home or onboarding
+  // Login page: redirect logged-in users
   if (pathname === '/login') {
     if (!token) {
       return NextResponse.next();
+    }
+    // Check waitlist first, then onboarding
+    const accessStatus = (token?.accessStatus as string | undefined) ?? 'ACTIVE';
+    if (accessStatus !== 'ACTIVE') {
+      return NextResponse.redirect(new URL(WAITLIST_PATH, req.url));
     }
     const redirectUrl = new URL(
       token.onboardingComplete ? '/' : ONBOARDING_PATH,
