@@ -32,6 +32,13 @@ interface GenerateResult {
   error?: 'UNSAFE_TOPIC' | 'NEEDS_CLARIFICATION';
 }
 
+const estimateWordOutputTokens = (count: number) => {
+  const baseTokens = 200;
+  const perWordTokens = 55;
+  const estimate = baseTokens + count * perWordTokens;
+  return Math.max(512, Math.min(2048, estimate));
+};
+
 const WORDS_RESPONSE_SCHEMA = {
   type: 'object',
   properties: {
@@ -150,7 +157,7 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
     const response = await gemini.generateWithMetadata(finalPrompt, {
       temperature: 0.8,
-      maxOutputTokens: 2048,
+      maxOutputTokens: estimateWordOutputTokens(requestedCount),
       model,
       responseMimeType: 'application/json',
       responseSchema: WORDS_RESPONSE_SCHEMA,
@@ -173,7 +180,15 @@ export async function POST(request: NextRequest) {
       success: true,
     }).catch(console.error);
 
-    const result = parseAIResponse<GenerateResult>(response.content);
+    let result: GenerateResult;
+    try {
+      result = parseAIResponse<GenerateResult>(response.content, { logErrors: false });
+    } catch {
+      return NextResponse.json(
+        { error: 'response_truncated' },
+        { status: 422 }
+      );
+    }
 
     if (result.error === 'UNSAFE_TOPIC') {
       return NextResponse.json(
@@ -189,7 +204,30 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(result);
+    if (!Array.isArray(result.words)) {
+      return NextResponse.json(
+        { error: 'response_truncated' },
+        { status: 422 }
+      );
+    }
+
+    const normalizedWords = result.words.slice(0, requestedCount);
+    const responseBody: GenerateResult & {
+      warning?: 'partial_result';
+      requestedCount: number;
+      returnedCount: number;
+    } = {
+      ...result,
+      words: normalizedWords,
+      requestedCount,
+      returnedCount: normalizedWords.length,
+    };
+
+    if (normalizedWords.length < requestedCount) {
+      responseBody.warning = 'partial_result';
+    }
+
+    return NextResponse.json(responseBody);
   } catch (error) {
     console.error('Word generation error:', error);
     const mapped = mapGeminiError(error);

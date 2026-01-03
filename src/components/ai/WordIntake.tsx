@@ -254,6 +254,8 @@ export const wordIntakeCopy = {
     statsOutro: 'Chcesz dodać więcej słówek?',
     generatedWords: (count: number, topic: string, level: string) =>
       `Wygenerowałem **${count}** słówek na temat "${topic}" (poziom ${level}).\n\nZaznacz te, które chcesz dodać do biblioteki:`,
+    generatedWordsPartial: (count: number, requested: number, topic: string, level: string) =>
+      `Wygenerowałem **${count}** z **${requested}** słówek na temat "${topic}" (poziom ${level}).\n\nSpróbuj mniejszej liczby słówek, jeśli potrzebujesz pełnej listy.\n\nZaznacz te, które chcesz dodać do biblioteki:`,
     unsafeTopic:
       'Nie mogę wygenerować słówek dla tego tematu. Wybierz neutralny, szkolny temat (np. szkoła, praca, podróże).',
     clarifyTopic:
@@ -262,6 +264,8 @@ export const wordIntakeCopy = {
       `Użyłem lokalnych danych (brak lub nieprawidłowy klucz API${code ? `, ${code}` : ''}).\n\nZnalazłem ${Math.min(count, total)} przykładowych słówek. Skonfiguruj GEMINI_API_KEY w .env.local dla pełnej funkcjonalności.`,
     generatedFallbackLimit: (count: number, total: number, code?: string) =>
       `Użyłem lokalnych danych (limit AI${code ? `, ${code}` : ''}).\n\nZnalazłem ${Math.min(count, total)} przykładowych słówek.`,
+    generatedFallbackTruncated: (count: number, total: number, code?: string) =>
+      `Odpowiedź AI była zbyt długa i została ucięta${code ? `, ${code}` : ''}.\n\nSpróbuj mniejszej liczby słówek (np. 8-10). Użyłem lokalnych danych i znalazłem ${Math.min(count, total)} przykładowych słówek.`,
     generatedFallbackError: (count: number, total: number, code?: string) =>
       `Użyłem lokalnych danych (błąd AI${code ? `, ${code}` : ''}).\n\nZnalazłem ${Math.min(count, total)} przykładowych słówek.`,
     foundWordsWithPhonetics: (count: number) =>
@@ -357,6 +361,8 @@ export const wordIntakeCopy = {
     statsOutro: 'Want to add more words?',
     generatedWords: (count: number, topic: string, level: string) =>
       `I generated **${count}** words about "${topic}" (level ${level}).\n\nSelect the ones you want to add to your library:`,
+    generatedWordsPartial: (count: number, requested: number, topic: string, level: string) =>
+      `I generated **${count}** of **${requested}** words about "${topic}" (level ${level}).\n\nTry a smaller number if you need the full list.\n\nSelect the ones you want to add to your library:`,
     unsafeTopic:
       'I can’t generate words for that topic. Pick a neutral, school-appropriate topic (e.g., school, work, travel).',
     clarifyTopic:
@@ -365,6 +371,8 @@ export const wordIntakeCopy = {
       `I used local data (missing or invalid API key${code ? `, ${code}` : ''}).\n\nFound ${Math.min(count, total)} sample words. Configure GEMINI_API_KEY in .env.local for full functionality.`,
     generatedFallbackLimit: (count: number, total: number, code?: string) =>
       `I used local data (AI limit reached${code ? `, ${code}` : ''}).\n\nFound ${Math.min(count, total)} sample words.`,
+    generatedFallbackTruncated: (count: number, total: number, code?: string) =>
+      `The AI response was too long and got truncated${code ? `, ${code}` : ''}.\n\nTry a smaller word count (e.g., 8-10). I used local data and found ${Math.min(count, total)} sample words.`,
     generatedFallbackError: (count: number, total: number, code?: string) =>
       `I used local data (AI error${code ? `, ${code}` : ''}).\n\nFound ${Math.min(count, total)} sample words.`,
     foundWordsWithPhonetics: (count: number) =>
@@ -457,6 +465,8 @@ export const wordIntakeCopy = {
     statsOutro: 'Хочеш додати більше слів?',
     generatedWords: (count: number, topic: string, level: string) =>
       `Згенерував **${count}** слів на тему "${topic}" (рівень ${level}).\n\nОбери ті, які хочеш додати до бібліотеки:`,
+    generatedWordsPartial: (count: number, requested: number, topic: string, level: string) =>
+      `Згенерував **${count}** з **${requested}** слів на тему "${topic}" (рівень ${level}).\n\nСпробуй меншу кількість слів, якщо потрібен повний список.\n\nОбери ті, які хочеш додати до бібліотеки:`,
     unsafeTopic:
       'Не можу згенерувати слова для цієї теми. Обери нейтральну, шкільну тему (наприклад: школа, робота, подорожі).',
     clarifyTopic:
@@ -465,6 +475,8 @@ export const wordIntakeCopy = {
       `Використав локальні дані (немає або недійсний ключ API${code ? `, ${code}` : ''}).\n\nЗнайшов ${Math.min(count, total)} прикладових слів. Налаштуй GEMINI_API_KEY в .env.local для повної функціональності.`,
     generatedFallbackLimit: (count: number, total: number, code?: string) =>
       `Використав локальні дані (ліміт AI${code ? `, ${code}` : ''}).\n\nЗнайшов ${Math.min(count, total)} прикладових слів.`,
+    generatedFallbackTruncated: (count: number, total: number, code?: string) =>
+      `Відповідь AI була занадто довгою і обрізалася${code ? `, ${code}` : ''}.\n\nСпробуй меншу кількість слів (наприклад, 8-10). Використав локальні дані і знайшов ${Math.min(count, total)} прикладових слів.`,
     generatedFallbackError: (count: number, total: number, code?: string) =>
       `Використав локальні дані (помилка AI${code ? `, ${code}` : ''}).\n\nЗнайшов ${Math.min(count, total)} прикладових слів.`,
     foundWordsWithPhonetics: (count: number) =>
@@ -988,6 +1000,10 @@ export function WordIntake({
           await generateWordsLocal(count, topic, 'limit', data?.error);
           return;
         }
+        if (data?.error === 'response_truncated') {
+          await generateWordsLocal(count, topic, 'truncated', data?.error);
+          return;
+        }
         const aiError = handleAiLimitError(data, { silent: true });
         if (aiError === 'config') {
           await generateWordsLocal(count, topic, 'config', data?.error);
@@ -1025,7 +1041,14 @@ export function WordIntake({
         setSuggestedSetName(buildSetName(finalTopic));
         setSelectedSetOption(NEW_SET_OPTION);
 
-        addAssistantMessage(t.generatedWords(data.words.length, topic, level));
+        const requestedCount =
+          typeof data.requestedCount === 'number' ? data.requestedCount : count;
+        const returnedCount = data.words.length;
+        const generatedMessage =
+          data.warning === 'partial_result'
+            ? t.generatedWordsPartial(returnedCount, requestedCount, finalTopic, level)
+            : t.generatedWords(returnedCount, finalTopic, level);
+        addAssistantMessage(generatedMessage);
       } else {
         throw new Error('No words generated');
       }
@@ -1038,7 +1061,7 @@ export function WordIntake({
   const generateWordsLocal = async (
     count: number,
     topic: string,
-    reason: 'limit' | 'config' | 'error' = 'config',
+    reason: 'limit' | 'config' | 'error' | 'truncated' = 'config',
     errorCode?: string
   ) => {
     const fallbackWords = (FALLBACK_WORDS[activePair.id] ?? FALLBACK_WORDS['pl-en']).map(
@@ -1056,9 +1079,11 @@ export function WordIntake({
     const fallbackMessage =
       reason === 'limit'
         ? t.generatedFallbackLimit(count, fallbackWords.length, errorCode)
-        : reason === 'error'
-          ? t.generatedFallbackError(count, fallbackWords.length, errorCode)
-          : t.generatedFallback(count, fallbackWords.length, errorCode);
+        : reason === 'truncated'
+          ? t.generatedFallbackTruncated(count, fallbackWords.length, errorCode)
+          : reason === 'error'
+            ? t.generatedFallbackError(count, fallbackWords.length, errorCode)
+            : t.generatedFallback(count, fallbackWords.length, errorCode);
     addAssistantMessage(fallbackMessage);
   };
 
