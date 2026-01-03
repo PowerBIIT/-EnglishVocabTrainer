@@ -105,8 +105,7 @@ src/
   - Migrations only (data preserved)
 - Migrations run on startup: `scripts/ensure-migrations.js` + `prisma migrate deploy`
 - Verify: `curl https://uat.henio.app/api/health`
-- See `docs/RUNBOOK.md` for custom domain setup and ops procedures
-- See `docs/DEPLOYMENT_AZURE.md` for full Azure setup guide
+- See `docs/RUNBOOK.md` for deployment, operations, and troubleshooting
 
 ## Version Management
 

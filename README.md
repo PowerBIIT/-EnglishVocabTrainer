@@ -1,144 +1,102 @@
 # Henio
 
-Next.js app for school‑focused vocabulary learning (PL→EN for Polish students, UA→PL for
-Ukrainian students in Poland). Includes onboarding, flashcards, quizzes, pronunciation practice,
-and AI‑powered word intake with multi‑file upload.
+Next.js vocabulary learning app for Polish students (PL→EN) and Ukrainian students in Poland (UA→PL). Features AI-powered word intake, flashcards, quizzes, pronunciation training, and subscription management.
 
-## Status projektu (wersja 1.0.30 - stan na 2025-12-31)
+**Version:** 1.0.63
 
-- UAT: https://uat.henio.app (logowanie Google działa)
-- PRD: https://henio.app (domena + SSL OK, deploy manualny)
+## Environments
 
-### Funkcje użytkownika (szkoła/UA)
-- Ścieżki onboardingu: „Uczeń w Polsce” (PL → EN) i „Uczeń z Ukrainy w Polsce” (UA → PL).
-- UI dopasowane do uczniów: lekcje, zadania, krótkie quizy, zadanie dnia.
-- Podpowiedź polskich znaków dla UI UA przy parze UA → PL.
-- Dodawanie słówek: wklejanie tekstu, zdjęcia lub pliki (możesz wybrać wiele naraz).
+| Environment | URL |
+|-------------|-----|
+| UAT | https://uat.henio.app |
+| PRD | https://henio.app |
 
-### Wdrożone funkcje (stan stabilny)
-✅ **Panel admina: szybkie akcje + zgłoszenia**
-- Przyciski w tabeli: Nadaj dostęp / Zawieś / Usuń (z potwierdzeniem)
-- Zakładka "Zgłoszenia" (lista WAITLISTED)
+## Quick Start
 
-✅ **Panel admina PL/EN** - przełącznik języka w nagłówku
-
-✅ **Domyślny język PL** - domyślna para `pl-en` i UI po polsku
-
-✅ **Widoczny numer wersji w UI** - badge pobiera wersję z `/api/health`
-- Plik: `src/components/layout/VersionBadge.tsx`
-
-### Zgodność z RODO/GDPR (NOWE w 1.0.20)
-✅ **Polityka prywatności** - `/privacy` (PL/EN/UA)
-✅ **Regulamin** - `/terms` (PL/EN/UA)
-✅ **Consent w onboardingu** - krok akceptacji jako pierwszy krok
-✅ **Potwierdzenie wieku** - checkbox 16+ lub zgoda rodzica
-✅ **Usunięcie konta** - przycisk w profilu (Art. 17 RODO)
-✅ **ConsentBanner** - przypomnienie dla istniejących użytkowników
-✅ **Footer** - linki do dokumentów prawnych
-
-### Znane problemy
-- Brak krytycznych znanych problemów.
-
-### Panel admina (WDROŻONY)
-- Dostępny pod `/admin` dla emaili z `ADMIN_EMAILS`
-- Zakładki: Konfiguracja / Użytkownicy / Zgłoszenia / Statystyki (PL/EN)
-- Szybkie akcje: Nadaj dostęp / Zawieś / Usuń (usuwa konto i dane)
-- Konfiguracja zapisywana w DB (`AppConfig`), historia zmian w `ConfigHistory`
-- UAT: baza resetowana przy każdym deployu (zmiany w panelu są nietrwałe)
-- PRD: zmiany trwałe, migracje uruchamiane przy starcie aplikacji
-
-### Jak przekazać pracę kolejnemu developerowi
-
-1. **Sprawdź wdrożenie UAT:**
-   ```bash
-   curl https://uat.henio.app/api/health
-   # fallback (Azure): https://henio-uat.azurewebsites.net/api/health
-   ```
-   Oczekiwana odpowiedź: `"status":"ok"`, `version` zgodna z `package.json`, `commit` zgodny z deployem
-
-2. **Sprawdź panel admina:**
-   - Zaloguj się kontem z `ADMIN_EMAILS`
-   - Otwórz https://uat.henio.app/admin
-   - Przełącz język w nagłówku (PL/EN)
-   - Sprawdź zakładkę "Zgłoszenia" i nadaj dostęp
-   - Zmień np. `MAX_ACTIVE_USERS` i zapisz
-
-3. **Środowisko:**
-   - Region: Poland Central
-   - UAT: https://uat.henio.app (Azure fallback: https://henio-uat.azurewebsites.net)
-   - PRD: https://henio.app (Azure fallback: https://henio-prd.azurewebsites.net)
-   - Deployment: GitHub Actions (`.github/workflows/`)
-   - Aktualne adresy i domeny: `docs/DEPLOYMENT_AZURE.md` i `docs/RUNBOOK.md`
-
-## Stack
-- Next.js 14 / React 18
-- NextAuth (Google OAuth)
-- Prisma + PostgreSQL
-- Tailwind CSS
-- Vitest + Playwright
-
-## Local development
-1) Install dependencies:
 ```bash
+# Install dependencies
 npm ci
-```
 
-2) Configure env:
-```bash
+# Configure environment
 cp .env.example .env.local
-```
 
-3) Start Postgres (wymagane dla testów i większości funkcji):
-```bash
+# Start PostgreSQL
 docker compose up -d
-```
 
-4) Initialize schema:
-```bash
+# Initialize database
 npx prisma db push
-```
 
-5) Run the app:
-```bash
+# Run development server
 npm run dev
 ```
 
-Notes:
-- AI features need `GEMINI_API_KEY`.
-- Google login needs OAuth credentials. E2E uses a test login only when `E2E_TEST=true`.
-- Keep `E2E_TEST` and `NEXT_PUBLIC_E2E_TEST` disabled in production.
-- Image intake supports JPG/PNG/WEBP up to 30 MB and resizes photos to 2400px on upload.
-- Image extraction retries with `gemini-2.5-pro` if the active model fails on photos/handwriting.
+## Key Features
 
-## Access control & limits
-- Allowlist: `ALLOWLIST_EMAILS` (comma/space separated). If set, only listed emails are active.
-- Admins: `ADMIN_EMAILS` to access `/admin` dashboard.
-- Capacity: `MAX_ACTIVE_USERS` (over-capacity users are routed to `/waitlist`).
-- Per-plan AI limits (monthly): `FREE_AI_REQUESTS_PER_MONTH`, `FREE_AI_UNITS_PER_MONTH`,
-  `PRO_AI_REQUESTS_PER_MONTH`, `PRO_AI_UNITS_PER_MONTH`.
-- Global AI limits (monthly): `GLOBAL_AI_REQUESTS_PER_MONTH`, `GLOBAL_AI_UNITS_PER_MONTH`.
-- User plans live in `UserPlan` (default `FREE`); upgrade to `PRO` manually until Stripe is added.
+- **Learning Modes:** Flashcards, quizzes, pronunciation training
+- **AI Word Intake:** Paste text, upload photos, or files (PDF, DOCX)
+- **Subscriptions:** FREE and PRO plans via Stripe
+- **Access Control:** Allowlist, capacity limits, waitlist
+- **Admin Panel:** User management, stats, pricing configuration
+- **GDPR Compliance:** Consent management, data export, account deletion
 
-## Testing
-- Unit tests: `npm run test:unit`
-- Typecheck: `npm run typecheck`
-- E2E tests: `npm run test:e2e`
+## Documentation
 
-E2E wymaga działającego Postgresa i poprawnego `DATABASE_URL`.
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Technical architecture, data models, patterns |
+| [API.md](docs/API.md) | Complete API reference |
+| [USER_FLOWS.md](docs/USER_FLOWS.md) | User journeys and UI flows |
+| [RUNBOOK.md](docs/RUNBOOK.md) | Operations, deployment, troubleshooting |
+| [MANUAL_TESTS.md](docs/MANUAL_TESTS.md) | Manual test cases |
+
+## Commands
+
+```bash
+# Development
+npm run dev                  # Start dev server
+docker compose up -d         # Start PostgreSQL
+
+# Testing
+npm run test:unit           # Unit tests (Vitest)
+npm run test:e2e            # E2E tests (Playwright)
+npm run typecheck           # TypeScript check
+
+# Build
+npm run build               # Production build
+npm run lint                # ESLint
+
+# Database
+npx prisma studio           # DB GUI
+npx prisma migrate dev      # Create migration
+```
 
 ## Deployment
-Azure deployment (UAT + PRD) is documented in `docs/DEPLOYMENT_AZURE.md`.
-`/api/health` returns build metadata (`APP_VERSION`, `APP_COMMIT_SHA`, `APP_BUILD_TIME`)
-for post-deploy verification.
-Ops runbook: `docs/RUNBOOK.md`.
-Production checklist: `docs/PRODUCTION_CHECKLIST.md`.
 
-## GitHub Workflows
-- `deploy-uat.yml` - Auto-deploy to UAT on push to `main` (runs lint + unit tests)
-- `deploy-prd.yml` - Manual deploy to production
-- `provision-infra.yml` - One-time Azure infrastructure provisioning
-- `destroy-infra.yml` - Teardown Azure infrastructure
+- **UAT:** Auto-deploy on push to `main` (E2E tests run after)
+- **PRD:** Manual trigger via `gh workflow run deploy-prd.yml`
 
-## Data model
-Migrations are stored in `prisma/migrations`. Deployments run
-`node scripts/ensure-migrations.js` + `prisma migrate deploy` on startup.
+Health check: `curl https://henio.app/api/health`
+
+See [RUNBOOK.md](docs/RUNBOOK.md) for complete deployment guide.
+
+## Tech Stack
+
+- Next.js 14 (App Router) + React 18
+- NextAuth (Google OAuth + Credentials)
+- Prisma + PostgreSQL
+- Zustand (state management)
+- Gemini API (AI features)
+- Stripe (subscriptions)
+- Tailwind CSS
+- Vitest + Playwright
+
+## Environment Variables
+
+See `.env.example` for complete list. Key variables:
+
+- `DATABASE_URL` - PostgreSQL connection
+- `NEXTAUTH_SECRET`, `NEXTAUTH_URL` - Auth config
+- `GOOGLE_CLIENT_ID/SECRET` - OAuth
+- `GEMINI_API_KEY` - AI features
+- `STRIPE_*` - Payment integration
+- `ADMIN_EMAILS` - Admin access
