@@ -34,8 +34,13 @@ describe('gemini service', () => {
 
     expect(result).toBe('hello');
     expect(globalThis.fetch).toHaveBeenCalledWith(
-      expect.stringContaining('generateContent?key=api-key'),
-      expect.objectContaining({ method: 'POST' })
+      expect.stringContaining('generateContent'),
+      expect.objectContaining({
+        method: 'POST',
+        headers: expect.objectContaining({
+          'x-goog-api-key': 'api-key',
+        }),
+      })
     );
   });
 

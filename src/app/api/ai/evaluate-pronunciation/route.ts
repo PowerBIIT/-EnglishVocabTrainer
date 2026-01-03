@@ -10,10 +10,11 @@ import {
   normalizeTargetLanguage,
 } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
-import { enforceAiUsage } from '@/lib/aiAccess';
+import { ensureAiAccess } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
 import { logAiRequest } from '@/lib/aiTelemetry';
+import { recordAiUsage } from '@/lib/aiUsage';
 
 interface PhonemeAnalysis {
   phoneme: string;
@@ -91,18 +92,14 @@ export async function POST(request: NextRequest) {
       safeNativeLanguage
     );
 
-    const usage = await enforceAiUsage({
+    const access = await ensureAiAccess({
       userId: session.user.id,
       email: session.user.email,
-      units:
-        expectedValue.length +
-        spokenValue.length +
-        (typeof phonetic === 'string' ? phonetic.length : 0),
     });
-    if (!usage.ok) {
+    if (!access.ok) {
       return NextResponse.json(
-        { ...usage.body, fallback: true },
-        { status: usage.status }
+        { ...access.body, fallback: true },
+        { status: access.status }
       );
     }
 
@@ -133,6 +130,9 @@ export async function POST(request: NextRequest) {
       model,
     });
     const durationMs = Date.now() - startTime;
+    const totalTokens = response.usage.promptTokenCount + response.usage.candidatesTokenCount;
+
+    await recordAiUsage({ userId: session.user.id, units: totalTokens }).catch(console.error);
 
     // Log telemetry (async, non-blocking)
     const languagePair = `${safeNativeLanguage}-${safeTargetLanguage}`;

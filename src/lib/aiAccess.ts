@@ -1,5 +1,10 @@
 import { AccessStatus } from '@prisma/client';
-import { checkAndConsumeAiUsage, type UsageLimitResult } from '@/lib/aiUsage';
+import {
+  checkAiUsageLimits,
+  checkAndConsumeAiUsage,
+  type UsageLimitResult,
+} from '@/lib/aiUsage';
+import { isAdminEmail } from '@/lib/access';
 import { ensureUserPlan } from '@/lib/userPlan';
 
 export type AiAccessResult =
@@ -36,6 +41,41 @@ const buildUsageError = (result: Exclude<UsageLimitResult, { ok: true }>): AiAcc
   };
 };
 
+export const ensureAiAccess = async ({
+  userId,
+  email,
+}: {
+  userId: string;
+  email?: string | null;
+}): Promise<AiAccessResult> => {
+  const plan = await ensureUserPlan(userId, email ?? undefined);
+
+  if (plan.accessStatus !== AccessStatus.ACTIVE) {
+    return {
+      ok: false,
+      status: 403,
+      body: {
+        error: plan.accessStatus === AccessStatus.WAITLISTED ? 'waitlisted' : 'suspended',
+      },
+    };
+  }
+
+  if (isAdminEmail(email ?? undefined)) {
+    return { ok: true };
+  }
+
+  const usageResult = await checkAiUsageLimits({
+    userId,
+    plan: plan.plan,
+  });
+
+  if (!usageResult.ok) {
+    return buildUsageError(usageResult);
+  }
+
+  return { ok: true };
+};
+
 export const enforceAiUsage = async ({
   userId,
   email,
@@ -57,6 +97,10 @@ export const enforceAiUsage = async ({
         error: plan.accessStatus === AccessStatus.WAITLISTED ? 'waitlisted' : 'suspended',
       },
     };
+  }
+
+  if (isAdminEmail(email ?? undefined)) {
+    return { ok: true };
   }
 
   const usageResult = await checkAndConsumeAiUsage({

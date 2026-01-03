@@ -1,21 +1,30 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { AccessStatus, Plan } from '@prisma/client';
-import { checkAndConsumeAiUsage } from '@/lib/aiUsage';
+import { checkAiUsageLimits, checkAndConsumeAiUsage } from '@/lib/aiUsage';
+import { isAdminEmail } from '@/lib/access';
 import { ensureUserPlan } from '@/lib/userPlan';
-import { enforceAiUsage } from '@/lib/aiAccess';
+import { ensureAiAccess, enforceAiUsage } from '@/lib/aiAccess';
 
 vi.mock('@/lib/aiUsage', () => ({
   checkAndConsumeAiUsage: vi.fn(),
+  checkAiUsageLimits: vi.fn(),
 }));
 
 vi.mock('@/lib/userPlan', () => ({
   ensureUserPlan: vi.fn(),
 }));
 
+vi.mock('@/lib/access', () => ({
+  isAdminEmail: vi.fn(),
+}));
+
 describe('enforceAiUsage', () => {
   beforeEach(() => {
     vi.mocked(checkAndConsumeAiUsage).mockReset();
+    vi.mocked(checkAiUsageLimits).mockReset();
     vi.mocked(ensureUserPlan).mockReset();
+    vi.mocked(isAdminEmail).mockReset();
+    vi.mocked(isAdminEmail).mockReturnValue(false);
   });
 
   it('allows active users when usage ok', async () => {
@@ -81,5 +90,77 @@ describe('enforceAiUsage', () => {
       expect(result.body.error).toBe('user_limit_reached');
       expect(result.body.softLimit).toBe(true);
     }
+  });
+
+  it('bypasses usage consumption for admins', async () => {
+    vi.mocked(ensureUserPlan).mockResolvedValue({
+      accessStatus: AccessStatus.ACTIVE,
+      plan: Plan.PRO,
+    });
+    vi.mocked(isAdminEmail).mockReturnValue(true);
+
+    await expect(
+      enforceAiUsage({ userId: 'admin-1', email: 'admin@example.com', units: 50 })
+    ).resolves.toEqual({ ok: true });
+
+    expect(checkAndConsumeAiUsage).not.toHaveBeenCalled();
+  });
+});
+
+describe('ensureAiAccess', () => {
+  beforeEach(() => {
+    vi.mocked(checkAiUsageLimits).mockReset();
+    vi.mocked(ensureUserPlan).mockReset();
+    vi.mocked(isAdminEmail).mockReset();
+    vi.mocked(isAdminEmail).mockReturnValue(false);
+  });
+
+  it('allows active users when within limits', async () => {
+    vi.mocked(ensureUserPlan).mockResolvedValue({
+      accessStatus: AccessStatus.ACTIVE,
+      plan: Plan.FREE,
+    });
+    vi.mocked(checkAiUsageLimits).mockResolvedValue({ ok: true });
+
+    await expect(
+      ensureAiAccess({ userId: 'user-5', email: 'user@example.com' })
+    ).resolves.toEqual({ ok: true });
+  });
+
+  it('blocks when usage limit is reached', async () => {
+    vi.mocked(ensureUserPlan).mockResolvedValue({
+      accessStatus: AccessStatus.ACTIVE,
+      plan: Plan.FREE,
+    });
+    vi.mocked(checkAiUsageLimits).mockResolvedValue({
+      ok: false,
+      scope: 'user',
+      limit: { maxRequests: 10, maxUnits: 100 },
+      usage: { count: 10, units: 100 },
+      resetAt: '2024-10-01T00:00:00.000Z',
+    });
+
+    const result = await ensureAiAccess({ userId: 'user-6', email: 'user@example.com' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe(429);
+      expect(result.body.error).toBe('user_limit_reached');
+      expect(result.body.softLimit).toBe(true);
+    }
+  });
+
+  it('bypasses limit checks for admins', async () => {
+    vi.mocked(ensureUserPlan).mockResolvedValue({
+      accessStatus: AccessStatus.ACTIVE,
+      plan: Plan.PRO,
+    });
+    vi.mocked(isAdminEmail).mockReturnValue(true);
+
+    await expect(
+      ensureAiAccess({ userId: 'admin-2', email: 'admin@example.com' })
+    ).resolves.toEqual({ ok: true });
+
+    expect(checkAiUsageLimits).not.toHaveBeenCalled();
   });
 });

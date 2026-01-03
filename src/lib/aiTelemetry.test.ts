@@ -8,6 +8,7 @@ import {
 } from './aiTelemetry';
 import { prisma } from '@/lib/db';
 import { calculateTokenCost } from '@/lib/costEstimation';
+import { maybeNotifyAiCostAlert } from '@/lib/aiCostAlerts';
 
 // Mock prisma
 vi.mock('@/lib/db', () => ({
@@ -31,6 +32,10 @@ vi.mock('@/lib/costEstimation', () => ({
     outputCost: 0.002,
     totalCost: 0.003,
   }),
+}));
+
+vi.mock('@/lib/aiCostAlerts', () => ({
+  maybeNotifyAiCostAlert: vi.fn().mockResolvedValue(undefined),
 }));
 
 describe('aiTelemetry', () => {
@@ -95,6 +100,7 @@ describe('aiTelemetry', () => {
 
       expect(calculateTokenCost).toHaveBeenCalledWith('gemini-2.0-flash', 100, 50);
       expect(prisma.aiRequestLog.create).toHaveBeenCalled();
+      expect(maybeNotifyAiCostAlert).toHaveBeenCalled();
     });
 
     it('includes optional fields when provided', async () => {

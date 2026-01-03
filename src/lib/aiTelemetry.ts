@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/db';
 import { calculateTokenCost } from '@/lib/costEstimation';
+import { maybeNotifyAiCostAlert } from '@/lib/aiCostAlerts';
 
 export type AiRequestLogData = {
   userId: string;
@@ -53,6 +54,11 @@ export async function logAiRequest(data: AiRequestLogData): Promise<void> {
     // Update daily stats (async, non-blocking)
     updateDailyStats(data, totalCost).catch((err) => {
       console.error('Failed to update daily stats:', err);
+    });
+
+    // Check cost alerts (async, non-blocking)
+    maybeNotifyAiCostAlert().catch((err) => {
+      console.error('Failed to send AI cost alert:', err);
     });
   } catch (error) {
     // Log error but don't throw - telemetry should not break the main flow

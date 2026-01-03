@@ -21,6 +21,12 @@ export type UsageLimitResult =
       resetAt: string;
     };
 
+export type UsageState = {
+  user: UsageSnapshot;
+  global: UsageSnapshot;
+  resetAt: string;
+};
+
 export const getCurrentPeriod = (date: Date = new Date()) =>
   date.toISOString().slice(0, 7);
 
@@ -29,6 +35,88 @@ export const getNextPeriodResetAt = (date: Date = new Date()) => {
   const month = date.getUTCMonth();
   const resetAt = new Date(Date.UTC(year, month + 1, 1, 0, 0, 0));
   return resetAt.toISOString();
+};
+
+const buildSnapshot = (record: { count: number; units: number } | null): UsageSnapshot => ({
+  count: record?.count ?? 0,
+  units: record?.units ?? 0,
+});
+
+export const getCurrentAiUsage = async (userId: string): Promise<UsageState> => {
+  const period = getCurrentPeriod();
+  const resetAt = getNextPeriodResetAt();
+
+  const [userUsage, globalUsage] = await prisma.$transaction([
+    prisma.usageCounter.findUnique({
+      where: {
+        userId_period_feature: {
+          userId,
+          period,
+          feature: AI_FEATURE,
+        },
+      },
+      select: { count: true, units: true },
+    }),
+    prisma.globalUsage.findUnique({
+      where: {
+        period_feature: {
+          period,
+          feature: AI_FEATURE,
+        },
+      },
+      select: { count: true, units: true },
+    }),
+  ]);
+
+  return {
+    user: buildSnapshot(userUsage),
+    global: buildSnapshot(globalUsage),
+    resetAt,
+  };
+};
+
+export const checkAiUsageLimits = async ({
+  userId,
+  plan,
+}: {
+  userId: string;
+  plan: Plan;
+}): Promise<UsageLimitResult> => {
+  const usageState = await getCurrentAiUsage(userId);
+  const planLimits = await getPlanLimits(plan);
+  const globalLimits = await getGlobalLimits();
+
+  if (
+    (globalLimits.maxRequests !== Number.POSITIVE_INFINITY &&
+      usageState.global.count >= globalLimits.maxRequests) ||
+    (globalLimits.maxUnits !== Number.POSITIVE_INFINITY &&
+      usageState.global.units >= globalLimits.maxUnits)
+  ) {
+    return {
+      ok: false,
+      scope: 'global',
+      limit: globalLimits,
+      usage: usageState.global,
+      resetAt: usageState.resetAt,
+    };
+  }
+
+  if (
+    (planLimits.maxRequests !== Number.POSITIVE_INFINITY &&
+      usageState.user.count >= planLimits.maxRequests) ||
+    (planLimits.maxUnits !== Number.POSITIVE_INFINITY &&
+      usageState.user.units >= planLimits.maxUnits)
+  ) {
+    return {
+      ok: false,
+      scope: 'user',
+      limit: planLimits,
+      usage: usageState.user,
+      resetAt: usageState.resetAt,
+    };
+  }
+
+  return { ok: true };
 };
 
 export const checkAndConsumeAiUsage = async ({
@@ -176,4 +264,71 @@ export const checkAndConsumeAiUsage = async ({
   });
 
   return result;
+};
+
+export const recordAiUsage = async ({
+  userId,
+  units,
+  requests = 1,
+}: {
+  userId: string;
+  units: number;
+  requests?: number;
+}): Promise<UsageState> => {
+  const safeRequests = Math.max(1, Math.round(requests));
+  const safeUnits = Math.max(0, Math.round(units));
+  const period = getCurrentPeriod();
+  const resetAt = getNextPeriodResetAt();
+
+  const result = await prisma.$transaction(async (tx) => {
+    const userUsage = await tx.usageCounter.upsert({
+      where: {
+        userId_period_feature: {
+          userId,
+          period,
+          feature: AI_FEATURE,
+        },
+      },
+      create: {
+        userId,
+        period,
+        feature: AI_FEATURE,
+        count: safeRequests,
+        units: safeUnits,
+      },
+      update: {
+        count: { increment: safeRequests },
+        units: { increment: safeUnits },
+      },
+    });
+
+    const globalUsage = await tx.globalUsage.upsert({
+      where: {
+        period_feature: {
+          period,
+          feature: AI_FEATURE,
+        },
+      },
+      create: {
+        period,
+        feature: AI_FEATURE,
+        count: safeRequests,
+        units: safeUnits,
+      },
+      update: {
+        count: { increment: safeRequests },
+        units: { increment: safeUnits },
+      },
+    });
+
+    return {
+      user: buildSnapshot(userUsage),
+      global: buildSnapshot(globalUsage),
+    };
+  });
+
+  return {
+    ...result,
+    resetAt,
+  };
 };

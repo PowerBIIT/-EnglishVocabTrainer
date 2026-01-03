@@ -4,6 +4,7 @@ import { requireAdmin } from '@/middleware/adminAuth';
 import { GeminiService, AI_PROMPTS } from '@/lib/gemini';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { logAiRequest } from '@/lib/aiTelemetry';
+import { recordAiUsage } from '@/lib/aiUsage';
 import type { RevenueChatRequest, RevenueChatResponse, RevenueContext } from '@/types/aiAnalytics';
 
 function generateSessionId(): string {
@@ -166,6 +167,9 @@ export async function POST(request: NextRequest) {
       model,
     });
     const durationMs = Date.now() - startTime;
+    const totalTokens = result.usage.promptTokenCount + result.usage.candidatesTokenCount;
+
+    await recordAiUsage({ userId: session.user.id, units: totalTokens }).catch(console.error);
 
     // Log telemetry
     logAiRequest({

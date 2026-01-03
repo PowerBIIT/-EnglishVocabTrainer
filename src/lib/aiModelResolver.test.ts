@@ -17,8 +17,18 @@ describe('resolveGeminiModel', () => {
     await expect(resolveGeminiModel()).resolves.toBe('gemini-2.5-flash');
   });
 
+  it('normalizes model ids to lowercase', async () => {
+    vi.mocked(getAppConfig).mockResolvedValue('  GEMINI-2.5-FLASH  ');
+    await expect(resolveGeminiModel()).resolves.toBe('gemini-2.5-flash');
+  });
+
   it('falls back to the default when config empty', async () => {
     vi.mocked(getAppConfig).mockResolvedValue('');
+    await expect(resolveGeminiModel()).resolves.toBe(DEFAULT_GEMINI_MODEL);
+  });
+
+  it('falls back to the default when config is unknown', async () => {
+    vi.mocked(getAppConfig).mockResolvedValue('unknown-model');
     await expect(resolveGeminiModel()).resolves.toBe(DEFAULT_GEMINI_MODEL);
   });
 });

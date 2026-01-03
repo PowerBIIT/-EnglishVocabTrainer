@@ -54,22 +54,34 @@ export const GEMINI_PRICING: Record<string, { input: number; output: number }> =
 
 const DEFAULT_MODEL = 'gemini-1.5-flash';
 
-// Get pricing for a model, with fallback to default
-export function getModelPricing(model: string): { input: number; output: number } {
-  // Try exact match first
-  if (GEMINI_PRICING[model]) {
-    return GEMINI_PRICING[model];
+const findPricingKey = (model: string): string | null => {
+  if (!model || model.trim().length === 0) {
+    return null;
+  }
+  const normalized = model.trim().toLowerCase();
+  if (GEMINI_PRICING[normalized]) {
+    return normalized;
   }
 
-  // Try to match by prefix (e.g., "gemini-2.5-flash-preview" -> "gemini-2.5-flash-preview-05-20")
-  const modelPrefix = model.toLowerCase();
-  for (const [key, pricing] of Object.entries(GEMINI_PRICING)) {
-    if (key.startsWith(modelPrefix) || modelPrefix.startsWith(key.split('-preview')[0])) {
-      return pricing;
+  for (const key of Object.keys(GEMINI_PRICING)) {
+    const baseKey = key.split('-preview')[0];
+    if (key.startsWith(normalized) || normalized.startsWith(baseKey)) {
+      return key;
     }
   }
 
-  // Fallback to default pricing
+  return null;
+};
+
+export const hasPricingForModel = (model: string): boolean => Boolean(findPricingKey(model));
+
+// Get pricing for a model, with fallback to default
+export function getModelPricing(model: string): { input: number; output: number } {
+  const matchedKey = findPricingKey(model);
+  if (matchedKey) {
+    return GEMINI_PRICING[matchedKey];
+  }
+
   return GEMINI_PRICING[DEFAULT_MODEL];
 }
 
@@ -89,18 +101,16 @@ export function calculateTokenCost(
   };
 }
 
-// Legacy function: estimate cost from "units" (character count approximation)
+// Estimate cost from total tokens (input + output).
 export function estimateMonthlyCost(units: number): number {
-  const safeUnits = Math.max(0, units);
-  // Rough approximation: 4 chars ≈ 1 token
-  const inputTokens = safeUnits / 4;
-  // Assume output is ~50% of input
-  const outputTokens = inputTokens * 0.5;
+  const totalTokens = Math.max(0, units);
+  const inputTokens = totalTokens * (2 / 3);
+  const outputTokens = totalTokens / 3;
   const pricing = GEMINI_PRICING[DEFAULT_MODEL];
   return inputTokens * pricing.input + outputTokens * pricing.output;
 }
 
-// Legacy function: project end-of-month cost from current units
+// Project end-of-month cost from current total tokens.
 export function projectMonthlyCost(units: number, date: Date = new Date()): number {
   const year = date.getUTCFullYear();
   const month = date.getUTCMonth();

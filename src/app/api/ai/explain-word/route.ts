@@ -10,10 +10,11 @@ import {
   normalizeTargetLanguage,
 } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
-import { enforceAiUsage } from '@/lib/aiAccess';
+import { ensureAiAccess } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
 import { logAiRequest } from '@/lib/aiTelemetry';
+import { recordAiUsage } from '@/lib/aiUsage';
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,13 +65,12 @@ export async function POST(request: NextRequest) {
       safeNativeLanguage
     );
 
-    const usage = await enforceAiUsage({
+    const access = await ensureAiAccess({
       userId: session.user.id,
       email: session.user.email,
-      units: wordValue.length,
     });
-    if (!usage.ok) {
-      return NextResponse.json(usage.body, { status: usage.status });
+    if (!access.ok) {
+      return NextResponse.json(access.body, { status: access.status });
     }
 
     const model = await resolveGeminiModel();
@@ -90,6 +90,9 @@ export async function POST(request: NextRequest) {
       model,
     });
     const durationMs = Date.now() - startTime;
+    const totalTokens = result.usage.promptTokenCount + result.usage.candidatesTokenCount;
+
+    await recordAiUsage({ userId: session.user.id, units: totalTokens }).catch(console.error);
 
     // Log telemetry (async, non-blocking)
     const languagePair = `${safeNativeLanguage}-${safeTargetLanguage}`;

@@ -70,10 +70,13 @@ export class GeminiService {
 
     try {
       const response = await fetch(
-        `${GEMINI_API_URL}/${model}:generateContent?key=${this.apiKey}`,
+        `${GEMINI_API_URL}/${model}:generateContent`,
         {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': this.apiKey,
+          },
           body: JSON.stringify({
             ...body,
             generationConfig: {

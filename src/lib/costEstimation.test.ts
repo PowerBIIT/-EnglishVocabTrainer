@@ -3,6 +3,7 @@ import {
   GEMINI_PRICING,
   getModelPricing,
   calculateTokenCost,
+  hasPricingForModel,
   estimateMonthlyCost,
   projectMonthlyCost,
   calculateActualMonthlyCost,
@@ -45,6 +46,24 @@ describe('costEstimation', () => {
       const pricing = getModelPricing('gemini-2.5-flash-preview');
       expect(pricing).toBeDefined();
       expect(pricing.input).toBeGreaterThan(0);
+    });
+  });
+
+  describe('hasPricingForModel', () => {
+    it('returns true for known models', () => {
+      expect(hasPricingForModel('gemini-2.5-flash')).toBe(true);
+    });
+
+    it('returns true for preview model prefixes', () => {
+      expect(hasPricingForModel('gemini-2.5-flash-preview')).toBe(true);
+    });
+
+    it('returns true for trimmed/uppercased model ids', () => {
+      expect(hasPricingForModel('  GEMINI-2.5-FLASH  ')).toBe(true);
+    });
+
+    it('returns false for unknown models', () => {
+      expect(hasPricingForModel('unknown-model-xyz')).toBe(false);
     });
   });
 

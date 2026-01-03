@@ -4,6 +4,7 @@ import { GeminiService, parseAIResponse } from '@/lib/gemini';
 import { mapGeminiError } from '@/lib/aiErrors';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { getPromptCatalog, getPromptDefinition, type PromptId } from '@/lib/aiPromptCatalog';
+import { recordAiUsage } from '@/lib/aiUsage';
 
 type AssistRequest = {
   promptId: PromptId | 'global';
@@ -159,13 +160,17 @@ export async function POST(request: Request) {
   });
 
   try {
-    const response = await gemini.generate(assistPrompt, {
+    const response = await gemini.generateWithMetadata(assistPrompt, {
       temperature: 0.6,
       maxOutputTokens: 512,
       model,
       responseMimeType: 'application/json',
     });
-    const parsed = parseAssistResponse(response);
+    const totalTokens = response.usage.promptTokenCount + response.usage.candidatesTokenCount;
+
+    await recordAiUsage({ userId: session.user.id, units: totalTokens }).catch(console.error);
+
+    const parsed = parseAssistResponse(response.content);
     const suggestedOverlay =
       typeof parsed.suggestedOverlay === 'string' ? parsed.suggestedOverlay.trim() : '';
     const notes = typeof parsed.notes === 'string' ? parsed.notes.trim() : undefined;

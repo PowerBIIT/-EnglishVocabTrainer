@@ -7,6 +7,7 @@ import {
   GEMINI_MODELS,
   isGeminiModelId,
 } from '@/lib/aiModelCatalog';
+import { hasPricingForModel } from '@/lib/costEstimation';
 import { getPromptCatalog, type PromptId } from '@/lib/aiPromptCatalog';
 import {
   GLOBAL_PROMPT_OVERLAY_KEY,
@@ -61,7 +62,7 @@ export async function GET() {
     activeModel: {
       value,
       source,
-      isKnown: isGeminiModelId(value),
+      isKnown: isGeminiModelId(value) || hasPricingForModel(value),
     },
     defaultModel: DEFAULT_GEMINI_MODEL,
     models: GEMINI_MODELS,

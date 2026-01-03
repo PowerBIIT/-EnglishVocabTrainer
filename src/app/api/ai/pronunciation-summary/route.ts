@@ -10,10 +10,11 @@ import {
   normalizeTargetLanguage,
 } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
-import { enforceAiUsage } from '@/lib/aiAccess';
+import { ensureAiAccess } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
 import { logAiRequest } from '@/lib/aiTelemetry';
+import { recordAiUsage } from '@/lib/aiUsage';
 
 type SummaryWordInput = {
   word: string;
@@ -53,12 +54,6 @@ const normalizeWords = (words: unknown) => {
     .filter((item): item is SummaryWordInput => item !== null)
     .slice(0, MAX_AI_WORD_COUNT);
 };
-
-const buildUsageUnits = (words: SummaryWordInput[], extra: string) =>
-  words.reduce(
-    (total, item) => total + item.word.length + (item.phonetic?.length ?? 0),
-    extra.length
-  );
 
 export async function POST(request: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -106,14 +101,12 @@ export async function POST(request: NextRequest) {
       safeNativeLanguage
     );
 
-    const baseContext = words.map((item) => item.word).join(', ');
-    const usage = await enforceAiUsage({
+    const access = await ensureAiAccess({
       userId: session.user.id,
       email: session.user.email,
-      units: buildUsageUnits(words, baseContext),
     });
-    if (!usage.ok) {
-      return NextResponse.json({ ...usage.body, fallback: true }, { status: usage.status });
+    if (!access.ok) {
+      return NextResponse.json({ ...access.body, fallback: true }, { status: access.status });
     }
 
     const model = await resolveGeminiModel();
@@ -136,6 +129,9 @@ export async function POST(request: NextRequest) {
       model,
     });
     const durationMs = Date.now() - startTime;
+    const totalTokens = response.usage.promptTokenCount + response.usage.candidatesTokenCount;
+
+    await recordAiUsage({ userId: session.user.id, units: totalTokens }).catch(console.error);
 
     // Log telemetry (async, non-blocking)
     const languagePair = `${safeNativeLanguage}-${safeTargetLanguage}`;

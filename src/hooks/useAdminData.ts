@@ -50,7 +50,7 @@ export type AdminStats = {
     }[];
     topUsers: { email: string; count: number; units: number }[];
   };
-  costs: { estimatedMonthly: number; projectedEndOfMonth: number };
+  costs: { actualMonthToDate: number; projectedEndOfMonth: number };
 };
 
 export type AdminSubscription = {

@@ -3,7 +3,6 @@ import { AccessStatus, Plan } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getCurrentPeriod } from '@/lib/aiUsage';
 import { getGlobalLimits, getPlanLimits } from '@/lib/plans';
-import { estimateMonthlyCost, projectMonthlyCost } from '@/lib/costEstimation';
 import { requireAdmin } from '@/middleware/adminAuth';
 
 const AI_FEATURE = 'ai';
@@ -15,6 +14,13 @@ export async function GET() {
   }
 
   const period = getCurrentPeriod();
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth();
+  const periodStart = new Date(Date.UTC(year, month, 1, 0, 0, 0));
+  const periodEnd = new Date(Date.UTC(year, month + 1, 1, 0, 0, 0));
+  const day = Math.max(1, now.getUTCDate());
+  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
 
   const [
     activeCount,
@@ -66,6 +72,18 @@ export async function GET() {
     }),
   ]);
 
+  const aiCostTotals = await prisma.aiRequestLog.aggregate({
+    where: {
+      createdAt: {
+        gte: periodStart,
+        lt: periodEnd,
+      },
+    },
+    _sum: {
+      totalCost: true,
+    },
+  });
+
   const globalLimits = await getGlobalLimits();
 
   const planTotals = new Map<Plan, { count: number; units: number }>();
@@ -93,6 +111,9 @@ export async function GET() {
   );
 
   const totalUnits = globalUsage?.units ?? 0;
+  const actualMonthToDate = aiCostTotals._sum.totalCost ?? 0;
+  const projectedEndOfMonth =
+    day > 0 ? (actualMonthToDate / day) * daysInMonth : actualMonthToDate;
 
   return NextResponse.json({
     meta: { period },
@@ -121,8 +142,8 @@ export async function GET() {
       })),
     },
     costs: {
-      estimatedMonthly: estimateMonthlyCost(totalUnits),
-      projectedEndOfMonth: projectMonthlyCost(totalUnits),
+      actualMonthToDate,
+      projectedEndOfMonth,
     },
   });
 }

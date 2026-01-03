@@ -25,12 +25,12 @@ const statsCopy = {
     suspended: 'Zawieszeni',
     globalUsage: 'Globalne użycie AI',
     requests: 'Zapytania',
-    units: 'Jednostki',
-    estimatedCost: 'Szacowany koszt',
-    estimatedMonthly: 'Szacowany miesięcznie',
+    units: 'Tokeny',
+    actualCost: 'Koszt rzeczywisty',
+    monthToDate: 'Od początku miesiąca',
     projectedEnd: 'Prognoza na koniec miesiąca',
     planUsage: 'Użycie planów',
-    topUsers: 'Top użytkownicy (jednostki)',
+    topUsers: 'Top użytkownicy (tokeny)',
     topUsersEmpty: 'Brak użycia AI.',
     planBreakdown: 'Podział planów',
     planBreakdownEmpty: 'Brak danych podziału planów.',
@@ -58,12 +58,12 @@ const statsCopy = {
     suspended: 'Suspended',
     globalUsage: 'Global AI usage',
     requests: 'Requests',
-    units: 'Units',
-    estimatedCost: 'Estimated cost',
-    estimatedMonthly: 'Estimated monthly',
+    units: 'Tokens',
+    actualCost: 'Actual cost',
+    monthToDate: 'Month-to-date',
     projectedEnd: 'Projected end-of-month',
     planUsage: 'Plan usage',
-    topUsers: 'Top users (units)',
+    topUsers: 'Top users (tokens)',
     topUsersEmpty: 'No AI usage yet.',
     planBreakdown: 'Plan breakdown',
     planBreakdownEmpty: 'No plan breakdown data.',
@@ -193,11 +193,11 @@ export function StatsSection({
         </div>
 
         <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4 space-y-3">
-          <p className="text-sm text-slate-500">{t.estimatedCost}</p>
+          <p className="text-sm text-slate-500">{t.actualCost}</p>
           <div className="grid gap-3">
             <div className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
-              <span>{t.estimatedMonthly}</span>
-              <span className="font-semibold">{formatUsd(stats.costs.estimatedMonthly)}</span>
+              <span>{t.monthToDate}</span>
+              <span className="font-semibold">{formatUsd(stats.costs.actualMonthToDate)}</span>
             </div>
             <div className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
               <span>{t.projectedEnd}</span>

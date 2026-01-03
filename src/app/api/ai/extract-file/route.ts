@@ -6,10 +6,11 @@ import { mapGeminiError } from '@/lib/aiErrors';
 import { AI_RATE_LIMIT, MAX_AI_TEXT_CHARS, MAX_UPLOAD_SIZE_BYTES } from '@/lib/apiLimits';
 import { normalizeNativeLanguage, normalizeTargetLanguage } from '@/lib/aiValidation';
 import { checkRateLimit } from '@/lib/rateLimit';
-import { enforceAiUsage } from '@/lib/aiAccess';
+import { ensureAiAccess } from '@/lib/aiAccess';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
 import { logAiRequest } from '@/lib/aiTelemetry';
+import { recordAiUsage } from '@/lib/aiUsage';
 
 interface ExtractedWord {
   target: string;
@@ -133,6 +134,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const access = await ensureAiAccess({
+      userId: session.user.id,
+      email: session.user.email,
+    });
+    if (!access.ok) {
+      return NextResponse.json(access.body, { status: access.status });
+    }
+
     const extractedText = await extractTextFromFile(file);
     const cleanedText = extractedText.replace(/\s+/g, ' ').trim();
 
@@ -148,15 +157,6 @@ export async function POST(request: NextRequest) {
       ? `Input truncated to ${MAX_AI_TEXT_CHARS} characters.`
       : undefined;
 
-    const usage = await enforceAiUsage({
-      userId: session.user.id,
-      email: session.user.email,
-      units: safeText.length,
-    });
-    if (!usage.ok) {
-      return NextResponse.json(usage.body, { status: usage.status });
-    }
-
     const model = await resolveGeminiModel();
     const gemini = new GeminiService(apiKey);
     const prompt = AI_PROMPTS.parseText(safeText, targetLanguage, nativeLanguage);
@@ -169,6 +169,9 @@ export async function POST(request: NextRequest) {
       model,
     });
     const durationMs = Date.now() - startTime;
+    const totalTokens = response.usage.promptTokenCount + response.usage.candidatesTokenCount;
+
+    await recordAiUsage({ userId: session.user.id, units: totalTokens }).catch(console.error);
 
     // Log telemetry (async, non-blocking)
     const languagePair = `${nativeLanguage}-${targetLanguage}`;
