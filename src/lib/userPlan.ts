@@ -1,6 +1,12 @@
 import { AccessStatus, Plan } from '@prisma/client';
 import { prisma } from '@/lib/db';
-import { getMaxActiveUsers, isEmailAllowed, getAdminEmails, isAdminEmail } from '@/lib/access';
+import {
+  getMaxActiveUsers,
+  isOnAllowlist,
+  isWaitlistApproved,
+  getAdminEmails,
+  isAdminEmail,
+} from '@/lib/access';
 
 export const ensureUserPlan = async (userId: string, email?: string | null) => {
   const existing = await prisma.userPlan.findUnique({ where: { userId } });
@@ -9,19 +15,28 @@ export const ensureUserPlan = async (userId: string, email?: string | null) => {
     return existing;
   }
 
-  const allowlisted = await isEmailAllowed(email ?? undefined);
   let desiredStatus: AccessStatus = existing?.accessStatus ?? AccessStatus.ACTIVE;
 
-  if (!allowlisted) {
-    desiredStatus = AccessStatus.WAITLISTED;
-  } else if (isAdminEmail(email ?? undefined)) {
-    // Admini zawsze dostają ACTIVE, niezależnie od limitu użytkowników
+  // Priority 1: Admins always get ACTIVE
+  if (isAdminEmail(email ?? undefined)) {
     desiredStatus = AccessStatus.ACTIVE;
-  } else {
+  }
+  // Priority 2: VIPs on allowlist bypass the limit
+  else if (await isOnAllowlist(email ?? undefined)) {
+    desiredStatus = AccessStatus.ACTIVE;
+  }
+  // Priority 3: Approved from waitlist get ACTIVE
+  else if (await isWaitlistApproved(email ?? undefined)) {
+    desiredStatus = AccessStatus.ACTIVE;
+  }
+  // Priority 4: Already active users stay active
+  else if (existing?.accessStatus === AccessStatus.ACTIVE) {
+    desiredStatus = AccessStatus.ACTIVE;
+  }
+  // Priority 5: Check MAX_ACTIVE_USERS limit
+  else {
     const maxActiveUsers = await getMaxActiveUsers();
     if (maxActiveUsers === Number.POSITIVE_INFINITY) {
-      desiredStatus = AccessStatus.ACTIVE;
-    } else if (existing?.accessStatus === AccessStatus.ACTIVE) {
       desiredStatus = AccessStatus.ACTIVE;
     } else {
       const adminEmails = getAdminEmails();

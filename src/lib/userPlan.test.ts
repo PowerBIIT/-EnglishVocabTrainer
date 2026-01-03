@@ -13,7 +13,8 @@ const accessMock = vi.hoisted(() => ({
   getAdminEmails: vi.fn(),
   getMaxActiveUsers: vi.fn(),
   isAdminEmail: vi.fn(),
-  isEmailAllowed: vi.fn(),
+  isOnAllowlist: vi.fn(),
+  isWaitlistApproved: vi.fn(),
 }));
 
 vi.mock('@/lib/db', () => ({
@@ -24,7 +25,8 @@ vi.mock('@/lib/access', () => ({
   getAdminEmails: accessMock.getAdminEmails,
   getMaxActiveUsers: accessMock.getMaxActiveUsers,
   isAdminEmail: accessMock.isAdminEmail,
-  isEmailAllowed: accessMock.isEmailAllowed,
+  isOnAllowlist: accessMock.isOnAllowlist,
+  isWaitlistApproved: accessMock.isWaitlistApproved,
 }));
 
 const loadUserPlan = async () => import('@/lib/userPlan');
@@ -38,7 +40,12 @@ describe('user plan enforcement', () => {
     accessMock.getAdminEmails.mockReset();
     accessMock.getMaxActiveUsers.mockReset();
     accessMock.isAdminEmail.mockReset();
-    accessMock.isEmailAllowed.mockReset();
+    accessMock.isOnAllowlist.mockReset();
+    accessMock.isWaitlistApproved.mockReset();
+    // Default: not admin, not VIP, not waitlist approved
+    accessMock.isAdminEmail.mockReturnValue(false);
+    accessMock.isOnAllowlist.mockResolvedValue(false);
+    accessMock.isWaitlistApproved.mockResolvedValue(false);
     vi.resetModules();
   });
 
@@ -53,9 +60,11 @@ describe('user plan enforcement', () => {
     expect(prismaMock.userPlan.create).not.toHaveBeenCalled();
   });
 
-  it('creates waitlisted plan when not allowlisted', async () => {
+  it('creates waitlisted plan when limit is exceeded', async () => {
     prismaMock.userPlan.findUnique.mockResolvedValue(null);
-    accessMock.isEmailAllowed.mockResolvedValue(false);
+    accessMock.getMaxActiveUsers.mockResolvedValue(5);
+    accessMock.getAdminEmails.mockReturnValue([]);
+    prismaMock.userPlan.count.mockResolvedValue(5); // At limit
 
     const { ensureUserPlan } = await loadUserPlan();
     await ensureUserPlan('user-2', 'user@example.com');
@@ -71,8 +80,7 @@ describe('user plan enforcement', () => {
 
   it('allows admin email regardless of limits', async () => {
     prismaMock.userPlan.findUnique.mockResolvedValue(null);
-    accessMock.isEmailAllowed.mockResolvedValue(true);
-    accessMock.isAdminEmail.mockResolvedValue(true);
+    accessMock.isAdminEmail.mockReturnValue(true);
 
     const { ensureUserPlan } = await loadUserPlan();
     await ensureUserPlan('user-3', 'admin@example.com');
@@ -86,13 +94,43 @@ describe('user plan enforcement', () => {
     });
   });
 
+  it('allows VIP on allowlist regardless of limits', async () => {
+    prismaMock.userPlan.findUnique.mockResolvedValue(null);
+    accessMock.isOnAllowlist.mockResolvedValue(true);
+
+    const { ensureUserPlan } = await loadUserPlan();
+    await ensureUserPlan('user-vip', 'vip@example.com');
+
+    expect(prismaMock.userPlan.create).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-vip',
+        plan: Plan.FREE,
+        accessStatus: AccessStatus.ACTIVE,
+      },
+    });
+  });
+
+  it('allows waitlist-approved users', async () => {
+    prismaMock.userPlan.findUnique.mockResolvedValue(null);
+    accessMock.isWaitlistApproved.mockResolvedValue(true);
+
+    const { ensureUserPlan } = await loadUserPlan();
+    await ensureUserPlan('user-approved', 'approved@example.com');
+
+    expect(prismaMock.userPlan.create).toHaveBeenCalledWith({
+      data: {
+        userId: 'user-approved',
+        plan: Plan.FREE,
+        accessStatus: AccessStatus.ACTIVE,
+      },
+    });
+  });
+
   it('activates user when under max active users', async () => {
     prismaMock.userPlan.findUnique.mockResolvedValue({
       userId: 'user-4',
       accessStatus: AccessStatus.WAITLISTED,
     });
-    accessMock.isEmailAllowed.mockResolvedValue(true);
-    accessMock.isAdminEmail.mockResolvedValue(false);
     accessMock.getMaxActiveUsers.mockResolvedValue(5);
     accessMock.getAdminEmails.mockReturnValue([]);
     prismaMock.userPlan.count.mockResolvedValue(2);
@@ -111,8 +149,6 @@ describe('user plan enforcement', () => {
       userId: 'user-6',
       accessStatus: AccessStatus.ACTIVE,
     });
-    accessMock.isEmailAllowed.mockResolvedValue(true);
-    accessMock.isAdminEmail.mockResolvedValue(false);
     accessMock.getMaxActiveUsers.mockResolvedValue(1);
 
     const { ensureUserPlan } = await loadUserPlan();
@@ -127,8 +163,6 @@ describe('user plan enforcement', () => {
       userId: 'user-7',
       accessStatus: AccessStatus.WAITLISTED,
     });
-    accessMock.isEmailAllowed.mockResolvedValue(true);
-    accessMock.isAdminEmail.mockResolvedValue(false);
     accessMock.getMaxActiveUsers.mockResolvedValue(Number.POSITIVE_INFINITY);
 
     const { ensureUserPlan } = await loadUserPlan();

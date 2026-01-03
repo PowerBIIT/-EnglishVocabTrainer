@@ -46,13 +46,24 @@ export function ConfigSection({ config, loading, error, onSave }: ConfigSectionP
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(
     null
   );
+  const [pendingKeys, setPendingKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const nextDrafts: Record<string, string> = {};
     config.forEach((item) => {
-      nextDrafts[item.key] = item.value;
+      // Don't overwrite drafts for keys that are pending save
+      if (pendingKeys.has(item.key)) {
+        nextDrafts[item.key] = drafts[item.key] ?? item.value;
+      } else {
+        nextDrafts[item.key] = item.value;
+      }
     });
     setDrafts(nextDrafts);
+    // Clear pending keys after config is updated
+    if (pendingKeys.size > 0) {
+      setPendingKeys(new Set());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config]);
 
   const updates = useMemo(
@@ -66,10 +77,13 @@ export function ConfigSection({ config, loading, error, onSave }: ConfigSectionP
   const handleSave = async () => {
     setSaving(true);
     setToast(null);
+    // Mark keys as pending so they won't be overwritten during reload
+    setPendingKeys(new Set(updates.map((u) => u.key)));
     try {
       await onSave(updates);
       setToast({ type: 'success', message: t.toastSaved });
     } catch (saveError) {
+      setPendingKeys(new Set());
       setToast({
         type: 'error',
         message: saveError instanceof Error ? saveError.message : t.toastFailed,

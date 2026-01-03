@@ -55,32 +55,34 @@ describe('access helpers', () => {
     ]);
   });
 
-  it('checks allowlist with admin bypass', async () => {
-    process.env.ADMIN_EMAILS = 'admin@example.com';
-    vi.mocked(getAppConfig).mockResolvedValue('user@example.com');
-    const { isEmailAllowed } = await loadAccess();
-
-    await expect(isEmailAllowed('user@example.com')).resolves.toBe(true);
-    await expect(isEmailAllowed('admin@example.com')).resolves.toBe(true);
-    await expect(isEmailAllowed('blocked@example.com')).resolves.toBe(false);
-  });
-
-  it('allows approved waitlist emails when allowlist is enforced', async () => {
+  it('checks if email is on VIP allowlist', async () => {
     process.env.ADMIN_EMAILS = '';
-    vi.mocked(getAppConfig).mockResolvedValue('user@example.com');
-    prismaMock.waitlistEntry.findFirst.mockResolvedValue({ id: 'waitlist-1' });
-    const { isEmailAllowed } = await loadAccess();
+    vi.mocked(getAppConfig).mockResolvedValue('vip@example.com, special@example.com');
+    const { isOnAllowlist } = await loadAccess();
 
-    await expect(isEmailAllowed('waitlist@example.com')).resolves.toBe(true);
+    await expect(isOnAllowlist('vip@example.com')).resolves.toBe(true);
+    await expect(isOnAllowlist('special@example.com')).resolves.toBe(true);
+    await expect(isOnAllowlist('regular@example.com')).resolves.toBe(false);
+    await expect(isOnAllowlist(undefined)).resolves.toBe(false);
   });
 
-  it('allows all emails when allowlist is empty', async () => {
+  it('returns false for allowlist when list is empty', async () => {
     process.env.ADMIN_EMAILS = '';
     vi.mocked(getAppConfig).mockResolvedValue('');
-    const { isEmailAllowed } = await loadAccess();
+    const { isOnAllowlist } = await loadAccess();
 
-    await expect(isEmailAllowed(undefined)).resolves.toBe(true);
-    await expect(isEmailAllowed('anyone@example.com')).resolves.toBe(true);
+    await expect(isOnAllowlist('anyone@example.com')).resolves.toBe(false);
+  });
+
+  it('checks if email is approved via waitlist', async () => {
+    process.env.ADMIN_EMAILS = '';
+    prismaMock.waitlistEntry.findFirst.mockResolvedValueOnce({ id: 'waitlist-1' });
+    prismaMock.waitlistEntry.findFirst.mockResolvedValueOnce(null);
+    const { isWaitlistApproved } = await loadAccess();
+
+    await expect(isWaitlistApproved('approved@example.com')).resolves.toBe(true);
+    await expect(isWaitlistApproved('pending@example.com')).resolves.toBe(false);
+    await expect(isWaitlistApproved(undefined)).resolves.toBe(false);
   });
 
   it('normalizes max active users', async () => {

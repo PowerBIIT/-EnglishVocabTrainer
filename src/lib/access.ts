@@ -20,19 +20,26 @@ export const isAdminEmail = (email?: string | null) => {
   return adminEmails.has(normalizeEmail(email));
 };
 
-export const isEmailAllowed = async (email?: string | null) => {
-  const allowlist = await getAllowlistEmails();
-  if (allowlist.length === 0) return true;
+/**
+ * Check if email is on the VIP allowlist (bypasses MAX_ACTIVE_USERS limit).
+ * Does NOT block users - just gives them priority access.
+ */
+export const isOnAllowlist = async (email?: string | null) => {
   if (!email) return false;
-  if (isAdminEmail(email)) return true;
-  const normalized = normalizeEmail(email);
-  if (allowlist.includes(normalized)) return true;
+  const allowlist = await getAllowlistEmails();
+  if (allowlist.length === 0) return false;
+  return allowlist.includes(normalizeEmail(email));
+};
 
+/**
+ * Check if user has been approved via waitlist.
+ */
+export const isWaitlistApproved = async (email?: string | null) => {
+  if (!email) return false;
   const approved = await prisma.waitlistEntry.findFirst({
-    where: { email: normalized, status: 'APPROVED' },
+    where: { email: normalizeEmail(email), status: 'APPROVED' },
     select: { id: true },
   });
-
   return Boolean(approved);
 };
 

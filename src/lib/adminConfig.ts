@@ -68,8 +68,9 @@ export const ADMIN_CONFIG_FIELDS: AdminConfigField[] = [
   },
   {
     key: 'ALLOWLIST_EMAILS',
-    label: 'Allowlist emails',
-    description: 'Comma, space, or semicolon separated list of allowed emails.',
+    label: 'VIP emails (bypass limit)',
+    description:
+      'VIP emails that bypass MAX_ACTIVE_USERS limit. Comma/space/semicolon separated. Leave empty if not needed.',
     dataType: 'list',
     defaultValue: '',
   },
