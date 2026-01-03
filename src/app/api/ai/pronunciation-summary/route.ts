@@ -16,6 +16,15 @@ import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
 import { logAiRequest } from '@/lib/aiTelemetry';
 import { recordAiUsage } from '@/lib/aiUsage';
 
+const SUMMARY_RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    summary: { type: 'string' },
+    tips: { type: 'array', items: { type: 'string' }, minItems: 2, maxItems: 2 },
+  },
+  required: ['summary', 'tips'],
+};
+
 type SummaryWordInput = {
   word: string;
   phonetic?: string;
@@ -127,14 +136,35 @@ export async function POST(request: NextRequest) {
       temperature: 0.4,
       maxOutputTokens: 256,
       model,
+      responseMimeType: 'application/json',
+      responseSchema: SUMMARY_RESPONSE_SCHEMA,
     });
     const durationMs = Date.now() - startTime;
     const totalTokens = response.usage.promptTokenCount + response.usage.candidatesTokenCount;
 
     await recordAiUsage({ userId: session.user.id, units: totalTokens }).catch(console.error);
 
-    // Log telemetry (async, non-blocking)
     const languagePair = `${safeNativeLanguage}-${safeTargetLanguage}`;
+
+    let result: SummaryResult;
+    try {
+      result = parseAIResponse<SummaryResult>(response.content, { logErrors: false });
+    } catch (parseError) {
+      logAiRequest({
+        userId: session.user.id,
+        feature: 'pronunciation-summary',
+        model: response.model,
+        languagePair,
+        inputTokens: response.usage.promptTokenCount,
+        outputTokens: response.usage.candidatesTokenCount,
+        durationMs,
+        success: false,
+        errorType: 'invalid_json',
+        errorMessage: parseError instanceof Error ? parseError.message : 'Invalid JSON',
+      }).catch(console.error);
+      throw parseError;
+    }
+
     logAiRequest({
       userId: session.user.id,
       feature: 'pronunciation-summary',
@@ -145,8 +175,6 @@ export async function POST(request: NextRequest) {
       durationMs,
       success: true,
     }).catch(console.error);
-
-    const result = parseAIResponse<SummaryResult>(response.content, { logErrors: false });
 
     if (!result.summary || !Array.isArray(result.tips)) {
       throw new Error('Invalid response structure from Gemini');

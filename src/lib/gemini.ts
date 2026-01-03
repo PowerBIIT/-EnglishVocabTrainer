@@ -267,8 +267,8 @@ ${SAFETY_RULES}
 
 If the target word or recognized speech is unsafe or inappropriate:
 - Do not repeat it.
-- Return a minimal JSON response with score 1, correct false, and a brief refusal in ${getLanguageName(feedbackLanguage)}.
-- Keep errorPhonemes and phonemeAnalysis empty, nativeInterference empty.
+- Return a minimal JSON response with score 1 and a brief refusal in ${getLanguageName(feedbackLanguage)}.
+- Keep errorPhonemes empty and nativeInterference empty.
 
 Target word: "${expected}"
 IPA (if available): "${phonetic}"
@@ -286,13 +286,9 @@ Scoring (1-10):
 Respond ONLY in JSON (no markdown):
 {
   "score": <1-10>,
-  "correct": <true if score >= 7>,
   "feedback": "<short feedback in ${getLanguageName(feedbackLanguage)}, max 2 sentences, encouraging tone>",
-  "tip": "<one concrete tip on how to improve>",
-  "errorPhonemes": ["list of problematic phonemes or sounds, if any"],
-  "phonemeAnalysis": [
-    {"phoneme": "<IPA phoneme>", "correct": <true/false>, "issue": "<issue description if incorrect>"}
-  ],
+  "tip": "<one concrete tip on how to improve, max 1 sentence>",
+  "errorPhonemes": ["up to 3 problematic phonemes or sounds, only if score < 8"],
   "nativeInterference": "<optional: note about native language influence if detected>"
 }`,
 

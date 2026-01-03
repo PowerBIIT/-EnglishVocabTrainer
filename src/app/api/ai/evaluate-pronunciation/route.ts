@@ -16,11 +16,17 @@ import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
 import { logAiRequest } from '@/lib/aiTelemetry';
 import { recordAiUsage } from '@/lib/aiUsage';
 
-interface PhonemeAnalysis {
-  phoneme: string;
-  correct: boolean;
-  issue?: string;
-}
+const EVALUATION_RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    score: { type: 'number', minimum: 1, maximum: 10 },
+    feedback: { type: 'string' },
+    tip: { type: 'string' },
+    errorPhonemes: { type: 'array', items: { type: 'string' }, maxItems: 3 },
+    nativeInterference: { type: 'string' },
+  },
+  required: ['score', 'feedback', 'tip'],
+};
 
 interface EvaluationResult {
   score: number;
@@ -28,7 +34,6 @@ interface EvaluationResult {
   feedback: string;
   tip: string;
   errorPhonemes?: string[];
-  phonemeAnalysis?: PhonemeAnalysis[];
   nativeInterference?: string;
 }
 
@@ -126,16 +131,41 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
     const response = await gemini.generateWithMetadata(finalPrompt, {
       temperature: 0.3,
-      maxOutputTokens: 512,
+      maxOutputTokens: 256,
       model,
+      responseMimeType: 'application/json',
+      responseSchema: EVALUATION_RESPONSE_SCHEMA,
     });
     const durationMs = Date.now() - startTime;
     const totalTokens = response.usage.promptTokenCount + response.usage.candidatesTokenCount;
 
     await recordAiUsage({ userId: session.user.id, units: totalTokens }).catch(console.error);
 
-    // Log telemetry (async, non-blocking)
     const languagePair = `${safeNativeLanguage}-${safeTargetLanguage}`;
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('Gemini raw response:', response.content);
+    }
+
+    let result: EvaluationResult;
+    try {
+      result = parseAIResponse<EvaluationResult>(response.content, { logErrors: false });
+    } catch (parseError) {
+      logAiRequest({
+        userId: session.user.id,
+        feature: 'evaluate-pronunciation',
+        model: response.model,
+        languagePair,
+        inputTokens: response.usage.promptTokenCount,
+        outputTokens: response.usage.candidatesTokenCount,
+        durationMs,
+        success: false,
+        errorType: 'invalid_json',
+        errorMessage: parseError instanceof Error ? parseError.message : 'Invalid JSON',
+      }).catch(console.error);
+      throw parseError;
+    }
+
     logAiRequest({
       userId: session.user.id,
       feature: 'evaluate-pronunciation',
@@ -146,12 +176,6 @@ export async function POST(request: NextRequest) {
       durationMs,
       success: true,
     }).catch(console.error);
-
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('Gemini raw response:', response.content);
-    }
-
-    const result = parseAIResponse<EvaluationResult>(response.content);
 
     // Validate required fields
     if (typeof result.score !== 'number' || !result.feedback) {
