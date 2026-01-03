@@ -254,6 +254,7 @@ export default function OnboardingPage() {
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [consentSaving, setConsentSaving] = useState(false);
+  const [consentChecked, setConsentChecked] = useState(false);
   const [selectedSkin, setSelectedSkin] = useState(session?.user?.mascotSkin || 'explorer');
   const [onboardingSetId, setOnboardingSetId] = useState<string | null>(null);
   const [onboardingSetName, setOnboardingSetName] = useState('');
@@ -290,6 +291,30 @@ export default function OnboardingPage() {
         : 'custom';
   const showPolishHint = activePair.target === 'pl' && language === 'uk';
 
+  // Check if user already accepted terms (e.g., during email/password registration)
+  useEffect(() => {
+    if (consentChecked || step !== 'consent') return;
+    const checkConsent = async () => {
+      try {
+        const res = await fetch('/api/user/profile');
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user?.termsAcceptedAt) {
+            // User already accepted terms, skip consent step
+            setTermsAccepted(true);
+            setAgeConfirmed(true);
+            setStep('path');
+          }
+        }
+      } catch {
+        // Ignore errors, show consent step as fallback
+      } finally {
+        setConsentChecked(true);
+      }
+    };
+    checkConsent();
+  }, [consentChecked, step]);
+
   useEffect(() => {
     if (!hydrated || autoLanguageRef.current) return;
     const isDefaultState =
@@ -315,7 +340,7 @@ export default function OnboardingPage() {
     setLearningPair,
   ]);
 
-  if (!hydrated) {
+  if (!hydrated || (step === 'consent' && !consentChecked)) {
     return (
       <div className="p-4 flex items-center justify-center min-h-screen">
         <p className="text-slate-500">{t.loading}</p>
