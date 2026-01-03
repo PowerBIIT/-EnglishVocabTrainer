@@ -120,4 +120,49 @@ describe('aiCostAlerts', () => {
 
     expect(prisma.aiRequestLog.aggregate).not.toHaveBeenCalled();
   });
+
+  it('returns early when threshold is disabled', async () => {
+    vi.mocked(getAppConfigNumber).mockImplementation(async (key, fallback) => {
+      if (key === AI_COST_ALERT_THRESHOLD_KEY) return 0;
+      if (key === AI_COST_ALERT_CHECK_INTERVAL_MINUTES_KEY) return 0;
+      return fallback;
+    });
+
+    await maybeNotifyAiCostAlert();
+
+    expect(prisma.aiRequestLog.aggregate).not.toHaveBeenCalled();
+    expect(sendEmail).not.toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('returns early when no notification channels are configured', async () => {
+    vi.mocked(getAdminEmails).mockReturnValue([]);
+    vi.mocked(getAppConfig).mockResolvedValue(null);
+
+    await maybeNotifyAiCostAlert();
+
+    expect(prisma.aiRequestLog.aggregate).not.toHaveBeenCalled();
+  });
+
+  it('skips sending when costs are below the threshold', async () => {
+    vi.mocked(prisma.aiRequestLog.aggregate).mockResolvedValue({
+      _sum: { totalCost: 10 },
+    });
+
+    await maybeNotifyAiCostAlert();
+
+    expect(sendEmail).not.toHaveBeenCalled();
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('logs errors and does not throw', async () => {
+    const error = new Error('boom');
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.mocked(getAppConfigNumber).mockRejectedValueOnce(error);
+
+    await expect(maybeNotifyAiCostAlert()).resolves.toBeUndefined();
+
+    expect(consoleSpy).toHaveBeenCalledWith('AI cost alert failed:', error);
+    consoleSpy.mockRestore();
+  });
 });

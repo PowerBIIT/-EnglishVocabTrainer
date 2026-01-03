@@ -127,6 +127,36 @@ describe('ensureAiAccess', () => {
     ).resolves.toEqual({ ok: true });
   });
 
+  it('blocks waitlisted users', async () => {
+    vi.mocked(ensureUserPlan).mockResolvedValue({
+      accessStatus: AccessStatus.WAITLISTED,
+      plan: Plan.FREE,
+    });
+
+    await expect(
+      ensureAiAccess({ userId: 'user-7', email: 'user@example.com' })
+    ).resolves.toEqual({
+      ok: false,
+      status: 403,
+      body: { error: 'waitlisted' },
+    });
+  });
+
+  it('blocks suspended users', async () => {
+    vi.mocked(ensureUserPlan).mockResolvedValue({
+      accessStatus: AccessStatus.SUSPENDED,
+      plan: Plan.FREE,
+    });
+
+    await expect(
+      ensureAiAccess({ userId: 'user-8', email: 'user@example.com' })
+    ).resolves.toEqual({
+      ok: false,
+      status: 403,
+      body: { error: 'suspended' },
+    });
+  });
+
   it('blocks when usage limit is reached', async () => {
     vi.mocked(ensureUserPlan).mockResolvedValue({
       accessStatus: AccessStatus.ACTIVE,

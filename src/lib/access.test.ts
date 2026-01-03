@@ -44,6 +44,14 @@ describe('access helpers', () => {
     expect(getAdminEmails()).toEqual(['admin@example.com', 'other@example.com']);
   });
 
+  it('returns false when admin email is missing', async () => {
+    process.env.ADMIN_EMAILS = 'admin@example.com';
+    const { isAdminEmail } = await loadAccess();
+
+    expect(isAdminEmail(undefined)).toBe(false);
+    expect(isAdminEmail(null)).toBe(false);
+  });
+
   it('returns allowlist emails from config', async () => {
     process.env.ADMIN_EMAILS = '';
     vi.mocked(getAppConfig).mockResolvedValue(' one@example.com; two@example.com ');

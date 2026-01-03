@@ -10,19 +10,19 @@ import { prisma } from '@/lib/db';
 import { calculateTokenCost } from '@/lib/costEstimation';
 import { maybeNotifyAiCostAlert } from '@/lib/aiCostAlerts';
 
+const prismaMock = vi.hoisted(() => ({
+  aiRequestLog: {
+    create: vi.fn().mockResolvedValue({ id: 'test-id' }),
+  },
+  aiDailyStats: {
+    groupBy: vi.fn().mockResolvedValue([]),
+  },
+  $executeRaw: vi.fn().mockResolvedValue(undefined),
+}));
+
 // Mock prisma
 vi.mock('@/lib/db', () => ({
-  prisma: {
-    aiRequestLog: {
-      create: vi.fn().mockResolvedValue({ id: 'test-id' }),
-    },
-    aiDailyStats: {
-      upsert: vi.fn().mockResolvedValue({}),
-    },
-    aiGlobalDailyStats: {
-      upsert: vi.fn().mockResolvedValue({}),
-    },
-  },
+  prisma: prismaMock,
 }));
 
 // Mock costEstimation
@@ -38,9 +38,13 @@ vi.mock('@/lib/aiCostAlerts', () => ({
   maybeNotifyAiCostAlert: vi.fn().mockResolvedValue(undefined),
 }));
 
+const flushPromises = () => new Promise((resolve) => setImmediate(resolve));
+
 describe('aiTelemetry', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.$executeRaw.mockResolvedValue(undefined);
+    prismaMock.aiDailyStats.groupBy.mockResolvedValue([]);
   });
 
   describe('createTelemetryContext', () => {
@@ -122,6 +126,31 @@ describe('aiTelemetry', () => {
       expect(createCall.data.languagePair).toBe('pl-en');
     });
 
+    it('updates daily stats aggregates', async () => {
+      await logAiRequest({
+        userId: 'user-123',
+        feature: 'tutor',
+        model: 'gemini-2.0-flash',
+        inputTokens: 100,
+        outputTokens: 50,
+        durationMs: 500,
+        success: true,
+      });
+
+      await flushPromises();
+
+      expect(prisma.$executeRaw).toHaveBeenCalledTimes(2);
+      expect(prisma.aiDailyStats.groupBy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          by: ['userId'],
+          where: expect.objectContaining({
+            feature: 'tutor',
+            model: 'gemini-2.0-flash',
+          }),
+        })
+      );
+    });
+
     it('handles errors gracefully', async () => {
       vi.mocked(prisma.aiRequestLog.create).mockRejectedValueOnce(new Error('DB error'));
 
@@ -135,6 +164,27 @@ describe('aiTelemetry', () => {
         durationMs: 500,
         success: true,
       })).resolves.toBeUndefined();
+    });
+
+    it('logs cost alert failures without throwing', async () => {
+      const error = new Error('alert failed');
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.mocked(maybeNotifyAiCostAlert).mockRejectedValueOnce(error);
+
+      await logAiRequest({
+        userId: 'user-123',
+        feature: 'tutor',
+        model: 'gemini-2.0-flash',
+        inputTokens: 100,
+        outputTokens: 50,
+        durationMs: 500,
+        success: true,
+      });
+
+      await flushPromises();
+
+      expect(consoleSpy).toHaveBeenCalledWith('Failed to send AI cost alert:', error);
+      consoleSpy.mockRestore();
     });
 
     it('truncates long error messages', async () => {
