@@ -898,7 +898,9 @@ export default function PronunciationPage() {
     if (!currentWord) return;
     const localEvaluation = buildLocalEvaluation(spoken);
     const confidenceValue =
-      Number.isFinite(confidence) && confidence > 0 ? confidence : null;
+      typeof confidence === 'number' && Number.isFinite(confidence) && confidence > 0
+        ? confidence
+        : null;
     const lowConfidence =
       confidenceValue !== null && confidenceValue < MIN_STT_CONFIDENCE;
     const shouldUseAi = lowConfidence || localEvaluation.score < passingScore;
