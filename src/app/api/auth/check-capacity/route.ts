@@ -22,20 +22,11 @@ export async function GET() {
       },
     });
 
-    // If unlimited, always allow
     const hasCapacity = maxActiveUsers === Number.POSITIVE_INFINITY
       ? true
       : activeCount < maxActiveUsers;
 
-    // Debug info (temporary - remove after testing)
-    return NextResponse.json({
-      hasCapacity,
-      _debug: {
-        maxActiveUsers: maxActiveUsers === Number.POSITIVE_INFINITY ? 'INFINITY' : maxActiveUsers,
-        activeCount,
-        adminEmailsCount: adminEmails.length
-      },
-    });
+    return NextResponse.json({ hasCapacity });
   } catch (error) {
     console.error('Check capacity error:', error);
     return NextResponse.json({ hasCapacity: true, _error: String(error) });
