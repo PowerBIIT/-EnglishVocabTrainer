@@ -56,6 +56,8 @@ const FOCUS_MODE_ICONS: Record<PronunciationFocusMode, LucideIcon> = {
   review: RotateCcw,
 };
 
+const MIN_STT_CONFIDENCE = 0.6;
+
 const focusModeCopy = {
   pl: {
     random: { label: 'Losowe', desc: 'Losowe słowa z Twojego słownika' },
@@ -820,7 +822,7 @@ export default function PronunciationPage() {
         setIsRecording(false);
         // Stop recognition after getting result
         recognition.stop();
-        evaluatePronunciation(transcript);
+        evaluatePronunciation(transcript, confidence);
       } else {
         // Show interim result while speaking
         setRecordingStatus(t.status.recognizing(transcript));
@@ -882,8 +884,30 @@ export default function PronunciationPage() {
   const buildAiStatus = (message: string, code?: string) =>
     code ? `${message} (${code})` : message;
 
-  const evaluatePronunciation = async (spoken: string) => {
+  const buildLocalEvaluation = (spoken: string) => {
+    const { score, expectedNormalized, spokenNormalized } = calculatePronunciationScore(
+      getTargetText(currentWord),
+      spoken,
+      { language: settings.learning.targetLanguage }
+    );
+
+    return { score, expectedNormalized, spokenNormalized };
+  };
+
+  const evaluatePronunciation = async (spoken: string, confidence?: number) => {
     if (!currentWord) return;
+    const localEvaluation = buildLocalEvaluation(spoken);
+    const confidenceValue =
+      Number.isFinite(confidence) && confidence > 0 ? confidence : null;
+    const lowConfidence =
+      confidenceValue !== null && confidenceValue < MIN_STT_CONFIDENCE;
+    const shouldUseAi = lowConfidence || localEvaluation.score < passingScore;
+
+    if (!shouldUseAi) {
+      evaluateLocally(spoken, localEvaluation);
+      return;
+    }
+
     setIsProcessing(true);
     setRecordingStatus(t.status.aiSending);
     console.log('Evaluating pronunciation:', spoken, 'for word:', getTargetText(currentWord));
@@ -908,18 +932,18 @@ export default function PronunciationPage() {
       // If API returned fallback flag or error, use local evaluation
       if (data.error === 'user_limit_reached') {
         setRecordingStatus(buildAiStatus(t.status.aiLimitReached, data.error));
-        evaluateLocally(spoken);
+        evaluateLocally(spoken, localEvaluation);
         return;
       }
       if (data.error === 'global_limit_reached') {
         setRecordingStatus(buildAiStatus(t.status.aiGlobalLimitReached, data.error));
-        evaluateLocally(spoken);
+        evaluateLocally(spoken, localEvaluation);
         return;
       }
       if (data.fallback || data.error) {
         console.log('API fallback triggered:', data.error || 'No API key');
         setRecordingStatus(buildAiStatus(t.status.aiFallback, data.error));
-        evaluateLocally(spoken);
+        evaluateLocally(spoken, localEvaluation);
         return;
       }
 
@@ -927,7 +951,7 @@ export default function PronunciationPage() {
       if (typeof data.score !== 'number' || !data.feedback) {
         console.warn('Invalid API response structure:', data);
         setRecordingStatus(t.status.aiInvalid);
-        evaluateLocally(spoken);
+        evaluateLocally(spoken, localEvaluation);
         return;
       }
 
@@ -971,20 +995,24 @@ export default function PronunciationPage() {
       }
     } catch (error) {
       console.error('AI evaluation error:', error);
-      evaluateLocally(spoken);
+      evaluateLocally(spoken, localEvaluation);
     } finally {
       setIsProcessing(false);
     }
   };
 
-  const evaluateLocally = (spoken: string) => {
+  const evaluateLocally = (
+    spoken: string,
+    localEvaluation?: {
+      score: number;
+      expectedNormalized: string;
+      spokenNormalized: string;
+    }
+  ) => {
     if (!currentWord) return;
 
-    const { score, expectedNormalized, spokenNormalized } = calculatePronunciationScore(
-      getTargetText(currentWord),
-      spoken,
-      { language: settings.learning.targetLanguage }
-    );
+    const { score, expectedNormalized, spokenNormalized } =
+      localEvaluation ?? buildLocalEvaluation(spoken);
 
     let feedback = '';
     let tip = '';
