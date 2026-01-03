@@ -141,13 +141,41 @@ Pipelines verify these values match the build before marking deploy successful.
 | `SMTP_FROM` | From address | GitHub Secret |
 | `WAITLIST_CRON_SECRET` | Cron job bearer token | GitHub Secret |
 
+### Admin Panel Config (App Config)
+
+Configuration keys can be set in **Admin Panel → Config**. Values are stored in the database and override env defaults.
+
+- Supports `unlimited`, `infinity`, `inf`, or `-1` to remove caps
+- Changes are cached briefly (up to ~60 seconds)
+- These settings persist across deploys
+
 ### AI Usage Limits
 
 | Variable | Description |
 |----------|-------------|
-| `FREE_AI_REQUESTS_PER_MONTH` | FREE plan request limit (default: 50) |
+| `FREE_AI_REQUESTS_PER_MONTH` | FREE plan request limit (default: 60) |
+| `FREE_AI_UNITS_PER_MONTH` | FREE plan token limit (default: 45,000) |
 | `PRO_AI_REQUESTS_PER_MONTH` | PRO plan request limit (default: 600) |
-| `GLOBAL_AI_REQUESTS_PER_MONTH` | Global limit across all users |
+| `PRO_AI_UNITS_PER_MONTH` | PRO plan token limit (default: 450,000) |
+| `GLOBAL_AI_REQUESTS_PER_MONTH` | Global request limit (default: 6,000) |
+| `GLOBAL_AI_UNITS_PER_MONTH` | Global token limit (default: 4,500,000) |
+
+Notes:
+- Limits reset monthly (UTC).
+- Admins (`ADMIN_EMAILS`) bypass limits.
+- Requests and token usage are tracked per AI call; retries/fallbacks count separately.
+
+### AI Cost Alerts
+
+Configured via **Admin Panel → Config**:
+
+| Key | Description |
+|-----|-------------|
+| `AI_COST_ALERT_THRESHOLD_USD` | Send alert when actual or projected monthly cost exceeds this value |
+| `AI_COST_ALERT_CHECK_INTERVAL_MINUTES` | Minimum minutes between checks (0 = check every request) |
+| `AI_COST_ALERT_WEBHOOK_URL` | Optional webhook URL for JSON alerts |
+
+Alerts are sent to `ADMIN_EMAILS` via SMTP (if configured) and to the webhook URL (if set).
 
 ### E2E Test Settings
 
@@ -164,7 +192,7 @@ Pipelines verify these values match the build before marking deploy successful.
 - `ALLOWLIST_EMAILS` - VIPs who bypass capacity limits
 - `MAX_ACTIVE_USERS` - Maximum concurrent active users
 
-> **Note:** Do not manually edit Azure app settings - deploys will overwrite them. All config changes should go through GitHub Secrets.
+> **Note:** Azure app settings are overwritten by deploys; update env vars via GitHub Secrets. App Config values (Admin → Config) live in the DB and persist across deploys.
 
 ---
 
@@ -490,6 +518,8 @@ gh workflow run destroy-infra.yml -f confirm=destroy
 - [ ] Google OAuth: origins + redirect URIs include production domain
 - [ ] `GEMINI_API_KEY` set
 - [ ] `ADMIN_EMAILS`, `ALLOWLIST_EMAILS`, `MAX_ACTIVE_USERS` configured
+- [ ] AI usage limits (requests + tokens) configured in Admin → Config
+- [ ] AI cost alerts configured (threshold/webhook/email) if required
 - [ ] Email SMTP config set and tested
 - [ ] Waitlist cron active (hourly)
 

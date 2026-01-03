@@ -39,6 +39,14 @@ npm run dev
 - **Admin Panel:** User management, stats, pricing configuration
 - **GDPR Compliance:** Consent management, data export, account deletion
 
+## AI Limits & Monitoring
+
+- Limits are enforced per plan and globally (requests + tokens), reset monthly (UTC).
+- Configure limits and cost alerts in Admin Panel → Config (stored in DB, override env defaults).
+- Admins (`ADMIN_EMAILS`) bypass limits; retries/fallbacks count as separate usage.
+- Cost alerts use `AI_COST_ALERT_THRESHOLD_USD` and optional webhook + admin email (SMTP).
+- Admin analytics endpoints: `/api/admin/stats`, `/api/admin/stats/ai-tokens`, `/api/admin/stats/ai-trends`, `/api/admin/stats/ai-features`.
+
 ## Documentation
 
 | Document | Description |

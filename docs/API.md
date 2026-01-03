@@ -239,9 +239,32 @@ All AI endpoints require authentication and respect usage limits.
 
 **Common Error Responses:**
 - `401` - Not authenticated
-- `402` - Usage limit reached (upgrade to PRO)
-- `403` - Access not ACTIVE
+- `403` - Access not ACTIVE (`waitlisted` or `suspended`)
+- `429` - Usage limit reached (`user_limit_reached` or `global_limit_reached`)
 - `429` - Rate limit exceeded (Retry-After header included)
+- `422` - Response truncated (`response_truncated`) on JSON endpoints
+- `503` - Gemini API key not configured
+
+**Usage limit response:**
+```json
+{
+  "error": "user_limit_reached",
+  "resetAt": "2026-02-01T00:00:00.000Z",
+  "limit": { "maxRequests": 60, "maxUnits": 45000 },
+  "usage": { "count": 61, "units": 45210 },
+  "softLimit": true
+}
+```
+
+**Rate limit response:**
+```json
+{
+  "error": "rate_limited",
+  "retryAfter": 30
+}
+```
+
+Some pronunciation endpoints return `fallback: true` with status `200` if AI is unavailable.
 
 ### POST /api/ai/generate-words
 
@@ -251,30 +274,43 @@ Generate vocabulary words from a topic.
 ```json
 {
   "topic": "kitchen appliances",
-  "count": 10,
-  "languagePair": "pl-en",
-  "difficulty": "medium"
+  "count": 12,
+  "level": "A2",
+  "targetLanguage": "en",
+  "nativeLanguage": "pl"
 }
 ```
 
 **Response:**
 ```json
 {
+  "topic": "kitchen appliances",
+  "level": "A2",
   "words": [
     {
-      "native": "lodówka",
       "target": "refrigerator",
-      "pronunciation": "/rɪˈfrɪdʒəreɪtər/",
-      "category": "kitchen",
-      "examples": ["The refrigerator is in the corner."]
+      "phonetic": "/rɪˈfrɪdʒəreɪtər/",
+      "native": "lodowka",
+      "example_target": "The refrigerator is in the corner.",
+      "example_native": "Lodowka jest w rogu.",
+      "difficulty": "easy"
     }
   ],
-  "usage": {
-    "inputTokens": 150,
-    "outputTokens": 320
-  }
+  "requestedCount": 12,
+  "returnedCount": 10,
+  "warning": "partial_result"
 }
 ```
+
+**Notes:**
+- `level` supports `A1`, `A2`, `B1`, `B2`
+- `count` max is `30`
+- `warning` appears only when fewer words are returned
+
+**Errors:**
+- `400` - `unsafe_topic` or `needs_clarification`
+- `413` - topic too long or count too large
+- `422` - `response_truncated`
 
 ### POST /api/ai/parse-text
 
@@ -284,7 +320,8 @@ Parse manually entered vocabulary text.
 ```json
 {
   "text": "dom - house\nkot - cat\npies - dog",
-  "languagePair": "pl-en"
+  "targetLanguage": "en",
+  "nativeLanguage": "pl"
 }
 ```
 
@@ -292,11 +329,12 @@ Parse manually entered vocabulary text.
 ```json
 {
   "words": [
-    { "native": "dom", "target": "house" },
-    { "native": "kot", "target": "cat" },
-    { "native": "pies", "target": "dog" }
+    { "native": "dom", "target": "house", "phonetic": "/haʊs/", "difficulty": "easy" },
+    { "native": "kot", "target": "cat", "phonetic": "/kæt/", "difficulty": "easy" },
+    { "native": "pies", "target": "dog", "phonetic": "/dɔɡ/", "difficulty": "easy" }
   ],
-  "usage": { "inputTokens": 50, "outputTokens": 80 }
+  "category_suggestion": "home",
+  "parse_errors": []
 }
 ```
 
@@ -305,16 +343,18 @@ Parse manually entered vocabulary text.
 Extract vocabulary from uploaded file (PDF, DOCX, TXT, CSV).
 
 **Request:** `multipart/form-data`
-- `file` - File to process (max 10MB)
-- `languagePair` - Target language pair
+- `file` - File to process (max 30MB)
+- `targetLanguage`
+- `nativeLanguage`
 
 **Response:**
 ```json
 {
-  "words": [...],
-  "sourceType": "pdf",
-  "pageCount": 3,
-  "usage": { "inputTokens": 500, "outputTokens": 200 }
+  "category_suggestion": "home",
+  "words": [
+    { "native": "dom", "target": "house", "phonetic": "/haʊs/", "difficulty": "easy" }
+  ],
+  "notes": "Input truncated to 12000 characters."
 }
 ```
 
@@ -323,15 +363,18 @@ Extract vocabulary from uploaded file (PDF, DOCX, TXT, CSV).
 Extract vocabulary from uploaded image (OCR).
 
 **Request:** `multipart/form-data`
-- `image` - Image file (max 10MB)
-- `languagePair` - Target language pair
+- `file` - Image file (JPG/PNG/WebP, max 30MB)
+- `targetLanguage`
+- `nativeLanguage`
 
 **Response:**
 ```json
 {
-  "words": [...],
-  "detectedText": "Original text from image...",
-  "usage": { "inputTokens": 1000, "outputTokens": 300 }
+  "category_suggestion": "home",
+  "words": [
+    { "native": "dom", "target": "house", "phonetic": "/haʊs/", "difficulty": "easy" }
+  ],
+  "notes": "Optional notes."
 }
 ```
 
@@ -343,19 +386,16 @@ Get detailed explanation of a word.
 ```json
 {
   "word": "refrigerator",
-  "languagePair": "pl-en",
-  "context": "kitchen"
+  "targetLanguage": "en",
+  "nativeLanguage": "pl",
+  "feedbackLanguage": "pl"
 }
 ```
 
 **Response:**
 ```json
 {
-  "explanation": "A refrigerator is...",
-  "etymology": "From Latin...",
-  "examples": ["Keep the milk in the refrigerator."],
-  "synonyms": ["fridge", "icebox"],
-  "usage": { "inputTokens": 80, "outputTokens": 150 }
+  "explanation": "A refrigerator is..."
 }
 ```
 
@@ -366,10 +406,12 @@ Evaluate user's pronunciation attempt.
 **Request:**
 ```json
 {
-  "word": "through",
-  "userPronunciation": "fru",
-  "expectedPronunciation": "/θruː/",
-  "languagePair": "pl-en"
+  "expected": "through",
+  "spoken": "fru",
+  "phonetic": "/θruː/",
+  "targetLanguage": "en",
+  "nativeLanguage": "pl",
+  "feedbackLanguage": "pl"
 }
 ```
 
@@ -377,12 +419,18 @@ Evaluate user's pronunciation attempt.
 ```json
 {
   "score": 6,
+  "correct": false,
   "feedback": "The 'th' sound should be /θ/, not /f/.",
-  "phonemeErrors": [
-    { "expected": "θ", "actual": "f", "position": "initial" }
-  ],
-  "tips": ["Place tongue between teeth for /θ/ sound."],
-  "usage": { "inputTokens": 100, "outputTokens": 120 }
+  "tip": "Place tongue between teeth for /θ/ sound.",
+  "errorPhonemes": ["θ"]
+}
+```
+
+**Fallback Response (AI unavailable):**
+```json
+{
+  "error": "ai_failed",
+  "fallback": true
 }
 ```
 
@@ -393,22 +441,24 @@ Get summary of pronunciation session.
 **Request:**
 ```json
 {
-  "attempts": [
-    { "word": "through", "score": 6, "phonemeErrors": [...] },
-    { "word": "weather", "score": 8, "phonemeErrors": [...] }
+  "averageScore": 7.2,
+  "passingScore": 7,
+  "focusMode": "random",
+  "words": [
+    { "word": "through", "score": 6, "phonetic": "/θruː/" },
+    { "word": "weather", "score": 8, "phonetic": "/ˈweðər/" }
   ],
-  "languagePair": "pl-en"
+  "targetLanguage": "en",
+  "nativeLanguage": "pl",
+  "feedbackLanguage": "pl"
 }
 ```
 
 **Response:**
 ```json
 {
-  "overallScore": 7,
-  "strengths": ["Good vowel sounds"],
-  "weaknesses": ["/θ/ sound needs practice"],
-  "recommendations": ["Focus on 'th' minimal pairs"],
-  "usage": { "inputTokens": 200, "outputTokens": 150 }
+  "summary": "Nice progress with vowels. Focus on 'th' sounds.",
+  "tips": ["Practice minimal pairs: thin/fin", "Slow down the initial consonant."]
 }
 ```
 
@@ -420,20 +470,18 @@ AI tutor chat for learning assistance.
 ```json
 {
   "message": "How do I use 'have been' vs 'had been'?",
-  "context": {
-    "languagePair": "pl-en",
-    "currentTopic": "grammar"
-  }
+  "context": "Previous messages or topic context.",
+  "targetLanguage": "en",
+  "nativeLanguage": "pl",
+  "feedbackLanguage": "pl",
+  "adminMode": false
 }
 ```
 
 **Response:**
 ```json
 {
-  "response": "'Have been' is used for...",
-  "examples": [...],
-  "followUpQuestions": [...],
-  "usage": { "inputTokens": 150, "outputTokens": 300 }
+  "response": "'Have been' is used for..."
 }
 ```
 
@@ -649,12 +697,35 @@ Get overview statistics.
 **Response:**
 ```json
 {
-  "totalUsers": 150,
-  "activeUsers": 120,
-  "waitlistedUsers": 30,
-  "proUsers": 25,
-  "dailyActiveUsers": 45,
-  "weeklyActiveUsers": 80
+  "meta": { "period": "2026-01" },
+  "users": {
+    "active": 120,
+    "waitlisted": 30,
+    "suspended": 2,
+    "planBreakdown": [
+      { "plan": "FREE", "accessStatus": "ACTIVE", "count": 100 },
+      { "plan": "PRO", "accessStatus": "ACTIVE", "count": 20 }
+    ]
+  },
+  "aiUsage": {
+    "global": {
+      "count": 5000,
+      "units": 200000,
+      "maxRequests": 6000,
+      "maxUnits": 4500000
+    },
+    "byPlan": [
+      { "plan": "FREE", "count": 4000, "units": 120000, "maxRequests": 60, "maxUnits": 45000 },
+      { "plan": "PRO", "count": 1000, "units": 80000, "maxRequests": 600, "maxUnits": 450000 }
+    ],
+    "topUsers": [
+      { "email": "top@example.com", "count": 300, "units": 18000 }
+    ]
+  },
+  "costs": {
+    "actualMonthToDate": 12.34,
+    "projectedEndOfMonth": 18.9
+  }
 }
 ```
 
@@ -663,19 +734,51 @@ Get overview statistics.
 Get AI token usage statistics.
 
 **Query Parameters:**
-- `period` - `day`, `week`, `month`
+- `period` - `7d`, `30d`, `90d` (default: `7d`)
 
 **Response:**
 ```json
 {
-  "totalRequests": 5000,
-  "totalInputTokens": 1500000,
-  "totalOutputTokens": 800000,
-  "estimatedCost": 12.50,
-  "byFeature": {
-    "generate-words": { "requests": 2000, "tokens": 500000 },
-    "tutor": { "requests": 1500, "tokens": 400000 }
-  }
+  "period": { "start": "2026-01-01T00:00:00.000Z", "end": "2026-01-07T23:59:59.999Z" },
+  "totals": {
+    "requests": 5000,
+    "inputTokens": 1500000,
+    "outputTokens": 800000,
+    "totalTokens": 2300000,
+    "actualCost": 12.5,
+    "successRate": 98.4,
+    "avgDurationMs": 420
+  },
+  "byModel": [
+    {
+      "model": "gemini-2.5-flash",
+      "requests": 4200,
+      "inputTokens": 1200000,
+      "outputTokens": 600000,
+      "totalTokens": 1800000,
+      "cost": 9.8
+    }
+  ],
+  "byFeature": [
+    {
+      "feature": "generate-words",
+      "requests": 2000,
+      "inputTokens": 600000,
+      "outputTokens": 300000,
+      "totalTokens": 900000,
+      "cost": 4.1,
+      "errorRate": 1.2
+    }
+  ],
+  "topUsers": [
+    {
+      "userId": "user_id",
+      "email": "user@example.com",
+      "requests": 120,
+      "totalTokens": 9000,
+      "cost": 0.5
+    }
+  ]
 }
 ```
 
@@ -683,9 +786,65 @@ Get AI token usage statistics.
 
 Get AI usage trends over time.
 
+**Query Parameters:**
+- `period` - `7d`, `30d`, `90d` (default: `7d`)
+
+**Response:**
+```json
+{
+  "period": { "start": "2026-01-01T00:00:00.000Z", "end": "2026-01-07T23:59:59.999Z" },
+  "daily": [
+    {
+      "date": "2026-01-01",
+      "requests": 700,
+      "inputTokens": 200000,
+      "outputTokens": 100000,
+      "totalTokens": 300000,
+      "cost": 1.8,
+      "uniqueUsers": 120
+    }
+  ],
+  "totals": {
+    "requests": 5000,
+    "inputTokens": 1500000,
+    "outputTokens": 800000,
+    "totalTokens": 2300000,
+    "cost": 12.5,
+    "uniqueUsers": 650
+  }
+}
+```
+
 ### GET /api/admin/stats/ai-features
 
 Get per-feature AI analytics.
+
+**Query Parameters:**
+- `period` - `7d`, `30d`, `90d` (default: `7d`)
+
+**Response:**
+```json
+{
+  "period": { "start": "2026-01-01T00:00:00.000Z", "end": "2026-01-07T23:59:59.999Z" },
+  "features": [
+    {
+      "feature": "generate-words",
+      "requests": 2000,
+      "successCount": 1970,
+      "errorCount": 30,
+      "inputTokens": 600000,
+      "outputTokens": 300000,
+      "totalTokens": 900000,
+      "cost": 4.1,
+      "avgDurationMs": 420,
+      "errorRate": 1.5,
+      "languagePairs": [
+        { "pair": "pl-en", "requests": 1200, "tokens": 520000 }
+      ]
+    }
+  ]
+}
+```
 
 ### GET /api/admin/stats/revenue
 
@@ -762,7 +921,7 @@ All error responses follow this format:
 | `FORBIDDEN` | 403 | Access denied |
 | `NOT_FOUND` | 404 | Resource not found |
 | `VALIDATION_ERROR` | 400 | Invalid request data |
-| `USAGE_LIMIT_REACHED` | 402 | AI usage limit exceeded |
+| `USAGE_LIMIT_REACHED` | 429 | AI usage limit exceeded |
 | `RATE_LIMIT_EXCEEDED` | 429 | Too many requests |
 | `INTERNAL_ERROR` | 500 | Server error |
 
@@ -772,7 +931,7 @@ All error responses follow this format:
 
 | Endpoint Category | Limit | Window |
 |-------------------|-------|--------|
-| AI endpoints | 10 req | 1 min |
+| AI endpoints | 30 req | 1 min |
 | Auth endpoints | 5 req | 1 min |
 | User state sync | 30 req | 1 min |
 | General API | 60 req | 1 min |
