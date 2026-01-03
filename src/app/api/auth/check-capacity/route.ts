@@ -3,6 +3,10 @@ import { prisma } from '@/lib/db';
 import { AccessStatus } from '@prisma/client';
 import { getMaxActiveUsers, getAdminEmails } from '@/lib/access';
 
+// Force dynamic rendering to ensure fresh data
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     const maxActiveUsers = await getMaxActiveUsers();
