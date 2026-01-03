@@ -52,6 +52,11 @@ body.chat-page main {
   padding-bottom: 0 !important;
 }
 
+.chat-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

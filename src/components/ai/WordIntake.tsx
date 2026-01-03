@@ -1397,9 +1397,7 @@ export function WordIntake({
     messages.length <= 1 &&
     parsedWords.length === 0 &&
     !isProcessing;
-  const chatMessagesPadding = compactChatSpacing
-    ? 'pb-6'
-    : 'pb-[calc(10rem+env(safe-area-inset-bottom))] sm:pb-[calc(12rem+env(safe-area-inset-bottom))]';
+  const chatMessagesPadding = compactChatSpacing ? 'pb-6' : 'pb-8 sm:pb-10';
   const inputPanel = (
     <>
       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">
@@ -1483,7 +1481,7 @@ export function WordIntake({
       <div className={cn('flex flex-col flex-1 min-h-0', className)}>
         <div
           className={cn(
-            'flex-1 min-h-0 overflow-y-auto p-4 space-y-4',
+            'flex-1 min-h-0 overflow-y-auto p-4 space-y-4 chat-scroll',
             chatMessagesPadding
           )}
         >
@@ -1641,7 +1639,7 @@ export function WordIntake({
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0 md:left-24 md:bottom-8 bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 p-3 sm:p-4">
+        <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 sm:p-4 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-4">
           <div className="max-w-3xl mx-auto">
             {parsedWords.length > 0 ? (
               <div className="flex gap-3">
