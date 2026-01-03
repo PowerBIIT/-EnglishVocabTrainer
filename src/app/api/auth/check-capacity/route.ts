@@ -26,9 +26,13 @@ export async function GET() {
 
     const hasCapacity = activeCount < maxActiveUsers;
 
+    // Debug info (temporary - remove after testing)
+    console.log('check-capacity debug:', { maxActiveUsers, activeCount, adminEmails, hasCapacity });
+
     return NextResponse.json({
       hasCapacity,
-      // Don't expose exact numbers for security
+      // Debug info (temporary - remove after testing)
+      _debug: { maxActiveUsers, activeCount, adminEmailsCount: adminEmails.length },
     });
   } catch (error) {
     console.error('Check capacity error:', error);
