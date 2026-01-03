@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
     const response = await gemini.generateWithMetadata(finalPrompt, {
       temperature: 0.3,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 1024,
       model,
     });
     const durationMs = Date.now() - startTime;

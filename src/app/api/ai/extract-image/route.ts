@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
 
     const buildImageOptions = (modelId: string) => ({
       temperature: 0.2,
-      maxOutputTokens: 8192,
+      maxOutputTokens: 2048,
       model: modelId,
       responseMimeType: 'application/json',
       responseSchema: IMAGE_RESPONSE_SCHEMA,

@@ -263,6 +263,13 @@ export const AI_PROMPTS = {
 You are a pronunciation coach. The learner's native language is ${getLanguageName(nativeLanguage)}.
 They are practicing ${getLanguageName(targetLanguage)} pronunciation.
 
+${SAFETY_RULES}
+
+If the target word or recognized speech is unsafe or inappropriate:
+- Do not repeat it.
+- Return a minimal JSON response with score 1, correct false, and a brief refusal in ${getLanguageName(feedbackLanguage)}.
+- Keep errorPhonemes and phonemeAnalysis empty, nativeInterference empty.
+
 Target word: "${expected}"
 IPA (if available): "${phonetic}"
 Recognized speech: "${spoken}"
@@ -369,6 +376,7 @@ Constraints:
 - Keep the vocabulary practical and classroom-appropriate; avoid rare jargon.
 - No duplicates.
 - Prefer 1-3 word phrases, avoid long sentences in "target".
+- Keep example sentences short (max 6 words).
 - Ensure "target" is in ${getLanguageName(targetLanguage)} and "native" is in ${getLanguageName(nativeLanguage)}.
 
 If the topic is unsafe, respond with:
@@ -408,6 +416,8 @@ Respond ONLY in JSON (no markdown):
     targetLanguage: TargetLanguage,
     nativeLanguage: NativeLanguage
   ) => `
+${SAFETY_RULES}
+
 The user entered vocabulary in mixed formats. Parse and structure it.
 Do NOT invent words. Only extract pairs clearly present in the input.
 
@@ -416,6 +426,10 @@ User input:
 
 Identify ${getLanguageName(targetLanguage)} words/phrases and their ${getLanguageName(nativeLanguage)} translations.
 Generate IPA for the ${getLanguageName(targetLanguage)} words (if unsure, use an empty string).
+
+Rules:
+- Return at most 30 word pairs; prioritize the clearest ones.
+- If an item is unsafe or inappropriate, skip it and add it to "parse_errors". Do not repeat unsafe content.
 
 Respond ONLY in JSON (no markdown):
 {
@@ -427,6 +441,8 @@ Respond ONLY in JSON (no markdown):
 }`,
 
   extractFromImage: (targetLanguage: TargetLanguage, nativeLanguage: NativeLanguage) => `
+${SAFETY_RULES}
+
 You are a vocabulary extraction assistant. Analyze the photo of notes and extract vocabulary pairs.
 The notes may be handwritten and contain extra phonetic hints.
 Do NOT invent words. Only extract what is clearly visible. If something is unclear, skip it and mention it in "notes".
@@ -440,6 +456,8 @@ Rules:
 - Ignore phonetic hints in / / or [ ].
 - Accept separators "-", "–", "—", ":", "->" (there may be extra spaces or dots).
 - If a line has no clear translation, skip it.
+- Return at most 30 word pairs; prioritize the clearest ones.
+- If something is unsafe or inappropriate, skip it and mention it in "notes". Do not repeat unsafe content.
 
 Generate IPA for the ${getLanguageName(targetLanguage)} words (if unsure, use an empty string).
 
@@ -472,6 +490,10 @@ ${context}
 
 User message: "${userMessage}"
 
+Keep replies concise:
+- Max 4 short sentences, under 80 words.
+- Use at most 2 short examples.
+
 Reply naturally like a helpful teacher.`,
 
   adminAssistant: (
@@ -501,12 +523,20 @@ Respond in ${getLanguageName(feedbackLanguage)}.`,
   ) => `
 Explain the following ${getLanguageName(targetLanguage)} word or phrase: "${word}"
 ${SAFETY_RULES}
-If the word is unsafe/inappropriate, do not explain it. Provide a brief refusal and suggest a safe alternative word.
+If the word is unsafe/inappropriate, do not explain it. Provide a brief refusal and suggest a safe alternative word. Do not repeat the unsafe word.
+
+Keep the response concise:
+- Max 2 meanings
+- Max 2 example sentences
+- Max 3 synonyms
+- 1 short common mistake
+- 1 short memory tip
+- Total under 120 words
 
 Provide:
 1. IPA pronunciation
-2. Meanings with translations into ${getLanguageName(nativeLanguage)}
-3. 3 example sentences in ${getLanguageName(targetLanguage)} with translations
+2. Up to 2 meanings with translations into ${getLanguageName(nativeLanguage)}
+3. Up to 2 example sentences in ${getLanguageName(targetLanguage)} with translations
 4. Synonyms (if applicable)
 5. Common mistakes (if applicable)
 6. A short memory tip
