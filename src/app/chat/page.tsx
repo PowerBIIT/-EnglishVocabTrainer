@@ -30,7 +30,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-4rem-env(safe-area-inset-bottom))] md:h-[100dvh] min-h-0 max-w-3xl mx-auto overflow-hidden">
+    <div className="flex flex-col h-[calc(100dvh-4rem)] md:h-[calc(100dvh-3rem)] min-h-0 max-w-3xl mx-auto overflow-hidden">
       <header className="sticky top-0 z-20">
         <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-primary-100/50 dark:border-primary-900/50 pt-[env(safe-area-inset-top)]">
           <div className="px-4 py-3">

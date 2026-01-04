@@ -5,7 +5,6 @@ import { Navigation } from '@/components/layout/Navigation';
 import { ClientLayout } from '@/components/layout/ClientLayout';
 import { Providers } from '@/app/providers';
 import { AuthGate } from '@/components/layout/AuthGate';
-import { VersionBadge } from '@/components/layout/VersionBadge';
 import { Footer } from '@/components/layout/Footer';
 import { ConsentBanner } from '@/components/layout/ConsentBanner';
 
@@ -43,8 +42,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const appVersion = process.env.APP_VERSION ?? 'unknown';
-
   return (
     <html lang="pl" suppressHydrationWarning>
       <body className={`${sans.variable} ${display.variable} font-sans antialiased`}>
@@ -58,7 +55,6 @@ export default function RootLayout({
               </main>
               <Footer />
               <ConsentBanner />
-              <VersionBadge version={appVersion} />
             </div>
           </AuthGate>
         </Providers>
