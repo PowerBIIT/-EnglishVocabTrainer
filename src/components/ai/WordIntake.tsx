@@ -641,6 +641,10 @@ export function WordIntake({
   const canAddWords = selectedWordCount >= minWords && (!requiresSetName || hasSetName);
 
   useEffect(() => {
+    // Nie scrolluj przy początkowym renderowaniu (tylko welcome message)
+    if (messages.length <= 1 && parsedWords.length === 0 && !isProcessing) {
+      return;
+    }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, parsedWords, isProcessing]);
 
@@ -1406,22 +1410,26 @@ export function WordIntake({
     parsedWords.length === 0 &&
     !isProcessing;
   const chatMessagesPadding = compactChatSpacing ? 'pb-6' : 'pb-8 sm:pb-10';
+
+  const quickActionsPanel = (
+    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+      {t.quickActions.map((action) => (
+        <button
+          key={action.label}
+          onClick={() => setInput(action.prompt)}
+          className="flex flex-col items-center gap-1 p-2 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+        >
+          <action.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 dark:text-primary-400" />
+          <span className="text-[10px] sm:text-xs font-medium text-slate-700 dark:text-slate-300 truncate w-full text-center">
+            {action.label}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
+
   const inputPanel = (
     <>
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mb-2">
-        {t.quickActions.map((action) => (
-          <button
-            key={action.label}
-            onClick={() => setInput(action.prompt)}
-            className="flex flex-col items-center gap-1 p-2 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
-          >
-            <action.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 dark:text-primary-400" />
-            <span className="text-[10px] sm:text-xs font-medium text-slate-700 dark:text-slate-300 truncate w-full text-center">
-              {action.label}
-            </span>
-          </button>
-        ))}
-      </div>
       <p className="text-[11px] sm:text-xs text-slate-500 mb-2">
         {t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}
       </p>
@@ -1531,6 +1539,8 @@ export function WordIntake({
               </div>
             </div>
           ))}
+
+          {compactChatSpacing && quickActionsPanel}
 
           {parsedWords.length > 0 && (
             <Card className="mx-2 scroll-mb-[12rem]">
