@@ -82,6 +82,63 @@ Zrob slownictwo z lekcji w 5 minut i ucz sie polskiego codziennie bez chaosu.
   3) Наша Польща - 3,566 subskrybentow
      - Kontakt: @Napol_thebot
 
+### Facebook Grupy UA (dolaczone 4.01.2026)
+Laczny zasieg: ~1.5M czlonkow
+
+**OPUBLIKOWANE POSTY (4.01.2026):**
+1. Ukrainci v Polsce (40.7k) - post o szkole + grafika AI
+   - Tresc: Szkola w PL, zdjecie -> fiszki w 5 min
+   - Status: Oczekuje na zatwierdzenie admina
+2. Ukrainci u Varsavi (28.1k) - post o wymowie + grafika wymowa
+   - Tresc: Trening wymowy z AI, szcz/sc/rz
+   - Status: Oczekuje na zatwierdzenie admina
+3. 💙💛 Українці в Польщі (27.3k) - post o pracy + nauce
+   - Tresc: Praca + nauka polskiego, fiszki z AI, misja dnia
+   - Grafika: Gotowi_kartki_ta_kvizi.png
+   - Status: OPUBLIKOWANY (widoczny natychmiast)
+4. Українці в Щецині (69.6k) - post o zeszycie -> slowa
+   - Tresc: Zeszyt -> foto -> fiszki w 5 min, wymowa AI
+   - Grafika: Zoshyt_Slova_5_khvylyn.png
+   - Status: Oczekuje na zatwierdzenie admina
+5. Ukraińcy w Bydgoszczy (40.4k) - post o wymowie
+   - Tresc: Trening wymowy szcz/sc/rz/z z AI
+   - Grafika: Trenuj_idealnu_vymovu.png
+   - Status: Oczekuje na zatwierdzenie admina
+6. UKRAINCY W POLSCE - UKRAINCI V POLSCI (216k) - post o misji dnia
+   - Tresc: Misja dnia 10 slow, fiszki, AI wymowa
+   - Grafika: Gotovi_kartky_ta_kvizy.png
+   - Status: Oczekuje na zatwierdzenie admina
+
+**Duze grupy ogolne (dolaczone):**
+- UKRAINCY W POLSCE - UKRAINCI V POLSCI (216k) - POST OPUBLIKOWANY
+- Ukrainci u Polsci | Ukraincy w Polsce (121k) - dolaczone
+- Robota/poslugi v KATOVICE (121k) - dolaczone
+- Robota v Polsci (97k) - dolaczone
+- Rabota v Polsce (89k) - dolaczone
+- RABOTA V POLSZE (85k) - dolaczone
+- Ukrainci v Katovicah (70k) - pending approval
+- Ukrainci v Scecini (69k) - POST OPUBLIKOWANY
+- Ukrainci v Katovice PRACJA (48k) - dolaczone
+- UKRAINCY W POLSCE UKRAINCI V POLSCI (43k) - dolaczone
+- Ukraincy w Bydgoszczy (40k) - POST OPUBLIKOWANY
+- Ukrainci v Polsce (40k) - POST OPUBLIKOWANY
+- UKRAINCI V OPOLE (33k) - dolaczone
+- Ukrainci u Varsavi (28k) - POST OPUBLIKOWANY
+- Ukrainci v Polsci (27k) - dolaczone
+- Nasi v Kalivu (25k) - pending approval
+- OGLOSZENIA | OGLOSZENIA (23k) - dolaczone
+- Ukrainci v Lodzi (23k) - dolaczone
+- UKRAINCI V POLSCI - UKRAINCY W POLSCE (18k) - dolaczone
+- Ukrainci v Polsci / Ukraincy w Polsce (11k) - dolaczone
+- Ukrainci v Krakovi (11k) - dolaczone
+- Ukraincy w Polsce - Ukrainci v Polsci (8.6k) - dolaczone
+- Mami z Ukraini v Polsci (8.1k) - dolaczone (ograniczenia postowania)
+- Ukraincy w calej Polsce (9k) - dolaczone
+- Ukrainci v Polsci m.Sosnowiec (7.9k) - pending approval
+
+**Status:** 22 grup dolaczonych, 3 pending approval, 6 postow opublikowanych (CEL 5-8 OSIAGNIETY!)
+**Nastepne kroki:** Monitorowac zatwierdzenia adminow, odpowiadac na komentarze
+
 ### Logo
 - Lokalizacja: .playwright-mcp/Minimalist-modern-logo-for-vocabulary-learning-app-called-Henio-cute-white-Maltese-puppy-dog-mascot-character-with-floppy-ears-purple-8b5cf6-circular-background-orange-gold-f59e0b-collar-accessory-kawaii-cartoon-style-clean-vector-illust.jpg
 - Opis: Bialy maltanczyk, fioletowe tlo (#8b5cf6), pomaranczowa obroza (#f59e0b)
