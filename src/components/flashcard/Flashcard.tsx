@@ -201,35 +201,35 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
 
       {/* Action buttons */}
       {showActions && (
-        <div className="flex justify-center gap-3 mt-4 sm:mt-6">
+        <div className="flex justify-center gap-2 sm:gap-3 mt-4 sm:mt-6">
           <Button
             variant="danger"
             size="sm"
             onClick={() => handleAction('repeat')}
-            className="flex flex-1 min-w-0 items-center justify-center gap-2 text-sm sm:flex-none sm:min-w-[120px] sm:px-4 sm:py-2 sm:text-base"
+            className="flex flex-1 items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:flex-none sm:min-w-[120px] sm:text-base"
           >
             <X size={18} className="shrink-0" />
-            <span className="truncate">{t.repeat}</span>
+            <span className="hidden min-[400px]:inline">{t.repeat}</span>
           </Button>
 
           <Button
             variant="secondary"
             size="sm"
             onClick={() => handleAction('hard')}
-            className="flex flex-1 min-w-0 items-center justify-center gap-2 text-sm sm:flex-none sm:min-w-[120px] sm:px-4 sm:py-2 sm:text-base"
+            className="flex flex-1 items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:flex-none sm:min-w-[120px] sm:text-base"
           >
             <AlertTriangle size={18} className="shrink-0" />
-            <span className="truncate">{t.difficult}</span>
+            <span className="hidden min-[400px]:inline">{t.difficult}</span>
           </Button>
 
           <Button
             variant="success"
             size="sm"
             onClick={() => handleAction('know')}
-            className="flex flex-1 min-w-0 items-center justify-center gap-2 text-sm sm:flex-none sm:min-w-[120px] sm:px-4 sm:py-2 sm:text-base"
+            className="flex flex-1 items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:flex-none sm:min-w-[120px] sm:text-base"
           >
             <Check size={18} className="shrink-0" />
-            <span className="truncate">{t.know}</span>
+            <span className="hidden min-[400px]:inline">{t.know}</span>
           </Button>
         </div>
       )}
@@ -295,21 +295,21 @@ export function FlashcardSession({ words, onComplete }: FlashcardSessionProps) {
 
       <Flashcard item={currentWord} onAction={handleAction} />
 
-      {/* Navigation hint */}
-      <div className="flex justify-center gap-8 mt-8 text-slate-400 dark:text-slate-500 text-sm">
+      {/* Navigation hint - only on screens where button text is hidden */}
+      <div className="flex min-[400px]:hidden justify-center gap-6 mt-6 text-slate-400 dark:text-slate-500 text-xs">
         <div className="flex items-center gap-1">
-          <ChevronLeft size={16} />
+          <ChevronLeft size={14} />
           {t.repeat}
         </div>
         <div className="flex items-center gap-1">
           {t.difficult}
           <span className="rotate-90">
-            <ChevronRight size={16} />
+            <ChevronRight size={14} />
           </span>
         </div>
         <div className="flex items-center gap-1">
           {t.know}
-          <ChevronRight size={16} />
+          <ChevronRight size={14} />
         </div>
       </div>
     </div>
