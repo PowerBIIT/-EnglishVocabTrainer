@@ -1512,10 +1512,11 @@ export function WordIntake({
 
   if (variant === 'chat') {
     return (
-      <div className={cn('flex flex-col flex-1 min-h-0', className)}>
+      <div className={cn('flex flex-col min-h-0', !compactChatSpacing && 'flex-1', className)}>
         <div
           className={cn(
-            'flex-1 min-h-0 overflow-y-auto p-4 space-y-4 chat-scroll',
+            'overflow-y-auto p-4 space-y-4 chat-scroll',
+            !compactChatSpacing && 'flex-1 min-h-0',
             chatMessagesPadding
           )}
         >
