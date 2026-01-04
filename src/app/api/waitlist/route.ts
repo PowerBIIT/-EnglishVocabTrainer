@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkRateLimit } from '@/lib/rateLimit';
 import { WAITLIST_RATE_LIMIT_EMAIL, WAITLIST_RATE_LIMIT_IP } from '@/lib/apiLimits';
 import { createWaitlistEntry } from '@/lib/waitlist';
-import { sendWaitlistConfirmationEmail } from '@/lib/waitlistEmail';
+import { sendWaitlistConfirmationEmail, sendWaitlistAdminNotification } from '@/lib/waitlistEmail';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -79,6 +79,17 @@ export async function POST(request: NextRequest) {
         token: result.token,
         language: result.entry.language,
       });
+    }
+
+    // Notify admins about new waitlist signup
+    try {
+      await sendWaitlistAdminNotification({
+        userEmail: result.entry.email,
+        source: source,
+        language: result.entry.language,
+      });
+    } catch (notifyError) {
+      console.error('Failed to notify admins about waitlist signup:', notifyError);
     }
 
     return NextResponse.json({ ok: true, status: result.status });

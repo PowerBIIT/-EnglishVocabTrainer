@@ -119,3 +119,52 @@ export const sendWaitlistApprovedEmail = async ({
   const content = buildApprovedContent(locale, loginUrl);
   await sendEmail({ to: email, ...content });
 };
+
+export const sendWaitlistAdminNotification = async ({
+  userEmail,
+  source,
+  language,
+}: {
+  userEmail: string;
+  source?: string | null;
+  language?: string | null;
+}) => {
+  const adminEmails = process.env.ADMIN_EMAILS?.split(',')
+    .map((e) => e.trim())
+    .filter(Boolean);
+
+  if (!adminEmails || adminEmails.length === 0) {
+    return;
+  }
+
+  const adminUrl = `${getBaseUrl()}/admin`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #0f172a;">
+      <h2 style="margin: 0 0 12px; font-size: 20px;">Nowy zapis na waitlist</h2>
+      <p style="margin: 0 0 16px;">Ktoś zapisał się na listę oczekujących w aplikacji Henio.</p>
+      <table style="border-collapse: collapse; margin: 16px 0;">
+        <tr>
+          <td style="padding: 8px; color: #6b7280;">Email:</td>
+          <td style="padding: 8px; font-weight: 500;">${userEmail}</td>
+        </tr>
+        ${source ? `<tr><td style="padding: 8px; color: #6b7280;">Źródło:</td><td style="padding: 8px;">${source}</td></tr>` : ''}
+        ${language ? `<tr><td style="padding: 8px; color: #6b7280;">Język:</td><td style="padding: 8px;">${language}</td></tr>` : ''}
+      </table>
+      <p style="margin: 24px 0 0;">
+        <a href="${adminUrl}" style="display: inline-block; padding: 12px 18px; background: #8b5cf6; color: #fff; text-decoration: none; border-radius: 8px;">
+          Panel administracyjny
+        </a>
+      </p>
+    </div>
+  `;
+
+  const text = `Nowy zapis na waitlist\n\nEmail: ${userEmail}${source ? `\nŹródło: ${source}` : ''}${language ? `\nJęzyk: ${language}` : ''}\n\nPanel: ${adminUrl}`;
+
+  await sendEmail({
+    to: adminEmails,
+    subject: 'Nowy zapis na waitlist - Henio',
+    html,
+    text,
+  });
+};
