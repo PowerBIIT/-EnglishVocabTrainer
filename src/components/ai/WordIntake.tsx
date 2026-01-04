@@ -7,6 +7,7 @@ import {
   Plus,
   Loader2,
   Image as ImageIcon,
+  Camera,
   FileText,
   Send,
   Wand2,
@@ -335,6 +336,7 @@ export const wordIntakeCopy = {
       { label: 'Statystyki', prompt: 'Ile mam słówek?', icon: BarChart3 },
     ],
     imageButtonTitle: 'Wczytaj zdjęcie notatek',
+    cameraButtonTitle: 'Zrób zdjęcie aparatem',
     fileButtonTitle: 'Wczytaj plik z notatkami',
     inputPlaceholder: 'Wpisz słówka lub zapytaj...',
     assistantTitle: 'Asystent AI',
@@ -345,6 +347,7 @@ export const wordIntakeCopy = {
     selectAll: 'Zaznacz wszystkie',
     deselectAll: 'Odznacz',
     imageLabel: 'Zdjęcie',
+    cameraLabel: 'Aparat',
     fileLabel: 'Plik',
   },
   en: {
@@ -439,6 +442,7 @@ export const wordIntakeCopy = {
       { label: 'Stats', prompt: 'How many words do I have?', icon: BarChart3 },
     ],
     imageButtonTitle: 'Upload notes photo',
+    cameraButtonTitle: 'Take a photo',
     fileButtonTitle: 'Upload notes file',
     inputPlaceholder: 'Type words or ask...',
     assistantTitle: 'AI Assistant',
@@ -449,6 +453,7 @@ export const wordIntakeCopy = {
     selectAll: 'Select all',
     deselectAll: 'Deselect',
     imageLabel: 'Photo',
+    cameraLabel: 'Camera',
     fileLabel: 'File',
   },
   uk: {
@@ -544,6 +549,7 @@ export const wordIntakeCopy = {
       { label: 'Статистика', prompt: 'Скільки в мене слів?', icon: BarChart3 },
     ],
     imageButtonTitle: 'Завантажити фото нотаток',
+    cameraButtonTitle: 'Зробити фото',
     fileButtonTitle: 'Завантажити файл нотаток',
     inputPlaceholder: 'Введи слова або запитай...',
     assistantTitle: 'AI Асистент',
@@ -554,6 +560,7 @@ export const wordIntakeCopy = {
     selectAll: 'Вибрати всі',
     deselectAll: 'Зняти вибір',
     imageLabel: 'Фото',
+    cameraLabel: 'Камера',
     fileLabel: 'Файл',
   },
 } as const;
@@ -618,6 +625,7 @@ export function WordIntake({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
@@ -1420,6 +1428,24 @@ export function WordIntake({
 
       <div className="flex gap-2">
         <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          onChange={handleImageUpload}
+          className="hidden"
+        />
+        <button
+          onClick={() => cameraInputRef.current?.click()}
+          disabled={isProcessing}
+          className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
+          title={t.cameraButtonTitle}
+        >
+          <Camera size={18} className="sm:size-5" />
+          <span className="hidden sm:inline text-sm">{t.cameraLabel}</span>
+        </button>
+
+        <input
           ref={imageInputRef}
           type="file"
           accept="image/*"
@@ -1742,6 +1768,24 @@ export function WordIntake({
             {t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}
           </p>
           <div className={cn('flex gap-2 min-w-0', isCompact && 'gap-1.5')}>
+            <input
+              ref={cameraInputRef}
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+            <button
+              onClick={() => cameraInputRef.current?.click()}
+              disabled={isProcessing}
+              className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
+              title={t.cameraButtonTitle}
+            >
+              <Camera size={20} />
+              <span className="hidden sm:inline text-sm">{t.cameraLabel}</span>
+            </button>
+
             <input
               ref={imageInputRef}
               type="file"
