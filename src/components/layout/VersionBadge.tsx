@@ -65,7 +65,7 @@ export function VersionBadge({ version }: VersionBadgeProps) {
         : `App version ${label}`;
 
   return (
-    <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] left-4 md:bottom-4 md:left-28 z-40 text-[11px] text-slate-500 dark:text-slate-400">
+    <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom))] right-4 md:bottom-4 md:right-4 z-40 text-[11px] text-slate-500 dark:text-slate-400">
       <div
         className="rounded-full border border-slate-200/80 dark:border-slate-700/80 bg-white/80 dark:bg-slate-900/70 px-2 py-1 shadow-sm backdrop-blur"
         title={title}

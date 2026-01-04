@@ -1639,7 +1639,7 @@ export function WordIntake({
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 sm:p-4 pb-[calc(4rem+env(safe-area-inset-bottom))] md:pb-4">
+        <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 sm:p-4">
           <div className="max-w-3xl mx-auto">
             {parsedWords.length > 0 ? (
               <div className="flex gap-3">
