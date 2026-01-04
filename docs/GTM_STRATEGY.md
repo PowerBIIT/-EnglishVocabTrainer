@@ -1,7 +1,9 @@
 # Strategia Wejścia na Rynek (Go-To-Market) - Henio
 
 **Data:** Styczeń 2025
-**Wersja:** 1.0
+**Wersja:** 1.1
+
+> **Uzupełnienie:** Szczegółowy playbook taktyczny dostępny w [MARKETING_PLAYBOOK.md](./MARKETING_PLAYBOOK.md)
 
 ---
 
@@ -432,15 +434,17 @@ Q2 2026 (Kwi-Cze) - MARKET LEADERSHIP
 
 **Scenariusz bazowy:** 700 000 - 1 000 000 PLN dostępne w 18 miesięcy
 
-### 8.3 Prognoza Przychodów
+### 8.3 Prognoza Przychodów (Skorygowana)
 
-| Okres | MAU | PRO Users | ARPU | B2B Revenue | Total MRR |
-|-------|-----|-----------|------|-------------|-----------|
-| Q2 2025 | 2 000 | 50 | 25 PLN | 2 000 PLN | 3 250 PLN |
-| Q4 2025 | 10 000 | 500 | 25 PLN | 10 000 PLN | 22 500 PLN |
-| Q2 2026 | 50 000 | 2 500 | 25 PLN | 40 000 PLN | 102 500 PLN |
+> **Uwaga:** Benchmarki skorygowane na podstawie danych branżowych EdTech. Szczegóły w [MARKETING_PLAYBOOK.md](./MARKETING_PLAYBOOK.md#6-skorygowane-benchmarki)
 
-**ARR Q2 2026:** ~1 230 000 PLN
+| Okres | MAU | Konwersja | PRO Users | B2B Revenue | Total MRR |
+|-------|-----|-----------|-----------|-------------|-----------|
+| Q2 2025 | 2 000 | 2.5% | 50 | 1 000 PLN | 2 250 PLN |
+| Q4 2025 | 8 000 | 4% | 320 | 5 000 PLN | 13 000 PLN |
+| Q2 2026 | 25 000 | 5% | 1 250 | 15 000 PLN | 46 250 PLN |
+
+**ARR Q2 2026 (skorygowany):** ~555 000 PLN
 
 ### 8.4 Unit Economics (Target)
 
