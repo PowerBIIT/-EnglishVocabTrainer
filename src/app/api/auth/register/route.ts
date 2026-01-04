@@ -7,7 +7,7 @@ import {
   hashToken,
   getEmailVerifyExpiry,
 } from '@/lib/passwordAuth';
-import { sendVerificationEmail } from '@/lib/authEmail';
+import { sendVerificationEmail, sendNewUserNotification } from '@/lib/authEmail';
 import { checkRateLimit } from '@/lib/rateLimit';
 
 type Language = 'pl' | 'en' | 'uk';
@@ -196,6 +196,16 @@ export async function POST(request: NextRequest) {
     } catch (emailError) {
       console.error('Failed to send verification email:', emailError);
       // Don't fail registration if email fails - user can request resend
+    }
+
+    // Notify admins about new user
+    try {
+      await sendNewUserNotification({
+        userEmail: normalizedEmail,
+        userId: user.id,
+      });
+    } catch (notifyError) {
+      console.error('Failed to notify admins:', notifyError);
     }
 
     return NextResponse.json({ message: t.success, userId: user.id });

@@ -218,3 +218,50 @@ export async function sendPasswordChangedNotification({
     text,
   });
 }
+
+export async function sendNewUserNotification({
+  userEmail,
+  userId,
+}: {
+  userEmail: string;
+  userId: string;
+}) {
+  const adminEmails = process.env.ADMIN_EMAILS?.split(',')
+    .map((e) => e.trim())
+    .filter(Boolean);
+
+  if (!adminEmails || adminEmails.length === 0) {
+    return;
+  }
+
+  const adminUrl = `${getBaseUrl()}/admin/users`;
+
+  const html = emailWrapper(`
+    <h2 style="margin:0 0 16px;color:#1f2937;font-size:24px;">Nowy użytkownik</h2>
+    <p style="margin:0 0 16px;color:#4b5563;font-size:16px;line-height:1.6;">
+      Zarejestrował się nowy użytkownik w aplikacji Henio.
+    </p>
+    <table style="width:100%;border-collapse:collapse;margin:16px 0;">
+      <tr>
+        <td style="padding:8px;color:#6b7280;font-size:14px;">Email:</td>
+        <td style="padding:8px;color:#1f2937;font-size:14px;font-weight:500;">${userEmail}</td>
+      </tr>
+      <tr>
+        <td style="padding:8px;color:#6b7280;font-size:14px;">ID:</td>
+        <td style="padding:8px;color:#1f2937;font-size:14px;font-family:monospace;">${userId}</td>
+      </tr>
+    </table>
+    <div style="text-align:center;">
+      <a href="${adminUrl}" style="${buttonStyle}">Panel administracyjny</a>
+    </div>
+  `);
+
+  const text = `Nowy użytkownik w Henio\n\nEmail: ${userEmail}\nID: ${userId}\n\nPanel: ${adminUrl}`;
+
+  await sendEmail({
+    to: adminEmails,
+    subject: 'Nowy użytkownik - Henio',
+    html,
+    text,
+  });
+}
