@@ -661,10 +661,14 @@ export function WordIntake({
     const container = chatScrollRef.current;
     if (container) {
       requestAnimationFrame(() => {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: 'smooth',
-        });
+        if (typeof container.scrollTo === 'function') {
+          container.scrollTo({
+            top: container.scrollHeight,
+            behavior: 'smooth',
+          });
+          return;
+        }
+        container.scrollTop = container.scrollHeight;
       });
     }
   }, [messages, parsedWords, isProcessing]);
