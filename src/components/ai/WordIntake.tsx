@@ -622,6 +622,7 @@ export function WordIntake({
   const [suggestedSetName, setSuggestedSetName] = useState('');
   const [selectedSetOption, setSelectedSetOption] = useState(NEW_SET_OPTION);
 
+  const chatScrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -656,7 +657,16 @@ export function WordIntake({
     if (messages.length <= 1 && parsedWords.length === 0 && !isProcessing) {
       return;
     }
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    // Używamy scrollTop zamiast scrollIntoView żeby nie przewijać całej strony na mobile
+    const container = chatScrollRef.current;
+    if (container) {
+      requestAnimationFrame(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: 'smooth',
+        });
+      });
+    }
   }, [messages, parsedWords, isProcessing]);
 
   useEffect(() => {
@@ -1539,7 +1549,7 @@ export function WordIntake({
   if (variant === 'chat') {
     return (
       <div className={cn('flex flex-col min-h-0 flex-1', className)}>
-        <div className="overflow-y-auto p-4 space-y-4 chat-scroll flex-1 min-h-0 pb-8 sm:pb-10">
+        <div ref={chatScrollRef} className="overflow-y-auto p-4 space-y-4 chat-scroll flex-1 min-h-0 pb-8 sm:pb-10">
           {messages.map((message) => (
             <div
               key={message.id}
