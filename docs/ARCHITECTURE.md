@@ -2,10 +2,24 @@
 
 ## Overview
 
-Henio is a vocabulary learning application for Polish students (PL→EN) and Ukrainian students in Poland (UA→PL). It features AI-powered word intake, flashcards, quizzes, pronunciation training, and subscription management.
+Henio is a vocabulary learning application for Polish students (PL→EN) and Ukrainian students in Poland (UA→PL). It includes AI-powered word intake, flashcards, quizzes, pronunciation training, and subscription management.
 
-**Version:** 1.0.63
+**Version:** 1.0.74 (from `package.json`)
 **Repository:** `-EnglishVocabTrainer`
+
+## System Context
+
+```
+[Browser]
+   |
+   v
+[Next.js App Router + API Routes]
+   |-- PostgreSQL (Prisma)
+   |-- Google OAuth (NextAuth)
+   |-- Gemini API (AI features)
+   |-- Stripe (subscriptions)
+   |-- SMTP (email)
+```
 
 ## Technology Stack
 
@@ -20,463 +34,202 @@ Henio is a vocabulary learning application for Polish students (PL→EN) and Ukr
 | AI | Google Gemini API |
 | Payments | Stripe (subscriptions) |
 | Email | Nodemailer (OVH SMTP) |
-| File Processing | pdf-parse, mammoth (Word docs) |
+| File Processing | pdf-parse, mammoth |
 | Testing | Vitest (unit), Playwright (E2E) |
 
-## Directory Structure
+## Code Layout
 
 ```
 src/
-├── app/                    # Next.js App Router
-│   ├── api/               # REST API endpoints
-│   │   ├── ai/           # AI features (generate-words, extract-image, tutor, etc.)
-│   │   ├── auth/         # Authentication (NextAuth, register, verify-email)
-│   │   ├── admin/        # Admin endpoints (config, users, stats, pricing)
-│   │   ├── user/         # User data (state, profile, subscription, export)
-│   │   ├── stripe/       # Payment (checkout, portal, webhook)
-│   │   ├── waitlist/     # Waitlist management
-│   │   └── health/       # Health check endpoint
-│   ├── [feature]/page.tsx # Feature pages
-│   ├── providers.tsx      # Context providers
-│   └── layout.tsx         # Root layout
+├── app/                     # Next.js routes (App Router)
+│   ├── api/                 # API endpoints
+│   │   ├── ai/              # AI features (parse-text, tutor, extract-image, etc.)
+│   │   ├── auth/            # Auth (NextAuth, register, verify-email)
+│   │   ├── admin/           # Admin endpoints (config, users, stats, pricing)
+│   │   ├── stripe/          # Stripe (checkout, portal, webhook)
+│   │   ├── waitlist/        # Waitlist flows
+│   │   └── health/          # Health check
+│   ├── [feature]/page.tsx   # Feature pages
+│   ├── providers.tsx        # Context providers
+│   └── layout.tsx           # Root layout
 │
-├── components/            # React components by domain
-│   ├── ui/               # Base components (Button, Card, Modal, etc.)
-│   ├── admin/            # Admin panel sections
-│   ├── ai/               # WordIntake component
-│   ├── billing/          # PricingSection, UsageDisplay
-│   ├── flashcard/        # Flashcard player
-│   ├── quiz/             # Quiz engine
-│   ├── pronunciation/    # Pronunciation training
-│   ├── mascot/           # Mascot avatar system
-│   └── layout/           # SyncProvider, ConsentBanner, etc.
+├── components/              # UI components by domain
+│   ├── ui/                  # Base components
+│   ├── admin/               # Admin panel
+│   ├── ai/                  # Word intake + tutor
+│   ├── billing/             # Pricing and usage
+│   ├── flashcard/           # Flashcard player
+│   ├── quiz/                # Quiz engine
+│   ├── pronunciation/       # Pronunciation training
+│   ├── mascot/              # Mascot avatar system
+│   └── layout/              # Layout helpers (SyncProvider, etc.)
 │
-├── lib/                  # Business logic & utilities
-│   ├── store.ts          # Zustand state management (~26KB)
-│   ├── gemini.ts         # Gemini API client (GeminiService)
-│   ├── auth.ts           # NextAuth configuration
-│   ├── config.ts         # App config (DB + env fallback)
-│   ├── aiUsage.ts        # AI usage tracking & limits
-│   ├── aiTelemetry.ts    # AI request logging
-│   ├── aiPromptCatalog.ts# AI prompt templates
-│   ├── aiModelResolver.ts# Model selection with fallback
-│   ├── userPlan.ts       # User plan & access management
-│   ├── access.ts         # Access control (allowlist, admin)
-│   ├── waitlist.ts       # Waitlist logic
-│   ├── subscription.ts   # Stripe subscription logic
-│   ├── stripe.ts         # Stripe client
-│   ├── costEstimation.ts # Token cost calculation
-│   └── rateLimit.ts      # Rate limiting
+├── lib/                     # Business logic & utilities
+│   ├── auth.ts              # NextAuth config
+│   ├── access.ts            # Access control (admin/allowlist)
+│   ├── adminConfig.ts       # Admin-config schema
+│   ├── config.ts            # App config (DB + env fallback)
+│   ├── configDefaults.ts    # Default limits
+│   ├── aiAccess.ts          # AI access + usage checks
+│   ├── aiUsage.ts           # Usage counters + limits
+│   ├── aiTelemetry.ts       # AI request logging + alerts
+│   ├── aiCostAlerts.ts      # Cost alert checks
+│   ├── aiModelCatalog.ts    # Gemini model catalog
+│   ├── aiModelResolver.ts   # Model selection
+│   ├── aiPromptCatalog.ts   # Prompt templates
+│   ├── stripe.ts            # Stripe client
+│   ├── subscription.ts      # Stripe subscription logic
+│   └── rateLimit.ts         # Rate limiting
 │
-├── types/                # TypeScript definitions
-├── hooks/                # Custom React hooks
-├── middleware/           # Auth middleware
-└── data/                 # Static data (mascot skins, etc.)
+├── middleware/              # Server helpers (adminAuth)
+├── test/                    # Test setup (Vitest)
+└── data/                    # Static data (mascot skins, etc.)
 
-prisma/
-└── schema.prisma         # Database schema
-
-tests/                    # E2E tests (Playwright)
-docs/                     # Documentation
-.github/workflows/        # CI/CD pipelines
+middleware.ts                # Edge middleware (routing + access)
+prisma/                       # Prisma schema and migrations
+scripts/                      # Build/deploy helpers
+infra/                        # Azure provisioning scripts
+.github/workflows/            # CI/CD pipelines
 ```
 
-## Database Schema
+## Data Model (Summary)
 
-### Core Models
+Core models:
+- **User** + **UserState** (JSON state sync)
+- **UserPlan** (plan + access status)
+- **Subscription** (Stripe mapping)
+- **WaitlistEntry** (waitlist workflow)
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│      User       │────▶│    UserState    │     │    UserPlan     │
-├─────────────────┤     ├─────────────────┤     ├─────────────────┤
-│ id              │     │ id              │     │ id              │
-│ email           │     │ userId (FK)     │     │ userId (FK)     │
-│ name            │     │ data (JSON)     │     │ plan (FREE/PRO) │
-│ password (hash) │     │ updatedAt       │     │ accessStatus    │
-│ emailVerified   │     └─────────────────┘     │ stripeCustomerId│
-│ termsAcceptedAt │                             └─────────────────┘
-│ mascotSkin      │
-└─────────────────┘
-        │
-        ▼
-┌─────────────────┐     ┌─────────────────┐
-│  Subscription   │     │  WaitlistEntry  │
-├─────────────────┤     ├─────────────────┤
-│ stripeSubId     │     │ email           │
-│ stripeCustId    │     │ status          │
-│ status          │     │ confirmToken    │
-│ currentPeriod   │     │ confirmedAt     │
-│ cancelAtEnd     │     │ approvedAt      │
-└─────────────────┘     └─────────────────┘
-```
+Configuration and usage:
+- **AppConfig** + **ConfigHistory** (admin config + audit trail)
+- **UsageCounter** + **GlobalUsage** (monthly usage tracking)
+- **RateLimitWindow** (per-window request limits)
 
-### Configuration & Analytics Models
+AI telemetry:
+- **AiRequestLog** (per-request logging)
+- **AiDailyStats** + **AiGlobalDailyStats** (aggregates)
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   AppConfig     │     │  UsageCounter   │     │  GlobalUsage    │
-├─────────────────┤     ├─────────────────┤     ├─────────────────┤
-│ key             │     │ userId          │     │ feature         │
-│ value           │     │ feature         │     │ periodStart     │
-│ description     │     │ periodStart     │     │ count           │
-│ updatedBy       │     │ count / units   │     │ units           │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
+## Authentication & Access Control
 
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  AiRequestLog   │     │  AiDailyStats   │     │AiGlobalDaily    │
-├─────────────────┤     ├─────────────────┤     ├─────────────────┤
-│ userId          │     │ userId          │     │ date            │
-│ feature         │     │ feature         │     │ feature         │
-│ model           │     │ date            │     │ totalRequests   │
-│ inputTokens     │     │ requests/tokens │     │ totalTokens     │
-│ outputTokens    │     │ cost / errors   │     │ totalCost       │
-│ cost / duration │     └─────────────────┘     └─────────────────┘
-│ success/error   │
-└─────────────────┘
-```
+### NextAuth (`src/lib/auth.ts`)
+- Providers: Google OAuth + Credentials
+- Optional E2E login provider is gated by `E2E_LOGIN_ENABLED` + `E2E_TEST` flags
+- Sessions use JWT with a 60-second refresh interval
+- Plan/access status is synced into the JWT on login and periodically thereafter
 
-### Key Enums
+### Access Priority
+1. Admins (`ADMIN_EMAILS`, env only) -> always ACTIVE
+2. Allowlist (`ALLOWLIST_EMAILS`, DB or env) -> always ACTIVE
+3. Approved waitlist users -> ACTIVE
+4. Existing active users -> remain ACTIVE
+5. New users -> capacity check (`MAX_ACTIVE_USERS`)
 
-- **Plan**: `FREE`, `PRO`
-- **AccessStatus**: `ACTIVE`, `WAITLISTED`, `SUSPENDED`
-- **WaitlistStatus**: `PENDING`, `CONFIRMED`, `APPROVED`, `DECLINED`
-- **SubscriptionStatus**: `ACTIVE`, `PAST_DUE`, `CANCELED`, `INCOMPLETE`, `TRIALING`
+### Middleware (`middleware.ts`)
+- Redirects unauthenticated users to `/login`
+- Enforces onboarding flow and waitlist gates
+- Blocks `/admin` UI for non-admins (redirect)
+- Admin API endpoints use `requireAdmin` (403 if unauthorized)
 
-## State Management
-
-### Zustand Store (`src/lib/store.ts`)
-
-The client-side state is managed by Zustand with the following structure:
-
-```typescript
-interface AppState {
-  vocabulary: VocabularyItem[];      // All vocabulary items
-  sets: StudySet[];                  // Named word collections
-  progress: Record<string, UserProgress>; // Per-word progress
-  settings: AppSettings;             // User preferences
-  stats: UserStats;                  // XP, level, streaks, badges
-  dailyMission: DailyMission;        // Current mission
-  currentQuizResults: QuizResult[];  // Active quiz session
-}
-```
-
-### State Synchronization
+## State Synchronization
 
 ```
-┌─────────────┐     GET /api/user/state      ┌─────────────┐
-│   Client    │ ◀──────────────────────────▶ │   Server    │
-│  (Zustand)  │     POST /api/user/state     │  (Prisma)   │
-└─────────────┘                              └─────────────┘
-      │                                             │
-      │ hydrateFromServer()                         │
-      │ on mount                                    │
-      ▼                                             ▼
-┌─────────────┐                              ┌─────────────┐
-│ SyncProvider│                              │  UserState  │
-│  (debounced │                              │    .data    │
-│   800ms)    │                              │   (JSON)    │
-└─────────────┘                              └─────────────┘
+Client (Zustand) <-> /api/user/state (GET/POST)
+  - initial hydrate on mount
+  - debounced updates (800ms) via SyncProvider
 ```
 
-## Authentication Flow
+## AI System
 
-### NextAuth Configuration (`src/lib/auth.ts`)
+### Model Selection
+- Default model: `gemini-2.5-flash`
+- Override via `GEMINI_MODEL` (DB or env; not exposed in Admin UI)
+- Invalid config falls back to the default model
 
-**Providers:**
-1. **Google OAuth** - Primary authentication
-2. **Credentials** - Email/password with email verification
-3. **E2E Test** - Test-only provider (when `E2E_LOGIN_ENABLED=true`)
-
-**Session Strategy:** JWT with 60-second refresh interval
-
-**Authorization Flow:**
-```
-Login Request
-     │
-     ▼
-┌─────────────────┐
-│ NextAuth Handler│
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐     ┌─────────────────┐
-│ Check Provider  │────▶│ Validate Creds  │
-└────────┬────────┘     └────────┬────────┘
-         │                       │
-         ▼                       ▼
-┌─────────────────┐     ┌─────────────────┐
-│ Create/Get User │     │ Check Email     │
-│   (Prisma)      │     │   Verified      │
-└────────┬────────┘     └────────┬────────┘
-         │                       │
-         ▼                       ▼
-┌─────────────────┐     ┌─────────────────┐
-│ Sync UserPlan   │     │ Check Access    │
-│ (every 60s)     │     │    Status       │
-└────────┬────────┘     └────────┬────────┘
-         │                       │
-         ▼                       ▼
-┌─────────────────────────────────────────┐
-│              JWT Token                   │
-│  { userId, email, plan, accessStatus,   │
-│    isAdmin, mascotSkin }                │
-└─────────────────────────────────────────┘
-```
-
-## Access Control System
-
-### Priority Order (highest to lowest):
-
-1. **Admins** (`ADMIN_EMAILS`) → Always `ACTIVE`
-2. **Allowlist** (`ALLOWLIST_EMAILS`) → Always `ACTIVE`
-3. **Waitlist Approved** → Always `ACTIVE`
-4. **Already Active Users** → Stay `ACTIVE`
-5. **New Users** → Check capacity (`MAX_ACTIVE_USERS`)
-   - Capacity available → `ACTIVE`
-   - Capacity full → `WAITLISTED`
-
-### Middleware Protection (`src/middleware.ts`)
+### Request Flow
 
 ```
-Request
-   │
-   ▼
-┌─────────────────┐
-│ Public Pages?   │──Yes──▶ Allow
-│ (/privacy,      │
-│  /terms, etc.)  │
-└────────┬────────┘
-         │ No
-         ▼
-┌─────────────────┐
-│ Has Session?    │──No───▶ Redirect /login
-└────────┬────────┘
-         │ Yes
-         ▼
-┌─────────────────┐
-│ Onboarding Done?│──No───▶ Redirect /onboarding
-└────────┬────────┘
-         │ Yes
-         ▼
-┌─────────────────┐
-│ Access ACTIVE?  │──No───▶ Redirect /waitlist
-└────────┬────────┘
-         │ Yes
-         ▼
-┌─────────────────┐
-│ Admin Route?    │──Yes & !isAdmin──▶ 403 Forbidden
-└────────┬────────┘
-         │
-         ▼
-      Allow
+/api/ai/*
+  -> rate limit check (DB; memory fallback)
+  -> access check (plan + waitlist)
+  -> Gemini request
+  -> usage counters (monthly)
+  -> telemetry + cost alerts (async)
 ```
 
-## AI Integration
+### Usage Limits (Defaults, configurable via Admin Config)
 
-### GeminiService (`src/lib/gemini.ts`)
+| Scope | Requests/month | Units/month |
+|-------|----------------|-------------|
+| FREE  | 60             | 45,000      |
+| PRO   | 600            | 450,000     |
+| GLOBAL| 6,000          | 4,500,000   |
 
-```typescript
-class GeminiService {
-  private timeout = 20000; // 20 seconds
+Limits reset monthly (UTC). Units represent tokens.
 
-  async generateContent(prompt: string, options?: {
-    model?: string;
-    imageData?: string;
-  }): Promise<{
-    content: string;
-    usage: { inputTokens: number; outputTokens: number };
-  }>;
-}
-```
+### Cost Alerts
+- Controlled by `AI_COST_ALERT_THRESHOLD_USD`
+- Optional webhook: `AI_COST_ALERT_WEBHOOK_URL`
+- Email alerts use `ADMIN_EMAILS` + SMTP config
 
-### Model Selection (`src/lib/aiModelResolver.ts`)
+## Subscriptions
 
-| Task Type | Primary Model | Fallback |
-|-----------|---------------|----------|
-| Text tasks | `gemini-2.0-flash` | `gemini-1.5-flash` |
-| Image tasks | `gemini-2.0-flash` | `gemini-2.5-pro` |
-
-### AI Request Flow
-
-```
-API Request (/api/ai/*)
-        │
-        ▼
-┌─────────────────┐
-│ Rate Limit Check│──Exceeded──▶ 429 Too Many Requests
-└────────┬────────┘
-         │ OK
-         ▼
-┌─────────────────┐
-│ Access Check    │──Not ACTIVE──▶ 403 Forbidden
-└────────┬────────┘
-         │ OK
-         ▼
-┌─────────────────┐
-│ Usage Limit     │──Exceeded──▶ 402 Limit Reached
-│ Check (Plan)    │
-└────────┬────────┘
-         │ OK
-         ▼
-┌─────────────────┐
-│ GeminiService   │
-│   .generate()   │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Log Telemetry   │ (async, non-blocking)
-│ (AiRequestLog)  │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Update Usage    │
-│ Counters        │
-└────────┬────────┘
-         │
-         ▼
-    Response
-```
-
-### AI Features
-
-| Endpoint | Feature | Model |
-|----------|---------|-------|
-| `/api/ai/generate-words` | Generate vocabulary from topic | Flash |
-| `/api/ai/parse-text` | Parse manual word input | Flash |
-| `/api/ai/extract-file` | Extract from PDF/DOCX | Flash |
-| `/api/ai/extract-image` | OCR from image | Pro (fallback) |
-| `/api/ai/explain-word` | Word explanation | Flash |
-| `/api/ai/evaluate-pronunciation` | Score pronunciation | Flash |
-| `/api/ai/tutor` | AI tutor chat | Flash |
-
-## Subscription System
-
-### Stripe Integration
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│     Client      │     │    Next.js      │     │     Stripe      │
-└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
-         │                       │                       │
-         │ Click "Upgrade"       │                       │
-         │──────────────────────▶│                       │
-         │                       │ Create Checkout       │
-         │                       │──────────────────────▶│
-         │                       │◀──────────────────────│
-         │◀──────────────────────│ Checkout URL          │
-         │                       │                       │
-         │ Redirect to Stripe    │                       │
-         │──────────────────────────────────────────────▶│
-         │                       │                       │
-         │                       │ Webhook: session.completed
-         │                       │◀──────────────────────│
-         │                       │                       │
-         │                       │ Create Subscription   │
-         │                       │ Update UserPlan       │
-         │                       │                       │
-         │◀────────────────────────────────────────────── │
-         │ Redirect to success   │                       │
-```
-
-### Plan Limits
-
-| Feature | FREE | PRO |
-|---------|------|-----|
-| AI Requests/month | 50 | 600 |
-| Priority Support | No | Yes |
-| Advanced Stats | No | Yes |
+Stripe flow:
+1. Client requests checkout session (`/api/stripe/create-checkout-session`)
+2. Stripe redirects to payment
+3. Webhook updates subscription + plan
+4. Customer portal handled by `/api/stripe/create-portal-session`
 
 ## Configuration System
 
-### Hybrid Configuration (`src/lib/config.ts`)
+Priority order:
+1. Database (`AppConfig`) via Admin Panel
+2. Environment variables (GitHub Secrets)
+3. Code defaults (`configDefaults.ts`)
 
-```
-Priority Order:
-1. Database (AppConfig table) ← Admin Panel changes
-2. Environment Variables      ← Deployment secrets
-3. Code Defaults             ← Fallback values
+Config cache:
+- Default TTL: 5s
+- Max TTL: 60s
+- Controlled by `CONFIG_CACHE_TTL_MS`
 
-Cache: 5-second TTL with invalidation on changes
-```
+## Health & Observability
 
-### Key Configuration Values
+`GET /api/health` returns build metadata and subsystem checks:
+- `database`, `stripe`, `smtp`, `auth`, `ai`
+- `status` is `ok`, `degraded`, or `error`
+- Used by CI/CD pipelines to validate deployments
 
-| Key | Source | Description |
-|-----|--------|-------------|
-| `STRIPE_PRO_MONTHLY_PRICE_ID` | DB/Env | Stripe price ID |
-| `MAX_ACTIVE_USERS` | DB/Env | Capacity limit |
-| `ALLOWLIST_EMAILS` | DB/Env | VIP access list |
-| `ADMIN_EMAILS` | Env only | Admin users |
+AI telemetry is stored in `AiRequestLog` and daily aggregates, with async error handling to avoid blocking requests.
+
+## Security
+
+Security headers (`next.config.js`):
+- CSP with strict defaults (no third-party script sources)
+- HSTS (`max-age=63072000; includeSubDomains; preload`)
+- X-Frame-Options: `DENY`
+- X-Content-Type-Options: `nosniff`
+- Permissions-Policy: `camera=(self)`, `microphone=(self)`, `geolocation=()`
+
+E2E login endpoints are disabled in production unless explicitly enabled via env flags.
 
 ## Error Handling
-
-### AI Errors (`src/lib/aiErrors.ts`)
-
-```typescript
-class GeminiApiError extends Error {
-  type: 'RATE_LIMIT' | 'QUOTA' | 'INVALID_REQUEST' | 'SERVER' | 'NETWORK';
-  retryable: boolean;
-  retryAfter?: number;
-}
-```
-
-### HTTP Status Codes
 
 | Code | Meaning |
 |------|---------|
 | 401 | Unauthorized (no session) |
-| 402 | Usage limit reached |
 | 403 | Forbidden (access/admin) |
-| 429 | Rate limit exceeded |
-| 500 | Server error |
-
-## Security
-
-### Headers (`next.config.js`)
-
-- **CSP**: Script-src, style-src, img-src policies
-- **HSTS**: `max-age=31536000; includeSubDomains`
-- **X-Frame-Options**: `DENY`
-- **X-Content-Type-Options**: `nosniff`
-- **Permissions-Policy**: Restricted camera, microphone, geolocation
-
-### GDPR Compliance
-
-- Terms/Privacy acceptance tracking
-- Age confirmation (16+)
-- Account deletion (`DELETE /api/user/account`)
-- Data export (`GET /api/user/export`)
-- Consent versioning
-
-## Performance Patterns
-
-### Caching
-
-| What | TTL | Invalidation |
-|------|-----|--------------|
-| Config cache | 5s | On change |
-| JWT session | 60s | On refresh |
-
-### Optimizations
-
-- Debounced state sync (800ms)
-- Async telemetry logging (non-blocking)
-- Parallel tool calls in AI processing
-- Prisma connection pooling
+| 429 | Rate limit or usage limit reached |
+| 503 | Service not available (missing AI key, DB unavailable) |
 
 ## Key Files Reference
 
 | Purpose | File |
 |---------|------|
 | State management | `src/lib/store.ts` |
-| AI service | `src/lib/gemini.ts` |
 | Auth config | `src/lib/auth.ts` |
-| App config | `src/lib/config.ts` |
 | Access control | `src/lib/access.ts`, `src/lib/userPlan.ts` |
-| Usage tracking | `src/lib/aiUsage.ts` |
-| Subscription | `src/lib/subscription.ts` |
-| Database schema | `prisma/schema.prisma` |
-| Middleware | `src/middleware.ts` |
-| State sync | `src/components/layout/SyncProvider.tsx` |
+| App config | `src/lib/config.ts`, `src/lib/adminConfig.ts` |
+| AI pipeline | `src/lib/aiAccess.ts`, `src/lib/aiUsage.ts`, `src/lib/aiTelemetry.ts` |
+| Stripe | `src/lib/stripe.ts`, `src/lib/subscription.ts` |
+| Health check | `src/app/api/health/route.ts` |
+| Middleware | `middleware.ts`, `src/middleware/adminAuth.ts` |
+| DB schema | `prisma/schema.prisma` |

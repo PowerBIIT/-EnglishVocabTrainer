@@ -1,8 +1,9 @@
-# Plan Promocji Henio (UA w PL)
+# Plan Promocji Henio
 
 ## Status
 - Faza 3: Outreach (UKONCZONA - zamowiono pierwszy post!)
-- Data: 4 stycznia 2026
+- Data: 5 stycznia 2026
+- **NOWY SEGMENT:** PL→EN (Polacy uczący się angielskiego)
 - Budzet: 5000 PLN (wydano: 120 PLN)
 - Landing: https://henio.app/waitlist
 - Ceny: 19.99 PLN/mies, 149.99 PLN/rok, trial 7 dni (NIE ZMIENIAC)
@@ -270,4 +271,195 @@ konkretny material dla Waszej spolecznosci.
 - Odpowiedzi od adminow
 
 ## Ostatnia aktualizacja
-4 stycznia 2026
+5 stycznia 2026
+
+---
+
+# SEGMENT 2: Polacy uczący się angielskiego (PL→EN)
+
+## Status PL→EN
+- Faza: Research + Setup
+- Data startu: 5 stycznia 2026
+- Priorytet: WYSOKI (duży rynek, mniejsza konkurencja w grupach FB)
+
+## Grupa docelowa PL→EN
+
+### Główne persony:
+1. **Maturzyści** (17-19 lat) - przygotowanie do matury z angielskiego
+2. **Studenci** (19-25 lat) - angielski akademicki, certyfikaty (FCE, CAE)
+3. **Pracujący dorośli** (25-45 lat) - angielski do pracy, biznesowy
+4. **Emigranci do UK/Irlandii** - szybka nauka przed/po wyjeździe
+
+### Potrzeby:
+- Szybkie słówka do pracy/szkoły
+- Trening wymowy (th, r, w vs v)
+- Przygotowanie do egzaminów
+- Konwersacje codzienne
+
+## Pozycjonowanie PL→EN
+
+### 3 filary:
+1) **Szybkość:** "Zdjęcie notatek → fiszki i quiz w 5 min"
+2) **Wymowa:** "Trening th, r, w/v z AI - słuchasz, powtarzasz, masz wynik"
+3) **Elastyczność:** "Uczysz się gdzie chcesz - telefon, tablet, przeglądarka"
+
+### Obietnica (1 zdanie):
+"Zrób słówka z pracy/szkoły w 5 minut i mów po angielsku pewniej każdego dnia."
+
+## Research grup FB (5 stycznia 2026)
+
+### Grupy NAUKA ANGIELSKIEGO (priorytet 1):
+| Grupa | Członkowie | Typ |
+|-------|------------|-----|
+| NAUKA JĘZYKA ANGIELSKIEGO ZA DARMO | 40k | Publiczna |
+| Nauka angielskiego - Grupa wsparcia | 18k | Publiczna |
+| Szybka nauka języka angielskiego | 17k | Publiczna |
+| Samodzielna nauka angielskiego | 11k | Publiczna |
+| Nauka angielskiego w Wielkiej Brytanii | 10k | Publiczna |
+| materiały do nauki j. angielskiego | 6.2k | Publiczna |
+| Nauka Języka ANGIELSKIEGO z GREGIEM! | 5k | Publiczna |
+| Szybka nauka angielskiego dla Polaków w UK | 3.7k | Publiczna |
+| **ŁĄCZNIE** | **~111k** | |
+
+### Grupy MATURALNE (priorytet 2 - sezonowe):
+| Grupa | Członkowie |
+|-------|------------|
+| Matura 2024 - język angielski | 2.8k |
+| Matura z angielskiego 2023 | 2.5k |
+| Matura 2025 - polski wos angielski | 1.8k |
+| Matura z języka angielskiego | 1.1k |
+| Matura z języka angielskiego 2026 | 730 |
+| Matura 2026 - język angielski | 780 |
+| **ŁĄCZNIE** | **~10k** |
+
+### Grupy POLACY W UK (priorytet 3 - emigranci):
+| Grupa | Członkowie |
+|-------|------------|
+| Polacy w Uk / Polonia w UK | 89k |
+| Polacy w Londynie - LONDYŃCZYCY | 83k |
+| Polacy w Coventry | 30k |
+| Polacy w Birmingham | 25k |
+| Polacy w Manchester | 18k |
+| Polacy w UK - Londyn, Anglia... | 14k |
+| Polacy w Londynie / Ogłoszenia | 11k |
+| Polacy w Sheffield | 7.8k |
+| Polacy Na Wyspach | 7.5k |
+| Polacy w Bristol | 7k |
+| Polacy Doncaster | 6.3k |
+| Polacy w Southampton | 5.4k |
+| Polacy w Barnsley | 4.8k |
+| Polacy w Nottingham | 4.5k |
+| **ŁĄCZNIE** | **~313k** |
+
+### ŁĄCZNY POTENCJALNY ZASIĘG PL→EN: ~434k
+
+## Gotowe posty PL→EN
+
+### Post 1: Główny (zdjęcie → fiszki)
+```
+📸 Zdjęcie notatek → słówka angielskie w 5 minut!
+
+Henio to aplikacja do nauki angielskiego:
+✅ Robisz zdjęcie tekstu/notatek
+✅ AI tworzy fiszki automatycznie
+✅ Uczysz się z quizami i treningiem wymowy
+
+🎯 7 dni za darmo - bez karty!
+Sprawdź 👉 henio.app
+```
+
+### Post 2: Wymowa
+```
+🗣️ Masz problem z wymową angielską?
+
+Henio pomoże Ci z:
+• TH (think, this) - najtrudniejszy dźwięk
+• R vs L (right, light)
+• W vs V (wine, vine)
+
+AI pokazuje jak ułożyć usta + ocenia Twoją wymowę!
+
+Spróbuj za darmo 👉 henio.app
+```
+
+### Post 3: Do pracy/emigracji
+```
+🇬🇧 Angielski do pracy? Zrób to szybciej!
+
+Z Henio uczysz się słówek których NAPRAWDĘ potrzebujesz:
+📝 Wklej tekst z maila/dokumentu
+📸 Zrób zdjęcie instrukcji
+🎯 Masz gotowe fiszki w 5 min!
+
+Bez stresu, bez chaosu.
+7 dni free 👉 henio.app
+```
+
+### Post 4: Matura
+```
+📚 Matura z angielskiego? Henio pomoże!
+
+🎯 Szybkie fiszki ze słownictwa maturalnego
+🗣️ Trening wymowy z AI
+📝 Quizy na powtórkę
+
+Nie trać czasu na przepisywanie słówek.
+Zrób zdjęcie → masz fiszki!
+
+Sprawdź za darmo 👉 henio.app
+```
+
+### Post 5: Dla grup w UK
+```
+🇬🇧 Mieszkasz w UK i chcesz lepiej mówić po angielsku?
+
+Henio to polska aplikacja do nauki angielskiego:
+📸 Zdjęcie menu/instrukcji → słówka w 5 min
+🗣️ Trening wymowy z AI (th, r, w)
+🎯 Codzienne misje 10 słów
+
+7 dni za darmo 👉 henio.app
+Działa na telefonie i w przeglądarce!
+```
+
+## Przekaz do grup PL→EN
+
+### Kluczowe USP:
+1. "Zdjęcie → fiszki w 5 minut" (szybkość)
+2. "AI ocenia wymowę i pokazuje jak mówić" (wymowa)
+3. "7 dni za darmo, bez karty" (niski próg wejścia)
+4. "Polska aplikacja, po polsku" (zaufanie)
+
+### Czego unikać:
+- Nie wspominać o UA - to osobny segment
+- Nie obiecywać "płynnej mowy w 30 dni"
+- Nie porównywać bezpośrednio z Duolingo
+
+## Plan kampanii PL→EN
+
+### Faza 1: Organic (tydzień 1-2)
+1. [ ] Dołączyć do 10 największych grup nauki angielskiego
+2. [ ] Opublikować 3-5 postów wartościowych (nie reklamowych)
+3. [ ] Odpowiadać na pytania o naukę angielskiego
+4. [ ] Dopiero potem: posty promocyjne
+
+### Faza 2: Grupy UK (tydzień 2-3)
+1. [ ] Dołączyć do 5-10 grup Polaków w UK
+2. [ ] Posty o nauce angielskiego dla emigrantów
+3. [ ] Nacisk na wymowę i słownictwo praktyczne
+
+### Faza 3: Maturzyści (marzec-kwiecień 2026)
+1. [ ] Intensywna kampania przed maturą
+2. [ ] Posty o przygotowaniu do matury
+3. [ ] Możliwe współprace z korepetytorami
+
+## Materiały do przygotowania PL→EN
+- [ ] Grafika: "Zdjęcie → fiszki w 5 min" (PL)
+- [ ] Grafika: Trening wymowy TH/R/W
+- [ ] Screenshot aplikacji z polskim interfejsem
+- [ ] Krótkie video demo (15-30s) po polsku
+
+## Notatki
+- FB tymczasowo zablokował działania (5.01.2026) - kontynuować po odblokowaniu
+- Segment PL→EN ma większy potencjał (język polski w interfejsie!)
+- Rozważyć współprace z korepetytorami angielskiego

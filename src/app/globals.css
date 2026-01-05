@@ -9,12 +9,21 @@
   --surface-rgb: 255, 255, 255;
   --surface-border: 226, 232, 240;
   --shadow-color: 14, 30, 52;
+  --fullscreen-offset-mobile: calc(4rem + env(safe-area-inset-bottom));
+  --fullscreen-offset-desktop: 4rem;
+  --fullscreen-offset: var(--fullscreen-offset-mobile);
 
   /* Gradienty */
   --gradient-hero: linear-gradient(135deg, #7c3aed 0%, #3b82f6 50%, #ec4899 100%);
   --gradient-card: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
   --gradient-button: linear-gradient(90deg, #8b5cf6 0%, #ec4899 100%);
   --gradient-accent: linear-gradient(135deg, #a78bfa 0%, #818cf8 100%);
+}
+
+@media (min-width: 768px) {
+  :root {
+    --fullscreen-offset: var(--fullscreen-offset-desktop);
+  }
 }
 
 .dark {
@@ -44,12 +53,17 @@ body {
   min-height: 100vh;
 }
 
-body.chat-page {
+body.fullscreen-page {
   overflow: hidden;
 }
 
-body.chat-page main {
+body.fullscreen-page main {
   padding-bottom: 0 !important;
+}
+
+.fullscreen-shell {
+  height: calc(100dvh - var(--fullscreen-offset));
+  min-height: 0;
 }
 
 .chat-scroll {
