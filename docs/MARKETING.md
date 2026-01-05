@@ -1,13 +1,296 @@
 # Plan Promocji Henio
 
 ## Status
-- Faza 3: Outreach (UKONCZONA - zamowiono pierwszy post!)
 - Data: 5 stycznia 2026
-- **NOWY SEGMENT:** PL→EN (Polacy uczący się angielskiego)
-- Budzet: 5000 PLN (wydano: 120 PLN)
-- Landing: https://henio.app/waitlist
-- Ceny: 19.99 PLN/mies, 149.99 PLN/rok, trial 7 dni (NIE ZMIENIAC)
-- Wiek: 16+ (zgodne z onboardingiem)
+- Budzet miesięczny: max 1000 PLN
+- Landing: https://henio.app
+- Ceny: 19.99 PLN/mies, 149.99 PLN/rok, trial 7 dni
+
+---
+
+## ⚠️ ZASADA #1: NIE KŁAMIEMY O CENIE!
+
+**Henio NIE JEST darmową aplikacją!**
+
+| ✅ PRAWIDŁOWO | ❌ BŁĘDNIE (kłamstwo) |
+|---------------|----------------------|
+| "7-day free trial" | "free app" |
+| "7 dni za darmo" | "darmowa aplikacja" |
+| "trial bez karty" | "za darmo" (bez kontekstu) |
+| "wypróbuj za darmo przez 7 dni" | "darmowa nauka" |
+
+**Konsekwencje kłamania:**
+- Naruszenie prawa konsumenckiego (fałszywa reklama)
+- Utrata zaufania użytkowników
+- Potencjalne kary/bany na platformach
+
+**Zawsze precyzuj:** "7-dniowy darmowy trial, potem 19.99 PLN/mies"
+
+---
+
+# GOOGLE ADS - KAMPANIA MVP
+
+## Konto Google Ads
+- **Account ID:** AW-17853999994
+- **Email:** radekbroniszewski@gmail.com
+- **Conversion ID:** TAKeCJW8nN0bEPrWucFC (akcja: Rejestracja)
+
+## Tracking (wdrożony)
+- Zmienne środowiskowe dodane do Azure (UAT + PRD):
+  - `NEXT_PUBLIC_GOOGLE_ADS_ID=AW-17853999994`
+  - `NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID=TAKeCJW8nN0bEPrWucFC`
+- Kod gtag.js w `src/app/layout.tsx`
+- Tracking konwersji w `src/app/register/page.tsx`
+
+## Kampania 1: UA-PL Nauka polskiego (DRAFT)
+
+### Ustawienia
+| Parametr | Wartość |
+|----------|---------|
+| **Nazwa** | UA-PL Nauka polskiego |
+| **Typ** | Sieć wyszukiwania (Search) |
+| **Cel** | Potencjalni klienci → Rejestracje |
+| **Stawki** | Maksymalizuj konwersje |
+| **Lokalizacja** | Polska |
+| **Języki** | polski + ukraiński |
+| **Budżet dzienny** | 15 PLN |
+
+### Słowa kluczowe (10)
+- nauka polskiego dla ukraińców
+- польська мова онлайн
+- вивчити польську
+- nauka języka polskiego online
+- aplikacja do nauki polskiego
+- polski dla obcokrajowców
+- fiszki polskie słówka
+- польські слова
+- słownictwo polskie dla ukraińców
+- картки польська мова
+
+### Reklama (Responsive Search Ad)
+**Nagłówki:**
+1. Вивчай польську з AI
+2. Фото → Фішки за 5 хв
+3. 7 днів безкоштовно
+4. Nauka polskiego z AI
+5. Aplikacja Henio
+
+**Opisy:**
+1. Сфотографуй зошит, отримай картки. Тренуй вимову з AI. Квізи.
+2. Zrób zdjęcie tekstu, AI stworzy fiszki. Trening wymowy. Quizy.
+
+**URL:** henio.app
+
+### Prognozy
+| Metryka | Wartość |
+|---------|---------|
+| Koszt tygodniowy | ~105 PLN |
+| Koszt miesięczny | ~450 PLN |
+| Konwersje/tydzień | ~24 |
+| Koszt/konwersja | ~4,27 PLN |
+
+### Status
+- [x] Konto Google Ads utworzone
+- [x] Konwersja "Rejestracja" skonfigurowana
+- [x] Tracking dodany do aplikacji
+- [x] Zmienne wdrożone na Azure (UAT/PRD)
+- [ ] Kampania UA-PL: DRAFT gotowy, wymaga publikacji w Google Ads UI
+
+## Kampania 2: PL-EN Angielski (TODO)
+
+### Planowane ustawienia
+| Parametr | Wartość |
+|----------|---------|
+| **Nazwa** | PL-EN Nauka angielskiego |
+| **Typ** | Sieć wyszukiwania (Search) |
+| **Lokalizacja** | Polska |
+| **Języki** | polski |
+| **Budżet dzienny** | 15 PLN |
+
+### Planowane słowa kluczowe
+- nauka angielskiego online
+- aplikacja do nauki angielskiego
+- angielski za darmo
+- fiszki angielskie
+- matura angielski 2026
+
+### Status
+- [ ] Do utworzenia po uruchomieniu kampanii UA-PL
+
+## Kontrola kosztów
+
+| Parametr | Wartość |
+|----------|---------|
+| **Max budżet miesięczny** | 1000 PLN |
+| **Kampania UA-PL** | ~450 PLN/mies |
+| **Kampania PL-EN** | ~450 PLN/mies |
+| **Razem** | ~900 PLN/mies |
+| **Bufor** | ~100 PLN |
+
+### Bezpieczeństwo:
+- ✅ Brak umów długoterminowych
+- ✅ Można pauzować w każdej chwili
+- ✅ Płatność tylko za kliknięcia
+- ✅ Budżet dzienny = twardy limit miesięczny
+
+---
+
+# DARMOWA PROMOCJA - PLAN WYKONAWCZY
+
+## Priorytet kanałów (od najskuteczniejszych)
+
+### 1. Reddit (WYSOKI priorytet)
+**Dlaczego:** 40% użytkowników odkrywa apki przez rekomendacje, Reddit ma +1348% wzrost widoczności w Google.
+
+**⚠️ WAŻNE - PRAWIDŁOWY PRZEKAZ:**
+- Henio NIE JEST darmowy - ma tylko **7-dniowy darmowy trial**
+- ZAWSZE pisać: "7-day free trial" lub "7 dni za darmo"
+- NIGDY nie pisać: "free app", "darmowa aplikacja" - to kłamstwo i naruszenie prawa konsumenckiego!
+
+**Subreddity UA→PL:**
+- r/learnpolish (46k członków) - główny sub do nauki polskiego
+- r/poland (580k) - ogólny, można wrzucić w relevant thread
+- r/languagelearning (1.8M) - ogólny o nauce języków
+
+**Subreddity PL→EN:**
+- r/Polska (750k) - polskojęzyczny, można po polsku
+- r/matura - przygotowanie do matury
+
+**Strategia:**
+1. Najpierw: 5-10 pomocnych komentarzy (bez reklamy)
+2. Potem: post o apce z 7-dniowym trialem
+3. Kluczowe: być pomocnym, nie spamować, NIE kłamać o cenie!
+
+**Gotowy post UA→PL (r/learnpolish):**
+```
+Title: Photo → Polish flashcards in 30 seconds (AI app I built)
+
+I was frustrated with manually creating flashcards, so I built something different.
+
+**The problem:** You're in Polish class, taking notes, but converting them to flashcards takes forever.
+
+**My solution:** Take a photo of ANY text (notebook, textbook, menu, sign) → AI extracts words → Creates flashcards with pronunciation guide.
+
+What makes it different:
+- 🎤 Pronunciation training with AI feedback (szcz, ść, ą, ę - the hard sounds!)
+- 📸 Works with handwritten notes, not just typed text
+- 🎯 Spaced repetition + quizzes built in
+
+Built specifically for Ukrainian speakers learning Polish (but works for anyone).
+
+**Try it free for 7 days** (no card needed): henio.app
+
+Would love honest feedback - what features would make this more useful for you?
+```
+
+**Gotowy post PL→EN (r/Polska):**
+```
+Title: Zrobiłem apkę która zamienia zdjęcie notatek w fiszki angielskie w 30 sekund
+
+Problem: Przepisywanie słówek do Anki zajmuje więcej czasu niż sama nauka.
+
+Rozwiązanie: Robisz zdjęcie → AI wyciąga słówka → Masz gotowe fiszki z wymową.
+
+Co działa:
+- 🎤 Trening wymowy z AI (mówisz → dostajesz ocenę + podpowiedzi)
+- 📸 Rozpoznaje nawet odręczne notatki
+- 🎯 Quizy + powtórki rozłożone w czasie
+
+**7 dni za darmo** żeby przetestować (bez karty): henio.app
+
+Szukam betatersterów - co by wam się przydało? Jakich funkcji brakuje?
+```
+
+**Gotowy post r/languagelearning (EN, uniwersalny):**
+```
+Title: I built an app that turns photos of notes into flashcards with AI - looking for feedback
+
+**The workflow:**
+1. Snap a photo of your notes/textbook/anything
+2. AI extracts vocabulary automatically
+3. Creates flashcard pairs with example sentences
+4. Practice with quizzes + pronunciation training
+
+**Why I built it:**
+I was spending more time creating flashcards than actually learning. Tried OCR + ChatGPT workflows but they were clunky. So I made this.
+
+**What's different:**
+- Works with handwritten notes (not just printed text)
+- Pronunciation training with real-time AI feedback
+- Specifically optimized for Slavic languages (Polish, Ukrainian) but works with English too
+
+**7 days free** to try everything: henio.app
+
+Genuinely looking for feedback from language learners. What would make this more useful?
+```
+
+### 2. Discord (ŚREDNI priorytet)
+**Serwery do dołączenia:**
+- StudyNest - społeczność uczniów
+- Matura 2025/2026 - maturzyści
+- TeachMe - pomoc w nauce
+- #ustne2025 - wymiana pytań maturalnych
+
+**Strategia:**
+1. Dołączyć do serwerów
+2. Być pomocnym przez tydzień
+3. Wspomnieć o apce gdy pasuje do rozmowy
+
+### 3. Facebook Grupy (WYSOKI - już zaczęte)
+**Status:** Odblokowane - kontynuować!
+
+**Gotowe grupy UA (z MARKETING.md):**
+- 6 postów już opublikowanych
+- Czekamy na zatwierdzenia adminów
+- Odpowiadać na komentarze
+
+**Nowe grupy PL→EN do dołączenia:**
+- NAUKA JĘZYKA ANGIELSKIEGO ZA DARMO (40k)
+- Nauka angielskiego - Grupa wsparcia (18k)
+- Szybka nauka języka angielskiego (17k)
+- Samodzielna nauka angielskiego (11k)
+
+### 4. Quora (NISKI priorytet, ale długoterminowo)
+**Pytania do odpowiedzi:**
+- "Jak szybko nauczyć się polskiego?"
+- "Jakie są najlepsze aplikacje do nauki angielskiego?"
+- "Jak przygotować się do matury z angielskiego?"
+
+### 5. Product Hunt (ŚREDNI - jednorazowy boost)
+**Kiedy:** Gdy będzie 50+ użytkowników i pozytywne opinie
+**Przygotowanie:**
+- Ładne screenshoty
+- Video demo (15-30s)
+- Tagline: "Learn Polish/English from photos with AI"
+
+### 6. TikTok (OPCJONALNIE - wymaga contentu)
+**Format który działa:**
+- 5-7 sekund: szybki tip
+- 27-35 sekund: tutorial funkcji
+- Hook w pierwszych 3 sekundach
+
+**Pomysły na content:**
+- "POV: robisz zdjęcie notatek i masz fiszki w 5 sekund"
+- "Trening wymowy TH - AI ocenia jak mówisz"
+
+---
+
+## Status Google Ads
+**DECYZJA: Nie uruchamiamy płatnych kampanii (MVP faza)**
+
+Powód: Najpierw zbieramy dane o retencji (D1/D7) i konwersji trial→PRO z organic.
+
+**Co zostaje (za darmo):**
+- ✅ Konto Google Ads gotowe
+- ✅ Tracking konwersji działa (mierzy rejestracje z dowolnego źródła)
+- ✅ Draft kampanii zapisany na przyszłość
+
+**Kiedy uruchomić:**
+- Gdy D7 retencja > 30%
+- Gdy trial→PRO konwersja > 10%
+- Gdy budżet > 2000 PLN/mies
+
+---
 
 ## AKTYWNA KAMPANIA
 - Kanal: t.me/yavpolshi (23k subskrybentow)
@@ -379,7 +662,7 @@ Henio pomoże Ci z:
 
 AI pokazuje jak ułożyć usta + ocenia Twoją wymowę!
 
-Spróbuj za darmo 👉 henio.app
+🎯 7 dni za darmo 👉 henio.app
 ```
 
 ### Post 3: Do pracy/emigracji
@@ -406,7 +689,7 @@ Bez stresu, bez chaosu.
 Nie trać czasu na przepisywanie słówek.
 Zrób zdjęcie → masz fiszki!
 
-Sprawdź za darmo 👉 henio.app
+🎯 7 dni za darmo 👉 henio.app
 ```
 
 ### Post 5: Dla grup w UK
