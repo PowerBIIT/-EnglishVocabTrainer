@@ -19,6 +19,8 @@ interface HealthResponse {
     database: SubsystemStatus;
     stripe: SubsystemStatus;
     smtp: SubsystemStatus;
+    auth: SubsystemStatus;
+    ai: SubsystemStatus;
   };
 }
 
@@ -60,6 +62,44 @@ function checkStripe(): SubsystemStatus {
   return { status: 'ok' };
 }
 
+function checkAuth(): SubsystemStatus {
+  const authUrl = process.env.NEXTAUTH_URL;
+  const authSecret = process.env.NEXTAUTH_SECRET;
+  const googleClientId = process.env.GOOGLE_CLIENT_ID;
+  const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+  if (!authUrl || !authSecret) {
+    return {
+      status: 'unconfigured',
+      message: 'Missing NextAuth configuration',
+    };
+  }
+
+  if (!googleClientId || !googleClientSecret) {
+    return {
+      status: 'unconfigured',
+      message: 'Missing Google OAuth configuration',
+    };
+  }
+
+  try {
+    const parsed = new URL(authUrl);
+    if (process.env.NODE_ENV === 'production' && parsed.protocol !== 'https:') {
+      return {
+        status: 'error',
+        message: 'NEXTAUTH_URL must use https in production',
+      };
+    }
+  } catch {
+    return {
+      status: 'error',
+      message: 'NEXTAUTH_URL is invalid',
+    };
+  }
+
+  return { status: 'ok' };
+}
+
 function checkSmtp(): SubsystemStatus {
   const host = process.env.SMTP_HOST;
   const port = process.env.SMTP_PORT;
@@ -77,15 +117,30 @@ function checkSmtp(): SubsystemStatus {
   return { status: 'ok' };
 }
 
+function checkAi(): SubsystemStatus {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    return {
+      status: 'unconfigured',
+      message: 'Missing Gemini API configuration',
+    };
+  }
+  return { status: 'ok' };
+}
+
 export const GET = async () => {
   const [dbStatus] = await Promise.all([checkDatabase()]);
   const stripeStatus = checkStripe();
   const smtpStatus = checkSmtp();
+  const authStatus = checkAuth();
+  const aiStatus = checkAi();
 
   const subsystems = {
     database: dbStatus,
     stripe: stripeStatus,
     smtp: smtpStatus,
+    auth: authStatus,
+    ai: aiStatus,
   };
 
   // Determine overall status

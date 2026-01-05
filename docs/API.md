@@ -33,7 +33,15 @@ Returns application health status and build metadata.
   "status": "ok",
   "version": "1.0.63",
   "commit": "f7056bc12345",
-  "buildTime": "2026-01-03T10:00:00Z"
+  "buildTime": "2026-01-03T10:00:00Z",
+  "env": "production",
+  "subsystems": {
+    "database": { "status": "ok" },
+    "stripe": { "status": "ok" },
+    "smtp": { "status": "ok" },
+    "auth": { "status": "ok" },
+    "ai": { "status": "ok" }
+  }
 }
 ```
 

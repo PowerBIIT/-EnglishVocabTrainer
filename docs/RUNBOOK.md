@@ -99,7 +99,15 @@ curl https://henio.app/api/health
   "status": "ok",
   "version": "1.0.63",
   "commit": "f7056bc12345",
-  "buildTime": "2026-01-03T10:00:00Z"
+  "buildTime": "2026-01-03T10:00:00Z",
+  "env": "production",
+  "subsystems": {
+    "database": { "status": "ok" },
+    "stripe": { "status": "ok" },
+    "smtp": { "status": "ok" },
+    "auth": { "status": "ok" },
+    "ai": { "status": "ok" }
+  }
 }
 ```
 
@@ -109,6 +117,8 @@ The health check endpoint returns:
 - `version` - from `package.json`
 - `commit` - short git SHA from deploy
 - `buildTime` - UTC timestamp of build
+- `env` - runtime environment (`production`, `development`, etc.)
+- `subsystems` - configuration/status checks for DB, auth, AI, Stripe, SMTP
 
 Pipelines verify these values match the build before marking deploy successful.
 
