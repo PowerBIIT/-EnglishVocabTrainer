@@ -197,6 +197,13 @@ export default function RegisterPage() {
       }
 
       setSuccess(true);
+
+      // Google Ads conversion tracking
+      if (typeof window !== 'undefined' && window.gtag && process.env.NEXT_PUBLIC_GOOGLE_ADS_ID && process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID) {
+        window.gtag('event', 'conversion', {
+          'send_to': `${process.env.NEXT_PUBLIC_GOOGLE_ADS_ID}/${process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID}`,
+        });
+      }
     } catch {
       setError('Network error. Please try again.');
     } finally {
