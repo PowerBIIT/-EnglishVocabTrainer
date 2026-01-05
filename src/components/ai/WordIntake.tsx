@@ -623,10 +623,21 @@ export function WordIntake({
   const [selectedSetOption, setSelectedSetOption] = useState(NEW_SET_OPTION);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    textarea.style.height = 'auto';
+    const lineHeight = 24;
+    const minHeight = lineHeight + 20;
+    const maxHeight = lineHeight * 5 + 20;
+    textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)}px`;
+  };
 
   const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
   const addVocabulary = useVocabStore((state) => state.addVocabulary);
@@ -873,6 +884,9 @@ export function WordIntake({
     setMessages((prev) => [...prev, userMessage]);
     const messageText = input;
     setInput('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
     setIsProcessing(true);
 
     await processMessage(messageText);
@@ -1404,12 +1418,11 @@ export function WordIntake({
     variant === 'onboarding'
       ? t.addOnboarding(selectedWordCount)
       : t.add(selectedWordCount);
-  const compactChatSpacing =
+  const showQuickActions =
     variant === 'chat' &&
     messages.length <= 1 &&
     parsedWords.length === 0 &&
     !isProcessing;
-  const chatMessagesPadding = compactChatSpacing ? 'pb-6' : 'pb-8 sm:pb-10';
 
   const quickActionsPanel = (
     <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -1434,7 +1447,8 @@ export function WordIntake({
         {t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}
       </p>
 
-      <div className="flex gap-2">
+      {/* Wiersz 1: Ikony załączników */}
+      <div className="flex gap-2 mb-2">
         <input
           ref={cameraInputRef}
           type="file"
@@ -1446,11 +1460,11 @@ export function WordIntake({
         <button
           onClick={() => cameraInputRef.current?.click()}
           disabled={isProcessing}
-          className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
+          className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
           title={t.cameraButtonTitle}
         >
-          <Camera size={18} className="sm:size-5" />
-          <span className="hidden sm:inline text-sm">{t.cameraLabel}</span>
+          <Camera size={18} />
+          <span className="hidden sm:inline text-xs">{t.cameraLabel}</span>
         </button>
 
         <input
@@ -1464,11 +1478,11 @@ export function WordIntake({
         <button
           onClick={() => imageInputRef.current?.click()}
           disabled={isProcessing}
-          className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
+          className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
           title={t.imageButtonTitle}
         >
-          <ImageIcon size={18} className="sm:size-5" />
-          <span className="hidden sm:inline text-sm">{t.imageLabel}</span>
+          <ImageIcon size={18} />
+          <span className="hidden sm:inline text-xs">{t.imageLabel}</span>
         </button>
 
         <input
@@ -1482,29 +1496,41 @@ export function WordIntake({
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={isProcessing}
-          className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
+          className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
           title={t.fileButtonTitle}
         >
-          <FileText size={18} className="sm:size-5" />
-          <span className="hidden sm:inline text-sm">{t.fileLabel}</span>
+          <FileText size={18} />
+          <span className="hidden sm:inline text-xs">{t.fileLabel}</span>
         </button>
+      </div>
 
-        <input
-          ref={inputRef}
-          type="text"
+      {/* Wiersz 2: Textarea + Send */}
+      <div className="flex gap-2 items-end">
+        <textarea
+          ref={textareaRef}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+          onChange={(e) => {
+            setInput(e.target.value);
+            adjustTextareaHeight();
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              handleSend();
+            }
+          }}
           placeholder={t.inputPlaceholder}
-          className="flex-1 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-primary-500"
+          className="flex-1 px-3 sm:px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
           disabled={isProcessing}
+          rows={1}
+          style={{ minHeight: '44px', maxHeight: '140px' }}
         />
         <Button
           onClick={handleSend}
           disabled={!input.trim() || isProcessing}
-          className="px-3 sm:px-4"
+          className="px-3 sm:px-4 h-11 flex-shrink-0"
         >
-          <Send size={18} className="sm:size-5" />
+          <Send size={18} />
         </Button>
       </div>
     </>
@@ -1512,14 +1538,8 @@ export function WordIntake({
 
   if (variant === 'chat') {
     return (
-      <div className={cn('flex flex-col min-h-0', !compactChatSpacing && 'flex-1', className)}>
-        <div
-          className={cn(
-            'overflow-y-auto p-4 space-y-4 chat-scroll',
-            !compactChatSpacing && 'flex-1 min-h-0',
-            chatMessagesPadding
-          )}
-        >
+      <div className={cn('flex flex-col min-h-0 flex-1', className)}>
+        <div className="overflow-y-auto p-4 space-y-4 chat-scroll flex-1 min-h-0 pb-8 sm:pb-10">
           {messages.map((message) => (
             <div
               key={message.id}
@@ -1541,7 +1561,14 @@ export function WordIntake({
             </div>
           ))}
 
-          {compactChatSpacing && quickActionsPanel}
+          <div
+            className={cn(
+              'transition-all duration-300 overflow-hidden',
+              showQuickActions ? 'opacity-100 max-h-[200px]' : 'opacity-0 max-h-0'
+            )}
+          >
+            {quickActionsPanel}
+          </div>
 
           {parsedWords.length > 0 && (
             <Card className="mx-2 scroll-mb-[12rem]">
