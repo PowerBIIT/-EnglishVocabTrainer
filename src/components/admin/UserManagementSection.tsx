@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { Toast } from '@/components/ui/Toast';
@@ -16,7 +17,7 @@ type UserManagementSectionProps = {
   page: number;
   limit: number;
   total: number;
-  filters: { status: string; plan: string };
+  filters: { status: string; plan: string; search: string };
   onFiltersChange: (nextFilters: { status: string; plan: string }) => void;
   onPageChange: (page: number) => void;
   onUpdateUser: (userId: string, updates: { plan?: string; accessStatus?: string }) => Promise<void>;
@@ -34,6 +35,7 @@ const userManagementCopy = {
     filters: {
       statusAll: 'Wszystkie statusy',
       planAll: 'Wszystkie plany',
+      searchPlaceholder: 'Szukaj po emailu, imieniu lub ID',
     },
     columns: {
       email: 'Email',
@@ -85,6 +87,7 @@ const userManagementCopy = {
     filters: {
       statusAll: 'All statuses',
       planAll: 'All plans',
+      searchPlaceholder: 'Search by email, name, or ID',
     },
     columns: {
       email: 'Email',
@@ -274,6 +277,16 @@ export function UserManagementSection({
         </div>
         {!hideFilters && (
           <div className="flex flex-wrap gap-3">
+            <div className="min-w-[220px] sm:min-w-[260px]">
+              <Input
+                value={filters.search}
+                placeholder={t.filters.searchPlaceholder}
+                onChange={(event) => {
+                  onFiltersChange({ ...filters, search: event.target.value });
+                  onPageChange(0);
+                }}
+              />
+            </div>
             <Select
               value={filters.status}
               onChange={(event) => {

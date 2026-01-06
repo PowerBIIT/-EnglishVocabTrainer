@@ -7,6 +7,7 @@ const prismaMock = vi.hoisted(() => ({
   userPlan: {
     count: vi.fn(),
     groupBy: vi.fn(),
+    findMany: vi.fn(),
   },
   globalUsage: {
     findUnique: vi.fn(),
@@ -48,6 +49,7 @@ describe('GET /api/admin/stats', () => {
     prismaMock.$transaction.mockReset();
     prismaMock.userPlan.count.mockReset();
     prismaMock.userPlan.groupBy.mockReset();
+    prismaMock.userPlan.findMany.mockReset();
     prismaMock.globalUsage.findUnique.mockReset();
     prismaMock.usageCounter.findMany.mockReset();
     prismaMock.aiRequestLog.aggregate.mockReset();
@@ -81,6 +83,13 @@ describe('GET /api/admin/stats', () => {
       .mockResolvedValueOnce(1)
       .mockResolvedValueOnce(0);
     prismaMock.userPlan.groupBy.mockResolvedValue([]);
+    prismaMock.userPlan.findMany.mockResolvedValue([
+      {
+        userId: 'user-1',
+        plan: 'FREE',
+        user: { email: 'user@example.com', name: 'Ada' },
+      },
+    ]);
     prismaMock.globalUsage.findUnique.mockResolvedValue({
       count: 10,
       units: 1000,
@@ -88,6 +97,7 @@ describe('GET /api/admin/stats', () => {
     prismaMock.usageCounter.findMany
       .mockResolvedValueOnce([
         {
+          userId: 'user-1',
           count: 3,
           units: 300,
           user: { email: 'user@example.com', plan: { plan: 'FREE' } },
@@ -116,5 +126,12 @@ describe('GET /api/admin/stats', () => {
     expect(response.status).toBe(200);
     expect(data.costs.actualMonthToDate).toBe(45);
     expect(data.costs.projectedEndOfMonth).toBe(90);
+    expect(data.aiUsage.activeUsers.items[0]).toMatchObject({
+      email: 'user@example.com',
+      name: 'Ada',
+      plan: 'FREE',
+      usage: { count: 3, units: 300 },
+      remaining: { count: 7, units: 700 },
+    });
   });
 });

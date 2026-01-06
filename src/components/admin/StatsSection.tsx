@@ -1,7 +1,15 @@
 'use client';
 
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Select } from '@/components/ui/Select';
 import { Toast } from '@/components/ui/Toast';
-import type { AdminStats, RevenueStats } from '@/hooks/useAdminData';
+import type {
+  ActiveUserUsageQuery,
+  ActiveUserUsageResponse,
+  AdminStats,
+  RevenueStats,
+} from '@/hooks/useAdminData';
 import { useLanguage } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
@@ -9,6 +17,13 @@ type StatsSectionProps = {
   stats: AdminStats | null;
   loading: boolean;
   error?: string | null;
+  activeUsage?: ActiveUserUsageResponse | null;
+  activeUsageLoading?: boolean;
+  activeUsageError?: string | null;
+  activeUsageQuery?: ActiveUserUsageQuery;
+  onActiveUsageQueryChange?: (nextQuery: ActiveUserUsageQuery) => void;
+  onExportActiveUsage?: (search?: string) => void;
+  onOpenUser?: (user: { id: string; email: string | null; name: string | null }) => void;
   revenueStats?: RevenueStats | null;
   revenueLoading?: boolean;
   revenueError?: string | null;
@@ -34,6 +49,29 @@ const statsCopy = {
     topUsersEmpty: 'Brak użycia AI.',
     planBreakdown: 'Podział planów',
     planBreakdownEmpty: 'Brak danych podziału planów.',
+    activeUsage: 'Użycie aktywnych użytkowników',
+    activeUsageSubtitle: (shown: number, total: number) =>
+      `Wyświetlono ${shown} z ${total} aktywnych użytkowników`,
+    activeUsageLoading: 'Ładowanie użycia aktywnych użytkowników...',
+    activeUsageEmpty: 'Brak aktywnych użytkowników.',
+    activeUsageUnknown: 'Nieznany',
+    activeUsageColumns: {
+      user: 'Użytkownik',
+      plan: 'Plan',
+      requestsUsed: 'Zapytania użyte',
+      requestsRemaining: 'Zapytania pozostałe',
+      tokensUsed: 'Tokeny użyte',
+      tokensRemaining: 'Tokeny pozostałe',
+      actions: 'Akcje',
+    },
+    activeUsageSearch: 'Szukaj po emailu lub imieniu',
+    activeUsageExport: 'Eksport CSV',
+    activeUsageManage: 'Zarządzaj',
+    activeUsagePageLabel: (page: number, totalPages: number, total: number) =>
+      `Strona ${page} z ${totalPages} · ${total} użytkowników`,
+    activeUsageRowsLabel: 'Wiersze',
+    activeUsagePrev: 'Poprzednia',
+    activeUsageNext: 'Następna',
     // Revenue
     revenueTitle: 'Przychody',
     mrr: 'MRR',
@@ -67,6 +105,29 @@ const statsCopy = {
     topUsersEmpty: 'No AI usage yet.',
     planBreakdown: 'Plan breakdown',
     planBreakdownEmpty: 'No plan breakdown data.',
+    activeUsage: 'Active user usage',
+    activeUsageSubtitle: (shown: number, total: number) =>
+      `Showing ${shown} of ${total} active users`,
+    activeUsageLoading: 'Loading active user usage...',
+    activeUsageEmpty: 'No active users.',
+    activeUsageUnknown: 'Unknown',
+    activeUsageColumns: {
+      user: 'User',
+      plan: 'Plan',
+      requestsUsed: 'Requests used',
+      requestsRemaining: 'Requests remaining',
+      tokensUsed: 'Tokens used',
+      tokensRemaining: 'Tokens remaining',
+      actions: 'Actions',
+    },
+    activeUsageSearch: 'Search by email or name',
+    activeUsageExport: 'Export CSV',
+    activeUsageManage: 'Manage',
+    activeUsagePageLabel: (page: number, totalPages: number, total: number) =>
+      `Page ${page} of ${totalPages} · ${total} users`,
+    activeUsageRowsLabel: 'Rows',
+    activeUsagePrev: 'Previous',
+    activeUsageNext: 'Next',
     // Revenue
     revenueTitle: 'Revenue',
     mrr: 'MRR',
@@ -87,6 +148,13 @@ export function StatsSection({
   stats,
   loading,
   error,
+  activeUsage,
+  activeUsageLoading,
+  activeUsageError,
+  activeUsageQuery,
+  onActiveUsageQueryChange,
+  onExportActiveUsage,
+  onOpenUser,
   revenueStats,
   revenueLoading,
   revenueError,
@@ -95,6 +163,8 @@ export function StatsSection({
   const t = language === 'pl' ? statsCopy.pl : statsCopy.en;
   const locale = language === 'pl' ? 'pl-PL' : 'en-US';
   const formatNumber = (value: number) => new Intl.NumberFormat(locale).format(value);
+  const formatRemaining = (value: number | null) =>
+    value === null ? '∞' : formatNumber(value);
   const formatUsd = (value: number) =>
     new Intl.NumberFormat(locale, {
       style: 'currency',
@@ -115,10 +185,42 @@ export function StatsSection({
   }
 
   const usage = stats.aiUsage.global;
+  const activeUsageData =
+    activeUsage ??
+    ({
+      period: stats.meta.period,
+      total: stats.aiUsage.activeUsers.total,
+      page: 0,
+      limit: stats.aiUsage.activeUsers.limit,
+      items: stats.aiUsage.activeUsers.items,
+    } satisfies ActiveUserUsageResponse);
+  const activeQuery =
+    activeUsageQuery ??
+    ({
+      page: activeUsageData.page,
+      limit: activeUsageData.limit,
+      search: '',
+    } satisfies ActiveUserUsageQuery);
+  const activeUsersShown = activeUsageData.items.length;
+  const activeUsersTotal = activeUsageData.total;
+  const activeUsersTotalPages = Math.max(
+    1,
+    Math.ceil(activeUsageData.total / Math.max(1, activeUsageData.limit))
+  );
+  const canUpdateActiveUsage = Boolean(onActiveUsageQueryChange);
 
   const ratio = (value: number, max: number) => {
     if (!Number.isFinite(max) || max === 0) return 0;
     return Math.min(100, Math.round((value / max) * 100));
+  };
+
+  const getUserLabel = (email: string | null, name: string | null) =>
+    email ?? name ?? t.activeUsageUnknown;
+  const getUserSubLabel = (email: string | null, name: string | null) =>
+    email && name ? name : null;
+  const updateActiveUsage = (next: Partial<ActiveUserUsageQuery>) => {
+    if (!onActiveUsageQueryChange) return;
+    onActiveUsageQueryChange({ ...activeQuery, ...next });
   };
 
   return (
@@ -269,6 +371,167 @@ export function StatsSection({
             )}
           </div>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-1">
+            <p className="text-sm text-slate-500">{t.activeUsage}</p>
+            <span className="text-xs text-slate-400">
+              {t.activeUsageSubtitle(activeUsersShown, activeUsersTotal)}
+            </span>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+            <div className="min-w-[220px] sm:min-w-[260px]">
+              <Input
+                value={activeQuery.search}
+                placeholder={t.activeUsageSearch}
+                disabled={!canUpdateActiveUsage}
+                onChange={(event) =>
+                  updateActiveUsage({ search: event.target.value, page: 0 })
+                }
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400">{t.activeUsageRowsLabel}</span>
+              <Select
+                value={String(activeQuery.limit)}
+                disabled={!canUpdateActiveUsage}
+                className="w-20"
+                onChange={(event) =>
+                  updateActiveUsage({ limit: Number(event.target.value), page: 0 })
+                }
+              >
+                {[10, 20, 50].map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => onExportActiveUsage?.(activeQuery.search)}
+              disabled={!onExportActiveUsage}
+            >
+              {t.activeUsageExport}
+            </Button>
+          </div>
+        </div>
+
+        {activeUsageError && <Toast variant="error" message={activeUsageError} />}
+
+        {activeUsageLoading && activeUsageData.items.length === 0 ? (
+          <div className="mt-3 text-sm text-slate-500">{t.activeUsageLoading}</div>
+        ) : activeUsageData.items.length === 0 ? (
+          <div className="mt-3 text-sm text-slate-500">{t.activeUsageEmpty}</div>
+        ) : (
+          <div className="mt-3 overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="text-left text-slate-500">
+                <tr>
+                  <th className="px-2 py-1">{t.activeUsageColumns.user}</th>
+                  <th className="px-2 py-1">{t.activeUsageColumns.plan}</th>
+                  <th className="px-2 py-1 text-right">{t.activeUsageColumns.requestsUsed}</th>
+                  <th className="px-2 py-1 text-right">
+                    {t.activeUsageColumns.requestsRemaining}
+                  </th>
+                  <th className="px-2 py-1 text-right">{t.activeUsageColumns.tokensUsed}</th>
+                  <th className="px-2 py-1 text-right">
+                    {t.activeUsageColumns.tokensRemaining}
+                  </th>
+                  {onOpenUser && (
+                    <th className="px-2 py-1 text-right">
+                      {t.activeUsageColumns.actions}
+                    </th>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="text-slate-700 dark:text-slate-200">
+                {activeUsageData.items.map((user) => {
+                  const userLabel = getUserLabel(user.email, user.name);
+                  const subLabel = getUserSubLabel(user.email, user.name);
+                  return (
+                    <tr
+                      key={user.id}
+                      className="border-t border-slate-100 dark:border-slate-800"
+                    >
+                      <td className="px-2 py-2">
+                        <div className="font-medium break-all sm:break-normal">
+                          {userLabel}
+                        </div>
+                        {subLabel && <div className="text-xs text-slate-400">{subLabel}</div>}
+                      </td>
+                      <td className="px-2 py-2">{user.plan}</td>
+                      <td className="px-2 py-2 text-right">
+                        {formatNumber(user.usage.count)}
+                      </td>
+                      <td className="px-2 py-2 text-right">
+                        {formatRemaining(user.remaining.count)}
+                      </td>
+                      <td className="px-2 py-2 text-right">
+                        {formatNumber(user.usage.units)}
+                      </td>
+                      <td className="px-2 py-2 text-right">
+                        {formatRemaining(user.remaining.units)}
+                      </td>
+                      {onOpenUser && (
+                        <td className="px-2 py-2 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              onOpenUser({ id: user.id, email: user.email, name: user.name })
+                            }
+                          >
+                            {t.activeUsageManage}
+                          </Button>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {activeUsageData.total > 0 && (
+          <div className="mt-4 flex flex-col gap-2 text-sm text-slate-500 dark:text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+            <span>
+              {t.activeUsagePageLabel(
+                activeQuery.page + 1,
+                activeUsersTotalPages,
+                activeUsageData.total
+              )}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => updateActiveUsage({ page: Math.max(0, activeQuery.page - 1) })}
+                disabled={!canUpdateActiveUsage || activeQuery.page === 0}
+              >
+                {t.activeUsagePrev}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  updateActiveUsage({
+                    page: Math.min(activeUsersTotalPages - 1, activeQuery.page + 1),
+                  })
+                }
+                disabled={
+                  !canUpdateActiveUsage || activeQuery.page + 1 >= activeUsersTotalPages
+                }
+              >
+                {t.activeUsageNext}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Revenue Section */}
