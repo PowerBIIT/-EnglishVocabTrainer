@@ -23,6 +23,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const statusParam = searchParams.get('status');
   const planParam = searchParams.get('plan');
+  const searchParam = searchParams.get('search')?.trim();
   const page = Math.max(0, Math.floor(parseNumber(searchParams.get('page'), 0)));
   const limitRaw = Math.floor(parseNumber(searchParams.get('limit'), 20));
   const limit = Math.min(100, Math.max(1, limitRaw));
@@ -39,6 +40,13 @@ export async function GET(request: Request) {
     if (Object.keys(planFilter).length > 0) {
       where.plan = planFilter;
     }
+  }
+  if (searchParam) {
+    where.OR = [
+      { id: { contains: searchParam, mode: 'insensitive' } },
+      { email: { contains: searchParam, mode: 'insensitive' } },
+      { name: { contains: searchParam, mode: 'insensitive' } },
+    ];
   }
 
   const [total, users] = await prisma.$transaction([

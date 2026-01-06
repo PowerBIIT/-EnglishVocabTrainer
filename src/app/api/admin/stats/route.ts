@@ -6,6 +6,7 @@ import { getGlobalLimits, getPlanLimits } from '@/lib/plans';
 import { requireAdmin } from '@/middleware/adminAuth';
 
 const AI_FEATURE = 'ai';
+const ACTIVE_USERS_LIMIT = 50;
 
 export async function GET() {
   const session = await requireAdmin();
@@ -30,6 +31,7 @@ export async function GET() {
     globalUsage,
     usageByUser,
     topUsers,
+    activeUsers,
   ] = await prisma.$transaction([
     prisma.userPlan.count({ where: { accessStatus: AccessStatus.ACTIVE } }),
     prisma.userPlan.count({ where: { accessStatus: AccessStatus.WAITLISTED } }),
@@ -70,6 +72,19 @@ export async function GET() {
         },
       },
     }),
+    prisma.userPlan.findMany({
+      where: { accessStatus: AccessStatus.ACTIVE },
+      select: {
+        userId: true,
+        plan: true,
+        user: {
+          select: {
+            email: true,
+            name: true,
+          },
+        },
+      },
+    }),
   ]);
 
   const aiCostTotals = await prisma.aiRequestLog.aggregate({
@@ -84,7 +99,16 @@ export async function GET() {
     },
   });
 
-  const globalLimits = await getGlobalLimits();
+  const [globalLimits, freeLimits, proLimits] = await Promise.all([
+    getGlobalLimits(),
+    getPlanLimits(Plan.FREE),
+    getPlanLimits(Plan.PRO),
+  ]);
+
+  const planLimitsByPlan = {
+    [Plan.FREE]: freeLimits,
+    [Plan.PRO]: proLimits,
+  };
 
   const planTotals = new Map<Plan, { count: number; units: number }>();
   for (const entry of usageByUser) {
@@ -96,19 +120,49 @@ export async function GET() {
     });
   }
 
-  const byPlan = await Promise.all(
-    [Plan.FREE, Plan.PRO].map(async (plan) => {
-      const totals = planTotals.get(plan) ?? { count: 0, units: 0 };
-      const limits = await getPlanLimits(plan);
-      return {
-        plan,
-        count: totals.count,
-        units: totals.units,
-        maxRequests: limits.maxRequests,
-        maxUnits: limits.maxUnits,
-      };
-    })
+  const byPlan = [Plan.FREE, Plan.PRO].map((plan) => {
+    const totals = planTotals.get(plan) ?? { count: 0, units: 0 };
+    const limits = planLimitsByPlan[plan];
+    return {
+      plan,
+      count: totals.count,
+      units: totals.units,
+      maxRequests: limits.maxRequests,
+      maxUnits: limits.maxUnits,
+    };
+  });
+
+  const usageByUserMap = new Map(
+    usageByUser.map((entry) => [entry.userId, { count: entry.count, units: entry.units }])
   );
+  const activeUsersUsage = activeUsers.map((entry) => {
+    const usage = usageByUserMap.get(entry.userId);
+    const usedCount = usage?.count ?? 0;
+    const usedUnits = usage?.units ?? 0;
+    const limits = planLimitsByPlan[entry.plan];
+    const remainingCount = Number.isFinite(limits.maxRequests)
+      ? Math.max(0, limits.maxRequests - usedCount)
+      : null;
+    const remainingUnits = Number.isFinite(limits.maxUnits)
+      ? Math.max(0, limits.maxUnits - usedUnits)
+      : null;
+    return {
+      id: entry.userId,
+      email: entry.user?.email ?? null,
+      name: entry.user?.name ?? null,
+      plan: entry.plan,
+      usage: { count: usedCount, units: usedUnits },
+      remaining: { count: remainingCount, units: remainingUnits },
+    };
+  });
+  activeUsersUsage.sort((a, b) => {
+    if (b.usage.units !== a.usage.units) return b.usage.units - a.usage.units;
+    if (b.usage.count !== a.usage.count) return b.usage.count - a.usage.count;
+    const left = a.email ?? a.name ?? '';
+    const right = b.email ?? b.name ?? '';
+    return left.localeCompare(right);
+  });
+  const activeUsersPreview = activeUsersUsage.slice(0, ACTIVE_USERS_LIMIT);
 
   const totalUnits = globalUsage?.units ?? 0;
   const actualMonthToDate = aiCostTotals._sum.totalCost ?? 0;
@@ -140,6 +194,11 @@ export async function GET() {
         count: entry.count,
         units: entry.units,
       })),
+      activeUsers: {
+        total: activeCount,
+        limit: ACTIVE_USERS_LIMIT,
+        items: activeUsersPreview,
+      },
     },
     costs: {
       actualMonthToDate,

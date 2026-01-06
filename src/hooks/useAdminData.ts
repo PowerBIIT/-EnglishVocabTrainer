@@ -49,8 +49,43 @@ export type AdminStats = {
       maxUnits: number;
     }[];
     topUsers: { email: string; count: number; units: number }[];
+    activeUsers: {
+      total: number;
+      limit: number;
+      items: Array<{
+        id: string;
+        email: string | null;
+        name: string | null;
+        plan: 'FREE' | 'PRO';
+        usage: { count: number; units: number };
+        remaining: { count: number | null; units: number | null };
+      }>;
+    };
   };
   costs: { actualMonthToDate: number; projectedEndOfMonth: number };
+};
+
+export type ActiveUserUsage = {
+  id: string;
+  email: string | null;
+  name: string | null;
+  plan: 'FREE' | 'PRO';
+  usage: { count: number; units: number };
+  remaining: { count: number | null; units: number | null };
+};
+
+export type ActiveUserUsageResponse = {
+  period: string;
+  total: number;
+  page: number;
+  limit: number;
+  items: ActiveUserUsage[];
+};
+
+export type ActiveUserUsageQuery = {
+  page: number;
+  limit: number;
+  search: string;
 };
 
 export type AdminSubscription = {
@@ -100,6 +135,7 @@ type UsersQuery = {
   limit: number;
   status: string;
   plan: string;
+  search: string;
 };
 
 type SubscriptionsQuery = {
@@ -142,6 +178,16 @@ export function useAdminData(enabled: boolean = true) {
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
 
+  const [activeUsage, setActiveUsage] = useState<ActiveUserUsageResponse | null>(null);
+  const [activeUsageLoading, setActiveUsageLoading] = useState(true);
+  const [activeUsageError, setActiveUsageError] = useState<string | null>(null);
+
+  const [activeUsageQuery, setActiveUsageQuery] = useState<ActiveUserUsageQuery>({
+    page: 0,
+    limit: 20,
+    search: '',
+  });
+
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [usersTotal, setUsersTotal] = useState(0);
   const [usersLoading, setUsersLoading] = useState(true);
@@ -152,6 +198,7 @@ export function useAdminData(enabled: boolean = true) {
     limit: 20,
     status: 'all',
     plan: 'all',
+    search: '',
   });
 
   // Subscriptions state
@@ -197,6 +244,9 @@ export function useAdminData(enabled: boolean = true) {
     if (usersQuery.plan !== 'all') {
       params.set('plan', usersQuery.plan);
     }
+    if (usersQuery.search.trim()) {
+      params.set('search', usersQuery.search.trim());
+    }
     return params.toString();
   }, [usersQuery]);
 
@@ -212,6 +262,16 @@ export function useAdminData(enabled: boolean = true) {
     }
     return params.toString();
   }, [subscriptionsQuery]);
+
+  const buildActiveUsageQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('page', String(activeUsageQuery.page));
+    params.set('limit', String(activeUsageQuery.limit));
+    if (activeUsageQuery.search.trim()) {
+      params.set('search', activeUsageQuery.search.trim());
+    }
+    return params.toString();
+  }, [activeUsageQuery]);
 
   const loadConfig = useCallback(async () => {
     if (!enabled) return;
@@ -240,6 +300,30 @@ export function useAdminData(enabled: boolean = true) {
       setStatsLoading(false);
     }
   }, [enabled]);
+
+  const loadActiveUsage = useCallback(async () => {
+    if (!enabled) return;
+    setActiveUsageLoading(true);
+    setActiveUsageError(null);
+    try {
+      const data = await fetchJson<ActiveUserUsageResponse>(
+        `/api/admin/stats/active-users?${buildActiveUsageQuery}`
+      );
+      setActiveUsage(data);
+      setActiveUsageQuery((prev) => {
+        if (prev.page === data.page && prev.limit === data.limit) {
+          return prev;
+        }
+        return { ...prev, page: data.page, limit: data.limit };
+      });
+    } catch (error) {
+      setActiveUsageError(
+        error instanceof Error ? error.message : 'Failed to load active usage'
+      );
+    } finally {
+      setActiveUsageLoading(false);
+    }
+  }, [buildActiveUsageQuery, enabled]);
 
   const loadUsers = useCallback(async () => {
     if (!enabled) return;
@@ -372,6 +456,11 @@ export function useAdminData(enabled: boolean = true) {
 
   useEffect(() => {
     if (!enabled) return;
+    loadActiveUsage();
+  }, [enabled, loadActiveUsage]);
+
+  useEffect(() => {
+    if (!enabled) return;
     loadUsers();
   }, [enabled, loadUsers]);
 
@@ -421,18 +510,18 @@ export function useAdminData(enabled: boolean = true) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       });
-      await Promise.all([loadUsers(), loadStats()]);
+      await Promise.all([loadUsers(), loadStats(), loadActiveUsage()]);
     },
-    [enabled, loadStats, loadUsers]
+    [enabled, loadStats, loadUsers, loadActiveUsage]
   );
 
   const deleteUser = useCallback(
     async (userId: string) => {
       if (!enabled) return;
       await fetchJson(`/api/admin/users/${userId}`, { method: 'DELETE' });
-      await Promise.all([loadUsers(), loadStats()]);
+      await Promise.all([loadUsers(), loadStats(), loadActiveUsage()]);
     },
-    [enabled, loadStats, loadUsers]
+    [enabled, loadStats, loadUsers, loadActiveUsage]
   );
 
   const syncSubscription = useCallback(
@@ -590,6 +679,20 @@ export function useAdminData(enabled: boolean = true) {
     [enabled]
   );
 
+  const exportActiveUsage = useCallback(
+    async (search?: string) => {
+      if (!enabled) return;
+      const params = new URLSearchParams();
+      if (search && search.trim()) {
+        params.set('search', search.trim());
+      }
+      params.set('export', '1');
+      const url = `/api/admin/stats/active-users?${params.toString()}`;
+      window.open(url, '_blank');
+    },
+    [enabled]
+  );
+
   // Pricing actions
   const createPrice = useCallback(
     async (data: CreatePriceData) => {
@@ -661,6 +764,11 @@ export function useAdminData(enabled: boolean = true) {
     stats,
     statsLoading,
     statsError,
+    activeUsage,
+    activeUsageLoading,
+    activeUsageError,
+    activeUsageQuery,
+    setActiveUsageQuery,
     users,
     usersTotal,
     usersLoading,
@@ -671,6 +779,7 @@ export function useAdminData(enabled: boolean = true) {
     updateUser,
     deleteUser,
     refreshStats: loadStats,
+    refreshActiveUsage: loadActiveUsage,
     refreshUsers: loadUsers,
     // Subscriptions
     subscriptions,
@@ -691,6 +800,7 @@ export function useAdminData(enabled: boolean = true) {
     refundSubscription,
     getSubscriptionHistory,
     exportSubscriptions,
+    exportActiveUsage,
     refreshSubscriptions: loadSubscriptions,
     // Revenue
     revenueStats,

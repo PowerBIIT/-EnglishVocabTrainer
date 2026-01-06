@@ -70,7 +70,7 @@ export default function AdminPage() {
   const { data: session, status } = useSession();
   const isAdmin = Boolean(session?.user?.isAdmin);
   const [activeTab, setActiveTab] = useState<AdminTab>('config');
-  const savedUsersState = useRef({ status: 'all', plan: 'all', page: 0 });
+  const savedUsersState = useRef({ status: 'all', plan: 'all', page: 0, search: '' });
   const language = useLanguage();
   const t = language === 'pl' ? adminCopy.pl : adminCopy.en;
   const updateSettings = useVocabStore((state) => state.updateSettings);
@@ -94,6 +94,11 @@ export default function AdminPage() {
     stats,
     statsLoading,
     statsError,
+    activeUsage,
+    activeUsageLoading,
+    activeUsageError,
+    activeUsageQuery,
+    setActiveUsageQuery,
     users,
     usersTotal,
     usersLoading,
@@ -122,6 +127,7 @@ export default function AdminPage() {
     refundSubscription,
     getSubscriptionHistory,
     exportSubscriptions,
+    exportActiveUsage,
     // Revenue
     revenueStats,
     revenueLoading,
@@ -150,12 +156,14 @@ export default function AdminPage() {
         status: usersQuery.status,
         plan: usersQuery.plan,
         page: usersQuery.page,
+        search: usersQuery.search,
       };
       setUsersQuery((prev) => ({
         ...prev,
         status: 'WAITLISTED',
         plan: 'all',
         page: 0,
+        search: '',
       }));
     } else if (activeTab === 'requests') {
       setUsersQuery((prev) => ({
@@ -164,6 +172,18 @@ export default function AdminPage() {
       }));
     }
     setActiveTab(nextTab);
+  };
+
+  const handleActiveUserFocus = (user: { id: string; email: string | null; name: string | null }) => {
+    const search = user.email ?? user.id ?? user.name ?? '';
+    setActiveTab('users');
+    setUsersQuery((prev) => ({
+      ...prev,
+      status: 'all',
+      plan: 'all',
+      page: 0,
+      search,
+    }));
   };
 
   useEffect(() => {
@@ -261,7 +281,11 @@ export default function AdminPage() {
             page={usersQuery.page}
             limit={usersQuery.limit}
             total={usersTotal}
-            filters={{ status: usersQuery.status, plan: usersQuery.plan }}
+            filters={{
+              status: usersQuery.status,
+              plan: usersQuery.plan,
+              search: usersQuery.search,
+            }}
             onFiltersChange={(nextFilters) =>
               setUsersQuery((prev) => ({
                 ...prev,
@@ -288,7 +312,11 @@ export default function AdminPage() {
             page={usersQuery.page}
             limit={usersQuery.limit}
             total={usersTotal}
-            filters={{ status: usersQuery.status, plan: usersQuery.plan }}
+            filters={{
+              status: usersQuery.status,
+              plan: usersQuery.plan,
+              search: usersQuery.search,
+            }}
             onFiltersChange={(nextFilters) =>
               setUsersQuery((prev) => ({
                 ...prev,
@@ -376,6 +404,13 @@ export default function AdminPage() {
                 stats={stats}
                 loading={statsLoading}
                 error={statsError}
+                activeUsage={activeUsage}
+                activeUsageLoading={activeUsageLoading}
+                activeUsageError={activeUsageError}
+                activeUsageQuery={activeUsageQuery}
+                onActiveUsageQueryChange={setActiveUsageQuery}
+                onExportActiveUsage={exportActiveUsage}
+                onOpenUser={handleActiveUserFocus}
                 revenueStats={revenueStats}
                 revenueLoading={revenueLoading}
                 revenueError={revenueError}
