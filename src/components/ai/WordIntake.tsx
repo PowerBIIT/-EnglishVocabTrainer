@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
 import { useVocabStore } from '@/lib/store';
 import { useLanguage } from '@/lib/i18n';
+import { trackEvent } from '@/lib/analyticsClient';
 import { cn, formatDate, generateId } from '@/lib/utils';
 import { parseVocabularyInput } from '@/lib/parseVocabulary';
 import { getCategoryLabel } from '@/lib/categories';
@@ -629,6 +630,7 @@ export function WordIntake({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const lastIntakeSourceRef = useRef<string>('');
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -989,11 +991,24 @@ export function WordIntake({
         text.match(/(A1|A2|B1|B2)/i);
       const level = levelMatch ? levelMatch[1].toUpperCase() : 'A2';
 
+      lastIntakeSourceRef.current = 'prompt';
+      trackEvent({
+        eventName: 'vocab_generate_words',
+        feature: 'word_intake',
+        source: 'prompt',
+        metadata: { count, level, variant },
+      });
+
       await generateWordsWithAI(count, topic, level);
       return;
     }
 
     if (wantsStats) {
+      trackEvent({
+        eventName: 'vocab_stats_viewed',
+        feature: 'word_intake',
+        metadata: { total: vocabulary.length, categories: categories.length },
+      });
       const summaryIntro = t.statsIntro(vocabulary.length, categories.length);
       const categoryLines = categories
         .map((cat) => {
@@ -1130,6 +1145,18 @@ export function WordIntake({
   const parseTextWithAI = async (text: string) => {
     const localWords = parseVocabularyInput(text);
 
+    lastIntakeSourceRef.current = 'text';
+    trackEvent({
+      eventName: 'vocab_parse_text',
+      feature: 'word_intake',
+      source: 'text',
+      metadata: {
+        characters: text.length,
+        localMatches: localWords.length,
+        variant,
+      },
+    });
+
     if (localWords.length > 0) {
       try {
         const response = await fetch('/api/ai/parse-text', {
@@ -1178,6 +1205,16 @@ export function WordIntake({
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) return;
+
+    const source = event.target === cameraInputRef.current ? 'camera' : 'image';
+    const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+    lastIntakeSourceRef.current = source;
+    trackEvent({
+      eventName: 'vocab_extract_image',
+      feature: 'word_intake',
+      source,
+      metadata: { files: files.length, totalBytes, variant },
+    });
 
     setIsProcessing(true);
 
@@ -1279,6 +1316,15 @@ export function WordIntake({
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) return;
 
+    const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
+    lastIntakeSourceRef.current = 'file';
+    trackEvent({
+      eventName: 'vocab_extract_file',
+      feature: 'word_intake',
+      source: 'file',
+      metadata: { files: files.length, totalBytes, variant },
+    });
+
     setIsProcessing(true);
 
     const collectedWords: ParsedWord[] = [];
@@ -1376,6 +1422,7 @@ export function WordIntake({
     let targetSetId = '';
     let targetSetName = '';
     const existingSet = sets.find((set) => set.id === selectedSetOption);
+    const createdNewSet = selectedSetOption === NEW_SET_OPTION || !existingSet;
     if (selectedSetOption !== NEW_SET_OPTION && existingSet) {
       targetSetId = existingSet.id;
       targetSetName = existingSet.name;
@@ -1411,6 +1458,19 @@ export function WordIntake({
     addAssistantMessage(
       t.addedWords(selectedWords.length, targetSetName, suggestedCategory || t.defaultCategory)
     );
+
+    const intakeSource = lastIntakeSourceRef.current || 'manual';
+    trackEvent({
+      eventName: 'vocab_words_added',
+      feature: 'word_intake',
+      source: intakeSource,
+      metadata: {
+        count: selectedWords.length,
+        newSet: createdNewSet,
+        variant,
+      },
+    });
+    lastIntakeSourceRef.current = '';
 
     onWordsAdded?.({
       setId: targetSetId,

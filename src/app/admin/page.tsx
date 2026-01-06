@@ -10,6 +10,7 @@ import { UserManagementSection } from '@/components/admin/UserManagementSection'
 import { SubscriptionManagementSection } from '@/components/admin/SubscriptionManagementSection';
 import { PricingSection } from '@/components/admin/PricingSection';
 import { AiAnalyticsSection } from '@/components/admin/AiAnalyticsSection';
+import { BehaviorAnalyticsSection } from '@/components/admin/BehaviorAnalyticsSection';
 import { RevenueStrategyChatSection } from '@/components/admin/RevenueStrategyChatSection';
 import { Badge } from '@/components/ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
@@ -18,7 +19,16 @@ import { useLanguage } from '@/lib/i18n';
 import { useVocabStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 
-type AdminTab = 'config' | 'ai' | 'users' | 'requests' | 'subscriptions' | 'pricing' | 'stats' | 'ai-analytics';
+type AdminTab =
+  | 'config'
+  | 'ai'
+  | 'users'
+  | 'requests'
+  | 'subscriptions'
+  | 'pricing'
+  | 'stats'
+  | 'ai-analytics'
+  | 'behavior';
 
 const adminCopy = {
   pl: {
@@ -37,6 +47,7 @@ const adminCopy = {
       pricing: 'Cennik',
       stats: 'Statystyki',
       'ai-analytics': 'AI Analytics',
+      behavior: 'Zachowania',
     },
     requestsTitle: 'Zgłoszenia',
     requestsDescription: 'Użytkownicy oczekujący na dostęp.',
@@ -58,6 +69,7 @@ const adminCopy = {
       pricing: 'Pricing',
       stats: 'Statistics',
       'ai-analytics': 'AI Analytics',
+      behavior: 'Behavior',
     },
     requestsTitle: 'Requests',
     requestsDescription: 'Users waiting for access.',
@@ -258,6 +270,7 @@ export default function AdminPage() {
           <TabsTrigger value="pricing">{t.tabs.pricing}</TabsTrigger>
           <TabsTrigger value="stats">{t.tabs.stats}</TabsTrigger>
           <TabsTrigger value="ai-analytics">{t.tabs['ai-analytics']}</TabsTrigger>
+          <TabsTrigger value="behavior">{t.tabs.behavior}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="config">
@@ -424,6 +437,10 @@ export default function AdminPage() {
 
         <TabsContent value="ai-analytics">
           <AiAnalyticsSection />
+        </TabsContent>
+
+        <TabsContent value="behavior">
+          <BehaviorAnalyticsSection />
         </TabsContent>
       </Tabs>
     </div>
