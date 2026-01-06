@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/middleware/adminAuth';
 import { GeminiService, parseAIResponse } from '@/lib/gemini';
-import { mapGeminiError } from '@/lib/aiErrors';
+import { mapGeminiError, classifyGeminiError } from '@/lib/aiErrors';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { getPromptCatalog, getPromptDefinition, type PromptId } from '@/lib/aiPromptCatalog';
+import { logAiRequest, logAiRequestError } from '@/lib/aiTelemetry';
 import { recordAiUsage } from '@/lib/aiUsage';
 
 type AssistRequest = {
@@ -160,15 +161,27 @@ export async function POST(request: Request) {
   });
 
   try {
+    const startTime = Date.now();
     const response = await gemini.generateWithMetadata(assistPrompt, {
       temperature: 0.6,
       maxOutputTokens: 512,
       model,
       responseMimeType: 'application/json',
     });
+    const durationMs = Date.now() - startTime;
     const totalTokens = response.usage.promptTokenCount + response.usage.candidatesTokenCount;
 
     await recordAiUsage({ userId: session.user.id, units: totalTokens }).catch(console.error);
+
+    logAiRequest({
+      userId: session.user.id,
+      feature: 'admin-assist',
+      model: response.model,
+      inputTokens: response.usage.promptTokenCount,
+      outputTokens: response.usage.candidatesTokenCount,
+      durationMs,
+      success: true,
+    }).catch(console.error);
 
     const parsed = parseAssistResponse(response.content);
     const suggestedOverlay =
@@ -181,6 +194,17 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ suggestedOverlay, notes });
   } catch (error) {
+    const errorType =
+      error instanceof Error ? classifyGeminiError(500, error.message) : 'unknown';
+    logAiRequestError({
+      userId: session.user.id,
+      feature: 'admin-assist',
+      model: 'unknown',
+      durationMs: 0,
+      errorType,
+      errorMessage: error instanceof Error ? error.message : 'Unknown error',
+    }).catch(console.error);
+
     const mapped = mapGeminiError(error);
     if (mapped) {
       return NextResponse.json(mapped.body, { status: mapped.status });
