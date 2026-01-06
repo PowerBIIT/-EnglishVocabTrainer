@@ -124,6 +124,11 @@ AI telemetry:
 4. Existing active users -> remain ACTIVE
 5. New users -> capacity check (`MAX_ACTIVE_USERS`)
 
+### Email Verification Cleanup
+- Credential-based signups require email verification.
+- Unverified users are deleted after the verification link TTL (`EMAIL_VERIFY_TTL_HOURS`, default 24h).
+- Cleanup runs via the hourly waitlist cron endpoint.
+
 ### Middleware (`middleware.ts`)
 - Redirects unauthenticated users to `/login`
 - Enforces onboarding flow and waitlist gates

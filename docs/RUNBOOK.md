@@ -39,7 +39,7 @@
 | `ci.yml` | PRs to `main` | Lint → Typecheck → Test → Build |
 | `deploy-uat.yml` | Push to `main` | Full deploy with DB reset + E2E tests |
 | `deploy-prd.yml` | Manual dispatch | Production deploy with migrations |
-| `waitlist-cron.yml` | Hourly (`:00`) | Auto-approve waitlist entries |
+| `waitlist-cron.yml` | Hourly (`:00`) | Auto-approve waitlist entries + cleanup unverified signups |
 
 ### UAT Pipeline Steps
 
@@ -210,6 +210,11 @@ Alerts are sent to `ADMIN_EMAILS` via SMTP (if configured) and to the webhook UR
 - `MAX_ACTIVE_USERS` - Maximum concurrent active users
 
 > **Note:** Azure app settings are overwritten by deploys; update env vars via GitHub Secrets. App Config values (Admin → Config) live in the DB and persist across deploys.
+
+### Email Verification Cleanup
+
+- Unverified credential-based users are deleted after the verification TTL (`EMAIL_VERIFY_TTL_HOURS`, default 24h).
+- Cleanup runs hourly via `waitlist-cron.yml`.
 
 ---
 

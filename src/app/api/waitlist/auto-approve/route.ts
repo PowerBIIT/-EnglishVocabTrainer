@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { autoApproveWaitlistAndNotify } from '@/lib/waitlist';
+import { cleanupUnverifiedUsers } from '@/lib/emailVerificationCleanup';
 
 const getSecret = () => process.env.WAITLIST_CRON_SECRET?.trim();
 
@@ -33,7 +34,8 @@ const handleAutoApprove = async (request: NextRequest) => {
 
   try {
     const approved = await autoApproveWaitlistAndNotify();
-    return NextResponse.json({ ok: true, approved: approved.length });
+    const cleanup = await cleanupUnverifiedUsers();
+    return NextResponse.json({ ok: true, approved: approved.length, cleanup });
   } catch (error) {
     console.error('Waitlist auto-approve failed:', error);
     return NextResponse.json({ error: 'waitlist_auto_approve_failed' }, { status: 500 });
