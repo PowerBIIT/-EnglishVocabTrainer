@@ -79,6 +79,10 @@ export function Navigation() {
   const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'auto' : 'light';
   const ThemeIcon =
     theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor;
+  const handleToggleTheme = () =>
+    updateSettings('general', {
+      theme: nextTheme,
+    });
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 md:top-0 md:left-0 md:right-auto md:h-screen md:w-24 bg-white/80 dark:bg-slate-900/80 border-t md:border-t-0 md:border-r border-primary-100/50 dark:border-primary-900/50 backdrop-blur-xl z-50 pb-[env(safe-area-inset-bottom)] md:pb-0 shadow-lg shadow-primary-500/5">
@@ -89,6 +93,18 @@ export function Navigation() {
               H
             </div>
             <span className="text-xs font-medium bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{labels.brand}</span>
+            <button
+              type="button"
+              onClick={handleToggleTheme}
+              title={`${labels.theme}: ${themeLabel}`}
+              aria-label={`${labels.theme}: ${themeLabel}`}
+              className={cn(
+                'mt-1 flex items-center justify-center w-9 h-9 rounded-xl transition-all',
+                'text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-900/20'
+              )}
+            >
+              <ThemeIcon size={18} />
+            </button>
           </div>
           <ul className="flex justify-around items-center h-[calc(4rem+env(safe-area-inset-bottom))] md:h-auto md:flex-col md:gap-3 md:mt-4 w-full">
             {items.map(({ href, icon: Icon, key }) => {
@@ -111,25 +127,6 @@ export function Navigation() {
                 </li>
               );
             })}
-            <li>
-              <button
-                type="button"
-                onClick={() =>
-                  updateSettings('general', {
-                    theme: nextTheme,
-                  })
-                }
-                title={`${labels.theme}: ${themeLabel}`}
-                aria-label={`${labels.theme}: ${themeLabel}`}
-                className={cn(
-                  'flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all',
-                  'text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-900/20'
-                )}
-              >
-                <ThemeIcon size={22} />
-                <span className="text-[11px] font-medium">{labels.theme}</span>
-              </button>
-            </li>
           </ul>
         </div>
       </div>
