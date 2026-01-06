@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useLanguage } from '@/lib/i18n';
+import { normalizePathFeature, trackEvent } from '@/lib/analyticsClient';
 
 const PUBLIC_PATHS = new Set(['/login', '/register', '/forgot-password', '/reset-password', '/onboarding', '/waitlist', '/privacy', '/terms']);
 
@@ -55,6 +56,16 @@ export function ClientLayout() {
     session?.user?.onboardingComplete,
     status,
   ]);
+
+  useEffect(() => {
+    if (isPublic || status !== 'authenticated') return;
+    if (pathname.startsWith('/admin')) return;
+    trackEvent({
+      eventName: 'page_view',
+      feature: normalizePathFeature(pathname),
+      metadata: { path: pathname },
+    });
+  }, [isPublic, pathname, status]);
 
   return null;
 }

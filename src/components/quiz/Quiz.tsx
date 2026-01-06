@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Volume2, Check, X, Clock, Trophy } from 'lucide-react';
 import { VocabularyItem, QuizMode, QuizResult } from '@/types';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -9,6 +9,7 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { cn, shuffleArray, speak, XP_ACTIONS } from '@/lib/utils';
 import { useVocabStore } from '@/lib/store';
 import { useLanguage } from '@/lib/i18n';
+import { trackEvent } from '@/lib/analyticsClient';
 import {
   getLanguageLabel,
   getLearningPair,
@@ -332,6 +333,7 @@ export function QuizSession({ words, mode, onComplete }: QuizSessionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [results, setResults] = useState<QuizResult[]>([]);
   const [currentMode, setCurrentMode] = useState<QuizMode>(mode);
+  const loggedStartRef = useRef(false);
   const settings = useVocabStore((state) => state.settings);
   const language = useLanguage();
   const t = (quizCopy[language] ?? quizCopy.pl) as QuizCopy;
@@ -373,6 +375,19 @@ export function QuizSession({ words, mode, onComplete }: QuizSessionProps) {
     setOptions(generateOptions());
   }, [currentIndex, mode, generateOptions]);
 
+  useEffect(() => {
+    if (loggedStartRef.current) return;
+    loggedStartRef.current = true;
+    trackEvent({
+      eventName: 'quiz_started',
+      feature: 'quiz',
+      metadata: {
+        mode,
+        questions: words.length,
+      },
+    });
+  }, [mode, words.length]);
+
   const handleAnswer = (answer: string, correct: boolean, timeSpent: number) => {
     const result: QuizResult = {
       questionId: `${currentWord.id}-${currentIndex}`,
@@ -400,8 +415,21 @@ export function QuizSession({ words, mode, onComplete }: QuizSessionProps) {
     // Move to next question or complete
     if (currentIndex + 1 >= words.length) {
       addXp(XP_ACTIONS.session_complete);
+      const finalResults = [...results, result];
+      const correctCount = finalResults.filter((entry) => entry.correct).length;
+      const totalCount = finalResults.length;
+      trackEvent({
+        eventName: 'quiz_completed',
+        feature: 'quiz',
+        metadata: {
+          mode,
+          total: totalCount,
+          correct: correctCount,
+          score: totalCount > 0 ? Math.round((correctCount / totalCount) * 100) : 0,
+        },
+      });
       setTimeout(() => {
-        onComplete([...results, result]);
+        onComplete(finalResults);
       }, 500);
     } else {
       setTimeout(() => {
