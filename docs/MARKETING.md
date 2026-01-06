@@ -1,8 +1,8 @@
 # Plan Promocji Henio
 
 ## Status
-- Data: 5 stycznia 2026
-- Budzet miesięczny: max 1000 PLN
+- Data: 6 stycznia 2026
+- Budżet miesięczny Google Ads: ~1500 PLN (50 zł/dzień)
 - Landing: https://henio.app
 - Ceny: 19.99 PLN/mies, 149.99 PLN/rok, trial 7 dni
 
@@ -42,7 +42,7 @@
 - Kod gtag.js w `src/app/layout.tsx`
 - Tracking konwersji w `src/app/register/page.tsx`
 
-## Kampania 1: UA-PL Nauka polskiego (DRAFT)
+## Kampania 1: UA-PL Nauka polskiego (AKTYWNA ✅)
 
 ### Ustawienia
 | Parametr | Wartość |
@@ -53,7 +53,8 @@
 | **Stawki** | Maksymalizuj konwersje |
 | **Lokalizacja** | Polska |
 | **Języki** | polski + ukraiński |
-| **Budżet dzienny** | 15 PLN |
+| **Budżet dzienny** | 25 PLN |
+| **Status** | **AKTYWNA** (opublikowana 6.01.2026) |
 
 ### Słowa kluczowe (10)
 - nauka polskiego dla ukraińców
@@ -74,6 +75,7 @@
 3. 7 днів безкоштовно
 4. Nauka polskiego z AI
 5. Aplikacja Henio
+6. Польська без стресу
 
 **Opisy:**
 1. Сфотографуй зошит, отримай картки. Тренуй вимову з AI. Квізи.
@@ -81,57 +83,93 @@
 
 **URL:** henio.app
 
-### Prognozy
+### Prognozy (Google Ads)
 | Metryka | Wartość |
 |---------|---------|
-| Koszt tygodniowy | ~105 PLN |
-| Koszt miesięczny | ~450 PLN |
-| Konwersje/tydzień | ~24 |
-| Koszt/konwersja | ~4,27 PLN |
+| Koszt tygodniowy | ~175 PLN |
+| Koszt miesięczny | ~750 PLN |
+| Konwersje/tydzień | ~33 |
+| Koszt/konwersja | ~5,30 PLN |
 
 ### Status
 - [x] Konto Google Ads utworzone
 - [x] Konwersja "Rejestracja" skonfigurowana
 - [x] Tracking dodany do aplikacji
 - [x] Zmienne wdrożone na Azure (UAT/PRD)
-- [ ] Kampania UA-PL: DRAFT gotowy, wymaga publikacji w Google Ads UI
+- [x] **Kampania OPUBLIKOWANA i AKTYWNA** (6.01.2026)
 
-## Kampania 2: PL-EN Angielski (TODO)
+## Kampania 2: PL-EN Angielski (AKTYWNA ✅)
 
-### Planowane ustawienia
+### Ustawienia
 | Parametr | Wartość |
 |----------|---------|
 | **Nazwa** | PL-EN Nauka angielskiego |
 | **Typ** | Sieć wyszukiwania (Search) |
+| **Cel** | Potencjalni klienci → Rejestracje |
+| **Stawki** | Maksymalizuj konwersje |
 | **Lokalizacja** | Polska |
-| **Języki** | polski |
-| **Budżet dzienny** | 15 PLN |
+| **Języki** | polski + angielski |
+| **Budżet dzienny** | 25 PLN |
+| **Status** | **AKTYWNA** (opublikowana 6.01.2026) |
 
-### Planowane słowa kluczowe
+### Słowa kluczowe (7)
 - nauka angielskiego online
 - aplikacja do nauki angielskiego
 - angielski za darmo
+- nauka słówek angielskich
 - fiszki angielskie
-- matura angielski 2026
+- matura angielski 2025
+- angielski do pracy
+
+### Reklama (Responsive Search Ad)
+**Nagłówki:**
+1. Angielski z AI - 5 min/dzień
+2. Fiszki ze zdjęcia notatek
+3. 7 dni za darmo
+4. Matura 2025 - Angielski
+5. Ucz się słówek z AI
+6. Nauka angielskiego z AI
+
+**Opisy:**
+1. Zrób zdjęcie tekstu, AI stworzy fiszki. Trening wymowy z oceną.
+2. Idealne na maturę i do pracy. Wypróbuj Henio za darmo!
+
+**URL:** henio.app
+
+### Prognozy (Google Ads)
+| Metryka | Wartość |
+|---------|---------|
+| Koszt tygodniowy | ~175 PLN |
+| Koszt miesięczny | ~750 PLN |
+| Konwersje/tydzień | ~23 |
+| Koszt/konwersja | ~7,60 PLN |
 
 ### Status
-- [ ] Do utworzenia po uruchomieniu kampanii UA-PL
+- [x] **Kampania OPUBLIKOWANA i AKTYWNA** (6.01.2026)
 
 ## Kontrola kosztów
 
 | Parametr | Wartość |
 |----------|---------|
-| **Max budżet miesięczny** | 1000 PLN |
-| **Kampania UA-PL** | ~450 PLN/mies |
-| **Kampania PL-EN** | ~450 PLN/mies |
-| **Razem** | ~900 PLN/mies |
-| **Bufor** | ~100 PLN |
+| **Budżet dzienny (obie)** | 50 PLN |
+| **Kampania UA-PL** | ~750 PLN/mies |
+| **Kampania PL-EN** | ~750 PLN/mies |
+| **Razem** | **~1500 PLN/mies** |
+
+### Jak zarządzać kosztami:
+1. **Budżet dzienny** - ustawiony 25 zł/kampania, można zmienić w dowolnym momencie
+2. **Pauzowanie** - można wstrzymać kampanię jednym kliknięciem (wtedy 0 zł)
+3. **Płatność za kliknięcia** - jeśli nikt nie kliknie, nie płacisz
 
 ### Bezpieczeństwo:
 - ✅ Brak umów długoterminowych
 - ✅ Można pauzować w każdej chwili
 - ✅ Płatność tylko za kliknięcia
-- ✅ Budżet dzienny = twardy limit miesięczny
+- ✅ Budżet dzienny = twardy limit
+
+### Opcje oszczędności:
+- Chcesz < 1000 PLN/mies? → Zmniejsz budżet do 16 zł/dzień/kampanię
+- Jedna kampania nie działa? → Wstrzymaj ją i przenieś budżet na drugą
 
 ---
 
@@ -276,19 +314,50 @@ Genuinely looking for feedback from language learners. What would make this more
 ---
 
 ## Status Google Ads
-**DECYZJA: Nie uruchamiamy płatnych kampanii (MVP faza)**
+**KAMPANIE AKTYWNE** (od 6.01.2026)
 
-Powód: Najpierw zbieramy dane o retencji (D1/D7) i konwersji trial→PRO z organic.
+✅ UA-PL Nauka polskiego - 25 PLN/dzień
+✅ PL-EN Nauka angielskiego - 25 PLN/dzień
+✅ Tracking konwersji działa
+✅ Tag wdrożony na produkcji
 
-**Co zostaje (za darmo):**
-- ✅ Konto Google Ads gotowe
-- ✅ Tracking konwersji działa (mierzy rejestracje z dowolnego źródła)
-- ✅ Draft kampanii zapisany na przyszłość
+## Jak monitorować kampanie (dla początkujących)
 
-**Kiedy uruchomić:**
-- Gdy D7 retencja > 30%
-- Gdy trial→PRO konwersja > 10%
-- Gdy budżet > 2000 PLN/mies
+### Gdzie sprawdzać wyniki:
+1. Wejdź na https://ads.google.com
+2. Zaloguj się kontem radekbroniszewski@gmail.com
+3. Kliknij "Kampanie" w menu po lewej
+
+### Co sprawdzać (raz dziennie przez pierwszy tydzień):
+
+| Metryka | Gdzie | Co oznacza | Dobry wynik |
+|---------|-------|------------|-------------|
+| **Wyświetlenia** | Kolumna "Wyśw." | Ile razy reklama się pokazała | > 100/dzień |
+| **Kliknięcia** | Kolumna "Klikn." | Ile osób kliknęło | > 10/dzień |
+| **CTR** | Kolumna "CTR" | % kliknięć vs wyświetlenia | > 3% |
+| **Koszt** | Kolumna "Koszt" | Ile wydałeś | ≤ 25 zł/kampania |
+| **Konwersje** | Kolumna "Konw." | Ile rejestracji | > 1/dzień |
+
+### Czerwone flagi (reaguj!):
+- ❌ CTR < 1% przez 3 dni → słabe teksty reklam, zmień nagłówki
+- ❌ 0 konwersji przez 5 dni → sprawdź czy tracking działa
+- ❌ Koszt/konwersja > 20 zł → słowa kluczowe zbyt ogólne
+
+### Kiedy pauzować kampanię:
+- Koszt/konwersja > 30 zł
+- CTR < 0.5% przez tydzień
+- Brak konwersji przez 7 dni
+
+### Jak wstrzymać kampanię:
+1. Wejdź w kampanię
+2. Kliknij niebieski przełącznik przy nazwie → zmieni się na szary
+3. Kampania wstrzymana (0 zł kosztów)
+
+### Harmonogram sprawdzania:
+- **Dzień 1-3:** Sprawdź czy reklamy się wyświetlają (czy są "wyświetlenia")
+- **Dzień 4-7:** Sprawdź CTR i kliknięcia
+- **Po 7 dniach:** Pierwsza analiza konwersji
+- **Po 14 dniach:** Decyzja: kontynuować, optymalizować, czy wyłączyć
 
 ---
 
@@ -554,7 +623,7 @@ konkretny material dla Waszej spolecznosci.
 - Odpowiedzi od adminow
 
 ## Ostatnia aktualizacja
-5 stycznia 2026
+6 stycznia 2026
 
 ---
 
