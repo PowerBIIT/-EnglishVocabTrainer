@@ -4,7 +4,7 @@
 
 Henio is a vocabulary learning application for Polish students (PL→EN) and Ukrainian students in Poland (UA→PL). It includes AI-powered word intake, flashcards, quizzes, pronunciation training, and subscription management.
 
-**Version:** 1.0.74 (from `package.json`)
+**Version:** 1.0.76 (from `package.json`)
 **Repository:** `-EnglishVocabTrainer`
 
 ## System Context
@@ -150,7 +150,7 @@ Client (Zustand) <-> /api/user/state (GET/POST)
 ```
 /api/ai/*
   -> rate limit check (DB; memory fallback)
-  -> access check (plan + waitlist)
+  -> access check (plan + waitlist + hard cost cap)
   -> Gemini request
   -> usage counters (monthly)
   -> telemetry + cost alerts (async)
@@ -170,6 +170,10 @@ Limits reset monthly (UTC). Units represent tokens.
 - Controlled by `AI_COST_ALERT_THRESHOLD_USD`
 - Optional webhook: `AI_COST_ALERT_WEBHOOK_URL`
 - Email alerts use `ADMIN_EMAILS` + SMTP config
+
+### Hard Cost Limit
+- Controlled by `AI_COST_HARD_LIMIT_USD`
+- Blocks all AI requests once monthly cost meets or exceeds the cap (including admins)
 
 ## Subscriptions
 
@@ -197,6 +201,7 @@ Config cache:
 - `database`, `stripe`, `smtp`, `auth`, `ai`
 - `status` is `ok`, `degraded`, or `error`
 - Used by CI/CD pipelines to validate deployments
+- `APP_ENV` controls the reported `env` value and strictness of config checks
 
 AI telemetry is stored in `AiRequestLog` and daily aggregates, with async error handling to avoid blocking requests.
 

@@ -97,9 +97,9 @@ curl https://henio.app/api/health
 # Expected response
 {
   "status": "ok",
-  "version": "1.0.63",
-  "commit": "f7056bc12345",
-  "buildTime": "2026-01-03T10:00:00Z",
+  "version": "1.0.76",
+  "commit": "1cb5ff86b418",
+  "buildTime": "2026-01-06T21:37:47Z",
   "env": "production",
   "subsystems": {
     "database": { "status": "ok" },
@@ -117,7 +117,7 @@ The health check endpoint returns:
 - `version` - from `package.json`
 - `commit` - short git SHA from deploy
 - `buildTime` - UTC timestamp of build
-- `env` - runtime environment (`production`, `development`, etc.)
+- `env` - runtime environment (`APP_ENV` if set, else `NODE_ENV`)
 - `subsystems` - configuration/status checks for DB, auth, AI, Stripe, SMTP
 
 Pipelines verify these values match the build before marking deploy successful.
@@ -133,6 +133,7 @@ Pipelines verify these values match the build before marking deploy successful.
 | `DATABASE_URL` | PostgreSQL connection string | GitHub Secret |
 | `NEXTAUTH_SECRET` | NextAuth JWT secret | GitHub Secret |
 | `NEXTAUTH_URL` | App URL (https://henio.app) | GitHub Secret |
+| `APP_ENV` | Runtime label used by health checks (`production`, `uat`) | Deploy workflow |
 | `GOOGLE_CLIENT_ID` | Google OAuth client ID | GitHub Secret |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth secret | GitHub Secret |
 | `GEMINI_API_KEY` | Gemini AI API key | GitHub Secret |
@@ -172,7 +173,7 @@ Configuration keys can be set in **Admin Panel → Config**. Values are stored i
 
 Notes:
 - Limits reset monthly (UTC).
-- Admins (`ADMIN_EMAILS`) bypass limits.
+- Admins (`ADMIN_EMAILS`) bypass usage limits, but not the hard cost cap.
 - Requests and token usage are tracked per AI call; retries/fallbacks count separately.
 
 ### AI Cost Alerts
@@ -186,6 +187,12 @@ Configured via **Admin Panel → Config**:
 | `AI_COST_ALERT_WEBHOOK_URL` | Optional webhook URL for JSON alerts |
 
 Alerts are sent to `ADMIN_EMAILS` via SMTP (if configured) and to the webhook URL (if set).
+
+### AI Cost Hard Limit
+
+| Key | Description |
+|-----|-------------|
+| `AI_COST_HARD_LIMIT_USD` | Hard stop when monthly AI cost reaches this value (0 disables). Applies to all users, including admins. |
 
 ### E2E Test Settings
 
