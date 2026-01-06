@@ -40,8 +40,7 @@ export const getAiCostTotals = async (date: Date = new Date()): Promise<AiCostTo
   });
 
   const totalCost = totals._sum.totalCost ?? 0;
-  const projectedCost =
-    window.day > 0 ? (totalCost / window.day) * window.daysInMonth : totalCost;
+  const projectedCost = (totalCost / window.day) * window.daysInMonth;
 
   return {
     ...window,
