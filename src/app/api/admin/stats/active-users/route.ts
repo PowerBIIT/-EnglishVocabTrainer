@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { AccessStatus, Plan, Prisma } from '@prisma/client';
+import { AccessStatus, Plan } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getCurrentPeriod } from '@/lib/aiUsage';
 import { getPlanLimits } from '@/lib/plans';
@@ -8,15 +9,6 @@ import { requireAdmin } from '@/middleware/adminAuth';
 const AI_FEATURE = 'ai';
 const MAX_LIMIT = 100;
 const EXPORT_LIMIT = 5000;
-
-type ActiveUserUsageRow = {
-  id: string;
-  email: string | null;
-  name: string | null;
-  plan: Plan;
-  count: number;
-  units: number;
-};
 
 const parseNumber = (value: string | null, fallback: number) => {
   if (!value) return fallback;
@@ -53,50 +45,55 @@ export async function GET(request: Request) {
     : Math.min(MAX_LIMIT, Math.max(1, limitRaw));
 
   const period = getCurrentPeriod();
-  const searchPattern = search ? `%${search}%` : null;
-  const searchFilter = searchPattern
-    ? Prisma.sql`AND (u."email" ILIKE ${searchPattern} OR u."name" ILIKE ${searchPattern})`
-    : Prisma.empty;
+  const userWhere: Prisma.UserPlanWhereInput = {
+    accessStatus: AccessStatus.ACTIVE,
+  };
+  if (search) {
+    userWhere.user = {
+      OR: [
+        { id: { contains: search, mode: 'insensitive' } },
+        { email: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: 'insensitive' } },
+      ],
+    };
+  }
 
-  const totalRows = await prisma.$queryRaw<{ count: bigint }[]>`
-    SELECT COUNT(*)::bigint AS count
-    FROM "UserPlan" up
-    JOIN "User" u ON u.id = up."userId"
-    WHERE up."accessStatus" = ${AccessStatus.ACTIVE}
-    ${searchFilter}
-  `;
-  const total = Number(totalRows[0]?.count ?? 0);
+  const [total, userPlans] = await prisma.$transaction([
+    prisma.userPlan.count({ where: userWhere }),
+    prisma.userPlan.findMany({
+      where: userWhere,
+      select: {
+        userId: true,
+        plan: true,
+        user: {
+          select: {
+            email: true,
+            name: true,
+          },
+        },
+      },
+    }),
+  ]);
 
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-  const safePage = exportMode ? 0 : Math.min(page, totalPages - 1);
-  const offset = exportMode ? 0 : safePage * limit;
-  const limitClause = exportMode
-    ? Prisma.sql`LIMIT ${limit}`
-    : Prisma.sql`LIMIT ${limit} OFFSET ${offset}`;
-
-  const rows = await prisma.$queryRaw<ActiveUserUsageRow[]>`
-    SELECT
-      up."userId" AS id,
-      u."email" AS email,
-      u."name" AS name,
-      up."plan" AS plan,
-      COALESCE(uc."count", 0)::int AS count,
-      COALESCE(uc."units", 0)::int AS units
-    FROM "UserPlan" up
-    JOIN "User" u ON u.id = up."userId"
-    LEFT JOIN "UsageCounter" uc
-      ON uc."userId" = up."userId"
-      AND uc."period" = ${period}
-      AND uc."feature" = ${AI_FEATURE}
-    WHERE up."accessStatus" = ${AccessStatus.ACTIVE}
-    ${searchFilter}
-    ORDER BY
-      COALESCE(uc."units", 0) DESC,
-      COALESCE(uc."count", 0) DESC,
-      u."email" ASC NULLS LAST,
-      u."name" ASC NULLS LAST
-    ${limitClause}
-  `;
+  const userIds = userPlans.map((entry) => entry.userId);
+  const usageEntries =
+    userIds.length === 0
+      ? []
+      : await prisma.usageCounter.findMany({
+          where: {
+            userId: { in: userIds },
+            period,
+            feature: AI_FEATURE,
+          },
+          select: {
+            userId: true,
+            count: true,
+            units: true,
+          },
+        });
+  const usageMap = new Map(
+    usageEntries.map((entry) => [entry.userId, { count: entry.count, units: entry.units }])
+  );
 
   const [freeLimits, proLimits] = await Promise.all([
     getPlanLimits(Plan.FREE),
@@ -107,23 +104,40 @@ export async function GET(request: Request) {
     [Plan.PRO]: proLimits,
   };
 
-  const items = rows.map((row) => {
-    const limits = planLimitsByPlan[row.plan];
+  const items = userPlans.map((entry) => {
+    const usage = usageMap.get(entry.userId);
+    const usedCount = usage?.count ?? 0;
+    const usedUnits = usage?.units ?? 0;
+    const limits = planLimitsByPlan[entry.plan];
     const remainingCount = Number.isFinite(limits.maxRequests)
-      ? Math.max(0, limits.maxRequests - row.count)
+      ? Math.max(0, limits.maxRequests - usedCount)
       : null;
     const remainingUnits = Number.isFinite(limits.maxUnits)
-      ? Math.max(0, limits.maxUnits - row.units)
+      ? Math.max(0, limits.maxUnits - usedUnits)
       : null;
     return {
-      id: row.id,
-      email: row.email,
-      name: row.name,
-      plan: row.plan,
-      usage: { count: row.count, units: row.units },
+      id: entry.userId,
+      email: entry.user?.email ?? null,
+      name: entry.user?.name ?? null,
+      plan: entry.plan,
+      usage: { count: usedCount, units: usedUnits },
       remaining: { count: remainingCount, units: remainingUnits },
     };
   });
+
+  items.sort((a, b) => {
+    if (b.usage.units !== a.usage.units) return b.usage.units - a.usage.units;
+    if (b.usage.count !== a.usage.count) return b.usage.count - a.usage.count;
+    const left = a.email ?? a.name ?? '';
+    const right = b.email ?? b.name ?? '';
+    return left.localeCompare(right);
+  });
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const safePage = exportMode ? 0 : Math.min(page, totalPages - 1);
+  const sliceStart = exportMode ? 0 : safePage * limit;
+  const sliceEnd = exportMode ? limit : sliceStart + limit;
+  const pageItems = items.slice(sliceStart, sliceEnd);
 
   if (exportMode) {
     const formatRemaining = (value: number | null) =>
@@ -137,7 +151,7 @@ export async function GET(request: Request) {
       'TokensUsed',
       'TokensRemaining',
     ];
-    const rowsCsv = items.map((item) =>
+    const rowsCsv = pageItems.map((item) =>
       [
         escapeCsv(item.email),
         escapeCsv(item.name),
@@ -163,6 +177,6 @@ export async function GET(request: Request) {
     total,
     page: safePage,
     limit,
-    items,
+    items: pageItems,
   });
 }
