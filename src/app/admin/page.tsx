@@ -11,7 +11,7 @@ import { SubscriptionManagementSection } from '@/components/admin/SubscriptionMa
 import { PricingSection } from '@/components/admin/PricingSection';
 import { AiAnalyticsSection } from '@/components/admin/AiAnalyticsSection';
 import { BehaviorAnalyticsSection } from '@/components/admin/BehaviorAnalyticsSection';
-import { RevenueStrategyChatSection } from '@/components/admin/RevenueStrategyChatSection';
+import { AdminCopilotSection } from '@/components/admin/AdminCopilotSection';
 import { Badge } from '@/components/ui/Badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { useAdminData } from '@/hooks/useAdminData';
@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils';
 type AdminTab =
   | 'config'
   | 'ai'
+  | 'copilot'
   | 'users'
   | 'requests'
   | 'subscriptions'
@@ -41,6 +42,7 @@ const adminCopy = {
     tabs: {
       config: 'Konfiguracja',
       ai: 'Modele AI',
+      copilot: 'Copilot',
       users: 'Użytkownicy',
       requests: 'Zgłoszenia',
       subscriptions: 'Subskrypcje',
@@ -63,6 +65,7 @@ const adminCopy = {
     tabs: {
       config: 'Configuration',
       ai: 'AI models',
+      copilot: 'Copilot',
       users: 'Users',
       requests: 'Requests',
       subscriptions: 'Subscriptions',
@@ -264,6 +267,7 @@ export default function AdminPage() {
         <TabsList className="w-full flex-wrap justify-start md:w-auto md:flex-nowrap">
           <TabsTrigger value="config">{t.tabs.config}</TabsTrigger>
           <TabsTrigger value="ai">{t.tabs.ai}</TabsTrigger>
+          <TabsTrigger value="copilot">{t.tabs.copilot}</TabsTrigger>
           <TabsTrigger value="users">{t.tabs.users}</TabsTrigger>
           <TabsTrigger value="requests">{t.tabs.requests}</TabsTrigger>
           <TabsTrigger value="subscriptions">{t.tabs.subscriptions}</TabsTrigger>
@@ -284,6 +288,10 @@ export default function AdminPage() {
 
         <TabsContent value="ai">
           <AiModelSection />
+        </TabsContent>
+
+        <TabsContent value="copilot">
+          <AdminCopilotSection />
         </TabsContent>
 
         <TabsContent value="users">
@@ -411,28 +419,21 @@ export default function AdminPage() {
         </TabsContent>
 
         <TabsContent value="stats">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2">
-              <StatsSection
-                stats={stats}
-                loading={statsLoading}
-                error={statsError}
-                activeUsage={activeUsage}
-                activeUsageLoading={activeUsageLoading}
-                activeUsageError={activeUsageError}
-                activeUsageQuery={activeUsageQuery}
-                onActiveUsageQueryChange={setActiveUsageQuery}
-                onExportActiveUsage={exportActiveUsage}
-                onOpenUser={handleActiveUserFocus}
-                revenueStats={revenueStats}
-                revenueLoading={revenueLoading}
-                revenueError={revenueError}
-              />
-            </div>
-            <div className="lg:col-span-1">
-              <RevenueStrategyChatSection />
-            </div>
-          </div>
+          <StatsSection
+            stats={stats}
+            loading={statsLoading}
+            error={statsError}
+            activeUsage={activeUsage}
+            activeUsageLoading={activeUsageLoading}
+            activeUsageError={activeUsageError}
+            activeUsageQuery={activeUsageQuery}
+            onActiveUsageQueryChange={setActiveUsageQuery}
+            onExportActiveUsage={exportActiveUsage}
+            onOpenUser={handleActiveUserFocus}
+            revenueStats={revenueStats}
+            revenueLoading={revenueLoading}
+            revenueError={revenueError}
+          />
         </TabsContent>
 
         <TabsContent value="ai-analytics">
