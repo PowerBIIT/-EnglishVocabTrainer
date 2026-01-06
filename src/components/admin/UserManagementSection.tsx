@@ -18,7 +18,7 @@ type UserManagementSectionProps = {
   limit: number;
   total: number;
   filters: { status: string; plan: string; search: string };
-  onFiltersChange: (nextFilters: { status: string; plan: string }) => void;
+  onFiltersChange: (nextFilters: { status: string; plan: string; search: string }) => void;
   onPageChange: (page: number) => void;
   onUpdateUser: (userId: string, updates: { plan?: string; accessStatus?: string }) => Promise<void>;
   onDeleteUser: (userId: string) => Promise<void>;
