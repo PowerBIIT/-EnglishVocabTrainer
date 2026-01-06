@@ -48,6 +48,9 @@ jobs:
         run: npm run test:unit
 
       - name: Build
+        env:
+          NEXT_PUBLIC_GOOGLE_ADS_ID: AW-17853999994
+          NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID: TAKeCJW8nN0bEPrWucFC
         run: npm run build
 
       - name: Build version info
