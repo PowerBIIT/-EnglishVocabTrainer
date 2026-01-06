@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { Home, BookOpen, Mic, MessageCircle, UserCircle, Shield } from 'lucide-react';
+import { Home, BookOpen, Mic, MessageCircle, UserCircle, Shield, Sun, Moon, Monitor } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useVocabStore } from '@/lib/store';
 
@@ -16,6 +16,10 @@ const navLabels = {
     chat: 'Czat AI',
     profile: 'Profil',
     admin: 'Admin',
+    theme: 'Motyw',
+    themeLight: 'Jasny',
+    themeDark: 'Ciemny',
+    themeAuto: 'Auto',
   },
   en: {
     brand: 'Trainer',
@@ -25,6 +29,10 @@ const navLabels = {
     chat: 'AI Chat',
     profile: 'Profile',
     admin: 'Admin',
+    theme: 'Theme',
+    themeLight: 'Light',
+    themeDark: 'Dark',
+    themeAuto: 'Auto',
   },
   uk: {
     brand: 'Тренер',
@@ -34,6 +42,10 @@ const navLabels = {
     chat: 'AI Чат',
     profile: 'Профіль',
     admin: 'Адмін',
+    theme: 'Тема',
+    themeLight: 'Світла',
+    themeDark: 'Темна',
+    themeAuto: 'Авто',
   },
 } as const;
 
@@ -49,6 +61,8 @@ export function Navigation() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const language = useVocabStore((state) => state.settings.general.language);
+  const theme = useVocabStore((state) => state.settings.general.theme);
+  const updateSettings = useVocabStore((state) => state.updateSettings);
   const labels = navLabels[language] ?? navLabels.pl;
   const isAdmin = Boolean(session?.user?.isAdmin);
 
@@ -59,6 +73,12 @@ export function Navigation() {
   const items = isAdmin
     ? [...navItems, { href: '/admin', icon: Shield, key: 'admin' as const }]
     : navItems;
+
+  const themeLabel =
+    theme === 'dark' ? labels.themeDark : theme === 'light' ? labels.themeLight : labels.themeAuto;
+  const nextTheme = theme === 'light' ? 'dark' : theme === 'dark' ? 'auto' : 'light';
+  const ThemeIcon =
+    theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 md:top-0 md:left-0 md:right-auto md:h-screen md:w-24 bg-white/80 dark:bg-slate-900/80 border-t md:border-t-0 md:border-r border-primary-100/50 dark:border-primary-900/50 backdrop-blur-xl z-50 pb-[env(safe-area-inset-bottom)] md:pb-0 shadow-lg shadow-primary-500/5">
@@ -91,6 +111,25 @@ export function Navigation() {
                 </li>
               );
             })}
+            <li>
+              <button
+                type="button"
+                onClick={() =>
+                  updateSettings('general', {
+                    theme: nextTheme,
+                  })
+                }
+                title={`${labels.theme}: ${themeLabel}`}
+                aria-label={`${labels.theme}: ${themeLabel}`}
+                className={cn(
+                  'flex flex-col items-center gap-1 px-3 py-2 rounded-xl transition-all',
+                  'text-slate-500 dark:text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-primary-50/50 dark:hover:bg-primary-900/20'
+                )}
+              >
+                <ThemeIcon size={22} />
+                <span className="text-[11px] font-medium">{labels.theme}</span>
+              </button>
+            </li>
           </ul>
         </div>
       </div>
