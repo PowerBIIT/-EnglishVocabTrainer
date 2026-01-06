@@ -4,6 +4,9 @@ import { prisma } from '@/lib/db';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+const appEnv = process.env.APP_ENV ?? process.env.NODE_ENV ?? 'unknown';
+const isProdEnv = appEnv === 'production';
+
 interface SubsystemStatus {
   status: 'ok' | 'error' | 'unconfigured';
   message?: string;
@@ -50,9 +53,7 @@ function checkStripe(): SubsystemStatus {
 
   // Check if using live or test keys
   const isLive = secretKey.startsWith('sk_live_');
-  const isProd = process.env.NODE_ENV === 'production';
-
-  if (isProd && !isLive) {
+  if (isProdEnv && !isLive) {
     return {
       status: 'error',
       message: 'Production using test Stripe keys',
@@ -84,7 +85,7 @@ function checkAuth(): SubsystemStatus {
 
   try {
     const parsed = new URL(authUrl);
-    if (process.env.NODE_ENV === 'production' && parsed.protocol !== 'https:') {
+    if (isProdEnv && parsed.protocol !== 'https:') {
       return {
         status: 'error',
         message: 'NEXTAUTH_URL must use https in production',
@@ -150,7 +151,7 @@ export const GET = async () => {
   let overallStatus: HealthResponse['status'] = 'ok';
   if (hasError) {
     overallStatus = 'error';
-  } else if (hasUnconfigured) {
+  } else if (hasUnconfigured && isProdEnv) {
     overallStatus = 'degraded';
   }
 
@@ -159,7 +160,7 @@ export const GET = async () => {
     version: process.env.APP_VERSION ?? 'unknown',
     commit: process.env.APP_COMMIT_SHA ?? 'unknown',
     buildTime: process.env.APP_BUILD_TIME ?? 'unknown',
-    env: process.env.NODE_ENV ?? 'unknown',
+    env: appEnv,
     subsystems,
   };
 

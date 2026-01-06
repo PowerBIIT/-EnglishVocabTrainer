@@ -80,6 +80,7 @@ jobs:
               --name "${{ secrets.AZURE_WEBAPP_NAME_UAT }}" \
               --settings \
                 NODE_ENV=production \
+                APP_ENV=uat \
                 WEBSITE_RUN_FROM_PACKAGE=1 \
                 WEBSITE_NODE_DEFAULT_VERSION=20 \
                 APP_VERSION="${{ steps.build_info.outputs.app_version }}" \
