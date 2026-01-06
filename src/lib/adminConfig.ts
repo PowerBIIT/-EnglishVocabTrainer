@@ -74,6 +74,14 @@ export const ADMIN_CONFIG_FIELDS: AdminConfigField[] = [
     defaultValue: '0',
   },
   {
+    key: 'AI_COST_HARD_LIMIT_USD',
+    label: 'AI cost hard limit (USD)',
+    description:
+      'Hard stop for all AI requests once monthly cost reaches this amount (USD). Use 0 or unlimited to disable.',
+    dataType: 'number',
+    defaultValue: '0',
+  },
+  {
     key: 'AI_COST_ALERT_CHECK_INTERVAL_MINUTES',
     label: 'AI cost alert check interval (minutes)',
     description: 'Minimum interval between alert checks. Use 0 to check every request.',

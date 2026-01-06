@@ -4,6 +4,7 @@ import { requireAdmin } from '@/middleware/adminAuth';
 import { GeminiService, AI_PROMPTS, parseAIResponse } from '@/lib/gemini';
 import { mapGeminiError, classifyGeminiError } from '@/lib/aiErrors';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
+import { buildAiCostLimitPayload, checkAiCostLimit } from '@/lib/aiCostLimit';
 import { logAiRequest, logAiRequestError } from '@/lib/aiTelemetry';
 import { recordAiUsage } from '@/lib/aiUsage';
 import { parseAnalyticsRange } from '@/lib/analyticsRange';
@@ -351,6 +352,7 @@ const buildContextPayload = async (
       },
       costAlerts: {
         thresholdUsd: configValue('AI_COST_ALERT_THRESHOLD_USD'),
+        hardLimitUsd: configValue('AI_COST_HARD_LIMIT_USD'),
         checkIntervalMinutes: configValue('AI_COST_ALERT_CHECK_INTERVAL_MINUTES'),
         webhookConfigured: Boolean(configValue('AI_COST_ALERT_WEBHOOK_URL')),
       },
@@ -384,6 +386,11 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: 'api_key_missing' }, { status: 503 });
+  }
+
+  const costLimit = await checkAiCostLimit();
+  if (!costLimit.ok) {
+    return NextResponse.json(buildAiCostLimitPayload(costLimit.status), { status: 429 });
   }
 
   const body = (await request.json().catch(() => null)) as AdminCopilotRequest | null;

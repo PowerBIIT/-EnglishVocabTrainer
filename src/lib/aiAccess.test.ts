@@ -3,6 +3,7 @@ import { AccessStatus, Plan } from '@prisma/client';
 import { checkAiUsageLimits, checkAndConsumeAiUsage } from '@/lib/aiUsage';
 import { isAdminEmail } from '@/lib/access';
 import { ensureUserPlan } from '@/lib/userPlan';
+import { checkAiCostLimit } from '@/lib/aiCostLimit';
 import { ensureAiAccess, enforceAiUsage } from '@/lib/aiAccess';
 
 vi.mock('@/lib/aiUsage', () => ({
@@ -18,6 +19,21 @@ vi.mock('@/lib/access', () => ({
   isAdminEmail: vi.fn(),
 }));
 
+vi.mock('@/lib/aiCostLimit', () => ({
+  checkAiCostLimit: vi.fn(),
+  buildAiCostLimitPayload: vi.fn((status: { resetAt: string }) => ({
+    error: 'ai_cost_limit_reached',
+    resetAt: status.resetAt,
+    costLimit: {
+      limitUsd: 0,
+      usedUsd: 0,
+      remainingUsd: 0,
+      period: '2024-01',
+      resetAt: status.resetAt,
+    },
+  })),
+}));
+
 describe('enforceAiUsage', () => {
   beforeEach(() => {
     vi.mocked(checkAndConsumeAiUsage).mockReset();
@@ -25,6 +41,7 @@ describe('enforceAiUsage', () => {
     vi.mocked(ensureUserPlan).mockReset();
     vi.mocked(isAdminEmail).mockReset();
     vi.mocked(isAdminEmail).mockReturnValue(false);
+    vi.mocked(checkAiCostLimit).mockResolvedValue({ ok: true });
   });
 
   it('allows active users when usage ok', async () => {
@@ -113,6 +130,7 @@ describe('ensureAiAccess', () => {
     vi.mocked(ensureUserPlan).mockReset();
     vi.mocked(isAdminEmail).mockReset();
     vi.mocked(isAdminEmail).mockReturnValue(false);
+    vi.mocked(checkAiCostLimit).mockResolvedValue({ ok: true });
   });
 
   it('allows active users when within limits', async () => {
@@ -178,6 +196,34 @@ describe('ensureAiAccess', () => {
       expect(result.body.error).toBe('user_limit_reached');
       expect(result.body.softLimit).toBe(true);
     }
+  });
+
+  it('blocks when cost limit is reached', async () => {
+    vi.mocked(ensureUserPlan).mockResolvedValue({
+      accessStatus: AccessStatus.ACTIVE,
+      plan: Plan.FREE,
+    });
+    vi.mocked(checkAiCostLimit).mockResolvedValue({
+      ok: false,
+      status: {
+        enabled: true,
+        limitUsd: 50,
+        usedUsd: 75,
+        remainingUsd: 0,
+        isExceeded: true,
+        period: '2024-06',
+        resetAt: '2024-07-01T00:00:00.000Z',
+      },
+    });
+
+    const result = await ensureAiAccess({ userId: 'user-9', email: 'user@example.com' });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.status).toBe(429);
+      expect(result.body.error).toBe('ai_cost_limit_reached');
+    }
+    expect(checkAiUsageLimits).not.toHaveBeenCalled();
   });
 
   it('bypasses limit checks for admins', async () => {

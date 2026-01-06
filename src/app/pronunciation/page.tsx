@@ -160,6 +160,7 @@ const pronunciationCopy = {
       aiFallback: 'Używam lokalnej oceny...',
       aiLimitReached: 'Limit AI wyczerpany. Używam lokalnej oceny...',
       aiGlobalLimitReached: 'Globalny limit AI osiągnięty. Używam lokalnej oceny...',
+      aiCostLimitReached: 'Limit kosztów AI osiągnięty. Używam lokalnej oceny...',
       aiInvalid: 'Nieprawidłowa odpowiedź API',
       aiDone: 'Analiza gotowa.',
     },
@@ -253,6 +254,7 @@ const pronunciationCopy = {
       aiFallback: 'Using local evaluation...',
       aiLimitReached: 'AI limit reached. Using local evaluation...',
       aiGlobalLimitReached: 'Global AI limit reached. Using local evaluation...',
+      aiCostLimitReached: 'AI cost limit reached. Using local evaluation...',
       aiInvalid: 'Invalid API response',
       aiDone: 'Analysis ready.',
     },
@@ -346,6 +348,7 @@ const pronunciationCopy = {
       aiFallback: 'Використовую локальну оцінку...',
       aiLimitReached: 'Ліміт AI вичерпано. Використовую локальну оцінку...',
       aiGlobalLimitReached: 'Глобальний ліміт AI вичерпано. Використовую локальну оцінку...',
+      aiCostLimitReached: 'Ліміт витрат AI вичерпано. Використовую локальну оцінку...',
       aiInvalid: 'Некоректна відповідь API',
       aiDone: 'Аналіз готовий.',
     },
@@ -939,6 +942,11 @@ export default function PronunciationPage() {
       }
       if (data.error === 'global_limit_reached') {
         setRecordingStatus(buildAiStatus(t.status.aiGlobalLimitReached, data.error));
+        evaluateLocally(spoken, localEvaluation);
+        return;
+      }
+      if (data.error === 'ai_cost_limit_reached') {
+        setRecordingStatus(buildAiStatus(t.status.aiCostLimitReached, data.error));
         evaluateLocally(spoken, localEvaluation);
         return;
       }

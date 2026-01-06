@@ -22,6 +22,7 @@ const prismaMock = vi.hoisted(() => ({
 
 const mockGetGlobalLimits = vi.fn();
 const mockGetPlanLimits = vi.fn();
+const mockGetAppConfigNumber = vi.fn();
 
 vi.mock('@/middleware/adminAuth', () => ({
   requireAdmin: () => mockRequireAdmin(),
@@ -36,6 +37,10 @@ vi.mock('@/lib/plans', () => ({
   getPlanLimits: () => mockGetPlanLimits(),
 }));
 
+vi.mock('@/lib/config', () => ({
+  getAppConfigNumber: () => mockGetAppConfigNumber(),
+}));
+
 const loadModule = async () => {
   vi.resetModules();
   return import('./route');
@@ -46,6 +51,7 @@ describe('GET /api/admin/stats', () => {
     mockRequireAdmin.mockReset();
     mockGetGlobalLimits.mockReset();
     mockGetPlanLimits.mockReset();
+    mockGetAppConfigNumber.mockReset();
     prismaMock.$transaction.mockReset();
     prismaMock.userPlan.count.mockReset();
     prismaMock.userPlan.groupBy.mockReset();
@@ -53,6 +59,8 @@ describe('GET /api/admin/stats', () => {
     prismaMock.globalUsage.findUnique.mockReset();
     prismaMock.usageCounter.findMany.mockReset();
     prismaMock.aiRequestLog.aggregate.mockReset();
+
+    mockGetAppConfigNumber.mockResolvedValue(0);
 
     vi.useFakeTimers();
     vi.setSystemTime(new Date(Date.UTC(2024, 5, 15, 12, 0, 0)));

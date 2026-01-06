@@ -6,6 +6,11 @@ import {
 } from '@/lib/aiUsage';
 import { isAdminEmail } from '@/lib/access';
 import { ensureUserPlan } from '@/lib/userPlan';
+import {
+  buildAiCostLimitPayload,
+  checkAiCostLimit,
+  type AiCostLimitStatus,
+} from '@/lib/aiCostLimit';
 
 export type AiAccessResult =
   | { ok: true }
@@ -24,6 +29,13 @@ export type AiAccessResult =
           units: number;
         };
         softLimit?: boolean;
+        costLimit?: {
+          limitUsd: number | null;
+          usedUsd: number;
+          remainingUsd: number | null;
+          period: string;
+          resetAt: string;
+        };
       };
     };
 
@@ -38,6 +50,14 @@ const buildUsageError = (result: Exclude<UsageLimitResult, { ok: true }>): AiAcc
       usage: result.usage,
       softLimit: result.scope === 'user',
     },
+  };
+};
+
+const buildCostLimitError = (status: AiCostLimitStatus): AiAccessResult => {
+  return {
+    ok: false,
+    status: 429,
+    body: buildAiCostLimitPayload(status),
   };
 };
 
@@ -58,6 +78,11 @@ export const ensureAiAccess = async ({
         error: plan.accessStatus === AccessStatus.WAITLISTED ? 'waitlisted' : 'suspended',
       },
     };
+  }
+
+  const costLimit = await checkAiCostLimit();
+  if (!costLimit.ok) {
+    return buildCostLimitError(costLimit.status);
   }
 
   if (isAdminEmail(email ?? undefined)) {
@@ -97,6 +122,11 @@ export const enforceAiUsage = async ({
         error: plan.accessStatus === AccessStatus.WAITLISTED ? 'waitlisted' : 'suspended',
       },
     };
+  }
+
+  const costLimit = await checkAiCostLimit();
+  if (!costLimit.ok) {
+    return buildCostLimitError(costLimit.status);
   }
 
   if (isAdminEmail(email ?? undefined)) {

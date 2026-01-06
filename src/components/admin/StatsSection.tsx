@@ -44,6 +44,15 @@ const statsCopy = {
     actualCost: 'Koszt rzeczywisty',
     monthToDate: 'Od początku miesiąca',
     projectedEnd: 'Prognoza na koniec miesiąca',
+    aiCostLimitTitle: 'Twardy limit kosztów AI',
+    aiCostLimitStatus: 'Status',
+    aiCostLimitEnabled: 'Aktywny',
+    aiCostLimitExceeded: 'Przekroczony',
+    aiCostLimitDisabled: 'Wyłączony',
+    aiCostLimitLimit: 'Limit',
+    aiCostLimitUsed: 'Wykorzystane',
+    aiCostLimitRemaining: 'Pozostało',
+    aiCostLimitResets: 'Reset',
     planUsage: 'Użycie planów',
     topUsers: 'Top użytkownicy (tokeny)',
     topUsersEmpty: 'Brak użycia AI.',
@@ -100,6 +109,15 @@ const statsCopy = {
     actualCost: 'Actual cost',
     monthToDate: 'Month-to-date',
     projectedEnd: 'Projected end-of-month',
+    aiCostLimitTitle: 'AI cost hard limit',
+    aiCostLimitStatus: 'Status',
+    aiCostLimitEnabled: 'Active',
+    aiCostLimitExceeded: 'Exceeded',
+    aiCostLimitDisabled: 'Disabled',
+    aiCostLimitLimit: 'Limit',
+    aiCostLimitUsed: 'Used',
+    aiCostLimitRemaining: 'Remaining',
+    aiCostLimitResets: 'Resets',
     planUsage: 'Plan usage',
     topUsers: 'Top users (tokens)',
     topUsersEmpty: 'No AI usage yet.',
@@ -171,6 +189,8 @@ export function StatsSection({
       currency: 'USD',
       maximumFractionDigits: 2,
     }).format(value);
+  const formatDate = (value: string) =>
+    new Intl.DateTimeFormat(locale, { dateStyle: 'medium' }).format(new Date(value));
 
   if (loading && !stats) {
     return <div className="text-sm text-slate-500">{t.loading}</div>;
@@ -185,6 +205,17 @@ export function StatsSection({
   }
 
   const usage = stats.aiUsage.global;
+  const costLimit = stats.costLimit;
+  const costLimitStatus = costLimit.enabled
+    ? costLimit.isExceeded
+      ? t.aiCostLimitExceeded
+      : t.aiCostLimitEnabled
+    : t.aiCostLimitDisabled;
+  const costLimitTone = costLimit.enabled
+    ? costLimit.isExceeded
+      ? 'text-rose-600 dark:text-rose-400'
+      : 'text-emerald-600 dark:text-emerald-400'
+    : 'text-slate-500 dark:text-slate-400';
   const activeUsageData =
     activeUsage ??
     ({
@@ -232,7 +263,7 @@ export function StatsSection({
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[
           { label: t.active, value: stats.users.active },
           { label: t.waitlisted, value: stats.users.waitlisted },
@@ -304,6 +335,37 @@ export function StatsSection({
             <div className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-300 sm:flex-row sm:items-center sm:justify-between">
               <span>{t.projectedEnd}</span>
               <span className="font-semibold">{formatUsd(stats.costs.projectedEndOfMonth)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4 space-y-3">
+          <div className="flex items-center justify-between text-sm text-slate-500">
+            <span>{t.aiCostLimitTitle}</span>
+            <span className={cn('font-semibold', costLimitTone)}>{costLimitStatus}</span>
+          </div>
+          <div className="grid gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <div className="flex items-center justify-between">
+              <span>{t.aiCostLimitLimit}</span>
+              <span className="font-semibold">
+                {costLimit.limitUsd !== null ? formatUsd(costLimit.limitUsd) : '--'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>{t.aiCostLimitUsed}</span>
+              <span className="font-semibold">{formatUsd(costLimit.usedUsd)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>{t.aiCostLimitRemaining}</span>
+              <span className="font-semibold">
+                {costLimit.remainingUsd !== null ? formatUsd(costLimit.remainingUsd) : '--'}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span>{t.aiCostLimitResets}</span>
+              <span className="font-semibold">
+                {costLimit.enabled ? formatDate(costLimit.resetAt) : '--'}
+              </span>
             </div>
           </div>
         </div>

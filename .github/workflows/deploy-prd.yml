@@ -124,6 +124,7 @@ jobs:
                 PRO_AI_UNITS_PER_MONTH="${{ secrets.PRO_AI_UNITS_PER_MONTH }}" \
                 GLOBAL_AI_REQUESTS_PER_MONTH="${{ secrets.GLOBAL_AI_REQUESTS_PER_MONTH }}" \
                 GLOBAL_AI_UNITS_PER_MONTH="${{ secrets.GLOBAL_AI_UNITS_PER_MONTH }}" \
+                AI_COST_HARD_LIMIT_USD="${{ secrets.AI_COST_HARD_LIMIT_USD }}" \
                 STRIPE_SECRET_KEY="${{ secrets.STRIPE_SECRET_KEY }}" \
                 STRIPE_WEBHOOK_SECRET="${{ secrets.STRIPE_WEBHOOK_SECRET }}" \
                 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}" \

@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/db';
 import { getAdminEmails } from '@/lib/access';
+import { getAiCostTotals } from '@/lib/aiCost';
 import { getAppConfig, getAppConfigNumber, setAppConfig } from '@/lib/config';
 import { sendEmail } from '@/lib/email';
 
@@ -10,17 +10,6 @@ export const AI_COST_ALERT_LAST_CHECK_AT_KEY = 'AI_COST_ALERT_LAST_CHECK_AT';
 export const AI_COST_ALERT_CHECK_INTERVAL_MINUTES_KEY = 'AI_COST_ALERT_CHECK_INTERVAL_MINUTES';
 
 const SYSTEM_ACTOR = 'system';
-
-const buildPeriodWindow = (date: Date = new Date()) => {
-  const year = date.getUTCFullYear();
-  const month = date.getUTCMonth();
-  const period = date.toISOString().slice(0, 7);
-  const periodStart = new Date(Date.UTC(year, month, 1, 0, 0, 0));
-  const periodEnd = new Date(Date.UTC(year, month + 1, 1, 0, 0, 0));
-  const day = Math.max(1, date.getUTCDate());
-  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
-  return { period, periodStart, periodEnd, day, daysInMonth };
-};
 
 const parseIsoDate = (value: string | null) => {
   if (!value) return null;
@@ -101,22 +90,7 @@ export const maybeNotifyAiCostAlert = async () => {
     const canCheck = await shouldCheckAlerts(now);
     if (!canCheck) return;
 
-    const { period, periodStart, periodEnd, day, daysInMonth } = buildPeriodWindow(now);
-
-    const totals = await prisma.aiRequestLog.aggregate({
-      where: {
-        createdAt: {
-          gte: periodStart,
-          lt: periodEnd,
-        },
-      },
-      _sum: {
-        totalCost: true,
-      },
-    });
-
-    const totalCost = totals._sum.totalCost ?? 0;
-    const projectedCost = day > 0 ? (totalCost / day) * daysInMonth : totalCost;
+    const { period, totalCost, projectedCost } = await getAiCostTotals(now);
 
     if (totalCost < threshold && projectedCost < threshold) {
       return;

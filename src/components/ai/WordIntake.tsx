@@ -307,6 +307,8 @@ export const wordIntakeCopy = {
       'Wykorzystałeś limit AI na ten miesiąc. Poczekaj na odnowienie limitu lub przejdź na plan Pro.',
     aiGlobalLimitReached:
       'Globalny limit AI został osiągnięty. Spróbuj ponownie później.',
+    aiCostLimitReached:
+      'Osiągnięto twardy limit kosztów AI na ten miesiąc. Spróbuj ponownie po odnowieniu limitu.',
     aiRateLimited: 'AI jest chwilowo przeciążone. Spróbuj ponownie za chwilę.',
     aiConfigError: 'Błąd konfiguracji AI. Sprawdź GEMINI_API_KEY w .env.local.',
     aiServiceError: 'Wystąpił błąd usługi AI. Spróbuj ponownie później.',
@@ -414,6 +416,8 @@ export const wordIntakeCopy = {
       'You have reached your monthly AI limit. Wait for the next reset or upgrade to Pro.',
     aiGlobalLimitReached:
       'The global AI budget has been reached. Please try again later.',
+    aiCostLimitReached:
+      'The monthly AI cost limit has been reached. Please try again after the reset.',
     aiRateLimited: 'AI is rate limited right now. Please try again in a moment.',
     aiConfigError: 'AI configuration error. Check GEMINI_API_KEY in .env.local.',
     aiServiceError: 'AI service error. Please try again later.',
@@ -521,6 +525,8 @@ export const wordIntakeCopy = {
       'Ви вичерпали місячний ліміт AI. Зачекайте на оновлення або перейдіть на Pro.',
     aiGlobalLimitReached:
       'Глобальний ліміт AI вичерпано. Спробуйте пізніше.',
+    aiCostLimitReached:
+      'Досягнуто місячного ліміту витрат на AI. Спробуйте після оновлення.',
     aiRateLimited: 'AI тимчасово перевантажене. Спробуй ще раз трохи пізніше.',
     aiConfigError: 'Помилка налаштування AI. Перевір GEMINI_API_KEY в .env.local.',
     aiServiceError: 'Сталася помилка сервісу AI. Спробуй пізніше.',
@@ -731,6 +737,10 @@ export function WordIntake({
     if (errorCode === 'global_limit_reached') {
       notify(t.aiGlobalLimitReached);
       return 'global_limit';
+    }
+    if (errorCode === 'ai_cost_limit_reached') {
+      notify(t.aiCostLimitReached);
+      return 'cost_limit';
     }
     if (errorCode === 'waitlisted') {
       notify(t.aiWaitlisted);
@@ -1050,7 +1060,8 @@ export function WordIntake({
         }
         if (
           data?.error === 'user_limit_reached' ||
-          data?.error === 'global_limit_reached'
+          data?.error === 'global_limit_reached' ||
+          data?.error === 'ai_cost_limit_reached'
         ) {
           await generateWordsLocal(count, topic, 'limit', data?.error);
           return;

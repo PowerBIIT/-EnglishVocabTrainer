@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
 import { AccessStatus, Plan } from '@prisma/client';
 import { prisma } from '@/lib/db';
+import { getAiCostTotals } from '@/lib/aiCost';
+import { buildAiCostLimitStatus, AI_COST_HARD_LIMIT_KEY } from '@/lib/aiCostLimit';
 import { getCurrentPeriod } from '@/lib/aiUsage';
 import { getGlobalLimits, getPlanLimits } from '@/lib/plans';
+import { getAppConfigNumber } from '@/lib/config';
 import { requireAdmin } from '@/middleware/adminAuth';
 
 const AI_FEATURE = 'ai';
@@ -16,12 +19,6 @@ export async function GET() {
 
   const period = getCurrentPeriod();
   const now = new Date();
-  const year = now.getUTCFullYear();
-  const month = now.getUTCMonth();
-  const periodStart = new Date(Date.UTC(year, month, 1, 0, 0, 0));
-  const periodEnd = new Date(Date.UTC(year, month + 1, 1, 0, 0, 0));
-  const day = Math.max(1, now.getUTCDate());
-  const daysInMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
 
   const [
     activeCount,
@@ -87,23 +84,14 @@ export async function GET() {
     }),
   ]);
 
-  const aiCostTotals = await prisma.aiRequestLog.aggregate({
-    where: {
-      createdAt: {
-        gte: periodStart,
-        lt: periodEnd,
-      },
-    },
-    _sum: {
-      totalCost: true,
-    },
-  });
-
-  const [globalLimits, freeLimits, proLimits] = await Promise.all([
-    getGlobalLimits(),
-    getPlanLimits(Plan.FREE),
-    getPlanLimits(Plan.PRO),
-  ]);
+  const [aiCostTotals, rawCostLimit, globalLimits, freeLimits, proLimits] =
+    await Promise.all([
+      getAiCostTotals(now),
+      getAppConfigNumber(AI_COST_HARD_LIMIT_KEY, 0),
+      getGlobalLimits(),
+      getPlanLimits(Plan.FREE),
+      getPlanLimits(Plan.PRO),
+    ]);
 
   const planLimitsByPlan = {
     [Plan.FREE]: freeLimits,
@@ -165,9 +153,9 @@ export async function GET() {
   const activeUsersPreview = activeUsersUsage.slice(0, ACTIVE_USERS_LIMIT);
 
   const totalUnits = globalUsage?.units ?? 0;
-  const actualMonthToDate = aiCostTotals._sum.totalCost ?? 0;
-  const projectedEndOfMonth =
-    day > 0 ? (actualMonthToDate / day) * daysInMonth : actualMonthToDate;
+  const actualMonthToDate = aiCostTotals.totalCost;
+  const projectedEndOfMonth = aiCostTotals.projectedCost;
+  const costLimit = buildAiCostLimitStatus(aiCostTotals, rawCostLimit);
 
   return NextResponse.json({
     meta: { period },
@@ -204,5 +192,6 @@ export async function GET() {
       actualMonthToDate,
       projectedEndOfMonth,
     },
+    costLimit,
   });
 }

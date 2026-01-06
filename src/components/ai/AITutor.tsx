@@ -79,6 +79,8 @@ const tutorCopy = {
       'Wykorzystałeś limit AI na ten miesiąc. Spróbuj ponownie po odnowieniu limitu lub przejdź na plan Pro.',
     globalLimitMessage:
       'Globalny limit AI został osiągnięty. Spróbuj ponownie później.',
+    costLimitMessage:
+      'Osiągnięto twardy limit kosztów AI na ten miesiąc. Spróbuj ponownie po odnowieniu limitu.',
     waitlistMessage:
       'Twoje konto oczekuje na aktywację. AI będzie dostępne po przyznaniu dostępu.',
     suspendedMessage:
@@ -136,6 +138,8 @@ const tutorCopy = {
       'You have reached your monthly AI limit. Try again after the reset or upgrade to Pro.',
     globalLimitMessage:
       'The global AI budget has been reached. Please try again later.',
+    costLimitMessage:
+      'The monthly AI cost limit has been reached. Please try again after the reset.',
     waitlistMessage:
       'Your account is on the waitlist. AI will be available once access is granted.',
     suspendedMessage: 'Your account is temporarily suspended. Contact support.',
@@ -192,6 +196,8 @@ const tutorCopy = {
       'Ви вичерпали місячний ліміт AI. Спробуйте після оновлення або перейдіть на Pro.',
     globalLimitMessage:
       'Глобальний ліміт AI вичерпано. Спробуйте пізніше.',
+    costLimitMessage:
+      'Досягнуто місячного ліміту витрат на AI. Спробуйте після оновлення.',
     waitlistMessage:
       'Ваш акаунт у списку очікування. AI буде доступний після надання доступу.',
     suspendedMessage:
@@ -306,6 +312,10 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
         }
         if (errorCode === 'global_limit_reached') {
           addAssistantMessage(t.globalLimitMessage);
+          return;
+        }
+        if (errorCode === 'ai_cost_limit_reached') {
+          addAssistantMessage(t.costLimitMessage);
           return;
         }
         if (errorCode === 'waitlisted') {

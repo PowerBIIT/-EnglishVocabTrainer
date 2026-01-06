@@ -63,6 +63,15 @@ export type AdminStats = {
     };
   };
   costs: { actualMonthToDate: number; projectedEndOfMonth: number };
+  costLimit: {
+    enabled: boolean;
+    limitUsd: number | null;
+    usedUsd: number;
+    remainingUsd: number | null;
+    isExceeded: boolean;
+    period: string;
+    resetAt: string;
+  };
 };
 
 export type ActiveUserUsage = {

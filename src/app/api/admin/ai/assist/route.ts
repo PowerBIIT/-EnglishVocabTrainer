@@ -4,6 +4,7 @@ import { GeminiService, parseAIResponse } from '@/lib/gemini';
 import { mapGeminiError, classifyGeminiError } from '@/lib/aiErrors';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
 import { getPromptCatalog, getPromptDefinition, type PromptId } from '@/lib/aiPromptCatalog';
+import { buildAiCostLimitPayload, checkAiCostLimit } from '@/lib/aiCostLimit';
 import { logAiRequest, logAiRequestError } from '@/lib/aiTelemetry';
 import { recordAiUsage } from '@/lib/aiUsage';
 
@@ -137,6 +138,11 @@ export async function POST(request: Request) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: 'api_key_missing' }, { status: 503 });
+  }
+
+  const costLimit = await checkAiCostLimit();
+  if (!costLimit.ok) {
+    return NextResponse.json(buildAiCostLimitPayload(costLimit.status), { status: 429 });
   }
 
   const model = await resolveGeminiModel();

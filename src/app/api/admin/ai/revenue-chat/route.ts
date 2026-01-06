@@ -3,6 +3,7 @@ import { prisma } from '@/lib/db';
 import { requireAdmin } from '@/middleware/adminAuth';
 import { GeminiService, AI_PROMPTS } from '@/lib/gemini';
 import { resolveGeminiModel } from '@/lib/aiModelResolver';
+import { buildAiCostLimitPayload, checkAiCostLimit } from '@/lib/aiCostLimit';
 import { logAiRequest } from '@/lib/aiTelemetry';
 import { recordAiUsage } from '@/lib/aiUsage';
 import type { RevenueChatRequest, RevenueChatResponse, RevenueContext } from '@/types/aiAnalytics';
@@ -119,6 +120,11 @@ export async function POST(request: NextRequest) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
     return NextResponse.json({ error: 'api_key_missing' }, { status: 503 });
+  }
+
+  const costLimit = await checkAiCostLimit();
+  if (!costLimit.ok) {
+    return NextResponse.json(buildAiCostLimitPayload(costLimit.status), { status: 429 });
   }
 
   try {
