@@ -147,4 +147,158 @@ describe('cleanupUnverifiedUsers', () => {
       expect.objectContaining({ key: 'EMAIL_VERIFICATION_CLEANUP_ALERT_LAST_SENT' })
     );
   });
+
+  it('skips alert when no deletions occur', async () => {
+    const now = new Date('2026-01-07T02:00:00Z');
+    expiredTokens = [];
+    activeTokens = [];
+
+    prismaMock.user.deleteMany
+      .mockResolvedValueOnce({ count: 0 })
+      .mockResolvedValueOnce({ count: 0 });
+
+    getAdminEmailsMock.mockReturnValue(['admin@example.com']);
+
+    const { cleanupUnverifiedUsers } = await loadCleanup();
+    await cleanupUnverifiedUsers(now);
+
+    expect(sendEmailMock).not.toHaveBeenCalled();
+    expect(setAppConfigMock).toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'EMAIL_VERIFICATION_CLEANUP_METRICS' })
+    );
+    expect(setAppConfigMock).not.toHaveBeenCalledWith(
+      expect.objectContaining({ key: 'EMAIL_VERIFICATION_CLEANUP_ALERT_LAST_SENT' })
+    );
+  });
+
+  it('skips alert when threshold is disabled', async () => {
+    const now = new Date('2026-01-07T03:00:00Z');
+    expiredTokens = [{ email: 'expired@example.com' }];
+
+    prismaMock.user.deleteMany
+      .mockResolvedValueOnce({ count: 6 })
+      .mockResolvedValueOnce({ count: 5 });
+
+    getAdminEmailsMock.mockReturnValue(['admin@example.com']);
+    getAppConfigNumberMock.mockImplementation(async (key: string, fallback: number) => {
+      if (key === 'EMAIL_VERIFICATION_CLEANUP_ALERT_THRESHOLD') return 0;
+      return fallback;
+    });
+
+    const { cleanupUnverifiedUsers } = await loadCleanup();
+    await cleanupUnverifiedUsers(now);
+
+    expect(sendEmailMock).not.toHaveBeenCalled();
+  });
+
+  it('respects alert cooldown window', async () => {
+    const now = new Date('2026-01-07T04:00:00Z');
+    expiredTokens = [{ email: 'expired@example.com' }];
+
+    prismaMock.user.deleteMany
+      .mockResolvedValueOnce({ count: 8 })
+      .mockResolvedValueOnce({ count: 3 });
+
+    getAdminEmailsMock.mockReturnValue(['admin@example.com']);
+    getAppConfigNumberMock.mockImplementation(async (key: string, fallback: number) => {
+      if (key === 'EMAIL_VERIFICATION_CLEANUP_ALERT_THRESHOLD') return 5;
+      if (key === 'EMAIL_VERIFICATION_CLEANUP_ALERT_COOLDOWN_HOURS') return 24;
+      return fallback;
+    });
+    getAppConfigMock.mockImplementation(async (key: string) => {
+      if (key === 'EMAIL_VERIFICATION_CLEANUP_ALERT_LAST_SENT') {
+        return '2026-01-07T03:30:00Z';
+      }
+      if (key === 'EMAIL_VERIFICATION_CLEANUP_METRICS') {
+        return '{"window":[1,2,3],"lastRunAt":"2026-01-06T04:00:00Z"}';
+      }
+      return null;
+    });
+
+    const { cleanupUnverifiedUsers } = await loadCleanup();
+    await cleanupUnverifiedUsers(now);
+
+    expect(sendEmailMock).not.toHaveBeenCalled();
+  });
+
+  it('handles invalid metrics payloads gracefully', async () => {
+    const now = new Date('2026-01-07T05:00:00Z');
+    expiredTokens = [{ email: 'expired@example.com' }];
+
+    prismaMock.user.deleteMany
+      .mockResolvedValueOnce({ count: 12 })
+      .mockResolvedValueOnce({ count: 0 });
+
+    getAdminEmailsMock.mockReturnValue(['admin@example.com']);
+    getAppConfigNumberMock.mockImplementation(async (key: string, fallback: number) => {
+      if (key === 'EMAIL_VERIFICATION_CLEANUP_ALERT_THRESHOLD') return 10;
+      if (key === 'EMAIL_VERIFICATION_CLEANUP_ALERT_SPIKE_MULTIPLIER') return 2;
+      return fallback;
+    });
+    getAppConfigMock.mockImplementation(async (key: string) => {
+      if (key === 'EMAIL_VERIFICATION_CLEANUP_METRICS') {
+        return '{invalid-json';
+      }
+      return null;
+    });
+
+    const { cleanupUnverifiedUsers } = await loadCleanup();
+    await cleanupUnverifiedUsers(now);
+
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('skips alert when admin emails are missing', async () => {
+    const now = new Date('2026-01-07T06:00:00Z');
+    expiredTokens = [{ email: 'expired@example.com' }];
+
+    prismaMock.user.deleteMany
+      .mockResolvedValueOnce({ count: 5 })
+      .mockResolvedValueOnce({ count: 1 });
+
+    getAdminEmailsMock.mockReturnValue([]);
+    getAppConfigNumberMock.mockImplementation(async (key: string, fallback: number) => {
+      if (key === 'EMAIL_VERIFICATION_CLEANUP_ALERT_THRESHOLD') return 3;
+      return fallback;
+    });
+
+    const { cleanupUnverifiedUsers } = await loadCleanup();
+    await cleanupUnverifiedUsers(now);
+
+    expect(sendEmailMock).not.toHaveBeenCalled();
+  });
+
+  it('logs errors if sending alert fails', async () => {
+    const now = new Date('2026-01-07T07:00:00Z');
+    expiredTokens = [{ email: 'expired@example.com' }];
+
+    prismaMock.user.deleteMany
+      .mockResolvedValueOnce({ count: 9 })
+      .mockResolvedValueOnce({ count: 2 });
+
+    getAdminEmailsMock.mockReturnValue(['admin@example.com']);
+    getAppConfigNumberMock.mockImplementation(async (key: string, fallback: number) => {
+      if (key === 'EMAIL_VERIFICATION_CLEANUP_ALERT_THRESHOLD') return 5;
+      return fallback;
+    });
+    getAppConfigMock.mockImplementation(async (key: string) => {
+      if (key === 'EMAIL_VERIFICATION_CLEANUP_METRICS') {
+        return 'null';
+      }
+      return null;
+    });
+    sendEmailMock.mockRejectedValueOnce(new Error('SMTP down'));
+
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    const { cleanupUnverifiedUsers } = await loadCleanup();
+    await cleanupUnverifiedUsers(now);
+
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledWith(
+      'Email verification cleanup alert failed:',
+      expect.any(Error)
+    );
+
+    errorSpy.mockRestore();
+  });
 });
