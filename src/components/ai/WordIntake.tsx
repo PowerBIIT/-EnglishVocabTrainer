@@ -689,6 +689,14 @@ export function WordIntake({
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastIntakeSourceRef = useRef<string>('');
+  const requestIdRef = useRef(0);
+
+  const startRequest = () => {
+    requestIdRef.current += 1;
+    return requestIdRef.current;
+  };
+
+  const isActiveRequest = (requestId: number) => requestIdRef.current === requestId;
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -941,8 +949,13 @@ export function WordIntake({
       selected: true,
     }));
 
-  const applyParsedWords = (words: ParsedWord[], category: string) => {
+  const applyParsedWords = (
+    words: ParsedWord[],
+    category: string,
+    requestId?: number
+  ) => {
     if (words.length === 0) return;
+    if (typeof requestId === 'number' && !isActiveRequest(requestId)) return;
     setParsedWords(words);
     setSuggestedCategory(category);
     setSuggestedSetName(buildSetName(category));
@@ -951,6 +964,7 @@ export function WordIntake({
 
   const handleSend = async () => {
     if (!input.trim() || isProcessing) return;
+    const requestId = startRequest();
 
     const userMessage: Message = {
       id: generateId(),
@@ -967,11 +981,13 @@ export function WordIntake({
     }
     setIsProcessing(true);
 
-    await processMessage(messageText);
-    setIsProcessing(false);
+    await processMessage(messageText, requestId);
+    if (isActiveRequest(requestId)) {
+      setIsProcessing(false);
+    }
   };
 
-  const processMessage = async (text: string) => {
+  const processMessage = async (text: string, requestId: number) => {
     const normalizedText = normalizeForMatch(text);
     const statsKeywords = [
       'ile mam',
@@ -1069,7 +1085,7 @@ export function WordIntake({
         metadata: { count, level, variant },
       });
 
-      await generateWordsWithAI(count, topic, level);
+      await generateWordsWithAI(count, topic, level, requestId);
       return;
     }
 
@@ -1090,10 +1106,15 @@ export function WordIntake({
       return;
     }
 
-    await parseTextWithAI(text);
+    await parseTextWithAI(text, requestId);
   };
 
-  const generateWordsWithAI = async (count: number, topic: string, level: string) => {
+  const generateWordsWithAI = async (
+    count: number,
+    topic: string,
+    level: string,
+    requestId: number
+  ) => {
     try {
       const response = await fetch('/api/ai/generate-words', {
         method: 'POST',
@@ -1127,20 +1148,20 @@ export function WordIntake({
           data?.error === 'global_limit_reached' ||
           data?.error === 'ai_cost_limit_reached'
         ) {
-          await generateWordsLocal(count, topic, 'limit', data?.error);
+          await generateWordsLocal(count, topic, 'limit', data?.error, requestId);
           return;
         }
         if (data?.error === 'response_truncated') {
-          await generateWordsLocal(count, topic, 'truncated', data?.error);
+          await generateWordsLocal(count, topic, 'truncated', data?.error, requestId);
           return;
         }
         const aiError = handleAiLimitError(data, { silent: true });
         if (aiError === 'config') {
-          await generateWordsLocal(count, topic, 'config', data?.error);
+          await generateWordsLocal(count, topic, 'config', data?.error, requestId);
           return;
         }
         if (aiError === 'rate_limited' || aiError === 'service') {
-          await generateWordsLocal(count, topic, 'error', data?.error);
+          await generateWordsLocal(count, topic, 'error', data?.error, requestId);
           return;
         }
         if (aiError === 'waitlisted' || aiError === 'suspended') {
@@ -1164,6 +1185,7 @@ export function WordIntake({
       }
 
       if (data.words && data.words.length > 0) {
+        if (!isActiveRequest(requestId)) return;
         setParsedWords(
           data.words.map((w: ParsedWord) => ({
             ...normalizeParsedWord(w),
@@ -1188,7 +1210,7 @@ export function WordIntake({
       }
     } catch (error) {
       console.error('Generate error:', error);
-      await generateWordsLocal(count, topic, 'error');
+      await generateWordsLocal(count, topic, 'error', undefined, requestId);
     }
   };
 
@@ -1196,8 +1218,10 @@ export function WordIntake({
     count: number,
     topic: string,
     reason: 'limit' | 'config' | 'error' | 'truncated' = 'config',
-    errorCode?: string
+    errorCode?: string,
+    requestId?: number
   ) => {
+    if (typeof requestId === 'number' && !isActiveRequest(requestId)) return;
     const fallbackWords = (FALLBACK_WORDS[activePair.id] ?? FALLBACK_WORDS['pl-en']).map(
       (word) => ({
         ...word,
@@ -1221,7 +1245,7 @@ export function WordIntake({
     addAssistantMessage(fallbackMessage);
   };
 
-  const parseTextWithAI = async (text: string) => {
+  const parseTextWithAI = async (text: string, requestId: number) => {
     const localWords = parseVocabularyInput(text);
 
     lastIntakeSourceRef.current = 'text';
@@ -1253,6 +1277,7 @@ export function WordIntake({
         if (!response.ok) {
           handleAiLimitError(data);
         } else if (data?.words && data.words.length > 0) {
+          if (!isActiveRequest(requestId)) return;
           setParsedWords(
             data.words.map((w: ParsedWord) => ({
               ...normalizeParsedWord(w),
@@ -1270,6 +1295,7 @@ export function WordIntake({
         console.error('Parse API error:', error);
       }
 
+      if (!isActiveRequest(requestId)) return;
       setParsedWords(localWords.map((w) => ({ ...w, selected: true })));
       setSuggestedCategory(t.defaultCategory);
       setSuggestedSetName(buildSetName(t.defaultCategory));
@@ -1284,6 +1310,7 @@ export function WordIntake({
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) return;
+    const requestId = startRequest();
 
     const source = event.target === cameraInputRef.current ? 'camera' : 'image';
     const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
@@ -1303,6 +1330,7 @@ export function WordIntake({
     let hasProcessingIssues = false;
 
     for (const file of files) {
+      if (!isActiveRequest(requestId)) break;
       if (stopProcessing) break;
 
       const preparedFile = await prepareImageForUpload(file);
@@ -1335,6 +1363,7 @@ export function WordIntake({
         });
 
         const data = await response.json().catch(() => null);
+        if (!isActiveRequest(requestId)) break;
 
         if (!response.ok) {
           if (response.status === 413) {
@@ -1376,15 +1405,17 @@ export function WordIntake({
       }
     }
 
-    if (collectedWords.length > 0) {
+    if (isActiveRequest(requestId) && collectedWords.length > 0) {
       const finalCategory = suggestedCategory ?? t.imageCategoryFallback;
-      applyParsedWords(collectedWords, finalCategory);
+      applyParsedWords(collectedWords, finalCategory, requestId);
     }
-    if (hasProcessingIssues && collectedWords.length === 0) {
+    if (isActiveRequest(requestId) && hasProcessingIssues && collectedWords.length === 0) {
       addAssistantMessage(t.imageTips);
     }
 
-    setIsProcessing(false);
+    if (isActiveRequest(requestId)) {
+      setIsProcessing(false);
+    }
 
     if (imageInputRef.current) {
       imageInputRef.current.value = '';
@@ -1394,6 +1425,7 @@ export function WordIntake({
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files ?? []);
     if (files.length === 0) return;
+    const requestId = startRequest();
 
     const totalBytes = files.reduce((sum, file) => sum + file.size, 0);
     lastIntakeSourceRef.current = 'file';
@@ -1411,6 +1443,7 @@ export function WordIntake({
     let stopProcessing = false;
 
     for (const file of files) {
+      if (!isActiveRequest(requestId)) break;
       if (stopProcessing) break;
 
       if (file.size > MAX_UPLOAD_SIZE_BYTES) {
@@ -1445,6 +1478,7 @@ export function WordIntake({
         });
 
         const data = await response.json().catch(() => null);
+        if (!isActiveRequest(requestId)) break;
 
         if (!response.ok) {
           if (response.status === 413) {
@@ -1477,12 +1511,14 @@ export function WordIntake({
       }
     }
 
-    if (collectedWords.length > 0) {
+    if (isActiveRequest(requestId) && collectedWords.length > 0) {
       const finalCategory = suggestedCategory ?? t.defaultCategory;
-      applyParsedWords(collectedWords, finalCategory);
+      applyParsedWords(collectedWords, finalCategory, requestId);
     }
 
-    setIsProcessing(false);
+    if (isActiveRequest(requestId)) {
+      setIsProcessing(false);
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -1559,10 +1595,12 @@ export function WordIntake({
   };
 
   const cancelWords = () => {
+    requestIdRef.current += 1;
     setParsedWords([]);
     setSuggestedCategory('');
     setSuggestedSetName('');
     setSelectedSetOption(NEW_SET_OPTION);
+    setIsProcessing(false);
   };
 
   const selectionHint =

@@ -97,4 +97,45 @@ describe('WordIntake', () => {
       );
     });
   });
+
+  it('ignores generated words after canceling an onboarding request', async () => {
+    const user = userEvent.setup();
+    let resolveFetch!: (value: { ok: boolean; json: () => Promise<unknown> }) => void;
+    const pendingFetch = new Promise<{ ok: boolean; json: () => Promise<unknown> }>(
+      (resolve) => {
+        resolveFetch = resolve;
+      }
+    );
+
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(pendingFetch));
+
+    render(<WordIntake variant="onboarding" />);
+
+    const input = await screen.findByPlaceholderText('Wpisz słówka lub temat...');
+    await user.type(input, 'Wygeneruj 5 słówek o biologii');
+    await user.keyboard('{Enter}');
+
+    const cancelButtons = screen.getAllByRole('button', { name: 'Anuluj' });
+    await user.click(cancelButtons[0]);
+
+    resolveFetch({
+      ok: true,
+      json: async () => ({
+        topic: 'biologia',
+        level: 'A2',
+        words: [
+          {
+            target: 'cell',
+            native: 'komorka',
+            phonetic: '/sel/',
+            difficulty: 'easy',
+          },
+        ],
+      }),
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByText('cell')).not.toBeInTheDocument();
+    });
+  });
 });
