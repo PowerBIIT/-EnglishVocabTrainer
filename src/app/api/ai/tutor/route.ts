@@ -20,6 +20,13 @@ import { buildPromptWithOverlays } from '@/lib/aiPromptOverlay';
 import { logAiRequest, logAiRequestError } from '@/lib/aiTelemetry';
 import { recordAiUsage } from '@/lib/aiUsage';
 
+const estimateTutorOutputTokens = (message: string, isAdmin: boolean) => {
+  const wordCount = message.trim().split(/\s+/).filter(Boolean).length;
+  const baseTokens = isAdmin ? 320 : 480;
+  const estimate = baseTokens + wordCount * 8;
+  return Math.min(1024, Math.max(256, estimate));
+};
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -110,7 +117,7 @@ export async function POST(request: NextRequest) {
     const startTime = Date.now();
     const result = await gemini.generateWithMetadata(finalPrompt, {
       temperature: 0.8,
-      maxOutputTokens: 512,
+      maxOutputTokens: estimateTutorOutputTokens(messageValue, isAdminRequest),
       model,
     });
     const durationMs = Date.now() - startTime;

@@ -9,9 +9,26 @@ import { resetStore } from '@/test/utils';
 describe('WordIntake', () => {
   beforeEach(() => {
     resetStore();
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
+    const mockFetch = vi.fn().mockImplementation(async (input: RequestInfo) => {
+      const url = typeof input === 'string' ? input : input.url;
+      if (url.includes('/api/ai/generate-words')) {
+        return {
+          ok: true,
+          json: async () => ({
+            topic: 'biologia',
+            level: 'A2',
+            words: [
+              {
+                target: 'cell',
+                native: 'komorka',
+                phonetic: '/sel/',
+                difficulty: 'easy',
+              },
+            ],
+          }),
+        };
+      }
+      return {
         ok: true,
         json: async () => ({
           category_suggestion: 'Klasowka',
@@ -19,8 +36,9 @@ describe('WordIntake', () => {
             { target: 'apple', native: 'jablko', phonetic: '/apple/', difficulty: 'easy' },
           ],
         }),
-      })
-    );
+      };
+    });
+    vi.stubGlobal('fetch', mockFetch);
   });
 
   afterEach(() => {
@@ -32,7 +50,7 @@ describe('WordIntake', () => {
     const user = userEvent.setup();
     render(<WordIntake variant="chat" />);
 
-    const input = await screen.findByPlaceholderText('Wpisz słówka lub zapytaj...');
+    const input = await screen.findByPlaceholderText('Wpisz słówka lub temat...');
     await user.type(input, 'apple - jablko');
     await user.keyboard('{Enter}');
 
@@ -48,5 +66,35 @@ describe('WordIntake', () => {
     });
 
     expect(await screen.findByText(/Dodano/)).toBeVisible();
+  });
+
+  it('shows a helpful message for general questions', async () => {
+    const user = userEvent.setup();
+    render(<WordIntake variant="chat" />);
+
+    const input = await screen.findByPlaceholderText('Wpisz słówka lub temat...');
+    await user.type(input, 'Jak zrobić tort?');
+    await user.keyboard('{Enter}');
+
+    expect(
+      await screen.findByText(/To wygląda na ogólne pytanie/i)
+    ).toBeVisible();
+    expect(globalThis.fetch).not.toHaveBeenCalled();
+  });
+
+  it('accepts vocabulary questions that include generation intent', async () => {
+    const user = userEvent.setup();
+    render(<WordIntake variant="chat" />);
+
+    const input = await screen.findByPlaceholderText('Wpisz słówka lub temat...');
+    await user.type(input, 'Czy możesz wygenerować 8 słówek na temat biologii?');
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        '/api/ai/generate-words',
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
   });
 });

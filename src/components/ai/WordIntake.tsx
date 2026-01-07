@@ -103,6 +103,49 @@ const GENERATION_NOUNS = [
 
 const TOPIC_HINTS = ['temat', 'tema', 'topic', 'тема', 'тематика'].map(normalizeForMatch);
 
+const QUESTION_PREFIXES = [
+  'jak',
+  'co',
+  'czy',
+  'dlaczego',
+  'kiedy',
+  'gdzie',
+  'ile',
+  'jaki',
+  'jaka',
+  'jakie',
+  'po co',
+  'do czego',
+  'w jaki sposob',
+  'how',
+  'what',
+  'why',
+  'when',
+  'where',
+  'who',
+  'which',
+  'can',
+  'should',
+  'could',
+  'would',
+  'is',
+  'are',
+  'was',
+  'were',
+  'як',
+  'що',
+  'чому',
+  'коли',
+  'де',
+  'хто',
+  'який',
+  'яка',
+  'яке',
+  'чи',
+  'для чого',
+  'що таке',
+].map(normalizeForMatch);
+
 const LANGUAGE_HINTS = [
   'angiel',
   'english',
@@ -117,6 +160,9 @@ const LANGUAGE_HINTS = [
   'польсь',
   'україн',
 ].map(normalizeForMatch);
+
+const looksLikeQuestion = (text: string, normalizedText: string) =>
+  text.includes('?') || QUESTION_PREFIXES.some((prefix) => normalizedText.startsWith(prefix));
 
 const stripTopicLanguage = (topic: string) =>
   topic
@@ -262,6 +308,8 @@ export const wordIntakeCopy = {
       'Nie mogę wygenerować słówek dla tego tematu. Wybierz neutralny, szkolny temat (np. szkoła, praca, podróże).',
     clarifyTopic:
       'Temat jest zbyt ogólny. Doprecyzuj, np. "zakupy w sklepie" lub "praca w biurze".',
+    offTopicQuestion:
+      'To wygląda na ogólne pytanie. Ten asystent tworzy listy słówek — podaj temat (np. "gotowanie") albo wklej słówka w formacie `słowo - tłumaczenie`.',
     generatedFallback: (count: number, total: number, code?: string) =>
       `Użyłem lokalnych danych (brak lub nieprawidłowy klucz API${code ? `, ${code}` : ''}).\n\nZnalazłem ${Math.min(count, total)} przykładowych słówek. Skonfiguruj GEMINI_API_KEY w .env.local dla pełnej funkcjonalności.`,
     generatedFallbackLimit: (count: number, total: number, code?: string) =>
@@ -341,7 +389,7 @@ export const wordIntakeCopy = {
     imageButtonTitle: 'Wczytaj zdjęcie notatek',
     cameraButtonTitle: 'Zrób zdjęcie aparatem',
     fileButtonTitle: 'Wczytaj plik z notatkami',
-    inputPlaceholder: 'Wpisz słówka lub zapytaj...',
+    inputPlaceholder: 'Wpisz słówka lub temat...',
     assistantTitle: 'Asystent AI',
     assistantSubtitle: 'Powered by Gemini',
     selectionHint: 'Zaznacz słówka, które chcesz dodać do biblioteki.',
@@ -373,6 +421,8 @@ export const wordIntakeCopy = {
       'I can’t generate words for that topic. Pick a neutral, school-appropriate topic (e.g., school, work, travel).',
     clarifyTopic:
       'The topic is too broad. Please be more specific, e.g., "shopping at a store" or "office work".',
+    offTopicQuestion:
+      'That looks like a general question. I can only help with vocabulary — give a topic (e.g., "cooking") or paste words as `word - translation`.',
     generatedFallback: (count: number, total: number, code?: string) =>
       `I used local data (missing or invalid API key${code ? `, ${code}` : ''}).\n\nFound ${Math.min(count, total)} sample words. Configure GEMINI_API_KEY in .env.local for full functionality.`,
     generatedFallbackLimit: (count: number, total: number, code?: string) =>
@@ -449,7 +499,7 @@ export const wordIntakeCopy = {
     imageButtonTitle: 'Upload notes photo',
     cameraButtonTitle: 'Take a photo',
     fileButtonTitle: 'Upload notes file',
-    inputPlaceholder: 'Type words or ask...',
+    inputPlaceholder: 'Type words or a topic...',
     assistantTitle: 'AI Assistant',
     assistantSubtitle: 'Powered by Gemini',
     selectionHint: 'Select the words you want to add to your library.',
@@ -481,6 +531,8 @@ export const wordIntakeCopy = {
       'Не можу згенерувати слова для цієї теми. Обери нейтральну, шкільну тему (наприклад: школа, робота, подорожі).',
     clarifyTopic:
       'Тема надто загальна. Уточни, наприклад: "покупки в магазині" або "робота в офісі".',
+    offTopicQuestion:
+      'Це схоже на загальне питання. Я можу допомогти лише зі словником — задай тему (наприклад, "готування") або встав слова у форматі `слово - переклад`.',
     generatedFallback: (count: number, total: number, code?: string) =>
       `Використав локальні дані (немає або недійсний ключ API${code ? `, ${code}` : ''}).\n\nЗнайшов ${Math.min(count, total)} прикладових слів. Налаштуй GEMINI_API_KEY в .env.local для повної функціональності.`,
     generatedFallbackLimit: (count: number, total: number, code?: string) =>
@@ -558,7 +610,7 @@ export const wordIntakeCopy = {
     imageButtonTitle: 'Завантажити фото нотаток',
     cameraButtonTitle: 'Зробити фото',
     fileButtonTitle: 'Завантажити файл нотаток',
-    inputPlaceholder: 'Введи слова або запитай...',
+    inputPlaceholder: 'Введи слова або тему...',
     assistantTitle: 'AI Асистент',
     assistantSubtitle: 'Powered by Gemini',
     selectionHint: 'Обери слова, які хочеш додати до бібліотеки.',
@@ -966,6 +1018,14 @@ export function WordIntake({
       hasTopicPattern ||
       (hasWordHint && (hasLanguageHint || hasCountHint));
     const wantsStats = containsKeyword(normalizedText, normalizedStatsKeywords);
+    const isQuestionLike = looksLikeQuestion(text, normalizedText);
+    const hasVocabIntent =
+      hasTopicHint || hasTopicPattern || hasWordHint || hasLanguageHint;
+
+    if (!wantsStats && isQuestionLike && !hasVocabIntent) {
+      addAssistantMessage(t.offTopicQuestion);
+      return;
+    }
 
     if (wantsGeneration) {
       const match =
@@ -1058,6 +1118,10 @@ export function WordIntake({
           addAssistantMessage(t.clarifyTopic);
           return;
         }
+        if (data?.error === 'topic_question') {
+          addAssistantMessage(t.offTopicQuestion);
+          return;
+        }
         if (
           data?.error === 'user_limit_reached' ||
           data?.error === 'global_limit_reached' ||
@@ -1092,6 +1156,10 @@ export function WordIntake({
       }
       if (data?.error === 'needs_clarification') {
         addAssistantMessage(t.clarifyTopic);
+        return;
+      }
+      if (data?.error === 'topic_question') {
+        addAssistantMessage(t.offTopicQuestion);
         return;
       }
 

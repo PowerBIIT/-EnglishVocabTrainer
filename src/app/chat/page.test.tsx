@@ -13,6 +13,6 @@ describe('ChatPage', () => {
     render(<ChatPage />);
 
     expect(await screen.findByRole('heading', { name: 'Asystent AI' })).toBeVisible();
-    expect(screen.getByPlaceholderText('Wpisz słówka lub zapytaj...')).toBeVisible();
+    expect(screen.getByPlaceholderText('Wpisz słówka lub temat...')).toBeVisible();
   });
 });

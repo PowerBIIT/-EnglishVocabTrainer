@@ -32,6 +32,51 @@ interface GenerateResult {
   error?: 'UNSAFE_TOPIC' | 'NEEDS_CLARIFICATION';
 }
 
+const normalizeForMatch = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u0141\u0142]/g, 'l')
+    .replace(/[^a-z0-9\u0400-\u04ff]+/g, '');
+
+const QUESTION_PREFIXES = [
+  'jak',
+  'co',
+  'czy',
+  'dlaczego',
+  'kiedy',
+  'gdzie',
+  'ile',
+  'jaki',
+  'jaka',
+  'jakie',
+  'po co',
+  'do czego',
+  'w jaki sposob',
+  'how',
+  'what',
+  'why',
+  'when',
+  'where',
+  'who',
+  'which',
+  'can',
+  'should',
+  'could',
+  'would',
+  'is',
+  'are',
+  'was',
+  'were',
+].map(normalizeForMatch);
+
+const looksLikeQuestion = (text: string) => {
+  if (text.includes('?')) return true;
+  const normalized = normalizeForMatch(text);
+  return QUESTION_PREFIXES.some((prefix) => normalized.startsWith(prefix));
+};
+
 const estimateWordOutputTokens = (count: number) => {
   const baseTokens = 220;
   const perWordTokens = 60;
@@ -110,6 +155,13 @@ export async function POST(request: NextRequest) {
     if (!topicValue) {
       return NextResponse.json(
         { error: 'Topic is required' },
+        { status: 400 }
+      );
+    }
+
+    if (looksLikeQuestion(topicValue)) {
+      return NextResponse.json(
+        { error: 'topic_question' },
         { status: 400 }
       );
     }

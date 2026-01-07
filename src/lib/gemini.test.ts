@@ -156,9 +156,11 @@ describe('gemini prompts', () => {
       'Respond ONLY in JSON'
     );
     expect(AI_PROMPTS.extractFromImage('en', 'pl')).toContain('Respond ONLY in JSON');
-    expect(AI_PROMPTS.tutorChat('context', 'hello', 'en', 'pl', 'en')).toContain(
-      'You are a friendly AI tutor'
-    );
+    const tutorPrompt = AI_PROMPTS.tutorChat('context', 'hello', 'en', 'pl', 'en');
+    expect(tutorPrompt).toContain('You are a friendly AI tutor');
+    expect(tutorPrompt).toContain('Safety rules');
+    expect(tutorPrompt).toContain('refuse briefly');
+    expect(tutorPrompt).toContain('concise but flexible');
     expect(AI_PROMPTS.adminAssistant('context', 'hello', 'en')).toContain('AI assistant');
     expect(AI_PROMPTS.explainWord('apple', 'en', 'pl', 'en')).toContain('Explain the following');
   });

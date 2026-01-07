@@ -374,6 +374,7 @@ Constraints:
 - Prefer 1-3 word phrases, avoid long sentences in "target".
 - Keep example sentences short (max 6 words).
 - Ensure "target" is in ${getLanguageName(targetLanguage)} and "native" is in ${getLanguageName(nativeLanguage)}.
+- If the topic is phrased as a question or a request for instructions (e.g., "how to bake a cake"), respond with NEEDS_CLARIFICATION.
 
 If the topic is unsafe, respond with:
 {
@@ -486,9 +487,11 @@ ${context}
 
 User message: "${userMessage}"
 
-Keep replies concise:
-- Max 4 short sentences, under 80 words.
+Keep replies concise but flexible:
+- Simple questions: 1-2 short sentences.
+- Explanations or grammar: up to 6 short sentences or a short bullet list.
 - Use at most 2 short examples.
+- Aim for 60-160 words max, depending on complexity.
 
 Reply naturally like a helpful teacher.`,
 
