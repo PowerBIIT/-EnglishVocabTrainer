@@ -1754,15 +1754,15 @@ export function WordIntake({
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400 min-w-[80px]">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:min-w-[80px]">
                       {t.setLabel}
                     </p>
                     <select
                       data-testid="set-selector"
                       value={selectedSetOption}
                       onChange={(e) => setSelectedSetOption(e.target.value)}
-                      className="text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 flex-1"
+                      className="w-full min-w-0 text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 sm:flex-1"
                     >
                       <option value={NEW_SET_OPTION}>{t.newSetOption}</option>
                       {sets.map((set) => (
@@ -1773,28 +1773,28 @@ export function WordIntake({
                     </select>
                   </div>
                   {selectedSetOption === NEW_SET_OPTION && (
-                    <div className="flex items-center gap-3">
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400 min-w-[80px]">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:min-w-[80px]">
                         {t.setNameLabel}
                       </p>
                       <input
                         type="text"
                         value={suggestedSetName}
                         onChange={(e) => setSuggestedSetName(e.target.value)}
-                        className="text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 flex-1"
+                        className="w-full min-w-0 text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 sm:flex-1"
                         placeholder={t.setNamePlaceholder}
                       />
                     </div>
                   )}
-                  <div className="flex items-center gap-3">
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400 min-w-[80px]">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:min-w-[80px]">
                       {t.categoryLabel}
                     </p>
                     <input
                       type="text"
                       value={suggestedCategory}
                       onChange={(e) => setSuggestedCategory(e.target.value)}
-                      className="text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 flex-1"
+                      className="w-full min-w-0 text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 sm:flex-1"
                       placeholder={t.categoryPlaceholder}
                     />
                   </div>
