@@ -216,6 +216,7 @@ Alerts are sent to `ADMIN_EMAILS` via SMTP (if configured) and to the webhook UR
 - Unverified credential-based users are deleted after the verification TTL (`EMAIL_VERIFY_TTL_HOURS`, default 24h).
 - Cleanup runs hourly via `waitlist-cron.yml`.
 - Cleanup alerts are sent to `ADMIN_EMAILS` via SMTP when deletions spike above baseline.
+- Cleanup is lightweight (indexed queries + deletes) and safe to run hourly on production.
 
 #### Cleanup Alert Config (Admin Panel → Config)
 
