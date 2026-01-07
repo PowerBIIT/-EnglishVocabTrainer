@@ -278,7 +278,7 @@ export function FlashcardSession({ words, onComplete }: FlashcardSessionProps) {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-4 overflow-x-hidden">
       {/* Progress bar */}
       <div className="mb-6">
         <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2">

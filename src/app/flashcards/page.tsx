@@ -180,6 +180,12 @@ export default function FlashcardsPage() {
     setAppliedSetParam(true);
   }, [appliedSetParam, hydrated, setIdParam, sets]);
 
+  useEffect(() => {
+    if (!hydrated) return;
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+  }, [hydrated, sessionState]);
+
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     filterBySet(vocabulary).forEach((word) => {
