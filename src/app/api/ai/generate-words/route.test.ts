@@ -138,4 +138,67 @@ describe('POST /api/ai/generate-words', () => {
     expect(data.words).toHaveLength(1);
     expect(mockGenerateWithMetadata).toHaveBeenCalledOnce();
   });
+
+  it('falls back to a compact prompt after invalid responses', async () => {
+    mockGenerateWithMetadata
+      .mockResolvedValueOnce({
+        content: 'not json',
+        usage: { promptTokenCount: 10, candidatesTokenCount: 20 },
+        model: 'test-model',
+      })
+      .mockResolvedValueOnce({
+        content: 'still not json',
+        usage: { promptTokenCount: 10, candidatesTokenCount: 20 },
+        model: 'test-model',
+      })
+      .mockResolvedValueOnce({
+        content: JSON.stringify({
+          topic: 'cars',
+          level: 'A2',
+          words: [
+            {
+              target: 'car',
+              phonetic: '/kar/',
+              native: 'auto',
+              example_target: '',
+              example_native: '',
+              difficulty: 'easy',
+            },
+            {
+              target: 'garage',
+              phonetic: '/gaˈraʒ/',
+              native: 'garaz',
+              example_target: '',
+              example_native: '',
+              difficulty: 'easy',
+            },
+          ],
+        }),
+        usage: { promptTokenCount: 10, candidatesTokenCount: 20 },
+        model: 'test-model',
+      });
+
+    const { POST } = await loadModule();
+    const response = await POST(
+      new Request('http://localhost/api/ai/generate-words', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: 'cars',
+          count: 12,
+          level: 'A2',
+          targetLanguage: 'en',
+          nativeLanguage: 'pl',
+        }),
+      })
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(mockGenerateWithMetadata).toHaveBeenCalledTimes(3);
+    expect(mockGenerateWithMetadata.mock.calls[2][0]).toContain('Compact output rules');
+    expect(data.warning).toBe('partial_result');
+    expect(data.requestedCount).toBe(12);
+    expect(data.returnedCount).toBe(2);
+  });
 });

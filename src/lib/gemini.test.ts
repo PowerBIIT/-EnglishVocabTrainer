@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { GeminiApiError } from '@/lib/aiErrors';
 import { GeminiService, AI_PROMPTS, parseAIResponse } from '@/lib/gemini';
+import { MAX_AI_GENERATE_WORD_COUNT } from '@/lib/apiLimits';
 
 describe('gemini service', () => {
   const originalFetch = globalThis.fetch;
@@ -149,8 +150,10 @@ describe('gemini prompts', () => {
       })
     ).toContain('Respond ONLY in JSON');
 
-    expect(AI_PROMPTS.generateWords('travel', 3, 'A2', 'en', 'pl')).toContain(
-      'Respond ONLY in JSON'
+    const generatePrompt = AI_PROMPTS.generateWords('travel', 3, 'A2', 'en', 'pl');
+    expect(generatePrompt).toContain('Respond ONLY in JSON');
+    expect(generatePrompt).toContain(
+      `Never return more than ${MAX_AI_GENERATE_WORD_COUNT} words`
     );
     expect(AI_PROMPTS.parseText('apple - jablko', 'en', 'pl')).toContain(
       'Respond ONLY in JSON'

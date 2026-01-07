@@ -5,6 +5,7 @@ import { GeminiService, AI_PROMPTS, parseAIResponse } from '@/lib/gemini';
 import { mapGeminiError } from '@/lib/aiErrors';
 import {
   AI_RATE_LIMIT,
+  MAX_AI_GENERATE_WORD_COUNT,
   MAX_AI_TOPIC_CHARS,
   MAX_AI_WORD_COUNT,
 } from '@/lib/apiLimits';
@@ -187,6 +188,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const effectiveCount = Math.min(requestedCount, MAX_AI_GENERATE_WORD_COUNT);
     const safeTargetLanguage = normalizeTargetLanguage(targetLanguage);
     const safeNativeLanguage = normalizeNativeLanguage(nativeLanguage);
 
@@ -200,19 +202,26 @@ export async function POST(request: NextRequest) {
 
     const model = await resolveGeminiModel();
     const gemini = new GeminiService(apiKey);
-    const prompt = AI_PROMPTS.generateWords(
-      topicValue,
-      requestedCount,
-      safeLevel,
-      safeTargetLanguage,
-      safeNativeLanguage
-    );
-    const finalPrompt = await buildPromptWithOverlays('generate-words', prompt);
+    const buildPrompt = async (count: number, options?: { compact?: boolean }) => {
+      const prompt = AI_PROMPTS.generateWords(
+        topicValue,
+        count,
+        safeLevel,
+        safeTargetLanguage,
+        safeNativeLanguage,
+        options
+      );
+      return buildPromptWithOverlays('generate-words', prompt);
+    };
 
     const languagePair = `${safeNativeLanguage}-${safeTargetLanguage}`;
-    const requestGeneration = async (maxOutputTokens: number, temperature: number) => {
+    const requestGeneration = async (
+      prompt: string,
+      maxOutputTokens: number,
+      temperature: number
+    ) => {
       const startTime = Date.now();
-      const response = await gemini.generateWithMetadata(finalPrompt, {
+      const response = await gemini.generateWithMetadata(prompt, {
         temperature,
         maxOutputTokens,
         model,
@@ -238,27 +247,41 @@ export async function POST(request: NextRequest) {
       return response;
     };
 
-    const initialBudget = estimateWordOutputTokens(requestedCount);
-    let response = await requestGeneration(initialBudget, 0.8);
-    let result: GenerateResult | null = null;
+    const parseResult = (content: string) => {
+      try {
+        return parseAIResponse<GenerateResult>(content, { logErrors: false });
+      } catch {
+        return null;
+      }
+    };
 
-    try {
-      result = parseAIResponse<GenerateResult>(response.content, { logErrors: false });
-    } catch {
-      result = null;
-    }
+    const initialBudget = estimateWordOutputTokens(effectiveCount);
+    const basePrompt = await buildPrompt(effectiveCount);
+    let response = await requestGeneration(basePrompt, initialBudget, 0.8);
+    let result: GenerateResult | null = null;
+    result = parseResult(response.content);
 
     if (!result) {
       const retryBudget = buildRetryTokenBudget(initialBudget);
-      response = await requestGeneration(retryBudget, 0.6);
-      try {
-        result = parseAIResponse<GenerateResult>(response.content, { logErrors: false });
-      } catch {
-        return NextResponse.json(
-          { error: 'response_truncated' },
-          { status: 422 }
-        );
-      }
+      response = await requestGeneration(basePrompt, retryBudget, 0.6);
+      result = parseResult(response.content);
+    }
+
+    let finalCount = effectiveCount;
+    if (!result) {
+      const compactCount = Math.min(effectiveCount, 8);
+      const compactPrompt = await buildPrompt(compactCount, { compact: true });
+      const compactBudget = estimateWordOutputTokens(compactCount);
+      response = await requestGeneration(compactPrompt, compactBudget, 0.4);
+      result = parseResult(response.content);
+      finalCount = compactCount;
+    }
+
+    if (!result) {
+      return NextResponse.json(
+        { error: 'response_truncated' },
+        { status: 422 }
+      );
     }
 
     if (result.error === 'UNSAFE_TOPIC') {
@@ -282,7 +305,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const normalizedWords = result.words.slice(0, requestedCount);
+    const normalizedWords = result.words.slice(0, finalCount);
     const responseBody: GenerateResult & {
       warning?: 'partial_result';
       requestedCount: number;

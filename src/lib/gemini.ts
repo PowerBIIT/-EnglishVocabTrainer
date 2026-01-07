@@ -5,6 +5,7 @@ import {
   createGeminiTimeoutError,
 } from '@/lib/aiErrors';
 import { DEFAULT_GEMINI_MODEL } from '@/lib/aiModelCatalog';
+import { MAX_AI_GENERATE_WORD_COUNT } from '@/lib/apiLimits';
 
 // Gemini API Service Layer
 
@@ -244,6 +245,13 @@ Safety rules (applies to all outputs):
 - If the request is unsafe or asks for non-language-learning content, refuse briefly and suggest a safe topic.
 `.trim();
 
+const GENERATE_WORDS_COMPACT_RULES = `
+Compact output rules:
+- Keep "target" and "native" to max 2 words.
+- Keep example sentences to max 4 words; if unsure, use an empty string.
+- If the response would be too long, return fewer words but valid JSON.
+`.trim();
+
 export const AI_PROMPTS = {
   evaluatePronunciation: ({
     expected,
@@ -348,7 +356,8 @@ Respond ONLY in JSON (no markdown):
     count: number,
     level: string,
     targetLanguage: TargetLanguage,
-    nativeLanguage: NativeLanguage
+    nativeLanguage: NativeLanguage,
+    options?: { compact?: boolean }
   ) => `
 ${SAFETY_RULES}
 
@@ -372,8 +381,12 @@ Constraints:
 - Keep the vocabulary practical and classroom-appropriate; avoid rare jargon.
 - No duplicates.
 - Prefer 1-3 word phrases, avoid long sentences in "target".
-- Keep example sentences short (max 6 words).
+- Keep example sentences short (max 6 words); if unsure, use an empty string.
+- Never return more than ${MAX_AI_GENERATE_WORD_COUNT} words, even if asked for more.
 - Ensure "target" is in ${getLanguageName(targetLanguage)} and "native" is in ${getLanguageName(nativeLanguage)}.
+- Keep translations short (max 4 words).
+- If the output would be too long, return fewer words but valid JSON.
+${options?.compact ? `\n${GENERATE_WORDS_COMPACT_RULES}\n` : ''}
 - If the topic is phrased as a question or a request for instructions (e.g., "how to bake a cake"), respond with NEEDS_CLARIFICATION.
 
 If the topic is unsafe, respond with:
