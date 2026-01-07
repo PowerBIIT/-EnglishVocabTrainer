@@ -96,6 +96,34 @@ export const ADMIN_CONFIG_FIELDS: AdminConfigField[] = [
     defaultValue: '',
   },
   {
+    key: 'EMAIL_VERIFICATION_CLEANUP_ALERT_THRESHOLD',
+    label: 'Email cleanup alert threshold',
+    description: 'Send an alert if a cleanup run deletes at least this many users.',
+    dataType: 'number',
+    defaultValue: '10',
+  },
+  {
+    key: 'EMAIL_VERIFICATION_CLEANUP_ALERT_SPIKE_MULTIPLIER',
+    label: 'Email cleanup spike multiplier',
+    description: 'Alert when deletions exceed baseline average by this multiplier.',
+    dataType: 'number',
+    defaultValue: '3',
+  },
+  {
+    key: 'EMAIL_VERIFICATION_CLEANUP_ALERT_WINDOW',
+    label: 'Email cleanup baseline window',
+    description: 'Number of recent cleanup runs used for baseline average.',
+    dataType: 'number',
+    defaultValue: '14',
+  },
+  {
+    key: 'EMAIL_VERIFICATION_CLEANUP_ALERT_COOLDOWN_HOURS',
+    label: 'Email cleanup alert cooldown (hours)',
+    description: 'Minimum hours between cleanup alert emails.',
+    dataType: 'number',
+    defaultValue: '24',
+  },
+  {
     key: 'ALLOWLIST_EMAILS',
     label: 'VIP emails (bypass limit)',
     description:

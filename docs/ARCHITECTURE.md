@@ -128,6 +128,7 @@ AI telemetry:
 - Credential-based signups require email verification.
 - Unverified users are deleted after the verification link TTL (`EMAIL_VERIFY_TTL_HOURS`, default 24h).
 - Cleanup runs via the hourly waitlist cron endpoint.
+- Cleanup alerts email `ADMIN_EMAILS` when deletions spike above baseline.
 
 ### Middleware (`middleware.ts`)
 - Redirects unauthenticated users to `/login`
