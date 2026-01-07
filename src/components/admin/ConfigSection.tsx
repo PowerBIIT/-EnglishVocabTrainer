@@ -38,6 +38,99 @@ const configCopy = {
   },
 } as const;
 
+const configFieldCopyPl: Record<string, { label: string; description: string }> = {
+  MAX_ACTIVE_USERS: {
+    label: 'Maks. aktywni użytkownicy',
+    description:
+      'Limituje liczbę użytkowników z dostępem ACTIVE jednocześnie. Pomaga kontrolować obciążenie i koszty; admini/VIP omijają limit, a aktywni nie tracą dostępu.',
+  },
+  FREE_AI_REQUESTS_PER_MONTH: {
+    label: 'FREE zapytania/miesiąc',
+    description:
+      'Miesięczny limit zapytań AI dla planu FREE. Kontroluje darmowe użycie i koszty; reset co miesiąc (UTC).',
+  },
+  FREE_AI_UNITS_PER_MONTH: {
+    label: 'FREE tokeny/miesiąc',
+    description:
+      'Miesięczny limit tokenów (units) dla planu FREE. Ogranicza kosztowne użycie; reset co miesiąc (UTC).',
+  },
+  PRO_AI_REQUESTS_PER_MONTH: {
+    label: 'PRO zapytania/miesiąc',
+    description:
+      'Miesięczny limit zapytań AI dla planu PRO. Chroni przed nadmiernym użyciem i kosztem; reset co miesiąc (UTC).',
+  },
+  PRO_AI_UNITS_PER_MONTH: {
+    label: 'PRO tokeny/miesiąc',
+    description:
+      'Miesięczny limit tokenów (units) dla planu PRO. Pilnuje kosztów; reset co miesiąc (UTC).',
+  },
+  GLOBAL_AI_REQUESTS_PER_MONTH: {
+    label: 'Globalne zapytania/miesiąc',
+    description:
+      'Globalny limit miesięcznych zapytań dla wszystkich użytkowników. Chroni system i koszty; po przekroczeniu AI jest blokowane do resetu.',
+  },
+  GLOBAL_AI_UNITS_PER_MONTH: {
+    label: 'Globalne tokeny/miesiąc',
+    description:
+      'Globalny limit miesięcznych tokenów dla wszystkich użytkowników. Chroni koszty; po przekroczeniu AI jest blokowane do resetu.',
+  },
+  AI_COST_ALERT_THRESHOLD_USD: {
+    label: 'Próg alertu kosztów AI (USD)',
+    description:
+      'Wysyła alert, gdy miesięczny koszt AI (faktyczny lub prognozowany) osiąga tę kwotę. Wczesne ostrzeżenie budżetowe.',
+  },
+  AI_COST_HARD_LIMIT_USD: {
+    label: 'Twardy limit kosztów AI (USD)',
+    description:
+      'Blokuje wszystkie żądania AI po osiągnięciu tej kwoty (także adminów). Ustaw 0 lub unlimited, aby wyłączyć.',
+  },
+  AI_COST_ALERT_CHECK_INTERVAL_MINUTES: {
+    label: 'Interwał sprawdzania alertu (min)',
+    description:
+      'Minimalna liczba minut między sprawdzeniami alertu kosztów. Większa wartość zmniejsza liczbę alertów i odczytów DB; 0 = każde żądanie.',
+  },
+  AI_COST_ALERT_WEBHOOK_URL: {
+    label: 'Webhook alertu kosztów AI',
+    description:
+      'Opcjonalny webhook do odbioru alertów kosztowych w JSON. Zostaw puste, aby wyłączyć.',
+  },
+  EMAIL_VERIFICATION_CLEANUP_ALERT_THRESHOLD: {
+    label: 'Próg alertu cleanupu email',
+    description:
+      'Minimalna liczba usunięć w jednym cleanupie, która wyzwala alert. Pomaga wykryć nietypowe skoki.',
+  },
+  EMAIL_VERIFICATION_CLEANUP_ALERT_SPIKE_MULTIPLIER: {
+    label: 'Mnożnik skoku cleanupu',
+    description:
+      'Alert, gdy usunięcia przekroczą średnią bazową x ten mnożnik. Do wykrywania nagłych wzrostów.',
+  },
+  EMAIL_VERIFICATION_CLEANUP_ALERT_WINDOW: {
+    label: 'Okno bazowe cleanupu',
+    description:
+      'Liczba ostatnich cleanupów używana do średniej bazowej. Większe okno wygładza szum.',
+  },
+  EMAIL_VERIFICATION_CLEANUP_ALERT_COOLDOWN_HOURS: {
+    label: 'Cooldown alertu cleanupu (h)',
+    description:
+      'Minimalna liczba godzin między alertami cleanupu. Zapobiega spamowi podczas burstów.',
+  },
+  ALLOWLIST_EMAILS: {
+    label: 'VIP emaile (omijają limit)',
+    description:
+      'VIP emaile omijają limit MAX_ACTIVE_USERS. Przydatne dla wewnętrznych/testowych kont; nie omija twardego limitu kosztów.',
+  },
+  STRIPE_PRO_MONTHLY_PRICE_ID: {
+    label: 'Stripe Price ID - PRO miesięczny',
+    description:
+      'ID ceny Stripe używane w checkout dla PRO miesięcznego. Zmień po aktualizacji ceny w Stripe.',
+  },
+  STRIPE_PRO_ANNUAL_PRICE_ID: {
+    label: 'Stripe Price ID - PRO roczny',
+    description:
+      'ID ceny Stripe używane w checkout dla PRO rocznego. Zmień po aktualizacji ceny w Stripe.',
+  },
+};
+
 export function ConfigSection({ config, loading, error, onSave }: ConfigSectionProps) {
   const language = useLanguage();
   const t = language === 'pl' ? configCopy.pl : configCopy.en;
@@ -133,23 +226,27 @@ export function ConfigSection({ config, loading, error, onSave }: ConfigSectionP
         {loading && config.length === 0 ? (
           <div className="text-sm text-slate-500">{t.loading}</div>
         ) : (
-          config.map((item) => (
-            <div
-              key={item.key}
-              className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4"
-            >
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-white">
-                    {item.label}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    {item.description}
-                  </p>
+          config.map((item) => {
+            const localized = language === 'pl' ? configFieldCopyPl[item.key] : null;
+            const label = localized?.label ?? item.label;
+            const description = localized?.description ?? item.description;
+            return (
+              <div
+                key={item.key}
+                className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-900/60 p-4"
+              >
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white">
+                      {label}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      {description}
+                    </p>
+                  </div>
+                  <Badge variant={sourceVariant(item.source)}>{item.source}</Badge>
                 </div>
-                <Badge variant={sourceVariant(item.source)}>{item.source}</Badge>
-              </div>
-              <div className="mt-3">
+                <div className="mt-3">
                 {item.dataType === 'list' ? (
                   <textarea
                     value={drafts[item.key] ?? ''}
@@ -169,9 +266,10 @@ export function ConfigSection({ config, loading, error, onSave }: ConfigSectionP
                     placeholder={item.defaultValue}
                   />
                 )}
+                </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>
