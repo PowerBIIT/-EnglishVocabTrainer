@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
 import { Toast } from '@/components/ui/Toast';
@@ -570,33 +571,41 @@ export function AdminCopilotSection() {
           }}
           className="border-t border-slate-200 dark:border-slate-700 p-4"
         >
-          <div className="flex gap-2 items-end">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(event) => {
-                setInput(event.target.value);
-                adjustTextareaHeight(inputRef.current, CHAT_MIN_ROWS, CHAT_MAX_ROWS);
-              }}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault();
-                  sendMessage(input);
-                }
-              }}
-              placeholder={t.inputPlaceholder}
-              className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
-              disabled={loading}
-              maxLength={2000}
-              rows={CHAT_MIN_ROWS}
-              style={{
-                minHeight: getTextareaHeight(CHAT_MIN_ROWS),
-                maxHeight: getTextareaHeight(CHAT_MAX_ROWS),
-              }}
-            />
-            <Button type="submit" disabled={!input.trim() || loading}>
-              {t.send}
-            </Button>
+          <div className="flex items-end">
+            <div className="relative flex-1 min-w-0">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(event) => {
+                  setInput(event.target.value);
+                  adjustTextareaHeight(inputRef.current, CHAT_MIN_ROWS, CHAT_MAX_ROWS);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    sendMessage(input);
+                  }
+                }}
+                placeholder={t.inputPlaceholder}
+                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 px-4 py-2 pr-12 sm:pr-14 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
+                disabled={loading}
+                maxLength={2000}
+                rows={CHAT_MIN_ROWS}
+                style={{
+                  minHeight: getTextareaHeight(CHAT_MIN_ROWS),
+                  maxHeight: getTextareaHeight(CHAT_MAX_ROWS),
+                }}
+              />
+              <Button
+                type="submit"
+                disabled={!input.trim() || loading}
+                aria-label={t.send}
+                title={t.send}
+                className="absolute bottom-2 right-2 h-9 w-9 p-0"
+              >
+                <Send size={16} />
+              </Button>
+            </div>
           </div>
         </form>
       </div>

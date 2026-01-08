@@ -10,6 +10,7 @@ import {
   Camera,
   FileText,
   Send,
+  ChevronDown,
   Wand2,
   Microscope,
   Calculator,
@@ -409,6 +410,8 @@ export const wordIntakeCopy = {
     cameraButtonTitle: 'Zrób zdjęcie aparatem',
     fileButtonTitle: 'Wczytaj plik z notatkami',
     inputPlaceholder: 'Wpisz słówka lub temat...',
+    sendLabel: 'Wyślij',
+    scrollHintMobile: 'Wygenerowaliśmy słówka — przewiń w dół, aby je zobaczyć.',
     assistantTitle: 'Asystent AI',
     assistantSubtitle: 'Powered by Gemini',
     selectionHint: 'Zaznacz słówka, które chcesz dodać do biblioteki.',
@@ -519,6 +522,8 @@ export const wordIntakeCopy = {
     cameraButtonTitle: 'Take a photo',
     fileButtonTitle: 'Upload notes file',
     inputPlaceholder: 'Type words or a topic...',
+    sendLabel: 'Send',
+    scrollHintMobile: 'Words are ready — scroll down to see them.',
     assistantTitle: 'AI Assistant',
     assistantSubtitle: 'Powered by Gemini',
     selectionHint: 'Select the words you want to add to your library.',
@@ -630,6 +635,8 @@ export const wordIntakeCopy = {
     cameraButtonTitle: 'Зробити фото',
     fileButtonTitle: 'Завантажити файл нотаток',
     inputPlaceholder: 'Введи слова або тему...',
+    sendLabel: 'Надіслати',
+    scrollHintMobile: 'Слова готові — прокрути вниз, щоб їх побачити.',
     assistantTitle: 'AI Асистент',
     assistantSubtitle: 'Powered by Gemini',
     selectionHint: 'Обери слова, які хочеш додати до бібліотеки.',
@@ -696,6 +703,7 @@ export function WordIntake({
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [parsedWords, setParsedWords] = useState<ParsedWord[]>([]);
+  const [showScrollHint, setShowScrollHint] = useState(false);
   const [suggestedCategory, setSuggestedCategory] = useState('');
   const [suggestedSetName, setSuggestedSetName] = useState('');
   const [selectedSetOption, setSelectedSetOption] = useState(NEW_SET_OPTION);
@@ -704,6 +712,7 @@ export function WordIntake({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const scrollHintTimeoutRef = useRef<number | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -716,6 +725,27 @@ export function WordIntake({
   };
 
   const isActiveRequest = (requestId: number) => requestIdRef.current === requestId;
+
+  const clearScrollHintTimeout = () => {
+    if (scrollHintTimeoutRef.current !== null) {
+      window.clearTimeout(scrollHintTimeoutRef.current);
+      scrollHintTimeoutRef.current = null;
+    }
+  };
+
+  const clearScrollHint = () => {
+    clearScrollHintTimeout();
+    setShowScrollHint(false);
+  };
+
+  const triggerScrollHint = () => {
+    clearScrollHintTimeout();
+    setShowScrollHint(true);
+    scrollHintTimeoutRef.current = window.setTimeout(() => {
+      setShowScrollHint(false);
+      scrollHintTimeoutRef.current = null;
+    }, 7000);
+  };
 
   const onboardingMinRows = isCompact ? 3 : 4;
   const onboardingMaxRows = isCompact ? 7 : 8;
@@ -752,6 +782,12 @@ export function WordIntake({
       });
     }
   }, [messages, parsedWords, isProcessing]);
+
+  useEffect(() => {
+    return () => {
+      clearScrollHintTimeout();
+    };
+  }, []);
 
   useEffect(() => {
     if (messages.length > 0) return;
@@ -980,6 +1016,7 @@ export function WordIntake({
     setSuggestedCategory(category);
     setSuggestedSetName(buildSetName(category));
     setSelectedSetOption(NEW_SET_OPTION);
+    triggerScrollHint();
   };
 
   const handleSend = async () => {
@@ -1556,6 +1593,7 @@ export function WordIntake({
   const addSelectedWords = () => {
     const selectedWords = parsedWords.filter((word) => word.selected);
     if (selectedWords.length === 0 || !canAddWords) return;
+    clearScrollHint();
 
     let targetSetId = '';
     let targetSetName = '';
@@ -1619,6 +1657,7 @@ export function WordIntake({
 
   const cancelWords = () => {
     requestIdRef.current += 1;
+    clearScrollHint();
     setParsedWords([]);
     setSuggestedCategory('');
     setSuggestedSetName('');
@@ -1637,6 +1676,13 @@ export function WordIntake({
     messages.length <= 1 &&
     parsedWords.length === 0 &&
     !isProcessing;
+  const scrollHint =
+    showScrollHint && parsedWords.length > 0 ? (
+      <div className="sm:hidden flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/60 px-3 py-2 text-[11px] leading-snug text-slate-500">
+        <ChevronDown size={14} className="text-primary-500" />
+        <span>{t.scrollHintMobile}</span>
+      </div>
+    ) : null;
 
   const quickActionsPanel = (
     <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
@@ -1719,36 +1765,41 @@ export function WordIntake({
       </div>
 
       {/* Wiersz 2: Textarea + Send */}
-      <div className="flex gap-2 items-end">
-        <textarea
-          ref={textareaRef}
-          value={input}
-          onChange={(e) => {
-            setInput(e.target.value);
-            adjustTextareaHeight(textareaRef.current, CHAT_MIN_ROWS, CHAT_MAX_ROWS);
-          }}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault();
-              handleSend();
-            }
-          }}
-          placeholder={t.inputPlaceholder}
-          className="flex-1 px-3 sm:px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
-          disabled={isProcessing}
-          rows={CHAT_MIN_ROWS}
-          style={{
-            minHeight: getTextareaHeight(CHAT_MIN_ROWS),
-            maxHeight: getTextareaHeight(CHAT_MAX_ROWS),
-          }}
-        />
-        <Button
-          onClick={handleSend}
-          disabled={!input.trim() || isProcessing}
-          className="px-3 sm:px-4 h-11 flex-shrink-0"
-        >
-          <Send size={18} />
-        </Button>
+      <div className="flex items-end">
+        <div className="relative flex-1 min-w-0">
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => {
+              setInput(e.target.value);
+              adjustTextareaHeight(textareaRef.current, CHAT_MIN_ROWS, CHAT_MAX_ROWS);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
+            placeholder={t.inputPlaceholder}
+            className="w-full px-3 sm:px-4 py-2.5 pr-12 sm:pr-14 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
+            disabled={isProcessing}
+            rows={CHAT_MIN_ROWS}
+            style={{
+              minHeight: getTextareaHeight(CHAT_MIN_ROWS),
+              maxHeight: getTextareaHeight(CHAT_MAX_ROWS),
+            }}
+          />
+          <Button
+            type="button"
+            onClick={handleSend}
+            disabled={!input.trim() || isProcessing}
+            aria-label={t.sendLabel}
+            title={t.sendLabel}
+            className="absolute bottom-2 right-2 h-9 w-9 p-0"
+          >
+            <Send size={18} />
+          </Button>
+        </div>
       </div>
     </>
   );
@@ -1923,15 +1974,18 @@ export function WordIntake({
         <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 sm:p-4">
           <div className="max-w-3xl mx-auto">
             {parsedWords.length > 0 ? (
-              <div className="flex gap-3">
-                <Button variant="secondary" size="sm" onClick={cancelWords} className="flex-1">
-                  <X size={16} className="mr-2 sm:size-4" />
-                  {t.cancel}
-                </Button>
-                <Button size="sm" onClick={addSelectedWords} className="flex-1" disabled={!canAddWords}>
-                  <Plus size={16} className="mr-2 sm:size-4" />
-                  {addLabel}
-                </Button>
+              <div className="space-y-2">
+                {scrollHint}
+                <div className="flex gap-3">
+                  <Button variant="secondary" size="sm" onClick={cancelWords} className="flex-1">
+                    <X size={16} className="mr-2 sm:size-4" />
+                    {t.cancel}
+                  </Button>
+                  <Button size="sm" onClick={addSelectedWords} className="flex-1" disabled={!canAddWords}>
+                    <Plus size={16} className="mr-2 sm:size-4" />
+                    {addLabel}
+                  </Button>
+                </div>
               </div>
             ) : (
               inputPanel
@@ -2079,41 +2133,47 @@ export function WordIntake({
                 <span className="hidden sm:inline text-sm">{t.fileLabel}</span>
               </button>
             </div>
-            <div className="flex gap-2 items-end min-w-0">
-              <textarea
-                ref={inputRef}
-                value={input}
-                onChange={(e) => {
-                  setInput(e.target.value);
-                  adjustTextareaHeight(
-                    inputRef.current,
-                    onboardingMinRows,
-                    onboardingMaxRows
-                  );
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleSend();
-                  }
-                }}
-                placeholder={t.inputPlaceholder}
-                className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
-                disabled={isProcessing}
-                rows={onboardingMinRows}
-                style={{
-                  minHeight: getTextareaHeight(onboardingMinRows),
-                  maxHeight: getTextareaHeight(onboardingMaxRows),
-                }}
-              />
-              <Button
-                onClick={handleSend}
-                disabled={!input.trim() || isProcessing}
-                className="px-3 sm:px-4"
-              >
-                <Send size={18} />
-              </Button>
+            <div className="flex items-end min-w-0">
+              <div className="relative flex-1 min-w-0">
+                <textarea
+                  ref={inputRef}
+                  value={input}
+                  onChange={(e) => {
+                    setInput(e.target.value);
+                    adjustTextareaHeight(
+                      inputRef.current,
+                      onboardingMinRows,
+                      onboardingMaxRows
+                    );
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder={t.inputPlaceholder}
+                  className="w-full min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 pr-12 sm:pr-14 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
+                  disabled={isProcessing}
+                  rows={onboardingMinRows}
+                  style={{
+                    minHeight: getTextareaHeight(onboardingMinRows),
+                    maxHeight: getTextareaHeight(onboardingMaxRows),
+                  }}
+                />
+                <Button
+                  type="button"
+                  onClick={handleSend}
+                  disabled={!input.trim() || isProcessing}
+                  aria-label={t.sendLabel}
+                  title={t.sendLabel}
+                  className="absolute bottom-2 right-2 h-9 w-9 p-0"
+                >
+                  <Send size={18} />
+                </Button>
+              </div>
             </div>
+            {scrollHint}
           </div>
         </div>
       </div>

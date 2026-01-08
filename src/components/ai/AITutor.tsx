@@ -89,6 +89,7 @@ const tutorCopy = {
     typing: 'Eva pisze...',
     quickActionsLabel: 'Szybkie akcje:',
     inputPlaceholder: 'Zapytaj o cokolwiek...',
+    sendLabel: 'Wyślij',
     adminInputPlaceholder: 'Zapytaj o konfigurację AI...',
     errorMessage:
       'Mam chwilowe problemy z połączeniem. Spróbuj ponownie za chwilę.\n\nUpewnij się, że klucz API jest skonfigurowany w .env.local.',
@@ -148,6 +149,7 @@ const tutorCopy = {
     typing: 'Eva is typing...',
     quickActionsLabel: 'Quick actions:',
     inputPlaceholder: 'Ask anything...',
+    sendLabel: 'Send',
     adminInputPlaceholder: 'Ask about AI configuration...',
     errorMessage:
       'I am having connection issues. Please try again in a moment.\n\nMake sure the API key is configured in .env.local.',
@@ -206,6 +208,7 @@ const tutorCopy = {
     typing: 'Ева пише...',
     quickActionsLabel: 'Швидкі дії:',
     inputPlaceholder: 'Запитай про що завгодно...',
+    sendLabel: 'Надіслати',
     adminInputPlaceholder: 'Запитай про конфігурацію AI...',
     errorMessage:
       'Маю тимчасові проблеми з підключенням. Спробуй ще раз трохи пізніше.\n\nПереконайся, що ключ API налаштовано в .env.local.',
@@ -523,36 +526,41 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
 
       {/* Input */}
       <div className="p-4 border-t border-slate-200 dark:border-slate-700">
-        <div className="flex gap-2 items-end">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              adjustTextareaHeight(inputRef.current, TUTOR_MIN_ROWS, TUTOR_MAX_ROWS);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder={inputPlaceholder}
-            className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
-            disabled={isLoading}
-            rows={TUTOR_MIN_ROWS}
-            style={{
-              minHeight: getTextareaHeight(TUTOR_MIN_ROWS),
-              maxHeight: getTextareaHeight(TUTOR_MAX_ROWS),
-            }}
-          />
-          <Button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isLoading}
-            className="bg-primary-600 hover:bg-primary-700 px-4"
-          >
-            <Send size={18} />
-          </Button>
+        <div className="flex items-end">
+          <div className="relative flex-1 min-w-0">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                adjustTextareaHeight(inputRef.current, TUTOR_MIN_ROWS, TUTOR_MAX_ROWS);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder={inputPlaceholder}
+              className="w-full px-4 py-2 pr-12 sm:pr-14 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
+              disabled={isLoading}
+              rows={TUTOR_MIN_ROWS}
+              style={{
+                minHeight: getTextareaHeight(TUTOR_MIN_ROWS),
+                maxHeight: getTextareaHeight(TUTOR_MAX_ROWS),
+              }}
+            />
+            <Button
+              type="button"
+              onClick={() => handleSend()}
+              disabled={!input.trim() || isLoading}
+              aria-label={t.sendLabel}
+              title={t.sendLabel}
+              className="absolute bottom-2 right-2 h-9 w-9 p-0"
+            >
+              <Send size={18} />
+            </Button>
+          </div>
         </div>
       </div>
     </div>

@@ -233,43 +233,47 @@ export function RevenueStrategyChatSection() {
 
       {/* Input area */}
       <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex gap-2 items-end">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              adjustTextareaHeight(inputRef.current, CHAT_MIN_ROWS, CHAT_MAX_ROWS);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage(input);
-              }
-            }}
-            placeholder="Ask about revenue strategy..."
-            className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 outline-none resize-none overflow-hidden"
-            disabled={loading}
-            rows={CHAT_MIN_ROWS}
-            style={{
-              minHeight: getTextareaHeight(CHAT_MIN_ROWS),
-              maxHeight: getTextareaHeight(CHAT_MAX_ROWS),
-            }}
-          />
-          <button
-            type="submit"
-            disabled={!input.trim() || loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-              />
-            </svg>
-          </button>
+        <div className="flex items-end">
+          <div className="relative flex-1 min-w-0">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                adjustTextareaHeight(inputRef.current, CHAT_MIN_ROWS, CHAT_MAX_ROWS);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage(input);
+                }
+              }}
+              placeholder="Ask about revenue strategy..."
+              className="w-full px-4 py-2 pr-12 sm:pr-14 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 outline-none resize-none overflow-hidden"
+              disabled={loading}
+              rows={CHAT_MIN_ROWS}
+              style={{
+                minHeight: getTextareaHeight(CHAT_MIN_ROWS),
+                maxHeight: getTextareaHeight(CHAT_MAX_ROWS),
+              }}
+            />
+            <button
+              type="submit"
+              disabled={!input.trim() || loading}
+              aria-label="Send message"
+              title="Send message"
+              className="absolute bottom-2 right-2 h-9 w-9 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                />
+              </svg>
+            </button>
+          </div>
         </div>
       </form>
     </div>
