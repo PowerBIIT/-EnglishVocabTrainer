@@ -1126,7 +1126,16 @@ export function WordIntake({
         }
       }
       topic = stripTopicLanguage(topic);
-      topic = topic.replace(/\b(poziom|level)\s*(A1|A2|B1|B2)\b/gi, '').trim();
+      topic = topic
+        .replace(/\b(poziom|level)\s*(A1|A2|B1|B2)\b/gi, '')
+        .replace(
+          /\b\d+\s*(sł[oó]w\w*|slow\w*|words?|vocab\w*|слов\w*|слів\w*|лексик\w*)\b/gi,
+          ''
+        )
+        .replace(/\b(A1|A2|B1|B2)\b/gi, '')
+        .replace(/[?؟!]+$/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
       if (!topic) {
         topic = t.defaultTopic;
       }

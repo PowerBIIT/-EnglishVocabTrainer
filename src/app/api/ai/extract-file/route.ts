@@ -25,6 +25,28 @@ interface ExtractResult {
   notes?: string;
 }
 
+const FILE_RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    category_suggestion: { type: 'string' },
+    words: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          target: { type: 'string' },
+          phonetic: { type: 'string' },
+          native: { type: 'string' },
+          difficulty: { type: 'string', enum: ['easy', 'medium', 'hard'] },
+        },
+        required: ['target', 'phonetic', 'native', 'difficulty'],
+      },
+    },
+    notes: { type: 'string' },
+  },
+  required: ['words'],
+};
+
 const getExtension = (name: string) =>
   name.split('.').pop()?.toLowerCase() ?? '';
 
@@ -86,12 +108,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rate = await checkRateLimit(`ai:extract-file:${session.user.id}`, AI_RATE_LIMIT);
-    if (!rate.ok) {
-      return NextResponse.json(
-        { error: 'rate_limited', retryAfter: rate.retryAfter },
-        { status: 429, headers: { 'Retry-After': rate.retryAfter.toString() } }
-      );
+    const isAdmin = Boolean(session.user.isAdmin);
+    if (!isAdmin) {
+      const rate = await checkRateLimit(`ai:extract-file:${session.user.id}`, AI_RATE_LIMIT);
+      if (!rate.ok) {
+        return NextResponse.json(
+          { error: 'rate_limited', retryAfter: rate.retryAfter },
+          { status: 429, headers: { 'Retry-After': rate.retryAfter.toString() } }
+        );
+      }
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -167,6 +192,9 @@ export async function POST(request: NextRequest) {
       temperature: 0.3,
       maxOutputTokens: 1024,
       model,
+      thinkingBudget: 0,
+      responseMimeType: 'application/json',
+      responseSchema: FILE_RESPONSE_SCHEMA,
     });
     const durationMs = Date.now() - startTime;
     const totalTokens = response.usage.promptTokenCount + response.usage.candidatesTokenCount;

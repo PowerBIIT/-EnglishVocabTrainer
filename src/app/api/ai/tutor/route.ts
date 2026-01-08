@@ -34,12 +34,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rate = await checkRateLimit(`ai:tutor:${session.user.id}`, AI_RATE_LIMIT);
-    if (!rate.ok) {
-      return NextResponse.json(
-        { error: 'rate_limited', retryAfter: rate.retryAfter },
-        { status: 429, headers: { 'Retry-After': rate.retryAfter.toString() } }
-      );
+    const isAdmin = Boolean(session.user.isAdmin);
+    if (!isAdmin) {
+      const rate = await checkRateLimit(`ai:tutor:${session.user.id}`, AI_RATE_LIMIT);
+      if (!rate.ok) {
+        return NextResponse.json(
+          { error: 'rate_limited', retryAfter: rate.retryAfter },
+          { status: 429, headers: { 'Retry-After': rate.retryAfter.toString() } }
+        );
+      }
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -119,6 +122,7 @@ export async function POST(request: NextRequest) {
       temperature: 0.8,
       maxOutputTokens: estimateTutorOutputTokens(messageValue, isAdminRequest),
       model,
+      thinkingBudget: 0,
     });
     const durationMs = Date.now() - startTime;
     const totalTokens = result.usage.promptTokenCount + result.usage.candidatesTokenCount;

@@ -127,12 +127,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rate = await checkRateLimit(`ai:generate-words:${session.user.id}`, AI_RATE_LIMIT);
-    if (!rate.ok) {
-      return NextResponse.json(
-        { error: 'rate_limited', retryAfter: rate.retryAfter },
-        { status: 429, headers: { 'Retry-After': rate.retryAfter.toString() } }
-      );
+    const isAdmin = Boolean(session.user.isAdmin);
+    if (!isAdmin) {
+      const rate = await checkRateLimit(`ai:generate-words:${session.user.id}`, AI_RATE_LIMIT);
+      if (!rate.ok) {
+        return NextResponse.json(
+          { error: 'rate_limited', retryAfter: rate.retryAfter },
+          { status: 429, headers: { 'Retry-After': rate.retryAfter.toString() } }
+        );
+      }
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -146,7 +149,7 @@ export async function POST(request: NextRequest) {
 
     const { topic, count = 10, level = 'A2', targetLanguage, nativeLanguage } =
       await request.json();
-    const topicValue = typeof topic === 'string' ? topic.trim() : '';
+    const topicValue = typeof topic === 'string' ? topic.trim().replace(/[?؟]+$/g, '') : '';
     const rawCount = typeof count === 'number' ? count : Number(count);
     const requestedCount = Number.isFinite(rawCount) ? Math.round(rawCount) : 10;
     const levelValue = typeof level === 'string' ? level.toUpperCase() : 'A2';
@@ -156,13 +159,6 @@ export async function POST(request: NextRequest) {
     if (!topicValue) {
       return NextResponse.json(
         { error: 'Topic is required' },
-        { status: 400 }
-      );
-    }
-
-    if (looksLikeQuestion(topicValue)) {
-      return NextResponse.json(
-        { error: 'topic_question' },
         { status: 400 }
       );
     }
@@ -225,6 +221,7 @@ export async function POST(request: NextRequest) {
         temperature,
         maxOutputTokens,
         model,
+        thinkingBudget: 0,
         responseMimeType: 'application/json',
         responseSchema: WORDS_RESPONSE_SCHEMA,
       });
@@ -247,7 +244,10 @@ export async function POST(request: NextRequest) {
       return response;
     };
 
-    const parseResult = (content: string) => {
+    const parseResult = (content: string, finishReason?: string) => {
+      if (finishReason === 'MAX_TOKENS') {
+        return null;
+      }
       try {
         return parseAIResponse<GenerateResult>(content, { logErrors: false });
       } catch {
@@ -259,12 +259,12 @@ export async function POST(request: NextRequest) {
     const basePrompt = await buildPrompt(effectiveCount);
     let response = await requestGeneration(basePrompt, initialBudget, 0.8);
     let result: GenerateResult | null = null;
-    result = parseResult(response.content);
+    result = parseResult(response.content, response.finishReason);
 
     if (!result) {
       const retryBudget = buildRetryTokenBudget(initialBudget);
       response = await requestGeneration(basePrompt, retryBudget, 0.6);
-      result = parseResult(response.content);
+      result = parseResult(response.content, response.finishReason);
     }
 
     let finalCount = effectiveCount;
@@ -273,7 +273,7 @@ export async function POST(request: NextRequest) {
       const compactPrompt = await buildPrompt(compactCount, { compact: true });
       const compactBudget = estimateWordOutputTokens(compactCount);
       response = await requestGeneration(compactPrompt, compactBudget, 0.4);
-      result = parseResult(response.content);
+      result = parseResult(response.content, response.finishReason);
       finalCount = compactCount;
     }
 

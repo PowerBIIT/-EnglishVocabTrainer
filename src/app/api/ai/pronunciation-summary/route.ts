@@ -70,12 +70,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const rate = await checkRateLimit(`ai:pronunciation-summary:${session.user.id}`, AI_RATE_LIMIT);
-  if (!rate.ok) {
-    return NextResponse.json(
-      { error: 'rate_limited', retryAfter: rate.retryAfter, fallback: true },
-      { status: 429, headers: { 'Retry-After': rate.retryAfter.toString() } }
-    );
+  const isAdmin = Boolean(session.user.isAdmin);
+  if (!isAdmin) {
+    const rate = await checkRateLimit(`ai:pronunciation-summary:${session.user.id}`, AI_RATE_LIMIT);
+    if (!rate.ok) {
+      return NextResponse.json(
+        { error: 'rate_limited', retryAfter: rate.retryAfter, fallback: true },
+        { status: 429, headers: { 'Retry-After': rate.retryAfter.toString() } }
+      );
+    }
   }
 
   try {
@@ -136,6 +139,7 @@ export async function POST(request: NextRequest) {
       temperature: 0.4,
       maxOutputTokens: 256,
       model,
+      thinkingBudget: 0,
       responseMimeType: 'application/json',
       responseSchema: SUMMARY_RESPONSE_SCHEMA,
     });

@@ -75,12 +75,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rate = await checkRateLimit(`ai:extract-image:${session.user.id}`, AI_RATE_LIMIT);
-    if (!rate.ok) {
-      return NextResponse.json(
-        { error: 'rate_limited', retryAfter: rate.retryAfter },
-        { status: 429, headers: { 'Retry-After': rate.retryAfter.toString() } }
-      );
+    const isAdmin = Boolean(session.user.isAdmin);
+    if (!isAdmin) {
+      const rate = await checkRateLimit(`ai:extract-image:${session.user.id}`, AI_RATE_LIMIT);
+      if (!rate.ok) {
+        return NextResponse.json(
+          { error: 'rate_limited', retryAfter: rate.retryAfter },
+          { status: 429, headers: { 'Retry-After': rate.retryAfter.toString() } }
+        );
+      }
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -161,6 +164,7 @@ export async function POST(request: NextRequest) {
       temperature: 0.2,
       maxOutputTokens: 2048,
       model: modelId,
+      thinkingBudget: 0,
       responseMimeType: 'application/json',
       responseSchema: IMAGE_RESPONSE_SCHEMA,
     });

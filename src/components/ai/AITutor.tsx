@@ -284,12 +284,24 @@ export function AITutor() {
   }, [isAdminMode, isOpen, messages.length, t, targetLabel]);
 
   const buildContext = () => {
-    return `
-${t.contextLabels.level}: ${stats.level}
-${t.contextLabels.xp}: ${stats.totalXp}
-${t.contextLabels.vocabulary}: ${vocabulary.length}
-${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
-    `.trim();
+    const statsBlock = [
+      `${t.contextLabels.level}: ${stats.level}`,
+      `${t.contextLabels.xp}: ${stats.totalXp}`,
+      `${t.contextLabels.vocabulary}: ${vocabulary.length}`,
+      `${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}`,
+    ].join('\n');
+
+    const recentMessages = messages
+      .filter((message, index) => !(index === 0 && message.role === 'assistant'))
+      .slice(-6)
+      .map(
+        (message) =>
+          `${message.role === 'user' ? 'User' : 'Assistant'}: ${message.content}`
+      )
+      .join('\n');
+
+    const historyBlock = recentMessages ? `\n\nRecent chat:\n${recentMessages}` : '';
+    return `${statsBlock}${historyBlock}`;
   };
 
   const appendErrorCode = (message: string, code?: string) =>

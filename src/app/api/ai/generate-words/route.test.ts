@@ -95,7 +95,7 @@ describe('POST /api/ai/generate-words', () => {
     });
   });
 
-  it('blocks question-like topics before calling AI', async () => {
+  it('allows question-like topics and still calls AI', async () => {
     const { POST } = await loadModule();
     const response = await POST(
       new Request('http://localhost/api/ai/generate-words', {
@@ -112,9 +112,9 @@ describe('POST /api/ai/generate-words', () => {
     );
     const data = await response.json();
 
-    expect(response.status).toBe(400);
-    expect(data).toMatchObject({ error: 'topic_question' });
-    expect(mockGenerateWithMetadata).not.toHaveBeenCalled();
+    expect(response.status).toBe(200);
+    expect(data.words).toHaveLength(1);
+    expect(mockGenerateWithMetadata).toHaveBeenCalledOnce();
   });
 
   it('returns generated words for a normal topic', async () => {

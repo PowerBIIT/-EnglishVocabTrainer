@@ -17,13 +17,15 @@ interface GeminiUsageMetadata {
   promptTokenCount: number;
   candidatesTokenCount: number;
   totalTokenCount: number;
+  thoughtsTokenCount?: number;
 }
 
 interface GeminiResponse {
   candidates?: {
     content: {
-      parts: { text: string }[];
+      parts: { text: string; thought?: boolean }[];
     };
+    finishReason?: string;
   }[];
   usageMetadata?: GeminiUsageMetadata;
   error?: {
@@ -37,6 +39,7 @@ export interface GeminiGenerateResult {
   content: string;
   usage: GeminiUsageMetadata;
   model: string;
+  finishReason?: string;
 }
 
 interface GenerateOptions {
@@ -45,6 +48,9 @@ interface GenerateOptions {
   model?: string;
   responseMimeType?: string;
   responseSchema?: Record<string, unknown>;
+  thinkingBudget?: number;
+  thinkingLevel?: 'minimal' | 'low' | 'medium' | 'high';
+  includeThoughts?: boolean;
 }
 
 export class GeminiService {
@@ -64,6 +70,9 @@ export class GeminiService {
       model = DEFAULT_MODEL,
       responseMimeType,
       responseSchema,
+      thinkingBudget,
+      thinkingLevel,
+      includeThoughts,
     } = options;
 
     const controller = new AbortController();
@@ -85,6 +94,21 @@ export class GeminiService {
               maxOutputTokens,
               ...(responseMimeType ? { responseMimeType } : {}),
               ...(responseSchema ? { responseSchema } : {}),
+              ...((typeof thinkingBudget === 'number' ||
+                typeof thinkingLevel === 'string' ||
+                typeof includeThoughts === 'boolean') && {
+                thinkingConfig: {
+                  ...(typeof thinkingBudget === 'number'
+                    ? { thinkingBudget }
+                    : {}),
+                  ...(typeof thinkingLevel === 'string'
+                    ? { thinkingLevel }
+                    : {}),
+                  ...(typeof includeThoughts === 'boolean'
+                    ? { includeThoughts }
+                    : {}),
+                },
+              }),
             },
           }),
           signal: controller.signal,
@@ -121,7 +145,12 @@ export class GeminiService {
         });
       }
 
-      const content = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      const candidate = data?.candidates?.[0];
+      const parts = candidate?.content?.parts ?? [];
+      const content = parts
+        .filter((part) => part.text && !part.thought)
+        .map((part) => part.text)
+        .join('');
       if (!content) {
         throw new GeminiApiError({
           message: 'No response from Gemini',
@@ -137,7 +166,7 @@ export class GeminiService {
         totalTokenCount: 0,
       };
 
-      return { content, usage, model };
+      return { content, usage, model, finishReason: candidate?.finishReason };
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw createGeminiTimeoutError();
