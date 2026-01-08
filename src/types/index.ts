@@ -95,8 +95,8 @@ export interface QuizResult {
 
 // Session settings
 export interface SessionSettings {
-  quizQuestionCount: 5 | 10 | 15 | 20 | 'all';
-  flashcardCount: 5 | 10 | 15 | 20 | 'all';
+  quizQuestionCount: number | 'all';
+  flashcardCount: number | 'all';
   timeLimit: null | 5 | 10 | 15 | 30;
   wordOrder: 'random' | 'alphabetical' | 'hardest_first';
   repeatMistakes: boolean;

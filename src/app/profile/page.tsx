@@ -186,6 +186,8 @@ const profileCopy = {
     flashcardsPerSession: 'Fiszek w sesji',
     timeLimit: 'Limit czasu',
     timeLimitDesc: 'Na odpowiedź w quizie',
+    customCountLabel: 'Własna liczba',
+    customCountPlaceholder: 'np. 12',
     none: 'Brak',
     seconds: (value: number) => `${value} sekund`,
     wordOrder: 'Kolejność słówek',
@@ -303,6 +305,8 @@ const profileCopy = {
     flashcardsPerSession: 'Flashcards per session',
     timeLimit: 'Time limit',
     timeLimitDesc: 'Per quiz answer',
+    customCountLabel: 'Custom number',
+    customCountPlaceholder: 'e.g. 12',
     none: 'None',
     seconds: (value: number) => `${value} seconds`,
     wordOrder: 'Word order',
@@ -419,6 +423,8 @@ const profileCopy = {
     flashcardsPerSession: 'Флешкарт у сесії',
     timeLimit: 'Ліміт часу',
     timeLimitDesc: 'На відповідь у квізі',
+    customCountLabel: 'Власна кількість',
+    customCountPlaceholder: 'наприклад 12',
     none: 'Немає',
     seconds: (value: number) => `${value} секунд`,
     wordOrder: 'Порядок слів',
@@ -495,6 +501,7 @@ type ProfileCopy = typeof profileCopy.pl;
 
 const AUTO_SAVE_DEBOUNCE_MS = 900;
 const AUTO_SAVE_IDLE_DELAY_MS = 2200;
+const SESSION_COUNT_OPTIONS = [5, 10, 15, 20] as const;
 
 export default function ProfilePage() {
   const hydrated = useHydration();
@@ -533,6 +540,51 @@ export default function ProfilePage() {
   const [newSetName, setNewSetName] = useState('');
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [editingSetName, setEditingSetName] = useState('');
+  const [customQuizCount, setCustomQuizCount] = useState('');
+  const [customFlashcardCount, setCustomFlashcardCount] = useState('');
+
+  const isCustomQuizCount =
+    typeof settings.session.quizQuestionCount === 'number' &&
+    !SESSION_COUNT_OPTIONS.includes(
+      settings.session.quizQuestionCount as (typeof SESSION_COUNT_OPTIONS)[number]
+    );
+  const isCustomFlashcardCount =
+    typeof settings.session.flashcardCount === 'number' &&
+    !SESSION_COUNT_OPTIONS.includes(
+      settings.session.flashcardCount as (typeof SESSION_COUNT_OPTIONS)[number]
+    );
+
+  useEffect(() => {
+    setCustomQuizCount(
+      isCustomQuizCount ? String(settings.session.quizQuestionCount) : ''
+    );
+  }, [isCustomQuizCount, settings.session.quizQuestionCount]);
+
+  useEffect(() => {
+    setCustomFlashcardCount(
+      isCustomFlashcardCount ? String(settings.session.flashcardCount) : ''
+    );
+  }, [isCustomFlashcardCount, settings.session.flashcardCount]);
+
+  const applyCustomQuizCount = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    const parsed = Number.parseInt(trimmed, 10);
+    if (Number.isNaN(parsed)) return;
+    const next = Math.max(parsed, 4);
+    updateSettings('session', { quizQuestionCount: next });
+    setCustomQuizCount(String(next));
+  };
+
+  const applyCustomFlashcardCount = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    const parsed = Number.parseInt(trimmed, 10);
+    if (Number.isNaN(parsed)) return;
+    const next = Math.max(parsed, 1);
+    updateSettings('session', { flashcardCount: next });
+    setCustomFlashcardCount(String(next));
+  };
 
   useEffect(() => {
     if (session?.user?.mascotSkin) {
@@ -1243,39 +1295,143 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className="divide-y divide-slate-100 dark:divide-slate-700">
             <SettingRow label={t.quizQuestions}>
-              <Select
-                value={settings.session.quizQuestionCount}
-                options={[
-                  { value: 5, label: '5' },
-                  { value: 10, label: '10' },
-                  { value: 15, label: '15' },
-                  { value: 20, label: '20' },
-                  { value: 'all', label: t.all },
-                ]}
-                onChange={(v) =>
-                  updateSettings('session', {
-                    quizQuestionCount: v as 5 | 10 | 15 | 20 | 'all',
-                  })
-                }
-              />
+              <div className="flex w-full flex-col gap-2 sm:w-72">
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                  {SESSION_COUNT_OPTIONS.map((count) => (
+                    <button
+                      key={count}
+                      onClick={() =>
+                        updateSettings('session', {
+                          quizQuestionCount: count,
+                        })
+                      }
+                      className={cn(
+                        'py-2 px-3 rounded-xl text-sm font-medium transition-colors',
+                        settings.session.quizQuestionCount === count
+                          ? 'bg-primary-500 text-white'
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                      )}
+                    >
+                      {count}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() =>
+                      updateSettings('session', {
+                        quizQuestionCount: 'all',
+                      })
+                    }
+                    className={cn(
+                      'py-2 px-3 rounded-xl text-sm font-medium transition-colors',
+                      settings.session.quizQuestionCount === 'all'
+                        ? 'bg-primary-500 text-white'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                    )}
+                  >
+                    {t.all}
+                  </button>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="settings-quiz-custom-count"
+                    className="text-xs text-slate-500 dark:text-slate-400"
+                  >
+                    {t.customCountLabel}
+                  </label>
+                  <input
+                    id="settings-quiz-custom-count"
+                    type="number"
+                    inputMode="numeric"
+                    min={4}
+                    placeholder={t.customCountPlaceholder}
+                    value={customQuizCount}
+                    onChange={(event) => setCustomQuizCount(event.target.value)}
+                    onBlur={() => applyCustomQuizCount(customQuizCount)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        applyCustomQuizCount(customQuizCount);
+                      }
+                    }}
+                    className={cn(
+                      'w-full px-3 py-2 rounded-lg border bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500',
+                      isCustomQuizCount
+                        ? 'border-primary-300 dark:border-primary-500/60'
+                        : 'border-slate-200 dark:border-slate-600'
+                    )}
+                  />
+                </div>
+              </div>
             </SettingRow>
 
             <SettingRow label={t.flashcardsPerSession}>
-              <Select
-                value={settings.session.flashcardCount}
-                options={[
-                  { value: 5, label: '5' },
-                  { value: 10, label: '10' },
-                  { value: 15, label: '15' },
-                  { value: 20, label: '20' },
-                  { value: 'all', label: t.all },
-                ]}
-                onChange={(v) =>
-                  updateSettings('session', {
-                    flashcardCount: v as 5 | 10 | 15 | 20 | 'all',
-                  })
-                }
-              />
+              <div className="flex w-full flex-col gap-2 sm:w-72">
+                <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                  {SESSION_COUNT_OPTIONS.map((count) => (
+                    <button
+                      key={count}
+                      onClick={() =>
+                        updateSettings('session', {
+                          flashcardCount: count,
+                        })
+                      }
+                      className={cn(
+                        'py-2 px-3 rounded-xl text-sm font-medium transition-colors',
+                        settings.session.flashcardCount === count
+                          ? 'bg-primary-500 text-white'
+                          : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                      )}
+                    >
+                      {count}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() =>
+                      updateSettings('session', {
+                        flashcardCount: 'all',
+                      })
+                    }
+                    className={cn(
+                      'py-2 px-3 rounded-xl text-sm font-medium transition-colors',
+                      settings.session.flashcardCount === 'all'
+                        ? 'bg-primary-500 text-white'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+                    )}
+                  >
+                    {t.all}
+                  </button>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label
+                    htmlFor="settings-flashcards-custom-count"
+                    className="text-xs text-slate-500 dark:text-slate-400"
+                  >
+                    {t.customCountLabel}
+                  </label>
+                  <input
+                    id="settings-flashcards-custom-count"
+                    type="number"
+                    inputMode="numeric"
+                    min={1}
+                    placeholder={t.customCountPlaceholder}
+                    value={customFlashcardCount}
+                    onChange={(event) => setCustomFlashcardCount(event.target.value)}
+                    onBlur={() => applyCustomFlashcardCount(customFlashcardCount)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        applyCustomFlashcardCount(customFlashcardCount);
+                      }
+                    }}
+                    className={cn(
+                      'w-full px-3 py-2 rounded-lg border bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500',
+                      isCustomFlashcardCount
+                        ? 'border-primary-300 dark:border-primary-500/60'
+                        : 'border-slate-200 dark:border-slate-600'
+                    )}
+                  />
+                </div>
+              </div>
             </SettingRow>
 
             <SettingRow label={t.timeLimit} description={t.timeLimitDesc}>
