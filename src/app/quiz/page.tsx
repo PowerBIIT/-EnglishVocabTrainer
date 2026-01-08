@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { QuizSession, QuizResults } from '@/components/quiz/Quiz';
 import { FullscreenPage } from '@/components/layout/FullscreenPage';
+import { CountSelector } from '@/components/session/CountSelector';
 import { useVocabStore, useHydration } from '@/lib/store';
 import { VocabularyItem, QuizMode, QuizResult } from '@/types';
 import { cn, shuffleArray } from '@/lib/utils';
@@ -22,7 +23,6 @@ type QuizModeOption = {
   icon: JSX.Element;
   description: string;
 };
-const QUESTION_COUNTS = [5, 10, 15, 20] as const;
 
 const quizPageCopy = {
   pl: {
@@ -140,10 +140,6 @@ export default function QuizPage() {
   const [selectedMode, setSelectedMode] = useState<QuizMode>('en_to_pl');
   const [selectedCategory, setSelectedCategory] = useState<string | 'all'>('all');
   const [selectedSetId, setSelectedSetId] = useState<'all' | 'unassigned' | string>('all');
-  const [selectedQuestionCount, setSelectedQuestionCount] = useState<number | 'all'>(
-    settings.session.quizQuestionCount
-  );
-  const [customQuestionCount, setCustomQuestionCount] = useState('');
   const [sessionWords, setSessionWords] = useState<VocabularyItem[]>([]);
   const [quizResults, setQuizResults] = useState<QuizResult[]>([]);
   const [appliedSetParam, setAppliedSetParam] = useState(false);
@@ -260,33 +256,6 @@ export default function QuizPage() {
     }
   }, [selectedSetId, sets]);
 
-  useEffect(() => {
-    setSelectedQuestionCount(settings.session.quizQuestionCount);
-  }, [settings.session.quizQuestionCount]);
-
-  const isCustomQuestionCount =
-    typeof selectedQuestionCount === 'number' &&
-    !QUESTION_COUNTS.includes(
-      selectedQuestionCount as (typeof QUESTION_COUNTS)[number]
-    );
-
-  useEffect(() => {
-    setCustomQuestionCount(
-      isCustomQuestionCount ? String(selectedQuestionCount) : ''
-    );
-  }, [isCustomQuestionCount, selectedQuestionCount]);
-
-  const applyCustomQuestionCount = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return;
-    const parsed = Number.parseInt(trimmed, 10);
-    if (Number.isNaN(parsed)) return;
-    const next = Math.max(parsed, 4);
-    setSelectedQuestionCount(next);
-    setCustomQuestionCount(String(next));
-    updateSettings('session', { quizQuestionCount: next });
-  };
-
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     filterBySet(vocabulary).forEach((word) => {
@@ -311,7 +280,7 @@ export default function QuizPage() {
   }
 
   const startQuiz = () => {
-    const count = selectedQuestionCount;
+    const count = settings.session.quizQuestionCount;
     let words = filterBySet(getNextReviewWords(count));
 
     if (selectedCategory !== 'all') {
@@ -587,87 +556,32 @@ export default function QuizPage() {
                   <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
                     <Target size={14} className="text-white" />
                   </div>
-                  <span>{t.questionsLabel(selectedQuestionCount)}</span>
+                  <span>{t.questionsLabel(settings.session.quizQuestionCount)}</span>
                 </div>
                 <Link href="/profile#settings" className="text-sm font-medium bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent hover:opacity-80 transition-opacity">
                   {t.change}
                 </Link>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                {QUESTION_COUNTS.map((count) => (
-                  <button
-                    key={count}
-                    onClick={() => {
-                      setSelectedQuestionCount(count);
-                      updateSettings('session', { quizQuestionCount: count });
-                    }}
-                    className={cn(
-                      'py-2 px-3 rounded-xl font-medium transition-all',
-                      selectedQuestionCount === count
-                        ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
-                        : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                    )}
-                  >
-                    {count}
-                  </button>
-                ))}
-                <button
-                  onClick={() => {
-                    setSelectedQuestionCount('all');
-                    updateSettings('session', { quizQuestionCount: 'all' });
-                  }}
-                  className={cn(
-                    'py-2 px-3 rounded-xl font-medium transition-all',
-                    selectedQuestionCount === 'all'
-                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
-                      : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                  )}
-                >
-                  {t.all}
-                </button>
-              </div>
+              <CountSelector
+                value={settings.session.quizQuestionCount}
+                onChange={(value) =>
+                  updateSettings('session', { quizQuestionCount: value })
+                }
+                allLabel={t.all}
+                customLabel={t.customCountLabel}
+                customPlaceholder={t.customCountPlaceholder}
+                minCustom={4}
+              />
 
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-col gap-1">
-                  <label
-                    htmlFor="quiz-custom-count"
-                    className="text-xs text-slate-500 dark:text-slate-400"
-                  >
-                    {t.customCountLabel}
-                  </label>
-                  <input
-                    id="quiz-custom-count"
-                    type="number"
-                    inputMode="numeric"
-                    min={4}
-                    placeholder={t.customCountPlaceholder}
-                    value={customQuestionCount}
-                    onChange={(event) => setCustomQuestionCount(event.target.value)}
-                    onBlur={() => applyCustomQuestionCount(customQuestionCount)}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        applyCustomQuestionCount(customQuestionCount);
-                      }
-                    }}
-                    className={cn(
-                      'w-full sm:w-32 px-3 py-2 rounded-lg border bg-white/90 dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500',
-                      isCustomQuestionCount
-                        ? 'border-primary-300 dark:border-primary-500/60'
-                        : 'border-slate-200 dark:border-slate-700'
-                    )}
-                  />
-                </div>
-                {settings.session.timeLimit && (
-                  <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
-                      <Clock size={14} className="text-white" />
-                    </div>
-                    <span>{settings.session.timeLimit}s</span>
+              {settings.session.timeLimit && (
+                <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                    <Clock size={14} className="text-white" />
                   </div>
-                )}
-              </div>
+                  <span>{settings.session.timeLimit}s</span>
+                </div>
+              )}
             </CardContent>
           </Card>
 

@@ -7,13 +7,13 @@ import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FlashcardSession } from '@/components/flashcard/Flashcard';
+import { CountSelector } from '@/components/session/CountSelector';
 import { useVocabStore, useHydration } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import { getCategoryLabel } from '@/lib/categories';
 import { useLanguage } from '@/lib/i18n';
 
 type SessionState = 'setup' | 'active' | 'complete';
-const SESSION_COUNTS = [5, 10, 15, 20] as const;
 
 const flashcardsCopy = {
   pl: {
@@ -120,10 +120,6 @@ export default function FlashcardsPage() {
   const getNextReviewWords = useVocabStore((state) => state.getNextReviewWords);
   const updateStreak = useVocabStore((state) => state.updateStreak);
   const incrementSessionCount = useVocabStore((state) => state.incrementSessionCount);
-  const [selectedFlashcardCount, setSelectedFlashcardCount] = useState<number | 'all'>(
-    settings.session.flashcardCount
-  );
-  const [customFlashcardCount, setCustomFlashcardCount] = useState('');
 
   const setCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -177,33 +173,6 @@ export default function FlashcardsPage() {
   }, [selectedSetId, sets]);
 
   useEffect(() => {
-    setSelectedFlashcardCount(settings.session.flashcardCount);
-  }, [settings.session.flashcardCount]);
-
-  const isCustomFlashcardCount =
-    typeof selectedFlashcardCount === 'number' &&
-    !SESSION_COUNTS.includes(
-      selectedFlashcardCount as (typeof SESSION_COUNTS)[number]
-    );
-
-  useEffect(() => {
-    setCustomFlashcardCount(
-      isCustomFlashcardCount ? String(selectedFlashcardCount) : ''
-    );
-  }, [isCustomFlashcardCount, selectedFlashcardCount]);
-
-  const applyCustomFlashcardCount = (value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed) return;
-    const parsed = Number.parseInt(trimmed, 10);
-    if (Number.isNaN(parsed)) return;
-    const next = Math.max(parsed, 1);
-    setSelectedFlashcardCount(next);
-    setCustomFlashcardCount(String(next));
-    updateSettings('session', { flashcardCount: next });
-  };
-
-  useEffect(() => {
     if (!hydrated || appliedSetParam) return;
     if (!setIdParam) {
       setAppliedSetParam(true);
@@ -251,7 +220,7 @@ export default function FlashcardsPage() {
   }
 
   const startSession = () => {
-    const count = selectedFlashcardCount;
+    const count = settings.session.flashcardCount;
     let words = filterBySet(getNextReviewWords(count));
 
     if (selectedCategory !== 'all') {
@@ -457,69 +426,16 @@ export default function FlashcardsPage() {
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
               {t.flashcardCount}
             </p>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-                {SESSION_COUNTS.map((count) => (
-                  <button
-                    key={count}
-                    onClick={() => {
-                      setSelectedFlashcardCount(count);
-                      updateSettings('session', { flashcardCount: count });
-                    }}
-                    className={cn(
-                      'py-2 px-3 rounded-xl text-sm font-medium transition-colors',
-                      selectedFlashcardCount === count
-                        ? 'bg-primary-500 text-white'
-                      : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                  )}
-                >
-                  {count}
-                </button>
-              ))}
-              <button
-                onClick={() => {
-                  setSelectedFlashcardCount('all');
-                  updateSettings('session', { flashcardCount: 'all' });
-                }}
-                className={cn(
-                  'py-2 px-3 rounded-xl text-sm font-medium transition-colors',
-                  selectedFlashcardCount === 'all'
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                )}
-              >
-                {t.all}
-              </button>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <label
-                htmlFor="flashcards-custom-count"
-                className="text-xs text-slate-500 dark:text-slate-400"
-              >
-                {t.customCountLabel}
-              </label>
-              <input
-                id="flashcards-custom-count"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                placeholder={t.customCountPlaceholder}
-                value={customFlashcardCount}
-                onChange={(event) => setCustomFlashcardCount(event.target.value)}
-                onBlur={() => applyCustomFlashcardCount(customFlashcardCount)}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter') {
-                    event.preventDefault();
-                    applyCustomFlashcardCount(customFlashcardCount);
-                  }
-                }}
-                className={cn(
-                  'w-full sm:w-32 px-3 py-2 rounded-lg border bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500',
-                  isCustomFlashcardCount
-                    ? 'border-primary-300 dark:border-primary-500/60'
-                    : 'border-slate-200 dark:border-slate-600'
-                )}
-              />
-            </div>
+            <CountSelector
+              value={settings.session.flashcardCount}
+              onChange={(value) =>
+                updateSettings('session', { flashcardCount: value })
+              }
+              allLabel={t.all}
+              customLabel={t.customCountLabel}
+              customPlaceholder={t.customCountPlaceholder}
+              minCustom={1}
+            />
           </div>
 
           <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-xl text-sm">
