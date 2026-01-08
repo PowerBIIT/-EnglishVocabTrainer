@@ -63,7 +63,7 @@ export class GeminiService {
   private async requestWithMetadata(
     body: Record<string, unknown>,
     options: GenerateOptions = {}
-  ): Promise<{ content: string; usage: GeminiUsageMetadata; model: string }> {
+  ): Promise<{ content: string; usage: GeminiUsageMetadata; model: string; finishReason?: string }> {
     const {
       temperature = 0.7,
       maxOutputTokens = 1024,
