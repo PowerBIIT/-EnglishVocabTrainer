@@ -49,8 +49,8 @@ const SUPPORTED_FILE_MIME = [
 ];
 const TEXTAREA_LINE_HEIGHT = 24;
 const TEXTAREA_PADDING = 20;
-const CHAT_MIN_ROWS = 2;
-const CHAT_MAX_ROWS = 5;
+const CHAT_MIN_ROWS = 3;
+const CHAT_MAX_ROWS = 8;
 
 const getTextareaHeight = (rows: number) =>
   `${rows * TEXTAREA_LINE_HEIGHT + TEXTAREA_PADDING}px`;
@@ -717,8 +717,8 @@ export function WordIntake({
 
   const isActiveRequest = (requestId: number) => requestIdRef.current === requestId;
 
-  const onboardingMinRows = isCompact ? 2 : 3;
-  const onboardingMaxRows = isCompact ? 5 : 6;
+  const onboardingMinRows = isCompact ? 3 : 4;
+  const onboardingMaxRows = isCompact ? 7 : 8;
 
   const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
   const addVocabulary = useVocabStore((state) => state.addVocabulary);
@@ -2020,97 +2020,100 @@ export function WordIntake({
               </button>
             ))}
           </div>
-          <p className={cn('text-xs text-slate-500', isCompact && 'leading-snug')}>
-            {t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}
-          </p>
-          <div className={cn('flex gap-2 min-w-0 items-end', isCompact && 'gap-1.5')}>
-            <input
-              ref={cameraInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              onChange={handleImageUpload}
-              className="hidden"
-            />
-            <button
-              onClick={() => cameraInputRef.current?.click()}
-              disabled={isProcessing}
-              className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
-              title={t.cameraButtonTitle}
-            >
-              <Camera size={20} />
-              <span className="hidden sm:inline text-sm">{t.cameraLabel}</span>
-            </button>
+          <div className={cn('space-y-2', isCompact && 'space-y-1.5')}>
+            <p className={cn('text-xs text-slate-500', isCompact && 'leading-snug')}>
+              {t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}
+            </p>
+            <div className={cn('flex flex-wrap gap-2', isCompact && 'gap-1.5')}>
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <button
+                onClick={() => cameraInputRef.current?.click()}
+                disabled={isProcessing}
+                className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
+                title={t.cameraButtonTitle}
+              >
+                <Camera size={20} />
+                <span className="hidden sm:inline text-sm">{t.cameraLabel}</span>
+              </button>
 
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleImageUpload}
-              className="hidden"
-              multiple
-            />
-            <button
-              onClick={() => imageInputRef.current?.click()}
-              disabled={isProcessing}
-              className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
-              title={t.imageButtonTitle}
-            >
-              <ImageIcon size={20} />
-              <span className="hidden sm:inline text-sm">{t.imageLabel}</span>
-            </button>
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                multiple
+              />
+              <button
+                onClick={() => imageInputRef.current?.click()}
+                disabled={isProcessing}
+                className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
+                title={t.imageButtonTitle}
+              >
+                <ImageIcon size={20} />
+                <span className="hidden sm:inline text-sm">{t.imageLabel}</span>
+              </button>
 
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept=".txt,.csv,.pdf,.docx,text/plain,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-              onChange={handleFileUpload}
-              className="hidden"
-              multiple
-            />
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              disabled={isProcessing}
-              className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
-              title={t.fileButtonTitle}
-            >
-              <FileText size={20} />
-              <span className="hidden sm:inline text-sm">{t.fileLabel}</span>
-            </button>
-
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                adjustTextareaHeight(
-                  inputRef.current,
-                  onboardingMinRows,
-                  onboardingMaxRows
-                );
-              }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder={t.inputPlaceholder}
-              className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
-              disabled={isProcessing}
-              rows={onboardingMinRows}
-              style={{
-                minHeight: getTextareaHeight(onboardingMinRows),
-                maxHeight: getTextareaHeight(onboardingMaxRows),
-              }}
-            />
-            <Button
-              onClick={handleSend}
-              disabled={!input.trim() || isProcessing}
-              className="px-3 sm:px-4"
-            >
-              <Send size={18} />
-            </Button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".txt,.csv,.pdf,.docx,text/plain,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                onChange={handleFileUpload}
+                className="hidden"
+                multiple
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isProcessing}
+                className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
+                title={t.fileButtonTitle}
+              >
+                <FileText size={20} />
+                <span className="hidden sm:inline text-sm">{t.fileLabel}</span>
+              </button>
+            </div>
+            <div className="flex gap-2 items-end min-w-0">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  adjustTextareaHeight(
+                    inputRef.current,
+                    onboardingMinRows,
+                    onboardingMaxRows
+                  );
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder={t.inputPlaceholder}
+                className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
+                disabled={isProcessing}
+                rows={onboardingMinRows}
+                style={{
+                  minHeight: getTextareaHeight(onboardingMinRows),
+                  maxHeight: getTextareaHeight(onboardingMaxRows),
+                }}
+              />
+              <Button
+                onClick={handleSend}
+                disabled={!input.trim() || isProcessing}
+                className="px-3 sm:px-4"
+              >
+                <Send size={18} />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
