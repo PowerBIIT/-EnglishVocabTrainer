@@ -9,6 +9,25 @@ const QUICK_PROMPTS = [
   { label: 'Reduce churn', prompt: 'How can I reduce churn rate for my subscription service?' },
   { label: 'Pricing strategy', prompt: 'Should I adjust my pricing strategy? What would you recommend?' },
 ];
+const TEXTAREA_LINE_HEIGHT = 24;
+const TEXTAREA_PADDING = 16;
+const CHAT_MIN_ROWS = 2;
+const CHAT_MAX_ROWS = 6;
+
+const getTextareaHeight = (rows: number) =>
+  `${rows * TEXTAREA_LINE_HEIGHT + TEXTAREA_PADDING}px`;
+
+const adjustTextareaHeight = (
+  textarea: HTMLTextAreaElement | null,
+  minRows: number,
+  maxRows: number
+) => {
+  if (!textarea) return;
+  textarea.style.height = 'auto';
+  const minHeight = TEXTAREA_LINE_HEIGHT * minRows + TEXTAREA_PADDING;
+  const maxHeight = TEXTAREA_LINE_HEIGHT * maxRows + TEXTAREA_PADDING;
+  textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)}px`;
+};
 
 export function RevenueStrategyChatSection() {
   const [messages, setMessages] = useState<RevenueChatMessage[]>([]);
@@ -16,15 +35,28 @@ export function RevenueStrategyChatSection() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    requestAnimationFrame(() => {
+      if (typeof container.scrollTo === 'function') {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        return;
+      }
+      container.scrollTop = container.scrollHeight;
+    });
   }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, scrollToBottom]);
+  }, [messages, loading, scrollToBottom]);
+
+  useEffect(() => {
+    adjustTextareaHeight(inputRef.current, CHAT_MIN_ROWS, CHAT_MAX_ROWS);
+  }, [input]);
 
   const sendMessage = async (messageText: string) => {
     if (!messageText.trim() || loading) return;
@@ -39,6 +71,9 @@ export function RevenueStrategyChatSection() {
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
     setLoading(true);
     setError(null);
 
@@ -115,7 +150,7 @@ export function RevenueStrategyChatSection() {
       </div>
 
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center">
             <div className="text-gray-400 dark:text-gray-500 mb-6">
@@ -185,7 +220,6 @@ export function RevenueStrategyChatSection() {
                 </div>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </>
         )}
       </div>
@@ -199,14 +233,28 @@ export function RevenueStrategyChatSection() {
 
       {/* Input area */}
       <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="flex gap-2">
-          <input
-            type="text"
+        <div className="flex gap-2 items-end">
+          <textarea
+            ref={inputRef}
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              adjustTextareaHeight(inputRef.current, CHAT_MIN_ROWS, CHAT_MAX_ROWS);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage(input);
+              }
+            }}
             placeholder="Ask about revenue strategy..."
-            className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 outline-none"
+            className="flex-1 px-4 py-2 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 outline-none resize-none overflow-hidden"
             disabled={loading}
+            rows={CHAT_MIN_ROWS}
+            style={{
+              minHeight: getTextareaHeight(CHAT_MIN_ROWS),
+              maxHeight: getTextareaHeight(CHAT_MAX_ROWS),
+            }}
           />
           <button
             type="submit"

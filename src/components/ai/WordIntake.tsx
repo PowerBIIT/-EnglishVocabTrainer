@@ -47,6 +47,25 @@ const SUPPORTED_FILE_MIME = [
   'application/pdf',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
 ];
+const TEXTAREA_LINE_HEIGHT = 24;
+const TEXTAREA_PADDING = 20;
+const CHAT_MIN_ROWS = 2;
+const CHAT_MAX_ROWS = 5;
+
+const getTextareaHeight = (rows: number) =>
+  `${rows * TEXTAREA_LINE_HEIGHT + TEXTAREA_PADDING}px`;
+
+const adjustTextareaHeight = (
+  textarea: HTMLTextAreaElement | null,
+  minRows: number,
+  maxRows: number
+) => {
+  if (!textarea) return;
+  textarea.style.height = 'auto';
+  const minHeight = TEXTAREA_LINE_HEIGHT * minRows + TEXTAREA_PADDING;
+  const maxHeight = TEXTAREA_LINE_HEIGHT * maxRows + TEXTAREA_PADDING;
+  textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)}px`;
+};
 
 const normalizeForMatch = (value: string) =>
   value
@@ -684,7 +703,7 @@ export function WordIntake({
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -698,15 +717,8 @@ export function WordIntake({
 
   const isActiveRequest = (requestId: number) => requestIdRef.current === requestId;
 
-  const adjustTextareaHeight = () => {
-    const textarea = textareaRef.current;
-    if (!textarea) return;
-    textarea.style.height = 'auto';
-    const lineHeight = 24;
-    const minHeight = lineHeight + 20;
-    const maxHeight = lineHeight * 5 + 20;
-    textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)}px`;
-  };
+  const onboardingMinRows = isCompact ? 2 : 3;
+  const onboardingMaxRows = isCompact ? 5 : 6;
 
   const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
   const addVocabulary = useVocabStore((state) => state.addVocabulary);
@@ -752,6 +764,14 @@ export function WordIntake({
       },
     ]);
   }, [messages.length, welcomeMessage]);
+
+  useEffect(() => {
+    if (variant === 'chat') {
+      adjustTextareaHeight(textareaRef.current, CHAT_MIN_ROWS, CHAT_MAX_ROWS);
+      return;
+    }
+    adjustTextareaHeight(inputRef.current, onboardingMinRows, onboardingMaxRows);
+  }, [input, variant, onboardingMinRows, onboardingMaxRows]);
 
   useEffect(() => {
     if (selectedSetOption === NEW_SET_OPTION) return;
@@ -978,6 +998,9 @@ export function WordIntake({
     setInput('');
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
+    }
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
     }
     setIsProcessing(true);
 
@@ -1702,7 +1725,7 @@ export function WordIntake({
           value={input}
           onChange={(e) => {
             setInput(e.target.value);
-            adjustTextareaHeight();
+            adjustTextareaHeight(textareaRef.current, CHAT_MIN_ROWS, CHAT_MAX_ROWS);
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -1713,8 +1736,11 @@ export function WordIntake({
           placeholder={t.inputPlaceholder}
           className="flex-1 px-3 sm:px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
           disabled={isProcessing}
-          rows={1}
-          style={{ minHeight: '44px', maxHeight: '140px' }}
+          rows={CHAT_MIN_ROWS}
+          style={{
+            minHeight: getTextareaHeight(CHAT_MIN_ROWS),
+            maxHeight: getTextareaHeight(CHAT_MAX_ROWS),
+          }}
         />
         <Button
           onClick={handleSend}
@@ -1938,6 +1964,7 @@ export function WordIntake({
         </div>
 
         <div
+          ref={chatScrollRef}
           className={cn(
             'rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 overflow-y-auto',
             isCompact
@@ -1996,7 +2023,7 @@ export function WordIntake({
           <p className={cn('text-xs text-slate-500', isCompact && 'leading-snug')}>
             {t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}
           </p>
-          <div className={cn('flex gap-2 min-w-0', isCompact && 'gap-1.5')}>
+          <div className={cn('flex gap-2 min-w-0 items-end', isCompact && 'gap-1.5')}>
             <input
               ref={cameraInputRef}
               type="file"
@@ -2051,15 +2078,31 @@ export function WordIntake({
               <span className="hidden sm:inline text-sm">{t.fileLabel}</span>
             </button>
 
-            <input
+            <textarea
               ref={inputRef}
-              type="text"
               value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+              onChange={(e) => {
+                setInput(e.target.value);
+                adjustTextareaHeight(
+                  inputRef.current,
+                  onboardingMinRows,
+                  onboardingMaxRows
+                );
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
               placeholder={t.inputPlaceholder}
-              className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="flex-1 min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
               disabled={isProcessing}
+              rows={onboardingMinRows}
+              style={{
+                minHeight: getTextareaHeight(onboardingMinRows),
+                maxHeight: getTextareaHeight(onboardingMaxRows),
+              }}
             />
             <Button
               onClick={handleSend}

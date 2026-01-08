@@ -26,6 +26,26 @@ interface Message {
   timestamp: Date;
 }
 
+const TEXTAREA_LINE_HEIGHT = 24;
+const TEXTAREA_PADDING = 20;
+const TUTOR_MIN_ROWS = 2;
+const TUTOR_MAX_ROWS = 6;
+
+const getTextareaHeight = (rows: number) =>
+  `${rows * TEXTAREA_LINE_HEIGHT + TEXTAREA_PADDING}px`;
+
+const adjustTextareaHeight = (
+  textarea: HTMLTextAreaElement | null,
+  minRows: number,
+  maxRows: number
+) => {
+  if (!textarea) return;
+  textarea.style.height = 'auto';
+  const minHeight = TEXTAREA_LINE_HEIGHT * minRows + TEXTAREA_PADDING;
+  const maxHeight = TEXTAREA_LINE_HEIGHT * maxRows + TEXTAREA_PADDING;
+  textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)}px`;
+};
+
 const tutorCopy = {
   pl: {
     welcomeMessage: (targetLabel: string) =>
@@ -214,8 +234,8 @@ export function AITutor() {
   const [isLoading, setIsLoading] = useState(false);
   const [showQuickActions, setShowQuickActions] = useState(true);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const { data: session } = useSession();
   const isAdminMode = Boolean(session?.user?.isAdmin);
@@ -231,8 +251,20 @@ export function AITutor() {
   const headerSubtitle = isAdminMode ? t.adminHeaderSubtitle : t.headerSubtitle;
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    requestAnimationFrame(() => {
+      if (typeof container.scrollTo === 'function') {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        return;
+      }
+      container.scrollTop = container.scrollHeight;
+    });
+  }, [messages, isLoading, isOpen]);
+
+  useEffect(() => {
+    adjustTextareaHeight(inputRef.current, TUTOR_MIN_ROWS, TUTOR_MAX_ROWS);
+  }, [input, isOpen]);
 
   useEffect(() => {
     if (isOpen && messages.length === 0) {
@@ -285,6 +317,9 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
     setShowQuickActions(false);
     setIsLoading(true);
 
@@ -418,7 +453,7 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -484,21 +519,32 @@ ${t.contextLabels.streak}: ${stats.currentStreak} ${t.streakSuffix}
           </div>
         )}
 
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
       <div className="p-4 border-t border-slate-200 dark:border-slate-700">
-        <div className="flex gap-2">
-          <input
+        <div className="flex gap-2 items-end">
+          <textarea
             ref={inputRef}
-            type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSend()}
+            onChange={(e) => {
+              setInput(e.target.value);
+              adjustTextareaHeight(inputRef.current, TUTOR_MIN_ROWS, TUTOR_MAX_ROWS);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
             placeholder={inputPlaceholder}
-            className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="flex-1 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
             disabled={isLoading}
+            rows={TUTOR_MIN_ROWS}
+            style={{
+              minHeight: getTextareaHeight(TUTOR_MIN_ROWS),
+              maxHeight: getTextareaHeight(TUTOR_MAX_ROWS),
+            }}
           />
           <Button
             onClick={() => handleSend()}

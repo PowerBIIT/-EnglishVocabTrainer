@@ -13,6 +13,25 @@ import type {
 } from '@/types/adminCopilot';
 
 const RANGE_OPTIONS = [7, 30, 90, 365] as const;
+const TEXTAREA_LINE_HEIGHT = 24;
+const TEXTAREA_PADDING = 20;
+const CHAT_MIN_ROWS = 2;
+const CHAT_MAX_ROWS = 6;
+
+const getTextareaHeight = (rows: number) =>
+  `${rows * TEXTAREA_LINE_HEIGHT + TEXTAREA_PADDING}px`;
+
+const adjustTextareaHeight = (
+  textarea: HTMLTextAreaElement | null,
+  minRows: number,
+  maxRows: number
+) => {
+  if (!textarea) return;
+  textarea.style.height = 'auto';
+  const minHeight = TEXTAREA_LINE_HEIGHT * minRows + TEXTAREA_PADDING;
+  const maxHeight = TEXTAREA_LINE_HEIGHT * maxRows + TEXTAREA_PADDING;
+  textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)}px`;
+};
 
 const formatDateInput = (date: Date) => {
   const year = date.getFullYear();
@@ -155,7 +174,8 @@ export function AdminCopilotSection() {
     null
   );
   const [actionState, setActionState] = useState<Record<string, ActionState>>({});
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const range = useMemo(() => buildRange(rangeDays), [rangeDays]);
 
@@ -165,12 +185,24 @@ export function AdminCopilotSection() {
   );
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    requestAnimationFrame(() => {
+      if (typeof container.scrollTo === 'function') {
+        container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        return;
+      }
+      container.scrollTop = container.scrollHeight;
+    });
   }, []);
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, scrollToBottom]);
+  }, [messages, loading, scrollToBottom]);
+
+  useEffect(() => {
+    adjustTextareaHeight(inputRef.current, CHAT_MIN_ROWS, CHAT_MAX_ROWS);
+  }, [input]);
 
   const resetSession = () => {
     setMessages([]);
@@ -191,6 +223,9 @@ export function AdminCopilotSection() {
 
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
     setLoading(true);
     setError(null);
 
@@ -419,7 +454,7 @@ export function AdminCopilotSection() {
           )}
         </div>
 
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center gap-4">
               <p className="text-sm text-slate-400">{t.emptyHint}</p>
@@ -518,7 +553,6 @@ export function AdminCopilotSection() {
                   </div>
                 </div>
               )}
-              <div ref={messagesEndRef} />
             </>
           )}
         </div>
@@ -536,15 +570,29 @@ export function AdminCopilotSection() {
           }}
           className="border-t border-slate-200 dark:border-slate-700 p-4"
         >
-          <div className="flex gap-2">
-            <input
-              type="text"
+          <div className="flex gap-2 items-end">
+            <textarea
+              ref={inputRef}
               value={input}
-              onChange={(event) => setInput(event.target.value)}
+              onChange={(event) => {
+                setInput(event.target.value);
+                adjustTextareaHeight(inputRef.current, CHAT_MIN_ROWS, CHAT_MAX_ROWS);
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault();
+                  sendMessage(input);
+                }
+              }}
               placeholder={t.inputPlaceholder}
-              className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="flex-1 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 px-4 py-2 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
               disabled={loading}
               maxLength={2000}
+              rows={CHAT_MIN_ROWS}
+              style={{
+                minHeight: getTextareaHeight(CHAT_MIN_ROWS),
+                maxHeight: getTextareaHeight(CHAT_MAX_ROWS),
+              }}
             />
             <Button type="submit" disabled={!input.trim() || loading}>
               {t.send}
