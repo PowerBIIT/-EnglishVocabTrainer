@@ -40,7 +40,9 @@
 ## Tracking (wdrożony ✅)
 
 - Tag gtag.js w `src/app/layout.tsx`
-- Konwersja na rejestrację w `src/app/register/page.tsx`
+- Konwersja śledzona w:
+  - `src/app/onboarding/page.tsx` - nowy użytkownik kończy onboarding (Google OAuth + email)
+  - `src/app/register/page.tsx` - rejestracja email/password
 - Zmienne w GitHub Actions (build-time):
   - `NEXT_PUBLIC_GOOGLE_ADS_ID=AW-17853999994`
   - `NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID=TAKeCJW8nN0bEPrWucFC`

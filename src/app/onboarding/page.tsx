@@ -431,6 +431,13 @@ export default function OnboardingPage() {
       body: JSON.stringify({ onboardingComplete: true, mascotSkin: selectedSkin }),
     });
 
+    // Google Ads conversion tracking - new user completed onboarding
+    if (typeof window !== 'undefined' && window.gtag && process.env.NEXT_PUBLIC_GOOGLE_ADS_ID && process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID) {
+      window.gtag('event', 'conversion', {
+        'send_to': `${process.env.NEXT_PUBLIC_GOOGLE_ADS_ID}/${process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID}`,
+      });
+    }
+
     await update({ onboardingComplete: true, mascotSkin: selectedSkin });
     setStep('done');
     setTimeout(() => router.push('/'), 600);
@@ -442,6 +449,13 @@ export default function OnboardingPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ onboardingComplete: true }),
     });
+
+    // Google Ads conversion tracking - new user skipped onboarding
+    if (typeof window !== 'undefined' && window.gtag && process.env.NEXT_PUBLIC_GOOGLE_ADS_ID && process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID) {
+      window.gtag('event', 'conversion', {
+        'send_to': `${process.env.NEXT_PUBLIC_GOOGLE_ADS_ID}/${process.env.NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID}`,
+      });
+    }
 
     await update({ onboardingComplete: true });
     router.push('/');
