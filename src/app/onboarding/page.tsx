@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { CheckCircle2, ExternalLink, Flag, Shield, Sparkles, Target } from 'lucide-react';
+import { CheckCircle2, ChevronDown, ExternalLink, Flag, Shield, Sparkles, Target } from 'lucide-react';
 import { mascotSkins } from '@/data/mascotSkins';
 import { MascotSkinCard } from '@/components/mascot/MascotSkinCard';
 import { Button } from '@/components/ui/Button';
@@ -75,6 +75,7 @@ const onboardingCopy = {
     startMission: 'Zaczynamy misję',
     addFirstSet: 'Dodaj pierwszy zestaw słówek',
     addFirstSetDesc: 'Wklej słówka w formacie: word - tłumaczenie. Możesz też użyć zdjęcia lub pliku.',
+    intakeHintsLabel: 'Wskazówki',
     formatHint: (example: string) => `Format: ${example}`,
     setNameLabel: 'Nazwa zestawu',
     setNamePlaceholder: 'Np. Klasówka z biologii',
@@ -135,6 +136,7 @@ const onboardingCopy = {
     startMission: 'Start the mission',
     addFirstSet: 'Add your first word set',
     addFirstSetDesc: 'Paste words in the format: word - translation. You can also use a photo or file.',
+    intakeHintsLabel: 'Tips',
     formatHint: (example: string) => `Format: ${example}`,
     setNameLabel: 'Set name',
     setNamePlaceholder: 'e.g. Biology test',
@@ -195,6 +197,7 @@ const onboardingCopy = {
     startMission: 'Почати місію',
     addFirstSet: 'Додай перший набір слів',
     addFirstSetDesc: 'Встав слова у форматі: слово - переклад. Можеш також використати фото або файл.',
+    intakeHintsLabel: 'Поради',
     formatHint: (example: string) => `Формат: ${example}`,
     setNameLabel: 'Назва набору',
     setNamePlaceholder: 'Напр. Контрольна з біології',
@@ -879,12 +882,12 @@ export default function OnboardingPage() {
         {step === 'words' && (
           <section className="space-y-4 sm:space-y-6">
             <div className="rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-primary-500/5 p-4 sm:p-6 space-y-4 sm:space-y-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                     {t.addFirstSet}
                   </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="hidden md:block text-sm text-slate-500 dark:text-slate-400">
                     {t.addFirstSetDesc}{' '}
                     <span className="font-medium text-primary-600">
                       {t.formatHint(`${examplePair.target} - ${examplePair.native}`)}
@@ -897,8 +900,39 @@ export default function OnboardingPage() {
                 </div>
               </div>
 
+              <div className="md:hidden">
+                <details className="group rounded-2xl border border-slate-200/70 dark:border-slate-700/70 bg-white/70 dark:bg-slate-900/60 backdrop-blur-sm">
+                  <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden px-4 py-3 flex items-center justify-between gap-3">
+                    <span className="text-sm font-medium text-slate-700 dark:text-slate-200">
+                      {t.intakeHintsLabel}
+                    </span>
+                    <ChevronDown
+                      size={18}
+                      className="text-slate-400 transition-transform group-open:rotate-180"
+                    />
+                  </summary>
+                  <div className="px-4 pb-4 space-y-3">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
+                      {t.addFirstSetDesc}{' '}
+                      <span className="font-medium text-primary-600">
+                        {t.formatHint(`${examplePair.target} - ${examplePair.native}`)}
+                      </span>
+                      .
+                    </p>
+                    {showPolishHint && (
+                      <div className="rounded-2xl border border-blue-100 dark:border-blue-900/60 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                        <p className="font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
+                          {t.polishHintTitle}
+                        </p>
+                        <p className="mt-1">{t.polishHintBody}</p>
+                      </div>
+                    )}
+                  </div>
+                </details>
+              </div>
+
               {showPolishHint && (
-                <div className="rounded-2xl border border-blue-100 dark:border-blue-900/60 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
+                <div className="hidden md:block rounded-2xl border border-blue-100 dark:border-blue-900/60 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/30 dark:to-cyan-900/30 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
                   <p className="font-semibold bg-gradient-to-r from-blue-600 to-cyan-600 bg-clip-text text-transparent">
                     {t.polishHintTitle}
                   </p>

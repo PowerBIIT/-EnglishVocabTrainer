@@ -456,7 +456,7 @@ export function AITutor() {
           </div>
           <div>
             <h3 className="chat-shell-title font-semibold">{t.headerTitle}</h3>
-            <p className="chat-shell-subtitle text-xs">{headerSubtitle}</p>
+            <p className="chat-shell-subtitle hidden md:block text-xs">{headerSubtitle}</p>
           </div>
         </div>
         <button
@@ -497,9 +497,9 @@ export function AITutor() {
 
         {/* Quick Actions */}
         {showQuickActions && messages.length <= 1 && (
-          <div className="space-y-2">
-            <p className="text-xs text-slate-500 text-center">{t.quickActionsLabel}</p>
-            <div className="flex flex-wrap gap-2 justify-center">
+          <div className="flex flex-col gap-2">
+            <p className="hidden md:block text-xs text-slate-500 text-center">{t.quickActionsLabel}</p>
+            <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1 md:mx-0 md:px-0 md:pb-0 md:flex-wrap md:justify-center md:overflow-visible">
               {quickActions.map((action, index) => (
                 <button
                   key={index}
@@ -509,7 +509,7 @@ export function AITutor() {
                       action.prompt.endsWith(': ')
                     )
                   }
-                  className="flex items-center gap-2 px-3 py-2 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors"
+                  className="flex flex-shrink-0 items-center gap-2 px-3 py-2 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full text-sm hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors whitespace-nowrap"
                 >
                   <action.icon size={14} />
                   {action.label}

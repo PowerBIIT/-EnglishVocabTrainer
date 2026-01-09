@@ -131,16 +131,16 @@ export default function KlasowkaPage() {
               <h1 className="font-display text-3xl text-slate-900 dark:text-white">
                 {t.title}
               </h1>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="hidden md:block text-sm text-slate-500 dark:text-slate-400">
                 {t.description}
               </p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 md:mx-0 md:px-0 md:pb-0 md:flex-wrap md:overflow-visible">
             {t.actions.map((action) => (
               <span
                 key={action}
-                className="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/60 px-3 py-1 text-xs text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700/70"
+                className="inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/60 px-3 py-1 text-xs text-slate-600 dark:text-slate-300 border border-slate-200/70 dark:border-slate-700/70 whitespace-nowrap"
               >
                 <span className="h-1.5 w-1.5 rounded-full bg-primary-500" />
                 {action}
@@ -235,7 +235,7 @@ export default function KlasowkaPage() {
                   <h2 className="font-semibold text-slate-800 dark:text-slate-100">
                     {t.intakeTitle}
                   </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="hidden md:block text-sm text-slate-500 dark:text-slate-400">
                     {t.intakeSubtitle(MIN_WORDS)}
                   </p>
                 </div>

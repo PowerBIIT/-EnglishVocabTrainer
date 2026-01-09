@@ -312,7 +312,7 @@ export const wordIntakeCopy = {
   pl: {
     loading: 'Ładowanie...',
     welcomeMessage: (example: string) =>
-      `Witaj! Jestem Twoim asystentem do słówek szkolnych. Mogę:\n\n• Dodać słówka z kartkówki (np. "${example}")\n• Wygenerować słówka z tematu lekcji\n• Wyciągnąć słówka ze zdjęcia lub pliku\n• Pokazać statystyki Twojej biblioteki\n\nJak mogę Ci pomóc?`,
+      `Cześć! Wklej słówka (np. "${example}") albo wpisz temat do wygenerowania.\nMożesz też dodać zdjęcie lub plik.`,
     defaultCategory: 'Moje słówka',
     defaultSetLabel: 'Nowy zestaw',
     defaultTopic: 'szkoła',
@@ -436,7 +436,7 @@ export const wordIntakeCopy = {
   en: {
     loading: 'Loading...',
     welcomeMessage: (example: string) =>
-      `Hi! I am your school vocabulary assistant. I can:\n\n• Add words from a test (e.g. "${example}")\n• Generate words for a lesson topic\n• Extract words from a photo or file\n• Show stats from your library\n\nHow can I help?`,
+      `Hi! Paste words (e.g. "${example}") or type a topic to generate.\nYou can also add a photo or file.`,
     defaultCategory: 'My words',
     defaultSetLabel: 'New set',
     defaultTopic: 'school',
@@ -557,7 +557,7 @@ export const wordIntakeCopy = {
   uk: {
     loading: 'Завантаження...',
     welcomeMessage: (example: string) =>
-      `Привіт! Я твій асистент для польської в школі й повсякденних справах у Польщі. Я можу:\n\n• Додати слова з контрольної (наприклад "${example}")\n• Згенерувати слова за темою уроку\n• Витягнути слова з фото або файлу\n• Показати статистику твоєї бібліотеки\n\nЧим можу допомогти?`,
+      `Привіт! Встав слова (напр. "${example}") або напиши тему для генерації.\nТакож можеш додати фото або файл.`,
     defaultCategory: 'Мої слова',
     defaultSetLabel: 'Новий набір',
     defaultTopic: 'школа',
@@ -2113,15 +2113,20 @@ export function WordIntake({
     ) : null;
 
   const quickActionsPanel = (
-    <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+    <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-6 md:gap-2 md:overflow-visible">
       {t.quickActions.map((action) => (
         <button
           key={action.label}
           onClick={() => setInput(action.prompt)}
-          className="flex flex-col items-center gap-1 p-2 sm:p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+          className={cn(
+            'flex flex-shrink-0 items-center gap-2 px-3 py-2 rounded-full border',
+            'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800',
+            'hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors',
+            'md:flex md:flex-col md:items-center md:gap-1 md:p-3 md:rounded-xl md:flex-shrink md:w-auto'
+          )}
         >
-          <action.icon className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 dark:text-primary-400" />
-          <span className="text-[10px] sm:text-xs font-medium text-slate-700 dark:text-slate-300 truncate w-full text-center">
+          <action.icon className="w-5 h-5 md:w-6 md:h-6 text-primary-600 dark:text-primary-400" />
+          <span className="text-xs font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap md:text-[10px] md:whitespace-normal md:truncate md:w-full md:text-center">
             {action.label}
           </span>
         </button>
@@ -2363,7 +2368,7 @@ export function WordIntake({
         )}
       >
         <div className={cn('min-w-0', isCompact || !showAssistantHeader ? 'space-y-3' : 'space-y-4')}>
-          {showAssistantHeader && (
+          {showAssistantHeader && !isMobile && (
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-amber-400 flex items-center justify-center">
                 <Wand2 size={20} className="text-white" />
@@ -2409,15 +2414,26 @@ export function WordIntake({
 
         <div className={cn(isCompact || !enableQuickActions ? 'space-y-2' : 'space-y-3')}>
           {enableQuickActions && (
-            <div className={cn('grid gap-2', isCompact ? 'grid-cols-3' : 'grid-cols-3 sm:grid-cols-5')}>
+            <div
+              className={cn(
+                'flex gap-2 overflow-x-auto -mx-1 px-1 pb-1',
+                'md:mx-0 md:px-0 md:pb-0 md:grid md:gap-2 md:overflow-visible',
+                isCompact ? 'md:grid-cols-3' : 'md:grid-cols-5'
+              )}
+            >
               {t.quickActions.map((action) => (
                 <button
                   key={action.label}
                   onClick={() => setInput(action.prompt)}
-                  className="flex flex-col items-center gap-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+                  className={cn(
+                    'flex flex-shrink-0 items-center gap-2 px-3 py-2 rounded-full border',
+                    'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800',
+                    'hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors',
+                    'md:flex md:flex-col md:items-center md:gap-1 md:p-3 md:rounded-xl md:flex-shrink md:w-auto'
+                  )}
                 >
-                  <action.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                  <span className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate w-full text-center">
+                  <action.icon className="w-5 h-5 md:w-6 md:h-6 text-primary-600 dark:text-primary-400" />
+                  <span className="text-xs font-medium text-slate-700 dark:text-slate-300 whitespace-nowrap md:text-[10px] md:whitespace-normal md:truncate md:w-full md:text-center">
                     {action.label}
                   </span>
                 </button>

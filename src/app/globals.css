@@ -208,7 +208,7 @@ body.fullscreen-page main {
   }
 
   .chat-shell-header {
-    @apply flex items-center justify-between border-b p-4;
+    @apply flex items-center justify-between border-b p-3 md:p-4;
     background-color: rgb(var(--chat-header-bg));
     border-color: rgb(var(--chat-header-border));
     color: rgb(var(--chat-header-text));
