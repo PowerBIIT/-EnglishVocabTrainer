@@ -2136,7 +2136,7 @@ export function WordIntake({
               <div ref={messagesEndRef} />
             </div>
 
-            <div className="chat-shell-footer flex-shrink-0 p-3 sm:p-4">
+            <div className="chat-shell-footer mt-auto flex-shrink-0 p-3 sm:p-4">
               <div
                 className={cn(
                   'mx-auto w-full',

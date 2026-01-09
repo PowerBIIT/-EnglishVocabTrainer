@@ -69,7 +69,7 @@ export function Footer() {
   const version = useVersion();
 
   // Hide on full-screen pages
-  const hiddenPaths = ['/login', '/onboarding', '/waitlist', '/privacy', '/terms'];
+  const hiddenPaths = ['/login', '/onboarding', '/waitlist', '/privacy', '/terms', '/chat'];
   if (hiddenPaths.includes(pathname)) {
     return null;
   }
