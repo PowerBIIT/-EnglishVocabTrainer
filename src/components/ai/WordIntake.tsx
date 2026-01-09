@@ -50,7 +50,7 @@ const SUPPORTED_FILE_MIME = [
 ];
 const TEXTAREA_LINE_HEIGHT = 24;
 const TEXTAREA_PADDING = 20;
-const CHAT_MIN_ROWS = 3;
+const CHAT_MIN_ROWS = 2;
 const CHAT_MAX_ROWS = 8;
 
 const getTextareaHeight = (rows: number) =>
@@ -762,7 +762,7 @@ export function WordIntake({
     }, 7000);
   };
 
-  const onboardingMinRows = isCompact ? 3 : 4;
+  const onboardingMinRows = 2;
   const onboardingMaxRows = isCompact ? 7 : 8;
 
   const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
@@ -1678,6 +1678,9 @@ export function WordIntake({
     setSuggestedCategory('');
     setSuggestedSetName('');
     setSelectedSetOption(NEW_SET_OPTION);
+    requestIdRef.current += 1;
+    setReviewOpen(false);
+    setIsProcessing(false);
 
     addAssistantMessage(
       t.addedWords(selectedWords.length, targetSetName, suggestedCategory || t.defaultCategory)
@@ -1701,6 +1704,11 @@ export function WordIntake({
       setName: targetSetName,
       wordCount: selectedWords.length,
     });
+    if (variant === 'chat') {
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+      });
+    }
   };
 
   const cancelWords = () => {
@@ -1710,7 +1718,13 @@ export function WordIntake({
     setSuggestedCategory('');
     setSuggestedSetName('');
     setSelectedSetOption(NEW_SET_OPTION);
+    setReviewOpen(false);
     setIsProcessing(false);
+    if (variant === 'chat') {
+      requestAnimationFrame(() => {
+        textareaRef.current?.focus();
+      });
+    }
   };
 
   const hasParsedWords = parsedWords.length > 0;
