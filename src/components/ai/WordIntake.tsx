@@ -1069,7 +1069,9 @@ export function WordIntake({
     setSuggestedCategory(category);
     setSuggestedSetName(buildSetName(category));
     setSelectedSetOption(NEW_SET_OPTION);
-    triggerScrollHint();
+    if (variant === 'onboarding' && !isMobile) {
+      triggerScrollHint();
+    }
   };
 
   const handleSend = async () => {
@@ -1754,8 +1756,13 @@ export function WordIntake({
     messages.length <= 1 &&
     !hasParsedWords &&
     !isProcessing;
+  const shouldShowReviewSheet =
+    isMobile && hasParsedWords && (variant === 'chat' ? reviewOpen : true);
   const scrollHint =
-    variant === 'onboarding' && showScrollHint && parsedWords.length > 0 ? (
+    variant === 'onboarding' &&
+    showScrollHint &&
+    hasParsedWords &&
+    !shouldShowReviewSheet ? (
       <div className="sm:hidden flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/60 px-3 py-2 text-[11px] leading-snug text-slate-500">
         <ChevronDown size={14} className="text-primary-500" />
         <span>{t.scrollHintMobile}</span>
@@ -1940,8 +1947,7 @@ export function WordIntake({
       </aside>
     ) : null;
 
-  const reviewSheet =
-    variant === 'chat' && hasParsedWords && reviewOpen && isMobile ? (
+  const reviewSheet = shouldShowReviewSheet ? (
       <div
         className="fixed inset-0 z-50 flex items-center justify-center px-3 py-4"
         role="dialog"
@@ -2156,25 +2162,26 @@ export function WordIntake({
   }
 
   return (
-    <div
-      className={cn(
-        'grid md:grid-cols-[1.2fr_1fr] pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0',
-        isCompact ? 'gap-3 sm:gap-4' : 'gap-4 sm:gap-6',
-        className
-      )}
-    >
-      <div className={cn('min-w-0 space-y-4', isCompact && 'space-y-3')}>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-amber-400 flex items-center justify-center">
-            <Wand2 size={20} className="text-white" />
+    <>
+      <div
+        className={cn(
+          'grid md:grid-cols-[1.2fr_1fr] pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0',
+          isCompact ? 'gap-3 sm:gap-4' : 'gap-4 sm:gap-6',
+          className
+        )}
+      >
+        <div className={cn('min-w-0 space-y-4', isCompact && 'space-y-3')}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-amber-400 flex items-center justify-center">
+              <Wand2 size={20} className="text-white" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                {t.assistantTitle}
+              </p>
+              <p className="text-xs text-slate-500">{t.quickActionsLabel}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-              {t.assistantTitle}
-            </p>
-            <p className="text-xs text-slate-500">{t.quickActionsLabel}</p>
-          </div>
-        </div>
 
         <div
           ref={chatScrollRef}
@@ -2455,26 +2462,28 @@ export function WordIntake({
         </div>
 
         {renderActions ? (
-          renderActions(
-            <>
-              <Button
-                variant="secondary"
-                onClick={cancelWords}
-                className="md:flex-initial flex-1 min-w-[140px]"
-              >
-                <X size={18} className="mr-2" />
-                {t.cancel}
-              </Button>
-              <Button
-                onClick={addSelectedWords}
-                className="md:flex-initial flex-1 min-w-[140px]"
-                disabled={!canAddWords}
-              >
-                <Plus size={18} className="mr-2" />
-                {addLabel}
-              </Button>
-            </>
-          )
+          shouldShowReviewSheet
+            ? null
+            : renderActions(
+                <>
+                  <Button
+                    variant="secondary"
+                    onClick={cancelWords}
+                    className="md:flex-initial flex-1 min-w-[140px]"
+                  >
+                    <X size={18} className="mr-2" />
+                    {t.cancel}
+                  </Button>
+                  <Button
+                    onClick={addSelectedWords}
+                    className="md:flex-initial flex-1 min-w-[140px]"
+                    disabled={!canAddWords}
+                  >
+                    <Plus size={18} className="mr-2" />
+                    {addLabel}
+                  </Button>
+                </>
+              )
         ) : (
           <>
             <div className="hidden md:flex gap-3">
@@ -2488,21 +2497,25 @@ export function WordIntake({
               </Button>
             </div>
 
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
-              <div className="flex gap-3 max-w-4xl mx-auto">
-                <Button variant="secondary" onClick={cancelWords} className="flex-1">
-                  <X size={18} className="mr-2" />
-                  {t.cancel}
-                </Button>
-                <Button onClick={addSelectedWords} className="flex-1" disabled={!canAddWords}>
-                  <Plus size={18} className="mr-2" />
-                  {addLabel}
-                </Button>
+            {!shouldShowReviewSheet && (
+              <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
+                <div className="flex gap-3 max-w-4xl mx-auto">
+                  <Button variant="secondary" onClick={cancelWords} className="flex-1">
+                    <X size={18} className="mr-2" />
+                    {t.cancel}
+                  </Button>
+                  <Button onClick={addSelectedWords} className="flex-1" disabled={!canAddWords}>
+                    <Plus size={18} className="mr-2" />
+                    {addLabel}
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </>
         )}
       </div>
     </div>
+    {reviewSheet}
+    </>
   );
 }

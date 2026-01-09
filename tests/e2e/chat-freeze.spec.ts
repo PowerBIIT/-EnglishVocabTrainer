@@ -150,8 +150,10 @@ test.describe('mobile onboarding intake', () => {
     await input.fill('apple - jablko, banana - banan, pear - gruszka');
     await input.press('Enter');
 
-    await expect(page.getByText(/apple/i)).toBeVisible();
-    await page.getByRole('button', { name: CANCEL_BUTTON }).click();
+    const reviewDialog = page.getByRole('dialog', { name: REVIEW_TITLE });
+    await expect(reviewDialog).toBeVisible();
+    await reviewDialog.getByRole('button', { name: CANCEL_BUTTON }).click();
+    await expect(reviewDialog).toHaveCount(0);
     await expect(input).toBeEnabled();
     await input.fill('still works');
     await expect(input).toHaveValue('still works');
@@ -186,8 +188,10 @@ test.describe('mobile klasowka intake', () => {
     await input.fill('apple - jablko, banana - banan, pear - gruszka');
     await input.press('Enter');
 
-    await expect(page.getByText(/apple/i)).toBeVisible();
-    await page.getByRole('button', { name: CANCEL_BUTTON }).click();
+    const reviewDialog = page.getByRole('dialog', { name: REVIEW_TITLE });
+    await expect(reviewDialog).toBeVisible();
+    await reviewDialog.getByRole('button', { name: CANCEL_BUTTON }).click();
+    await expect(reviewDialog).toHaveCount(0);
     await expect(input).toBeEnabled();
     await input.fill('still works');
     await expect(input).toHaveValue('still works');
