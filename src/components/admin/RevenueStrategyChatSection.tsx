@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { ArrowUp } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import type { RevenueChatMessage } from '@/types/aiAnalytics';
 
@@ -249,7 +249,7 @@ export function RevenueStrategyChatSection() {
               title="Send message"
               className="chat-send absolute bottom-2 right-2 h-10 w-10"
             >
-              <ArrowUp />
+              <Send />
             </button>
           </div>
         </div>

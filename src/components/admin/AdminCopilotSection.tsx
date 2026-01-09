@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowUp } from 'lucide-react';
+import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import { Select } from '@/components/ui/Select';
@@ -587,7 +587,7 @@ export function AdminCopilotSection() {
                 title={t.send}
                 className="chat-send absolute bottom-2 right-2 h-10 w-10 p-0"
               >
-                <ArrowUp />
+                <Send />
               </Button>
             </div>
           </div>

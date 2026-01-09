@@ -9,7 +9,7 @@ import {
   Image as ImageIcon,
   Camera,
   FileText,
-  ArrowUp,
+  Send,
   ChevronDown,
   Wand2,
   Microscope,
@@ -17,7 +17,6 @@ import {
   Globe,
   Landmark,
   BookOpen,
-  BarChart3,
   GraduationCap,
   ClipboardList,
   Stethoscope,
@@ -404,7 +403,7 @@ export const wordIntakeCopy = {
       { label: 'Geografia', prompt: 'Wygeneruj 12 słówek z geografii', icon: Globe },
       { label: 'Historia', prompt: 'Wygeneruj 12 słówek z historii', icon: Landmark },
       { label: 'Lektury', prompt: 'Wygeneruj 12 słówek z lektur', icon: BookOpen },
-      { label: 'Statystyki', prompt: 'Ile mam słówek?', icon: BarChart3 },
+      { label: 'Podróże', prompt: 'Wygeneruj 12 słówek z podróży', icon: Bus },
     ],
     imageButtonTitle: 'Wczytaj zdjęcie notatek',
     cameraButtonTitle: 'Zrób zdjęcie aparatem',
@@ -520,7 +519,7 @@ export const wordIntakeCopy = {
       { label: 'Geography', prompt: 'Generate 12 words about geography', icon: Globe },
       { label: 'History', prompt: 'Generate 12 words about history', icon: Landmark },
       { label: 'Literature', prompt: 'Generate 12 words about literature', icon: BookOpen },
-      { label: 'Stats', prompt: 'How many words do I have?', icon: BarChart3 },
+      { label: 'Travel', prompt: 'Generate 12 words about travel', icon: Bus },
     ],
     imageButtonTitle: 'Upload notes photo',
     cameraButtonTitle: 'Take a photo',
@@ -637,7 +636,7 @@ export const wordIntakeCopy = {
       { label: 'Документи', prompt: 'Згенеруй 12 слів на тему документи та установи', icon: ClipboardList },
       { label: 'Лікар', prompt: 'Згенеруй 12 слів на тему лікар і здоровʼя', icon: Stethoscope },
       { label: 'Транспорт', prompt: 'Згенеруй 12 слів на тему транспорт і місто', icon: Bus },
-      { label: 'Статистика', prompt: 'Скільки в мене слів?', icon: BarChart3 },
+      { label: 'Подорожі', prompt: 'Згенеруй 12 слів про подорожі', icon: Bus },
     ],
     imageButtonTitle: 'Завантажити фото нотаток',
     cameraButtonTitle: 'Зробити фото',
@@ -1758,6 +1757,7 @@ export function WordIntake({
     !isProcessing;
   const shouldShowReviewSheet =
     isMobile && hasParsedWords && (variant === 'chat' ? reviewOpen : true);
+  const shouldShowActionButtons = hasParsedWords && !shouldShowReviewSheet;
   const scrollHint =
     variant === 'onboarding' &&
     showScrollHint &&
@@ -2092,7 +2092,7 @@ export function WordIntake({
             title={t.sendLabel}
             className="chat-send absolute bottom-2 right-2 h-10 w-10 p-0"
           >
-            <ArrowUp />
+            <Send />
           </Button>
         </div>
       </div>
@@ -2321,7 +2321,7 @@ export function WordIntake({
                   title={t.sendLabel}
                   className="chat-send absolute bottom-2 right-2 h-10 w-10 p-0"
                 >
-                  <ArrowUp />
+                  <Send />
                 </Button>
               </div>
             </div>
@@ -2462,42 +2462,44 @@ export function WordIntake({
         </div>
 
         {renderActions ? (
-          shouldShowReviewSheet
-            ? null
-            : renderActions(
-                <>
-                  <Button
-                    variant="secondary"
-                    onClick={cancelWords}
-                    className="md:flex-initial flex-1 min-w-[140px]"
-                  >
-                    <X size={18} className="mr-2" />
-                    {t.cancel}
-                  </Button>
-                  <Button
-                    onClick={addSelectedWords}
-                    className="md:flex-initial flex-1 min-w-[140px]"
-                    disabled={!canAddWords}
-                  >
-                    <Plus size={18} className="mr-2" />
-                    {addLabel}
-                  </Button>
-                </>
-              )
+          renderActions(
+            shouldShowActionButtons ? (
+              <>
+                <Button
+                  variant="secondary"
+                  onClick={cancelWords}
+                  className="md:flex-initial flex-1 min-w-[140px]"
+                >
+                  <X size={18} className="mr-2" />
+                  {t.cancel}
+                </Button>
+                <Button
+                  onClick={addSelectedWords}
+                  className="md:flex-initial flex-1 min-w-[140px]"
+                  disabled={!canAddWords}
+                >
+                  <Plus size={18} className="mr-2" />
+                  {addLabel}
+                </Button>
+              </>
+            ) : null
+          )
         ) : (
           <>
-            <div className="hidden md:flex gap-3">
-              <Button variant="secondary" onClick={cancelWords} className="flex-1">
-                <X size={18} className="mr-2" />
-                {t.cancel}
-              </Button>
-              <Button onClick={addSelectedWords} className="flex-1" disabled={!canAddWords}>
-                <Plus size={18} className="mr-2" />
-                {addLabel}
-              </Button>
-            </div>
+            {hasParsedWords && (
+              <div className="hidden md:flex gap-3">
+                <Button variant="secondary" onClick={cancelWords} className="flex-1">
+                  <X size={18} className="mr-2" />
+                  {t.cancel}
+                </Button>
+                <Button onClick={addSelectedWords} className="flex-1" disabled={!canAddWords}>
+                  <Plus size={18} className="mr-2" />
+                  {addLabel}
+                </Button>
+              </div>
+            )}
 
-            {!shouldShowReviewSheet && (
+            {shouldShowActionButtons && (
               <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
                 <div className="flex gap-3 max-w-4xl mx-auto">
                   <Button variant="secondary" onClick={cancelWords} className="flex-1">

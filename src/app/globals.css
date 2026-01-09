@@ -20,7 +20,7 @@
   --chat-send-text-disabled: 148, 163, 184;
   --chat-send-shadow: 124, 58, 237;
   --chat-send-radius: 9999px;
-  --chat-send-icon-size: 28px;
+  --chat-send-icon-size: 30px;
   --chat-bubble-user-from: 139, 92, 246;
   --chat-bubble-user-to: 236, 72, 153;
   --chat-bubble-user-text: 255, 255, 255;
@@ -75,7 +75,7 @@
   --chat-send-text-disabled: 148, 163, 184;
   --chat-send-shadow: 124, 58, 237;
   --chat-send-radius: 9999px;
-  --chat-send-icon-size: 28px;
+  --chat-send-icon-size: 30px;
   --chat-bubble-assistant-from: 51, 65, 85;
   --chat-bubble-assistant-to: 71, 85, 105;
   --chat-bubble-assistant-text: 241, 245, 249;

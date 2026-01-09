@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   X,
-  ArrowUp,
+  Send,
   Sparkles,
   Loader2,
   Volume2,
@@ -555,7 +555,7 @@ export function AITutor() {
               title={t.sendLabel}
               className="chat-send absolute bottom-2 right-2 h-10 w-10 p-0"
             >
-              <ArrowUp />
+              <Send />
             </Button>
           </div>
         </div>
