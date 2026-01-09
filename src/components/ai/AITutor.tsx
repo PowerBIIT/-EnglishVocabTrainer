@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import {
   X,
-  Send,
+  ArrowUp,
   Sparkles,
   Loader2,
   Volume2,
@@ -468,7 +468,7 @@ export function AITutor() {
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 chat-scroll">
+      <div ref={messagesContainerRef} className="chat-shell-body p-4 space-y-4">
         {messages.map((message) => (
           <ChatMessage
             key={message.id}
@@ -539,7 +539,7 @@ export function AITutor() {
                 }
               }}
               placeholder={inputPlaceholder}
-              className="chat-input px-4 py-2 pr-12 sm:pr-14 text-sm"
+              className="chat-input px-4 py-2 pr-14 text-sm"
               disabled={isLoading}
               rows={TUTOR_MIN_ROWS}
               style={{
@@ -553,9 +553,9 @@ export function AITutor() {
               disabled={!input.trim() || isLoading}
               aria-label={t.sendLabel}
               title={t.sendLabel}
-              className="chat-send absolute bottom-2 right-2 h-10 w-10 p-0"
+              className="chat-send absolute bottom-2 right-2 h-11 w-11 p-0"
             >
-              <Send />
+              <ArrowUp strokeWidth={2.5} />
             </Button>
           </div>
         </div>

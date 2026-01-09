@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Send } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import type { RevenueChatMessage } from '@/types/aiAnalytics';
 
@@ -152,7 +152,7 @@ export function RevenueStrategyChatSection() {
       </div>
 
       {/* Messages area */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 chat-scroll">
+      <div ref={messagesContainerRef} className="chat-shell-body p-4 space-y-4">
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center">
             <div className="text-gray-400 dark:text-gray-500 mb-6">
@@ -234,7 +234,7 @@ export function RevenueStrategyChatSection() {
                 }
               }}
               placeholder="Ask about revenue strategy..."
-              className="chat-input px-4 py-2 pr-12 sm:pr-14 text-sm"
+              className="chat-input px-4 py-2 pr-14 text-sm"
               disabled={loading}
               rows={CHAT_MIN_ROWS}
               style={{
@@ -247,9 +247,9 @@ export function RevenueStrategyChatSection() {
               disabled={!input.trim() || loading}
               aria-label="Send message"
               title="Send message"
-              className="chat-send absolute bottom-2 right-2 h-10 w-10"
+              className="chat-send absolute bottom-2 right-2 h-11 w-11 p-0"
             >
-              <Send />
+              <ArrowUp strokeWidth={2.5} />
             </button>
           </div>
         </div>

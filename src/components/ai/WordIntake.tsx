@@ -5,11 +5,12 @@ import {
   Check,
   X,
   Plus,
+  Paperclip,
   Loader2,
   Image as ImageIcon,
   Camera,
   FileText,
-  Send,
+  ArrowUp,
   ChevronDown,
   Wand2,
   Microscope,
@@ -410,6 +411,7 @@ export const wordIntakeCopy = {
     fileButtonTitle: 'Wczytaj plik z notatkami',
     inputPlaceholder: 'Wpisz słówka lub temat...',
     sendLabel: 'Wyślij',
+    attachmentsLabel: 'Załączniki',
     reviewTitle: 'Słówka gotowe',
     reviewSubtitle: (count: number, topic: string) => `${count} słówek • Temat: ${topic}`,
     reviewOpen: 'Pokaż słówka',
@@ -526,6 +528,7 @@ export const wordIntakeCopy = {
     fileButtonTitle: 'Upload notes file',
     inputPlaceholder: 'Type words or a topic...',
     sendLabel: 'Send',
+    attachmentsLabel: 'Attachments',
     reviewTitle: 'Words ready',
     reviewSubtitle: (count: number, topic: string) => `${count} words • Topic: ${topic}`,
     reviewOpen: 'Review words',
@@ -643,6 +646,7 @@ export const wordIntakeCopy = {
     fileButtonTitle: 'Завантажити файл нотаток',
     inputPlaceholder: 'Введи слова або тему...',
     sendLabel: 'Надіслати',
+    attachmentsLabel: 'Вкладення',
     reviewTitle: 'Слова готові',
     reviewSubtitle: (count: number, topic: string) => `${count} слів • Тема: ${topic}`,
     reviewOpen: 'Переглянути слова',
@@ -674,6 +678,8 @@ interface WordIntakeProps {
   className?: string;
   renderActions?: (buttons: React.ReactNode) => React.ReactNode;
   compact?: boolean;
+  enableQuickActions?: boolean;
+  showAssistantHeader?: boolean;
 }
 
 const isSupportedFile = (file: File) => {
@@ -691,6 +697,8 @@ export function WordIntake({
   className,
   renderActions,
   compact,
+  enableQuickActions = true,
+  showAssistantHeader = true,
 }: WordIntakeProps) {
   const language = useLanguage();
   const t = (wordIntakeCopy[language] ?? wordIntakeCopy.pl) as IntakeCopy;
@@ -720,6 +728,7 @@ export function WordIntake({
   const [suggestedCategory, setSuggestedCategory] = useState('');
   const [suggestedSetName, setSuggestedSetName] = useState('');
   const [selectedSetOption, setSelectedSetOption] = useState(NEW_SET_OPTION);
+  const [attachmentsOpen, setAttachmentsOpen] = useState(false);
 
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -729,6 +738,8 @@ export function WordIntake({
   const imageInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const attachmentsMenuRef = useRef<HTMLDivElement>(null);
+  const attachmentsButtonRef = useRef<HTMLButtonElement>(null);
   const lastIntakeSourceRef = useRef<string>('');
   const requestIdRef = useRef(0);
   const prevWordsCountRef = useRef(0);
@@ -843,6 +854,31 @@ export function WordIntake({
     media.addListener(handleChange);
     return () => media.removeListener(handleChange);
   }, []);
+
+  useEffect(() => {
+    if (!attachmentsOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (attachmentsMenuRef.current?.contains(target)) return;
+      if (attachmentsButtonRef.current?.contains(target)) return;
+      setAttachmentsOpen(false);
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setAttachmentsOpen(false);
+      }
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [attachmentsOpen]);
 
   useEffect(() => {
     const previousCount = prevWordsCountRef.current;
@@ -1076,6 +1112,7 @@ export function WordIntake({
   const handleSend = async () => {
     if (!input.trim() || isProcessing) return;
     const requestId = startRequest();
+    setAttachmentsOpen(false);
 
     const userMessage: Message = {
       id: generateId(),
@@ -1750,7 +1787,8 @@ export function WordIntake({
     variant === 'onboarding'
       ? t.addOnboarding(selectedWordCount)
       : t.add(selectedWordCount);
-  const showQuickActions =
+  const shouldShowQuickActions =
+    enableQuickActions &&
     variant === 'chat' &&
     messages.length <= 1 &&
     !hasParsedWords &&
@@ -1996,72 +2034,122 @@ export function WordIntake({
     </div>
   );
 
+  const openCameraPicker = () => {
+    if (isProcessing) return;
+    setAttachmentsOpen(false);
+    cameraInputRef.current?.click();
+  };
+
+  const openImagePicker = () => {
+    if (isProcessing) return;
+    setAttachmentsOpen(false);
+    imageInputRef.current?.click();
+  };
+
+  const openFilePicker = () => {
+    if (isProcessing) return;
+    setAttachmentsOpen(false);
+    fileInputRef.current?.click();
+  };
+
+  const attachmentInputs = (
+    <>
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        onChange={handleImageUpload}
+        className="hidden"
+      />
+      <input
+        ref={imageInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleImageUpload}
+        className="hidden"
+        multiple
+      />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".txt,.csv,.pdf,.docx,text/plain,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        onChange={handleFileUpload}
+        className="hidden"
+        multiple
+      />
+    </>
+  );
+
+  const attachmentsMenu = attachmentsOpen ? (
+    <div
+      ref={attachmentsMenuRef}
+      className="absolute bottom-14 left-2 z-20 w-64 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl p-2"
+      role="menu"
+      aria-label={t.attachmentsLabel}
+    >
+      <button
+        type="button"
+        onClick={openCameraPicker}
+        disabled={isProcessing}
+        role="menuitem"
+        className="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+        title={t.cameraButtonTitle}
+      >
+        <Camera size={18} className="text-slate-500 dark:text-slate-400" />
+        <span className="flex-1 text-left">{t.cameraLabel}</span>
+      </button>
+      <button
+        type="button"
+        onClick={openImagePicker}
+        disabled={isProcessing}
+        role="menuitem"
+        className="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+        title={t.imageButtonTitle}
+      >
+        <ImageIcon size={18} className="text-slate-500 dark:text-slate-400" />
+        <span className="flex-1 text-left">{t.imageLabel}</span>
+      </button>
+      <button
+        type="button"
+        onClick={openFilePicker}
+        disabled={isProcessing}
+        role="menuitem"
+        className="w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50"
+        title={t.fileButtonTitle}
+      >
+        <FileText size={18} className="text-slate-500 dark:text-slate-400" />
+        <span className="flex-1 text-left">{t.fileLabel}</span>
+      </button>
+      <div className="px-3 pt-2 pb-1 text-[11px] leading-snug text-slate-500 dark:text-slate-400">
+        {t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}
+      </div>
+    </div>
+  ) : null;
+
+  const attachmentsButton = (
+    <button
+      ref={attachmentsButtonRef}
+      type="button"
+      onClick={() => setAttachmentsOpen((open) => !open)}
+      disabled={isProcessing}
+      aria-label={t.attachmentsLabel}
+      title={t.attachmentsLabel}
+      aria-haspopup="menu"
+      aria-expanded={attachmentsOpen}
+      className="absolute bottom-2 left-2 h-11 w-11 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 flex items-center justify-center"
+    >
+      <Paperclip size={20} />
+    </button>
+  );
+
   const inputPanel = (
     <>
-      <p className="text-[11px] sm:text-xs text-slate-500 mb-2">
-        {t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}
-      </p>
-
-      {/* Wiersz 1: Ikony załączników */}
-      <div className="flex gap-2 mb-2">
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={handleImageUpload}
-          className="hidden"
-        />
-        <button
-          onClick={() => cameraInputRef.current?.click()}
-          disabled={isProcessing}
-          className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
-          title={t.cameraButtonTitle}
-        >
-          <Camera size={18} />
-          <span className="hidden sm:inline text-xs">{t.cameraLabel}</span>
-        </button>
-
-        <input
-          ref={imageInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageUpload}
-          className="hidden"
-          multiple
-        />
-        <button
-          onClick={() => imageInputRef.current?.click()}
-          disabled={isProcessing}
-          className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
-          title={t.imageButtonTitle}
-        >
-          <ImageIcon size={18} />
-          <span className="hidden sm:inline text-xs">{t.imageLabel}</span>
-        </button>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept=".txt,.csv,.pdf,.docx,text/plain,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          onChange={handleFileUpload}
-          className="hidden"
-          multiple
-        />
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isProcessing}
-          className="flex items-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50"
-          title={t.fileButtonTitle}
-        >
-          <FileText size={18} />
-          <span className="hidden sm:inline text-xs">{t.fileLabel}</span>
-        </button>
-      </div>
-
-      {/* Wiersz 2: Textarea + Send */}
+      {attachmentInputs}
       <div className="flex items-end">
         <div className="relative flex-1 min-w-0">
+          {attachmentsMenu}
+          {attachmentsButton}
           <textarea
             ref={textareaRef}
             value={input}
@@ -2076,7 +2164,7 @@ export function WordIntake({
               }
             }}
             placeholder={t.inputPlaceholder}
-            className="chat-input px-3 sm:px-4 py-2.5 pr-12 sm:pr-14 text-sm"
+            className="chat-input py-2.5 text-sm pl-14 pr-14 sm:pl-16 sm:pr-16"
             disabled={isProcessing}
             rows={CHAT_MIN_ROWS}
             style={{
@@ -2090,9 +2178,9 @@ export function WordIntake({
             disabled={!input.trim() || isProcessing}
             aria-label={t.sendLabel}
             title={t.sendLabel}
-            className="chat-send absolute bottom-2 right-2 h-10 w-10 p-0"
+            className="chat-send absolute bottom-2 right-2 h-11 w-11 p-0"
           >
-            <Send />
+            <ArrowUp strokeWidth={2.5} />
           </Button>
         </div>
       </div>
@@ -2106,16 +2194,19 @@ export function WordIntake({
           className={cn(
             'flex flex-1 min-h-0 flex-col',
             hasParsedWords &&
-              'md:grid md:grid-cols-[0.9fr_1.1fr] md:grid-rows-[minmax(0,1fr)] md:gap-4'
+              'md:grid md:grid-cols-[minmax(0,44rem)_minmax(0,26rem)] md:grid-rows-[minmax(0,1fr)] md:gap-4 md:justify-center'
           )}
         >
           <div
             className={cn(
               'chat-shell flex flex-1 flex-col min-h-0 overflow-hidden w-full',
-              !hasParsedWords && 'md:max-w-4xl md:mx-auto'
+              !hasParsedWords && 'md:max-w-3xl md:mx-auto'
             )}
           >
-            <div ref={chatScrollRef} className="overflow-y-auto p-4 space-y-4 chat-scroll flex-1 min-h-0 pb-8 sm:pb-10">
+            <div
+              ref={chatScrollRef}
+              className="chat-shell-body p-4 space-y-4 pb-8 sm:pb-10"
+            >
               {messages.map((message) => (
                 <ChatMessage key={message.id} role={message.role}>
                   <p className="chat-message-text">{message.content}</p>
@@ -2125,7 +2216,7 @@ export function WordIntake({
               <div
                 className={cn(
                   'transition-all duration-300 overflow-hidden',
-                  showQuickActions ? 'opacity-100 max-h-[200px]' : 'opacity-0 max-h-0'
+                  shouldShowQuickActions ? 'opacity-100 max-h-[200px]' : 'opacity-0 max-h-0'
                 )}
               >
                 {quickActionsPanel}
@@ -2171,30 +2262,34 @@ export function WordIntake({
     <>
       <div
         className={cn(
-          'grid md:grid-cols-[1.2fr_1fr] pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-0',
+          'grid md:grid-cols-[1.2fr_1fr]',
           isCompact ? 'gap-3 sm:gap-4' : 'gap-4 sm:gap-6',
           className
         )}
       >
-        <div className={cn('min-w-0 space-y-4', isCompact && 'space-y-3')}>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-amber-400 flex items-center justify-center">
-              <Wand2 size={20} className="text-white" />
+        <div className={cn('min-w-0', isCompact || !showAssistantHeader ? 'space-y-3' : 'space-y-4')}>
+          {showAssistantHeader && (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-500 to-amber-400 flex items-center justify-center">
+                <Wand2 size={20} className="text-white" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                  {t.assistantTitle}
+                </p>
+                <p className="text-xs text-slate-500">
+                  {enableQuickActions ? t.quickActionsLabel : t.assistantSubtitle}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                {t.assistantTitle}
-              </p>
-              <p className="text-xs text-slate-500">{t.quickActionsLabel}</p>
-            </div>
-          </div>
+          )}
 
         <div
           ref={chatScrollRef}
           className={cn(
             'rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 overflow-y-auto chat-scroll',
             isCompact
-              ? 'p-3 max-h-32 sm:max-h-64 space-y-2'
+              ? 'p-3 max-h-48 sm:max-h-64 space-y-2'
               : 'p-4 max-h-64 space-y-3'
           )}
         >
@@ -2217,82 +2312,29 @@ export function WordIntake({
           <div ref={messagesEndRef} />
         </div>
 
-        <div className={cn('space-y-3', isCompact && 'space-y-2')}>
-          <div className={cn('grid gap-2', isCompact ? 'grid-cols-3' : 'grid-cols-3 sm:grid-cols-5')}>
-            {t.quickActions.map((action) => (
-              <button
-                key={action.label}
-                onClick={() => setInput(action.prompt)}
-                className="flex flex-col items-center gap-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
-              >
-                <action.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                <span className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate w-full text-center">
-                  {action.label}
-                </span>
-              </button>
-            ))}
-          </div>
-          <div className={cn('space-y-2', isCompact && 'space-y-1.5')}>
-            <p className={cn('text-xs text-slate-500', isCompact && 'leading-snug')}>
-              {t.fileSupportHint(MAX_UPLOAD_SIZE_MB)}
-            </p>
-            <div className={cn('flex flex-wrap gap-2', isCompact && 'gap-1.5')}>
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-              <button
-                onClick={() => cameraInputRef.current?.click()}
-                disabled={isProcessing}
-                className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
-                title={t.cameraButtonTitle}
-              >
-                <Camera size={20} />
-                <span className="hidden sm:inline text-sm">{t.cameraLabel}</span>
-              </button>
-
-              <input
-                ref={imageInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-                multiple
-              />
-              <button
-                onClick={() => imageInputRef.current?.click()}
-                disabled={isProcessing}
-                className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
-                title={t.imageButtonTitle}
-              >
-                <ImageIcon size={20} />
-                <span className="hidden sm:inline text-sm">{t.imageLabel}</span>
-              </button>
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".txt,.csv,.pdf,.docx,text/plain,text/csv,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                onChange={handleFileUpload}
-                className="hidden"
-                multiple
-              />
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={isProcessing}
-                className="flex items-center gap-2 p-2.5 sm:px-4 sm:py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-600 disabled:opacity-50 flex-shrink-0"
-                title={t.fileButtonTitle}
-              >
-                <FileText size={20} />
-                <span className="hidden sm:inline text-sm">{t.fileLabel}</span>
-              </button>
+        <div className={cn(isCompact || !enableQuickActions ? 'space-y-2' : 'space-y-3')}>
+          {enableQuickActions && (
+            <div className={cn('grid gap-2', isCompact ? 'grid-cols-3' : 'grid-cols-3 sm:grid-cols-5')}>
+              {t.quickActions.map((action) => (
+                <button
+                  key={action.label}
+                  onClick={() => setInput(action.prompt)}
+                  className="flex flex-col items-center gap-1 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-primary-300 dark:hover:border-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+                >
+                  <action.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                  <span className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate w-full text-center">
+                    {action.label}
+                  </span>
+                </button>
+              ))}
             </div>
+          )}
+          <div className={cn('space-y-2', isCompact && 'space-y-1.5')}>
+            {attachmentInputs}
             <div className="flex items-end min-w-0">
               <div className="relative flex-1 min-w-0">
+                {attachmentsMenu}
+                {attachmentsButton}
                 <textarea
                   ref={inputRef}
                   value={input}
@@ -2311,7 +2353,7 @@ export function WordIntake({
                     }
                   }}
                   placeholder={t.inputPlaceholder}
-                  className="chat-input min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 pr-12 sm:pr-14"
+                  className="chat-input min-w-0 py-2.5 sm:py-3 pl-14 pr-14 sm:pl-16 sm:pr-16"
                   disabled={isProcessing}
                   rows={onboardingMinRows}
                   style={{
@@ -2325,9 +2367,9 @@ export function WordIntake({
                   disabled={!input.trim() || isProcessing}
                   aria-label={t.sendLabel}
                   title={t.sendLabel}
-                  className="chat-send absolute bottom-2 right-2 h-10 w-10 p-0"
+                  className="chat-send absolute bottom-2 right-2 h-11 w-11 p-0"
                 >
-                  <Send />
+                  <ArrowUp strokeWidth={2.5} />
                 </Button>
               </div>
             </div>
@@ -2507,21 +2549,6 @@ export function WordIntake({
                   <Plus size={18} className="mr-2" />
                   {addLabel}
                 </Button>
-              </div>
-            )}
-
-            {shouldShowActionButtons && (
-              <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
-                <div className="flex gap-3 max-w-4xl mx-auto">
-                  <Button variant="secondary" onClick={cancelWords} className="flex-1">
-                    <X size={18} className="mr-2" />
-                    {t.cancel}
-                  </Button>
-                  <Button onClick={addSelectedWords} className="flex-1" disabled={!canAddWords}>
-                    <Plus size={18} className="mr-2" />
-                    {addLabel}
-                  </Button>
-                </div>
               </div>
             )}
           </>

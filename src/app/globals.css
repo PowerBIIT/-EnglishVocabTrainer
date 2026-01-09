@@ -20,7 +20,7 @@
   --chat-send-text-disabled: 148, 163, 184;
   --chat-send-shadow: 124, 58, 237;
   --chat-send-radius: 9999px;
-  --chat-send-icon-size: 30px;
+  --chat-send-icon-size: 32px;
   --chat-bubble-user-from: 139, 92, 246;
   --chat-bubble-user-to: 236, 72, 153;
   --chat-bubble-user-text: 255, 255, 255;
@@ -31,6 +31,7 @@
   --chat-shell-bg: 255, 255, 255;
   --chat-shell-border: 226, 232, 240;
   --chat-shell-shadow: 15, 23, 42;
+  --chat-body-bg: 248, 250, 252;
   --chat-header-bg: 255, 255, 255;
   --chat-header-border: 226, 232, 240;
   --chat-header-text: 15, 23, 42;
@@ -85,7 +86,7 @@
   --chat-send-text-disabled: 148, 163, 184;
   --chat-send-shadow: 124, 58, 237;
   --chat-send-radius: 9999px;
-  --chat-send-icon-size: 30px;
+  --chat-send-icon-size: 32px;
   --chat-bubble-assistant-from: 51, 65, 85;
   --chat-bubble-assistant-to: 71, 85, 105;
   --chat-bubble-assistant-text: 241, 245, 249;
@@ -93,6 +94,7 @@
   --chat-shell-bg: 30, 41, 59;
   --chat-shell-border: 51, 65, 85;
   --chat-shell-shadow: 0, 0, 0;
+  --chat-body-bg: 15, 23, 42;
   --chat-header-bg: 30, 41, 59;
   --chat-header-border: 51, 65, 85;
   --chat-header-text: 241, 245, 249;
@@ -230,6 +232,11 @@ body.fullscreen-page main {
     @apply border-t;
     background-color: rgb(var(--chat-footer-bg));
     border-color: rgb(var(--chat-footer-border));
+  }
+
+  .chat-shell-body {
+    @apply flex-1 min-h-0 overflow-y-auto chat-scroll;
+    background-color: rgb(var(--chat-body-bg));
   }
 }
 

@@ -246,6 +246,8 @@ export default function KlasowkaPage() {
                 variant="onboarding"
                 minWords={MIN_WORDS}
                 onWordsAdded={handleWordsAdded}
+                enableQuickActions={false}
+                showAssistantHeader={false}
               />
             </CardContent>
           </Card>

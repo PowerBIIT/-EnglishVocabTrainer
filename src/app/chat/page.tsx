@@ -51,7 +51,7 @@ export default function ChatPage() {
             </div>
           </header>
 
-          <WordIntake variant="chat" className="flex-1" />
+          <WordIntake variant="chat" className="flex-1 px-4 pb-4" />
         </>
       )}
     </FullscreenPage>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Send } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { ChatMessage } from '@/components/chat/ChatMessage';
 import { Select } from '@/components/ui/Select';
@@ -456,7 +456,7 @@ export function AdminCopilotSection() {
           )}
         </div>
 
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4 chat-scroll">
+        <div ref={messagesContainerRef} className="chat-shell-body px-4 py-4 space-y-4">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center gap-4">
               <p className="text-sm text-slate-400">{t.emptyHint}</p>
@@ -571,7 +571,7 @@ export function AdminCopilotSection() {
                   }
                 }}
                 placeholder={t.inputPlaceholder}
-                className="chat-input px-4 py-2 pr-12 sm:pr-14 text-sm"
+                className="chat-input px-4 py-2 pr-14 text-sm"
                 disabled={loading}
                 maxLength={2000}
                 rows={CHAT_MIN_ROWS}
@@ -585,9 +585,9 @@ export function AdminCopilotSection() {
                 disabled={!input.trim() || loading}
                 aria-label={t.send}
                 title={t.send}
-                className="chat-send absolute bottom-2 right-2 h-10 w-10 p-0"
+                className="chat-send absolute bottom-2 right-2 h-11 w-11 p-0"
               >
-                <Send />
+                <ArrowUp strokeWidth={2.5} />
               </Button>
             </div>
           </div>
