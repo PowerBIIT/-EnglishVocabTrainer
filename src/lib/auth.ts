@@ -21,6 +21,7 @@ const providers: NextAuthOptions['providers'] = [
   GoogleProvider({
     clientId: process.env.GOOGLE_CLIENT_ID ?? '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
+    allowDangerousEmailAccountLinking: true,
   }),
   CredentialsProvider({
     id: 'credentials',
@@ -129,6 +130,28 @@ export const authOptions: NextAuthOptions = {
     signIn: '/login',
   },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === 'google') {
+        const profileVerifiedRaw = (profile as { email_verified?: unknown })?.email_verified;
+        const profileVerified =
+          typeof profileVerifiedRaw === 'boolean' ? profileVerifiedRaw : true;
+        const userVerified =
+          user && 'emailVerified' in user ? (user.emailVerified as Date | null) : null;
+
+        if (profileVerified && user?.id && !userVerified) {
+          try {
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { emailVerified: new Date() },
+            });
+          } catch (error) {
+            console.error('Failed to mark Google user as verified:', error);
+          }
+        }
+      }
+
+      return true;
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.userId = user.id;

@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { ArrowUp } from 'lucide-react';
+import { ChatMessage } from '@/components/chat/ChatMessage';
 import type { RevenueChatMessage } from '@/types/aiAnalytics';
 
 const QUICK_PROMPTS = [
@@ -128,21 +130,21 @@ export function RevenueStrategyChatSection() {
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg flex flex-col h-[600px]">
+    <div className="chat-shell h-[600px]">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+      <div className="chat-shell-header">
         <div>
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+          <h3 className="chat-shell-title text-lg font-medium">
             Revenue Strategy Chat
           </h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+          <p className="chat-shell-subtitle text-xs">
             AI-powered business analysis
           </p>
         </div>
         {messages.length > 0 && (
           <button
             onClick={startNewSession}
-            className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
+            className="chat-shell-subtitle text-sm hover:text-slate-700 dark:hover:text-slate-200"
           >
             New session
           </button>
@@ -186,39 +188,22 @@ export function RevenueStrategyChatSection() {
         ) : (
           <>
             {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                <div
-                  className={`max-w-[85%] rounded-lg px-4 py-2 ${
-                    message.role === 'user'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                  }`}
-                >
-                  <div className="text-sm whitespace-pre-wrap">{message.content}</div>
-                </div>
-              </div>
+              <ChatMessage key={message.id} role={message.role}>
+                <p className="chat-message-text">{message.content}</p>
+              </ChatMessage>
             ))}
             {loading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 dark:bg-gray-700 rounded-lg px-4 py-3">
-                  <div className="flex gap-1">
-                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
-                    <span
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: '0.1s' }}
-                    ></span>
-                    <span
-                      className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
-                      style={{ animationDelay: '0.2s' }}
-                    ></span>
-                  </div>
-                </div>
-              </div>
+              <ChatMessage role="assistant" bubbleClassName="flex items-center gap-1">
+                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></span>
+                <span
+                  className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                  style={{ animationDelay: '0.1s' }}
+                ></span>
+                <span
+                  className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"
+                  style={{ animationDelay: '0.2s' }}
+                ></span>
+              </ChatMessage>
             )}
           </>
         )}
@@ -232,7 +217,7 @@ export function RevenueStrategyChatSection() {
       )}
 
       {/* Input area */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 dark:border-gray-700">
+      <form onSubmit={handleSubmit} className="chat-shell-footer p-4">
         <div className="flex items-end">
           <div className="relative flex-1 min-w-0">
             <textarea
@@ -249,7 +234,7 @@ export function RevenueStrategyChatSection() {
                 }
               }}
               placeholder="Ask about revenue strategy..."
-              className="w-full px-4 py-2 pr-12 sm:pr-14 bg-gray-100 dark:bg-gray-700 border-0 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 outline-none resize-none overflow-hidden"
+              className="chat-input px-4 py-2 pr-12 sm:pr-14 text-sm"
               disabled={loading}
               rows={CHAT_MIN_ROWS}
               style={{
@@ -262,16 +247,9 @@ export function RevenueStrategyChatSection() {
               disabled={!input.trim() || loading}
               aria-label="Send message"
               title="Send message"
-              className="absolute bottom-2 right-2 h-9 w-9 rounded-lg bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="chat-send absolute bottom-2 right-2 h-10 w-10"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-                />
-              </svg>
+              <ArrowUp />
             </button>
           </div>
         </div>

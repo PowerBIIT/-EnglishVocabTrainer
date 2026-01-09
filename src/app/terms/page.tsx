@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { useVocabStore } from '@/lib/store';
 
-const CURRENT_VERSION = '1.1';
-const LAST_UPDATED = '2026-01-02';
+const CURRENT_VERSION = '1.2';
+const LAST_UPDATED = '2026-01-08';
 
 const termsCopy = {
   pl: {
@@ -26,7 +26,7 @@ const termsCopy = {
         content: `Aby korzystac z Uslugi, musisz:
 
 • Miec ukonczono 16 lat
-• Posiadac konto Google do logowania
+• Logowac sie przez konto Google lub email i haslo (potwierdzenie emaila moze byc wymagane)
 • Zaakceptowac niniejszy Regulamin i Polityke Prywatnosci
 
 Korzystanie z Uslugi jest bezplatne w wersji podstawowej. Niektore funkcje moga wymagac subskrypcji PRO.`,
@@ -121,7 +121,7 @@ W razie pytan: info@henio.app`,
         content: `To use the Service, you must:
 
 • Be at least 16 years old
-• Have a Google account for login
+• Sign in with Google or with an email and password (email verification may be required)
 • Accept these Terms and Privacy Policy
 
 Basic use of the Service is free. Some features may require a PRO subscription.`,
@@ -216,7 +216,7 @@ For questions: info@henio.app`,
         content: `Щоб користуватися Послугою, ви повинні:
 
 • Мати щонайменш 16 років
-• Мати акаунт Google для входу
+• Увійти через Google або через email та пароль (може знадобитися підтвердження email)
 • Прийняти ці Умови та Політику Конфіденційності
 
 Базове користування Послугою є безкоштовним. Деякі функції можуть вимагати підписки PRO.`,

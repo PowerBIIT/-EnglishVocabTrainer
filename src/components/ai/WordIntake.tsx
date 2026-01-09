@@ -9,7 +9,7 @@ import {
   Image as ImageIcon,
   Camera,
   FileText,
-  Send,
+  ArrowUp,
   ChevronDown,
   Wand2,
   Microscope,
@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card, CardContent } from '@/components/ui/Card';
+import { ChatMessage } from '@/components/chat/ChatMessage';
 import { useVocabStore } from '@/lib/store';
 import { useLanguage } from '@/lib/i18n';
 import { trackEvent } from '@/lib/analyticsClient';
@@ -411,6 +411,10 @@ export const wordIntakeCopy = {
     fileButtonTitle: 'Wczytaj plik z notatkami',
     inputPlaceholder: 'Wpisz słówka lub temat...',
     sendLabel: 'Wyślij',
+    reviewTitle: 'Słówka gotowe',
+    reviewSubtitle: (count: number, topic: string) => `${count} słówek • Temat: ${topic}`,
+    reviewOpen: 'Pokaż słówka',
+    reviewClose: 'Wróć do czatu',
     scrollHintMobile: 'Wygenerowaliśmy słówka — przewiń w dół, aby je zobaczyć.',
     assistantTitle: 'Asystent AI',
     assistantSubtitle: 'Powered by Gemini',
@@ -523,6 +527,10 @@ export const wordIntakeCopy = {
     fileButtonTitle: 'Upload notes file',
     inputPlaceholder: 'Type words or a topic...',
     sendLabel: 'Send',
+    reviewTitle: 'Words ready',
+    reviewSubtitle: (count: number, topic: string) => `${count} words • Topic: ${topic}`,
+    reviewOpen: 'Review words',
+    reviewClose: 'Back to chat',
     scrollHintMobile: 'Words are ready — scroll down to see them.',
     assistantTitle: 'AI Assistant',
     assistantSubtitle: 'Powered by Gemini',
@@ -636,6 +644,10 @@ export const wordIntakeCopy = {
     fileButtonTitle: 'Завантажити файл нотаток',
     inputPlaceholder: 'Введи слова або тему...',
     sendLabel: 'Надіслати',
+    reviewTitle: 'Слова готові',
+    reviewSubtitle: (count: number, topic: string) => `${count} слів • Тема: ${topic}`,
+    reviewOpen: 'Переглянути слова',
+    reviewClose: 'Повернутися до чату',
     scrollHintMobile: 'Слова готові — прокрути вниз, щоб їх побачити.',
     assistantTitle: 'AI Асистент',
     assistantSubtitle: 'Powered by Gemini',
@@ -703,6 +715,8 @@ export function WordIntake({
   const [input, setInput] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [parsedWords, setParsedWords] = useState<ParsedWord[]>([]);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [showScrollHint, setShowScrollHint] = useState(false);
   const [suggestedCategory, setSuggestedCategory] = useState('');
   const [suggestedSetName, setSuggestedSetName] = useState('');
@@ -718,6 +732,7 @@ export function WordIntake({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const lastIntakeSourceRef = useRef<string>('');
   const requestIdRef = useRef(0);
+  const prevWordsCountRef = useRef(0);
 
   const startRequest = () => {
     requestIdRef.current += 1;
@@ -815,6 +830,30 @@ export function WordIntake({
       setSelectedSetOption(NEW_SET_OPTION);
     }
   }, [selectedSetOption, sets]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const media = window.matchMedia('(max-width: 767px)');
+    const handleChange = () => setIsMobile(media.matches);
+    handleChange();
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', handleChange);
+      return () => media.removeEventListener('change', handleChange);
+    }
+    media.addListener(handleChange);
+    return () => media.removeListener(handleChange);
+  }, []);
+
+  useEffect(() => {
+    const previousCount = prevWordsCountRef.current;
+    if (variant === 'chat' && previousCount === 0 && parsedWords.length > 0) {
+      setReviewOpen(true);
+    }
+    if (parsedWords.length === 0) {
+      setReviewOpen(false);
+    }
+    prevWordsCountRef.current = parsedWords.length;
+  }, [parsedWords.length, variant]);
 
   const addAssistantMessage = (content: string) => {
     setMessages((prev) => [
@@ -1674,6 +1713,8 @@ export function WordIntake({
     setIsProcessing(false);
   };
 
+  const hasParsedWords = parsedWords.length > 0;
+  const reviewTopic = suggestedCategory.trim() || t.defaultCategory;
   const selectionHint =
     variant === 'onboarding' ? t.selectionHintOnboarding : t.selectionHint;
   const addLabel =
@@ -1683,13 +1724,224 @@ export function WordIntake({
   const showQuickActions =
     variant === 'chat' &&
     messages.length <= 1 &&
-    parsedWords.length === 0 &&
+    !hasParsedWords &&
     !isProcessing;
   const scrollHint =
-    showScrollHint && parsedWords.length > 0 ? (
+    variant === 'onboarding' && showScrollHint && parsedWords.length > 0 ? (
       <div className="sm:hidden flex items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700/60 px-3 py-2 text-[11px] leading-snug text-slate-500">
         <ChevronDown size={14} className="text-primary-500" />
         <span>{t.scrollHintMobile}</span>
+      </div>
+    ) : null;
+
+  const reviewPanelBody = (
+    <div className="space-y-4">
+      <div className="space-y-3">
+        <p className="text-xs text-slate-500">{selectionHint}</p>
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <span>{t.selectedCount(selectedWordCount)}</span>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setParsedWords((words) => words.map((word) => ({ ...word, selected: true })))}
+              className="text-primary-600 dark:text-primary-400 hover:underline"
+            >
+              {t.selectAll}
+            </button>
+            <span className="text-slate-300 dark:text-slate-600">|</span>
+            <button
+              type="button"
+              onClick={() => setParsedWords((words) => words.map((word) => ({ ...word, selected: false })))}
+              className="text-slate-500 hover:underline"
+            >
+              {t.deselectAll}
+            </button>
+            {minWords > 1 && (
+              <>
+                <span className="text-slate-300 dark:text-slate-600">|</span>
+                <span>{t.minWords(minWords)}</span>
+              </>
+            )}
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:min-w-[80px]">
+            {t.setLabel}
+          </p>
+          <select
+            data-testid="set-selector"
+            value={selectedSetOption}
+            onChange={(e) => setSelectedSetOption(e.target.value)}
+            className="w-full min-w-0 text-sm px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 sm:flex-1"
+          >
+            <option value={NEW_SET_OPTION}>{t.newSetOption}</option>
+            {sets.map((set) => (
+              <option key={set.id} value={set.id}>
+                {set.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        {selectedSetOption === NEW_SET_OPTION && (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <p className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:min-w-[80px]">
+              {t.setNameLabel}
+            </p>
+            <input
+              type="text"
+              value={suggestedSetName}
+              onChange={(e) => setSuggestedSetName(e.target.value)}
+              className="w-full min-w-0 text-sm px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 sm:flex-1"
+              placeholder={t.setNamePlaceholder}
+            />
+          </div>
+        )}
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:min-w-[80px]">
+            {t.categoryLabel}
+          </p>
+          <input
+            type="text"
+            value={suggestedCategory}
+            onChange={(e) => setSuggestedCategory(e.target.value)}
+            className="w-full min-w-0 text-sm px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800 sm:flex-1"
+            placeholder={t.categoryPlaceholder}
+          />
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        {parsedWords.map((word, index) => (
+          <button
+            key={`${word.target}-${word.native}-${index}`}
+            onClick={() => toggleWord(index)}
+            className={cn(
+              'w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left',
+              word.selected
+                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900'
+                : 'border-slate-200 dark:border-slate-700'
+            )}
+          >
+            <div
+              className={cn(
+                'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+                word.selected
+                  ? 'bg-primary-500 border-primary-500'
+                  : 'border-slate-300 dark:border-slate-600'
+              )}
+            >
+              {word.selected && <Check size={12} className="text-white" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-slate-800 dark:text-slate-100">
+                {word.target}{' '}
+                <span className="text-slate-500 font-normal text-sm">
+                  {word.phonetic}
+                </span>
+              </p>
+              <p className="text-sm text-slate-500 truncate">{word.native}</p>
+              {word.example_target && (
+                <p className="text-xs text-slate-400 italic mt-1 truncate">
+                  "{word.example_target}"
+                </p>
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const reviewActions = (
+    <div className="flex gap-3">
+      <Button variant="secondary" size="sm" onClick={cancelWords} className="flex-1">
+        <X size={16} className="mr-2 sm:size-4" />
+        {t.cancel}
+      </Button>
+      <Button size="sm" onClick={addSelectedWords} className="flex-1" disabled={!canAddWords}>
+        <Plus size={16} className="mr-2 sm:size-4" />
+        {addLabel}
+      </Button>
+    </div>
+  );
+
+  const reviewBanner =
+    variant === 'chat' && hasParsedWords && !reviewOpen ? (
+      <div className="md:hidden flex items-center justify-between gap-3 rounded-2xl border border-primary-100/60 dark:border-primary-900/60 bg-white dark:bg-slate-800 px-3 py-2 shadow-sm">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 rounded-xl bg-primary-50 dark:bg-primary-900/40 flex items-center justify-center flex-shrink-0">
+            <Wand2 size={18} className="text-primary-600 dark:text-primary-300" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+              {t.reviewTitle}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 truncate">
+              {t.reviewSubtitle(parsedWords.length, reviewTopic)}
+            </p>
+          </div>
+        </div>
+        <Button size="sm" onClick={() => setReviewOpen(true)}>
+          {t.reviewOpen}
+        </Button>
+      </div>
+    ) : null;
+
+  const reviewPanel =
+    variant === 'chat' && hasParsedWords && !isMobile ? (
+      <aside className="flex min-h-0 flex-col rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-sm">
+        <div className="flex items-start justify-between gap-3 px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+          <div>
+            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {t.reviewTitle}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {t.reviewSubtitle(parsedWords.length, reviewTopic)}
+            </p>
+          </div>
+          <div className="inline-flex items-center gap-1 rounded-full bg-primary-50 dark:bg-primary-900/40 px-2 py-1 text-[11px] text-primary-700 dark:text-primary-200">
+            {t.selectedCount(selectedWordCount)}
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+          {reviewPanelBody}
+        </div>
+        <div className="border-t border-slate-200 dark:border-slate-700 px-4 py-3 bg-white/80 dark:bg-slate-800/80">
+          {reviewActions}
+        </div>
+      </aside>
+    ) : null;
+
+  const reviewSheet =
+    variant === 'chat' && hasParsedWords && reviewOpen && isMobile ? (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center px-3 py-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label={t.reviewTitle}
+      >
+        <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" />
+        <div className="relative flex h-full w-full max-h-[calc(100dvh-2rem)] flex-col rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xl">
+          <div className="flex items-start justify-between gap-3 px-4 py-3 border-b border-slate-200 dark:border-slate-700">
+            <div>
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                {t.reviewTitle}
+              </p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                {t.reviewSubtitle(parsedWords.length, reviewTopic)}
+              </p>
+            </div>
+            <div className="inline-flex items-center gap-1 rounded-full bg-primary-50 dark:bg-primary-900/40 px-2 py-1 text-[11px] text-primary-700 dark:text-primary-200">
+              {t.selectedCount(selectedWordCount)}
+            </div>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+            {reviewPanelBody}
+          </div>
+          <div className="border-t border-slate-200 dark:border-slate-700 px-4 py-3 bg-white/90 dark:bg-slate-900/90">
+            {reviewActions}
+          </div>
+        </div>
       </div>
     ) : null;
 
@@ -1790,7 +2042,7 @@ export function WordIntake({
               }
             }}
             placeholder={t.inputPlaceholder}
-            className="w-full px-3 sm:px-4 py-2.5 pr-12 sm:pr-14 rounded-xl border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
+            className="chat-input px-3 sm:px-4 py-2.5 pr-12 sm:pr-14 text-sm"
             disabled={isProcessing}
             rows={CHAT_MIN_ROWS}
             style={{
@@ -1804,9 +2056,9 @@ export function WordIntake({
             disabled={!input.trim() || isProcessing}
             aria-label={t.sendLabel}
             title={t.sendLabel}
-            className="absolute bottom-2 right-2 h-9 w-9 p-0"
+            className="chat-send absolute bottom-2 right-2 h-10 w-10 p-0"
           >
-            <Send size={18} />
+            <ArrowUp />
           </Button>
         </div>
       </div>
@@ -1815,192 +2067,62 @@ export function WordIntake({
 
   if (variant === 'chat') {
     return (
-      <div className={cn('flex flex-col min-h-0 flex-1', className)}>
-        <div ref={chatScrollRef} className="overflow-y-auto p-4 space-y-4 chat-scroll flex-1 min-h-0 pb-8 sm:pb-10">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={cn(
-                'flex',
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              )}
-            >
+      <div className={cn('min-h-0 flex-1', className)}>
+        <div
+          className={cn(
+            'flex flex-col min-h-0 flex-1',
+            hasParsedWords && 'md:grid md:grid-cols-[0.9fr_1.1fr] md:gap-4'
+          )}
+        >
+          <div className="flex flex-col min-h-0">
+            <div ref={chatScrollRef} className="overflow-y-auto p-4 space-y-4 chat-scroll flex-1 min-h-0 pb-8 sm:pb-10">
+              {messages.map((message) => (
+                <ChatMessage key={message.id} role={message.role}>
+                  <p className="chat-message-text">{message.content}</p>
+                </ChatMessage>
+              ))}
+
               <div
                 className={cn(
-                  'max-w-[85%] rounded-2xl px-4 py-3 shadow-md',
-                  message.role === 'user'
-                    ? 'bg-gradient-to-br from-primary-500 to-pink-500 text-white rounded-br-md shadow-primary-500/20'
-                    : 'bg-gradient-to-br from-primary-50 to-blue-50 dark:from-slate-700 dark:to-slate-600 text-slate-800 dark:text-slate-100 rounded-bl-md border border-primary-100 dark:border-slate-600'
+                  'transition-all duration-300 overflow-hidden',
+                  showQuickActions ? 'opacity-100 max-h-[200px]' : 'opacity-0 max-h-0'
                 )}
               >
-                <p className="whitespace-pre-wrap text-sm">{message.content}</p>
+                {quickActionsPanel}
+              </div>
+
+              {isProcessing && (
+                <ChatMessage role="assistant" bubbleClassName="flex items-center gap-2">
+                  <Loader2 size={20} className="animate-spin text-primary-500" />
+                  <span className="text-sm text-slate-500">{t.processing}</span>
+                </ChatMessage>
+              )}
+
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className="chat-shell-footer flex-shrink-0 p-3 sm:p-4">
+              <div
+                className={cn(
+                  'mx-auto w-full',
+                  hasParsedWords ? 'max-w-none' : 'max-w-3xl'
+                )}
+              >
+                {hasParsedWords ? (
+                  <div className="space-y-2">
+                    {reviewBanner}
+                    {(!isMobile || !reviewOpen) && inputPanel}
+                  </div>
+                ) : (
+                  inputPanel
+                )}
               </div>
             </div>
-          ))}
-
-          <div
-            className={cn(
-              'transition-all duration-300 overflow-hidden',
-              showQuickActions ? 'opacity-100 max-h-[200px]' : 'opacity-0 max-h-0'
-            )}
-          >
-            {quickActionsPanel}
           </div>
 
-          {parsedWords.length > 0 && (
-            <Card className="mx-2 scroll-mb-[12rem]">
-              <CardContent className="p-4 space-y-4">
-                <div className="space-y-3">
-                  <p className="text-xs text-slate-500">{selectionHint}</p>
-                  <div className="flex items-center justify-between text-xs text-slate-500">
-                    <span>{t.selectedCount(selectedWordCount)}</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setParsedWords(w => w.map(x => ({ ...x, selected: true })))}
-                        className="text-primary-600 dark:text-primary-400 hover:underline"
-                      >
-                        {t.selectAll}
-                      </button>
-                      <span className="text-slate-300 dark:text-slate-600">|</span>
-                      <button
-                        type="button"
-                        onClick={() => setParsedWords(w => w.map(x => ({ ...x, selected: false })))}
-                        className="text-slate-500 hover:underline"
-                      >
-                        {t.deselectAll}
-                      </button>
-                      {minWords > 1 && (
-                        <>
-                          <span className="text-slate-300 dark:text-slate-600">|</span>
-                          <span>{t.minWords(minWords)}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:min-w-[80px]">
-                      {t.setLabel}
-                    </p>
-                    <select
-                      data-testid="set-selector"
-                      value={selectedSetOption}
-                      onChange={(e) => setSelectedSetOption(e.target.value)}
-                      className="w-full min-w-0 text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 sm:flex-1"
-                    >
-                      <option value={NEW_SET_OPTION}>{t.newSetOption}</option>
-                      {sets.map((set) => (
-                        <option key={set.id} value={set.id}>
-                          {set.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {selectedSetOption === NEW_SET_OPTION && (
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                      <p className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:min-w-[80px]">
-                        {t.setNameLabel}
-                      </p>
-                      <input
-                        type="text"
-                        value={suggestedSetName}
-                        onChange={(e) => setSuggestedSetName(e.target.value)}
-                        className="w-full min-w-0 text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 sm:flex-1"
-                        placeholder={t.setNamePlaceholder}
-                      />
-                    </div>
-                  )}
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                    <p className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:min-w-[80px]">
-                      {t.categoryLabel}
-                    </p>
-                    <input
-                      type="text"
-                      value={suggestedCategory}
-                      onChange={(e) => setSuggestedCategory(e.target.value)}
-                      className="w-full min-w-0 text-sm px-3 py-1 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 sm:flex-1"
-                      placeholder={t.categoryPlaceholder}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2 max-h-[300px] overflow-y-auto">
-                  {parsedWords.map((word, index) => (
-                    <button
-                      key={`${word.target}-${word.native}-${index}`}
-                      onClick={() => toggleWord(index)}
-                      className={cn(
-                        'w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left',
-                        word.selected
-                          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900'
-                          : 'border-slate-200 dark:border-slate-700'
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
-                          word.selected
-                            ? 'bg-primary-500 border-primary-500'
-                            : 'border-slate-300 dark:border-slate-600'
-                        )}
-                      >
-                        {word.selected && <Check size={12} className="text-white" />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-slate-800 dark:text-slate-100">
-                          {word.target}{' '}
-                          <span className="text-slate-500 font-normal text-sm">
-                            {word.phonetic}
-                          </span>
-                        </p>
-                        <p className="text-sm text-slate-500 truncate">{word.native}</p>
-                        {word.example_target && (
-                          <p className="text-xs text-slate-400 italic mt-1 truncate">
-                            "{word.example_target}"
-                          </p>
-                        )}
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-              </CardContent>
-            </Card>
-          )}
-
-          {isProcessing && (
-            <div className="flex justify-start">
-              <div className="bg-slate-100 dark:bg-slate-700 rounded-2xl rounded-bl-md px-4 py-3 flex items-center gap-2">
-                <Loader2 size={20} className="animate-spin text-primary-500" />
-                <span className="text-sm text-slate-500">{t.processing}</span>
-              </div>
-            </div>
-          )}
-
-          <div ref={messagesEndRef} />
+          {reviewPanel}
         </div>
-
-        <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 sm:p-4">
-          <div className="max-w-3xl mx-auto">
-            {parsedWords.length > 0 ? (
-              <div className="space-y-2">
-                {scrollHint}
-                <div className="flex gap-3">
-                  <Button variant="secondary" size="sm" onClick={cancelWords} className="flex-1">
-                    <X size={16} className="mr-2 sm:size-4" />
-                    {t.cancel}
-                  </Button>
-                  <Button size="sm" onClick={addSelectedWords} className="flex-1" disabled={!canAddWords}>
-                    <Plus size={16} className="mr-2 sm:size-4" />
-                    {addLabel}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              inputPanel
-            )}
-          </div>
-        </div>
+        {reviewSheet}
       </div>
     );
   }
@@ -2036,33 +2158,19 @@ export function WordIntake({
           )}
         >
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={cn(
-                'flex',
-                message.role === 'user' ? 'justify-end' : 'justify-start'
-              )}
-            >
-              <div
-                className={cn(
-                  'max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-md',
-                  message.role === 'user'
-                    ? 'bg-gradient-to-br from-primary-500 to-pink-500 text-white rounded-br-md shadow-primary-500/20'
-                    : 'bg-gradient-to-br from-primary-50 to-blue-50 dark:from-slate-700 dark:to-slate-600 text-slate-800 dark:text-slate-100 rounded-bl-md border border-primary-100 dark:border-slate-600'
-                )}
-              >
-                <p className="whitespace-pre-wrap">{message.content}</p>
-              </div>
-            </div>
+            <ChatMessage key={message.id} role={message.role} bubbleClassName="px-3 py-2">
+              <p className="chat-message-text">{message.content}</p>
+            </ChatMessage>
           ))}
 
           {isProcessing && (
-            <div className="flex justify-start">
-              <div className="bg-white dark:bg-slate-700 rounded-2xl rounded-bl-md px-3 py-2 flex items-center gap-2 text-sm text-slate-500">
-                <Loader2 size={16} className="animate-spin text-primary-500" />
-                {t.processing}
-              </div>
-            </div>
+            <ChatMessage
+              role="assistant"
+              bubbleClassName="px-3 py-2 flex items-center gap-2 text-sm text-slate-500"
+            >
+              <Loader2 size={16} className="animate-spin text-primary-500" />
+              {t.processing}
+            </ChatMessage>
           )}
 
           <div ref={messagesEndRef} />
@@ -2162,7 +2270,7 @@ export function WordIntake({
                     }
                   }}
                   placeholder={t.inputPlaceholder}
-                  className="w-full min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 pr-12 sm:pr-14 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
+                  className="chat-input min-w-0 px-3 sm:px-4 py-2.5 sm:py-3 pr-12 sm:pr-14"
                   disabled={isProcessing}
                   rows={onboardingMinRows}
                   style={{
@@ -2176,9 +2284,9 @@ export function WordIntake({
                   disabled={!input.trim() || isProcessing}
                   aria-label={t.sendLabel}
                   title={t.sendLabel}
-                  className="absolute bottom-2 right-2 h-9 w-9 p-0"
+                  className="chat-send absolute bottom-2 right-2 h-10 w-10 p-0"
                 >
-                  <Send size={18} />
+                  <ArrowUp />
                 </Button>
               </div>
             </div>

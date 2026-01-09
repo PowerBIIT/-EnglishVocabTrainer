@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Send } from 'lucide-react';
+import { ArrowUp } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { ChatMessage } from '@/components/chat/ChatMessage';
 import { Select } from '@/components/ui/Select';
 import { Toast } from '@/components/ui/Toast';
 import { useLanguage } from '@/lib/i18n';
@@ -434,13 +435,13 @@ export function AdminCopilotSection() {
         />
       )}
 
-      <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/70 flex flex-col h-[640px]">
-        <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 px-4 py-3">
+      <div className="chat-shell h-[640px]">
+        <div className="chat-shell-header">
           <div>
-            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+            <p className="chat-shell-title text-sm font-semibold">
               {t.title}
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="chat-shell-subtitle text-xs">
               {rangeLabel}
             </p>
           </div>
@@ -448,7 +449,7 @@ export function AdminCopilotSection() {
             <button
               type="button"
               onClick={resetSession}
-              className="text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"
+              className="chat-shell-subtitle text-xs hover:text-slate-700 dark:hover:text-slate-200"
             >
               {t.newSession}
             </button>
@@ -478,81 +479,64 @@ export function AdminCopilotSection() {
           ) : (
             <>
               {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={cn(
-                    'flex',
-                    message.role === 'user' ? 'justify-end' : 'justify-start'
-                  )}
-                >
-                  <div
-                    className={cn(
-                      'max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm',
-                      message.role === 'user'
-                        ? 'bg-primary-600 text-white'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100'
-                    )}
-                  >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
-                    {message.actions && message.actions.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        <p className="text-[11px] uppercase tracking-wide text-slate-400">
-                          {t.actionsTitle}
-                        </p>
-                        <div className="space-y-2">
-                          {message.actions.map((action, index) => {
-                            const actionKey = `${message.id}-${index}`;
-                            const state = actionState[actionKey]?.status ?? 'idle';
-                            const isApplying = state === 'applying';
-                            const isApplied = state === 'applied';
-                            const actionError = actionState[actionKey]?.error;
+                <ChatMessage key={message.id} role={message.role}>
+                  <p className="chat-message-text">{message.content}</p>
+                  {message.actions && message.actions.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <p className="text-[11px] uppercase tracking-wide text-slate-400">
+                        {t.actionsTitle}
+                      </p>
+                      <div className="space-y-2">
+                        {message.actions.map((action, index) => {
+                          const actionKey = `${message.id}-${index}`;
+                          const state = actionState[actionKey]?.status ?? 'idle';
+                          const isApplying = state === 'applying';
+                          const isApplied = state === 'applied';
+                          const actionError = actionState[actionKey]?.error;
 
-                            return (
-                              <div
-                                key={actionKey}
-                                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 p-3 space-y-2"
-                              >
-                                <div className="flex flex-wrap items-start justify-between gap-3">
-                                  <div className="space-y-1">
-                                    {renderActionDetails(action)}
-                                    {action.reason && (
-                                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                                        {t.actionReason}: {action.reason}
-                                      </p>
-                                    )}
-                                    {actionError && (
-                                      <p className="text-xs text-error-600">{actionError}</p>
-                                    )}
-                                  </div>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    variant={isApplied ? 'success' : 'secondary'}
-                                    disabled={isApplying || isApplied}
-                                    onClick={() => applyAction(action, actionKey)}
-                                  >
-                                    {isApplied
-                                      ? t.actionApplied
-                                      : isApplying
-                                        ? t.actionApplying
-                                        : t.actionApply}
-                                  </Button>
+                          return (
+                            <div
+                              key={actionKey}
+                              className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/70 p-3 space-y-2"
+                            >
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div className="space-y-1">
+                                  {renderActionDetails(action)}
+                                  {action.reason && (
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                                      {t.actionReason}: {action.reason}
+                                    </p>
+                                  )}
+                                  {actionError && (
+                                    <p className="text-xs text-error-600">{actionError}</p>
+                                  )}
                                 </div>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant={isApplied ? 'success' : 'secondary'}
+                                  disabled={isApplying || isApplied}
+                                  onClick={() => applyAction(action, actionKey)}
+                                >
+                                  {isApplied
+                                    ? t.actionApplied
+                                    : isApplying
+                                      ? t.actionApplying
+                                      : t.actionApply}
+                                </Button>
                               </div>
-                            );
-                          })}
-                        </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    )}
-                  </div>
-                </div>
+                    </div>
+                  )}
+                </ChatMessage>
               ))}
               {loading && (
-                <div className="flex justify-start">
-                  <div className="rounded-2xl bg-slate-100 dark:bg-slate-800 px-4 py-2 text-sm text-slate-500">
-                    {t.loading}
-                  </div>
-                </div>
+                <ChatMessage role="assistant" bubbleClassName="text-sm text-slate-500">
+                  {t.loading}
+                </ChatMessage>
               )}
             </>
           )}
@@ -569,7 +553,7 @@ export function AdminCopilotSection() {
             event.preventDefault();
             sendMessage(input);
           }}
-          className="border-t border-slate-200 dark:border-slate-700 p-4"
+          className="chat-shell-footer p-4"
         >
           <div className="flex items-end">
             <div className="relative flex-1 min-w-0">
@@ -587,7 +571,7 @@ export function AdminCopilotSection() {
                   }
                 }}
                 placeholder={t.inputPlaceholder}
-                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white/90 dark:bg-slate-800 px-4 py-2 pr-12 sm:pr-14 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none overflow-hidden"
+                className="chat-input px-4 py-2 pr-12 sm:pr-14 text-sm"
                 disabled={loading}
                 maxLength={2000}
                 rows={CHAT_MIN_ROWS}
@@ -601,9 +585,9 @@ export function AdminCopilotSection() {
                 disabled={!input.trim() || loading}
                 aria-label={t.send}
                 title={t.send}
-                className="absolute bottom-2 right-2 h-9 w-9 p-0"
+                className="chat-send absolute bottom-2 right-2 h-10 w-10 p-0"
               >
-                <Send size={16} />
+                <ArrowUp />
               </Button>
             </div>
           </div>
