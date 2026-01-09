@@ -2101,10 +2101,10 @@ export function WordIntake({
 
   if (variant === 'chat') {
     return (
-      <div className={cn('min-h-0 flex-1', className)}>
+      <div className={cn('min-h-0 flex flex-1 flex-col', className)}>
         <div
           className={cn(
-            'flex flex-col min-h-0 flex-1',
+            'flex flex-1 min-h-0 flex-col',
             hasParsedWords && 'md:grid md:grid-cols-[0.9fr_1.1fr] md:gap-4'
           )}
         >
