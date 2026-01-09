@@ -733,6 +733,7 @@ export function WordIntake({
   const lastIntakeSourceRef = useRef<string>('');
   const requestIdRef = useRef(0);
   const prevWordsCountRef = useRef(0);
+  const prevReviewOpenRef = useRef(false);
 
   const startRequest = () => {
     requestIdRef.current += 1;
@@ -854,6 +855,19 @@ export function WordIntake({
     }
     prevWordsCountRef.current = parsedWords.length;
   }, [parsedWords.length, variant]);
+
+  useEffect(() => {
+    if (variant !== 'chat') {
+      prevReviewOpenRef.current = reviewOpen;
+      return;
+    }
+    const wasOpen = prevReviewOpenRef.current;
+    if (wasOpen && !reviewOpen && parsedWords.length === 0 && isProcessing) {
+      requestIdRef.current += 1;
+      setIsProcessing(false);
+    }
+    prevReviewOpenRef.current = reviewOpen;
+  }, [parsedWords.length, isProcessing, reviewOpen, variant]);
 
   const addAssistantMessage = (content: string) => {
     setMessages((prev) => [
@@ -2165,7 +2179,7 @@ export function WordIntake({
         <div
           ref={chatScrollRef}
           className={cn(
-            'rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 overflow-y-auto',
+            'rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 overflow-y-auto chat-scroll',
             isCompact
               ? 'p-3 max-h-32 sm:max-h-64 space-y-2'
               : 'p-4 max-h-64 space-y-3'

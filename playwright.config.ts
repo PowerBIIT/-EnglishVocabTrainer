@@ -27,6 +27,7 @@ export default defineConfig({
           NEXTAUTH_URL: `http://localhost:${PORT}`,
           E2E_TEST: 'true',
           E2E_TEST_PASSWORD: 'e2e',
+          E2E_LOGIN_ENABLED: 'true',
           NEXT_PUBLIC_E2E_TEST: 'true',
         },
       },

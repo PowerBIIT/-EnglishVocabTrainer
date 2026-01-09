@@ -468,7 +468,7 @@ export function AITutor() {
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 chat-scroll">
         {messages.map((message) => (
           <ChatMessage
             key={message.id}

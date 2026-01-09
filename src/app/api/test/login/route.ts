@@ -14,7 +14,11 @@ const ensureE2EEnabled = () => {
   return null;
 };
 
-const buildSessionResponse = async (email: string, password: string) => {
+const buildSessionResponse = async (
+  email: string,
+  password: string,
+  onboardingComplete: boolean
+) => {
   const secret = process.env.NEXTAUTH_SECRET;
   if (!secret) {
     return NextResponse.json({ error: 'Missing secret' }, { status: 500 });
@@ -31,11 +35,11 @@ const buildSessionResponse = async (email: string, password: string) => {
 
   const user = await prisma.user.upsert({
     where: { email },
-    update: {},
+    update: { onboardingComplete },
     create: {
       email,
       name: email.split('@')[0] || 'E2E User',
-      onboardingComplete: true,
+      onboardingComplete,
       mascotSkin: 'explorer',
     },
   });
@@ -46,7 +50,7 @@ const buildSessionResponse = async (email: string, password: string) => {
       email: user.email,
       sub: user.id,
       userId: user.id,
-      onboardingComplete: true,
+      onboardingComplete,
       mascotSkin: user.mascotSkin,
     },
     secret,
@@ -77,6 +81,8 @@ export async function POST(request: Request) {
   const body = await request.json();
   const email = String(body?.email || 'e2e@local.test');
   const password = String(body?.password || '');
+  const onboardingComplete =
+    typeof body?.onboardingComplete === 'boolean' ? body.onboardingComplete : true;
 
-  return buildSessionResponse(email, password);
+  return buildSessionResponse(email, password, onboardingComplete);
 }

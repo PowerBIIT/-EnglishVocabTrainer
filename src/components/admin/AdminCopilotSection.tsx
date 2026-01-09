@@ -456,7 +456,7 @@ export function AdminCopilotSection() {
           )}
         </div>
 
-        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        <div ref={messagesContainerRef} className="flex-1 overflow-y-auto px-4 py-4 space-y-4 chat-scroll">
           {messages.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center gap-4">
               <p className="text-sm text-slate-400">{t.emptyHint}</p>
