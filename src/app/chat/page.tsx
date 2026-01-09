@@ -14,7 +14,7 @@ export default function ChatPage() {
   const t = (wordIntakeCopy[language] ?? wordIntakeCopy.pl) as IntakeCopy;
 
   return (
-    <FullscreenPage className="w-full max-w-6xl mx-auto">
+    <FullscreenPage className="w-full max-w-6xl mx-auto chat-fullscreen">
       {!hydrated ? (
         <div className="flex-1 p-4 flex items-center justify-center">
           <p className="text-slate-500">{t.loading}</p>

@@ -57,6 +57,16 @@
   }
 }
 
+.chat-fullscreen {
+  --fullscreen-offset: var(--fullscreen-offset-mobile);
+}
+
+@media (min-width: 768px) {
+  .chat-fullscreen {
+    --fullscreen-offset: 0px;
+  }
+}
+
 .dark {
   --foreground-rgb: 248, 250, 252;
   --background-start-rgb: 15, 10, 31;
