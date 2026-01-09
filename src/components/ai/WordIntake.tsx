@@ -2109,7 +2109,12 @@ export function WordIntake({
               'md:grid md:grid-cols-[0.9fr_1.1fr] md:grid-rows-[minmax(0,1fr)] md:gap-4'
           )}
         >
-          <div className="flex flex-1 flex-col min-h-0">
+          <div
+            className={cn(
+              'chat-shell flex flex-1 flex-col min-h-0 overflow-hidden w-full',
+              !hasParsedWords && 'md:max-w-4xl md:mx-auto'
+            )}
+          >
             <div ref={chatScrollRef} className="overflow-y-auto p-4 space-y-4 chat-scroll flex-1 min-h-0 pb-8 sm:pb-10">
               {messages.map((message) => (
                 <ChatMessage key={message.id} role={message.role}>
@@ -2331,7 +2336,12 @@ export function WordIntake({
         </div>
       </div>
 
-      <div className={cn('min-w-0 space-y-4', isCompact && 'space-y-3')}>
+      <div
+        className={cn(
+          'min-w-0 space-y-4 hidden md:block',
+          isCompact && 'space-y-3'
+        )}
+      >
         <div
           className={cn(
             'rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800',

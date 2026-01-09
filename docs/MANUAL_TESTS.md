@@ -102,12 +102,14 @@ Oczekiwane:
 Kroki:
 1) W DevTools włącz Device Toolbar (Ctrl/Cmd+Shift+M).
 2) Ustaw viewport 390x844.
-3) Wejdź na `/klasowka` i przewiń do sekcji wyboru słówek.
-4) Dodaj słówka i przejdź do podsumowania.
+3) Wejdź na `/klasowka` i wklej słówka.
+4) Po wygenerowaniu słówek sprawdź, czy pojawia się okno z listą słówek.
+5) Dodaj słówka i przejdź do podsumowania.
 Oczekiwane:
 - Brak poziomego scrolla.
 - CTA i pola są widoczne i klikalne.
 - Na podsumowaniu przyciski „Wróć” i „Start quizu” są widoczne bez nakładania.
+- Po wygenerowaniu słówek lista pojawia się w oknie modalnym, a pod czatem nie ma duplikatu listy.
 
 ## TC-HM-PR-01: Karta „Wymowa” na home
 Kroki:
@@ -198,7 +200,7 @@ Kroki:
 3) Sprawdź dolny fixed footer.
 Oczekiwane:
 - Przycisk „Pomiń” jest widoczny w footerze.
-- W footerze są widoczne 3 akcje: „Pomiń”, „Anuluj”, „Dodaj i przejdź dalej”.
+- Przyciski „Anuluj” i „Dodaj i przejdź dalej” pojawiają się dopiero po wygenerowaniu słówek w oknie modalnym (footer nie duplikuje akcji).
 
 ## TC-OB-03: Onboarding krok 5 – footer nie zasłania contentu
 Kroki:
