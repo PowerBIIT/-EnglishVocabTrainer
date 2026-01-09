@@ -2109,7 +2109,7 @@ export function WordIntake({
               'md:grid md:grid-cols-[0.9fr_1.1fr] md:grid-rows-[minmax(0,1fr)] md:gap-4'
           )}
         >
-          <div className="flex flex-col min-h-0">
+          <div className="flex flex-1 flex-col min-h-0">
             <div ref={chatScrollRef} className="overflow-y-auto p-4 space-y-4 chat-scroll flex-1 min-h-0 pb-8 sm:pb-10">
               {messages.map((message) => (
                 <ChatMessage key={message.id} role={message.role}>
