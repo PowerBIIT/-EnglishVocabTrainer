@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   ArrowLeft,
   Search,
-  Filter,
   Volume2,
   Trash2,
   Plus,
@@ -54,6 +53,9 @@ const vocabularyCopy = {
     difficultyHard: 'Trudne',
     emptySearch: 'Nie znaleziono słówek',
     emptyCategory: 'Brak słówek w tej kategorii',
+    showMore: 'Pokaż więcej',
+    showLess: 'Zwiń',
+    showingCount: (shown: number, total: number) => `Pokazuję ${shown} z ${total}`,
     deleteConfirm: (count: number) => `Czy na pewno chcesz usunąć ${count} słówek?`,
   },
   en: {
@@ -83,6 +85,9 @@ const vocabularyCopy = {
     difficultyHard: 'Hard',
     emptySearch: 'No words found',
     emptyCategory: 'No words in this category',
+    showMore: 'Show more',
+    showLess: 'Collapse',
+    showingCount: (shown: number, total: number) => `Showing ${shown} of ${total}`,
     deleteConfirm: (count: number) => `Are you sure you want to delete ${count} words?`,
   },
   uk: {
@@ -112,6 +117,9 @@ const vocabularyCopy = {
     difficultyHard: 'Складні',
     emptySearch: 'Слів не знайдено',
     emptyCategory: 'Немає слів у цій категорії',
+    showMore: 'Показати більше',
+    showLess: 'Згорнути',
+    showingCount: (shown: number, total: number) => `Показано ${shown} з ${total}`,
     deleteConfirm: (count: number) => `Ти впевнений, що хочеш видалити ${count} слів?`,
   },
 } as const;
@@ -121,6 +129,8 @@ type VocabularyCopy = typeof vocabularyCopy.pl;
 export default function VocabularyPage() {
   const NEW_SET_OPTION = '__new__';
   const UNASSIGNED_OPTION = '__unassigned__';
+  const CATEGORY_PREVIEW_SIZE = 6;
+  const CATEGORY_PAGE_SIZE = 20;
   const hydrated = useHydration();
   const language = useLanguage();
   const t = (vocabularyCopy[language] ?? vocabularyCopy.pl) as VocabularyCopy;
@@ -131,6 +141,9 @@ export default function VocabularyPage() {
   const [isSelecting, setIsSelecting] = useState(false);
   const [bulkSetTarget, setBulkSetTarget] = useState(NEW_SET_OPTION);
   const [bulkSetName, setBulkSetName] = useState('');
+  const [visibleCountsByCategory, setVisibleCountsByCategory] = useState<
+    Record<string, number>
+  >({});
 
   const vocabulary = useVocabStore((state) => state.getActiveVocabulary());
   const progress = useVocabStore((state) => state.progress);
@@ -181,23 +194,30 @@ export default function VocabularyPage() {
   );
 
   // Filter vocabulary
-  const filteredVocabulary = wordsInSet.filter((word) => {
-    const matchesSearch =
-      getTargetText(word).toLowerCase().includes(searchQuery.toLowerCase()) ||
-      getNativeText(word).toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategory === 'all' || word.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredVocabulary = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    return wordsInSet.filter((word) => {
+      const matchesSearch =
+        getTargetText(word).toLowerCase().includes(query) ||
+        getNativeText(word).toLowerCase().includes(query);
+      const matchesCategory =
+        selectedCategory === 'all' || word.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [searchQuery, selectedCategory, wordsInSet]);
 
   // Group by category
-  const groupedVocabulary = filteredVocabulary.reduce((acc, word) => {
-    if (!acc[word.category]) {
-      acc[word.category] = [];
-    }
-    acc[word.category].push(word);
-    return acc;
-  }, {} as Record<string, VocabularyItem[]>);
+  const groupedVocabulary = useMemo(
+    () =>
+      filteredVocabulary.reduce((acc, word) => {
+        if (!acc[word.category]) {
+          acc[word.category] = [];
+        }
+        acc[word.category].push(word);
+        return acc;
+      }, {} as Record<string, VocabularyItem[]>),
+    [filteredVocabulary]
+  );
 
   useEffect(() => {
     if (
@@ -323,6 +343,11 @@ export default function VocabularyPage() {
     );
   }
 
+  const defaultCategoryLimit =
+    selectedCategory === 'all' && searchQuery.trim().length === 0
+      ? CATEGORY_PREVIEW_SIZE
+      : CATEGORY_PAGE_SIZE;
+
   return (
     <div className="min-h-screen relative overflow-hidden pb-24">
       {/* Gradient backdrop */}
@@ -331,52 +356,52 @@ export default function VocabularyPage() {
       <div className="absolute bottom-1/3 left-0 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl" />
 
       <div className="relative z-10 p-4 space-y-4 max-w-3xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Link href="/">
-          <button className="p-2 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors">
-            <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
-          </button>
-        </Link>
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 via-blue-500 to-pink-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
-          <BookOpen size={22} className="text-white" />
-        </div>
-        <div className="flex-1">
-          <h1 className="text-xl font-bold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
-            {t.title}
-          </h1>
-          <p className="text-sm text-slate-500">
-            {t.summary(vocabulary.length, categories.length)}
-          </p>
-        </div>
-        {isSelecting ? (
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setIsSelecting(false);
-                setSelectedItems(new Set());
-              }}
-            >
-              {t.cancel}
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={handleDelete}
-              disabled={selectedItems.size === 0}
-            >
-              <Trash2 size={16} className="mr-1" />
-              {selectedItems.size}
-            </Button>
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Link href="/">
+            <button className="p-2 rounded-xl hover:bg-white/50 dark:hover:bg-slate-800/50 transition-colors">
+              <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
+            </button>
+          </Link>
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary-500 via-blue-500 to-pink-500 flex items-center justify-center shadow-lg shadow-primary-500/30">
+            <BookOpen size={22} className="text-white" />
           </div>
-        ) : (
-          <Button variant="ghost" size="sm" onClick={handleStartSelecting}>
-            {t.select}
-          </Button>
-        )}
-      </div>
+          <div className="flex-1">
+            <h1 className="text-xl font-bold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
+              {t.title}
+            </h1>
+            <p className="text-sm text-slate-500">
+              {t.summary(vocabulary.length, categories.length)}
+            </p>
+          </div>
+          {isSelecting ? (
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setIsSelecting(false);
+                  setSelectedItems(new Set());
+                }}
+              >
+                {t.cancel}
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                onClick={handleDelete}
+                disabled={selectedItems.size === 0}
+              >
+                <Trash2 size={16} className="mr-1" />
+                {selectedItems.size}
+              </Button>
+            </div>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={handleStartSelecting}>
+              {t.select}
+            </Button>
+          )}
+        </div>
 
       {isSelecting && (
         <Card variant="glass">
@@ -536,116 +561,173 @@ export default function VocabularyPage() {
       </div>
 
       {/* Vocabulary list */}
-      {Object.entries(groupedVocabulary).map(([category, words]) => (
-        <div key={category} className="space-y-2">
-          <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400">
-            <BookOpen size={16} />
-            {getCategoryLabel(category, language)} ({words.length})
-          </div>
+      {Object.entries(groupedVocabulary).map(([category, words]) => {
+        const total = words.length;
+        const storedVisibleCount = visibleCountsByCategory[category];
+        const visibleCount = Math.min(
+          total,
+          storedVisibleCount ?? defaultCategoryLimit
+        );
+        const displayedWords = words.slice(0, visibleCount);
+        const canShowMore = visibleCount < total;
+        const canShowLess =
+          storedVisibleCount !== undefined && visibleCount > Math.min(total, defaultCategoryLimit);
 
-          {words.map((word) => {
-            const status = getProgressStatus(word.id);
-            const isSelected = selectedItems.has(word.id);
+        return (
+          <div key={category} className="space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-400">
+              <BookOpen size={16} />
+              {getCategoryLabel(category, language)} ({total})
+            </div>
 
-            return (
-              <Card
-                key={word.id}
-                variant="glass"
-                className={cn(
-                  'transition-all',
-                  isSelected && 'ring-2 ring-primary-500 shadow-lg shadow-primary-500/20'
-                )}
-                onClick={() => isSelecting && toggleSelection(word.id)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    {isSelecting && (
-                      <div
-                        className={cn(
-                          'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-1',
-                          isSelected
-                            ? 'bg-primary-500 border-primary-500'
-                            : 'border-slate-300 dark:border-slate-600'
-                        )}
-                      >
-                        {isSelected && <Check size={12} className="text-white" />}
-                      </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              {displayedWords.map((word) => {
+                const status = getProgressStatus(word.id);
+                const isSelected = selectedItems.has(word.id);
+
+                return (
+                  <Card
+                    key={word.id}
+                    variant="glass"
+                    className={cn(
+                      'transition-all',
+                      isSelected &&
+                        'ring-2 ring-primary-500 shadow-lg shadow-primary-500/20'
                     )}
+                    onClick={() => isSelecting && toggleSelection(word.id)}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        {isSelecting && (
+                          <div
+                            className={cn(
+                              'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 mt-1',
+                              isSelected
+                                ? 'bg-primary-500 border-primary-500'
+                                : 'border-slate-300 dark:border-slate-600'
+                            )}
+                          >
+                            {isSelected && <Check size={12} className="text-white" />}
+                          </div>
+                        )}
 
-                    <div
-                      className={cn(
-                        'w-2 h-2 rounded-full flex-shrink-0 mt-2',
-                        getStatusColor(status)
-                      )}
-                    />
+                        <div
+                          className={cn(
+                            'w-2 h-2 rounded-full flex-shrink-0 mt-2',
+                            getStatusColor(status)
+                          )}
+                        />
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-slate-800 dark:text-slate-100">
-                          {getTargetText(word)}
-                        </p>
-                        <span className="text-xs text-slate-400 font-mono">
-                          {word.phonetic}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
-                        {getNativeText(word)}
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {(word.setIds ?? []).length === 0 ? (
-                          <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-700 text-slate-500">
-                            {t.unassigned}
-                          </span>
-                        ) : (
-                          (word.setIds ?? []).map((setId) => (
-                            <span
-                              key={setId}
-                              className="px-2 py-0.5 rounded-full text-xs bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300"
-                            >
-                              {setNameById[setId] || t.setFallback}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-slate-800 dark:text-slate-100">
+                              {getTargetText(word)}
+                            </p>
+                            <span className="text-xs text-slate-400 font-mono">
+                              {word.phonetic}
                             </span>
-                          ))
-                        )}
+                          </div>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">
+                            {getNativeText(word)}
+                          </p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {(word.setIds ?? []).length === 0 ? (
+                              <span className="px-2 py-0.5 rounded-full text-xs bg-slate-100 dark:bg-slate-700 text-slate-500">
+                                {t.unassigned}
+                              </span>
+                            ) : (
+                              (word.setIds ?? []).map((setId) => (
+                                <span
+                                  key={setId}
+                                  className="px-2 py-0.5 rounded-full text-xs bg-primary-50 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300"
+                                >
+                                  {setNameById[setId] || t.setFallback}
+                                </span>
+                              ))
+                            )}
+                          </div>
+                          {getTargetExample(word) && (
+                            <p className="text-xs text-slate-400 mt-1 italic truncate">
+                              "{getTargetExample(word)}"
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <span
+                            className={cn(
+                              'px-2 py-0.5 rounded-full text-xs',
+                              word.difficulty === 'easy'
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                                : word.difficulty === 'medium'
+                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
+                                : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                            )}
+                          >
+                            {word.difficulty === 'easy'
+                              ? t.difficultyEasy
+                              : word.difficulty === 'medium'
+                              ? t.difficultyMedium
+                              : t.difficultyHard}
+                          </span>
+
+                          <button
+                            onClick={(e) => handleSpeak(getTargetText(word), e)}
+                            className="p-2 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30 text-slate-400 hover:text-primary-500 transition-colors"
+                          >
+                            <Volume2 size={18} />
+                          </button>
+                        </div>
                       </div>
-                      {getTargetExample(word) && (
-                        <p className="text-xs text-slate-400 mt-1 italic truncate">
-                          "{getTargetExample(word)}"
-                        </p>
-                      )}
-                    </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
 
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span
-                        className={cn(
-                          'px-2 py-0.5 rounded-full text-xs',
-                          word.difficulty === 'easy'
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
-                            : word.difficulty === 'medium'
-                            ? 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300'
-                            : 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-                        )}
-                      >
-                        {word.difficulty === 'easy'
-                          ? t.difficultyEasy
-                          : word.difficulty === 'medium'
-                          ? t.difficultyMedium
-                          : t.difficultyHard}
-                      </span>
-
-                      <button
-                        onClick={(e) => handleSpeak(getTargetText(word), e)}
-                        className="p-2 rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/30 text-slate-400 hover:text-primary-500 transition-colors"
-                      >
-                        <Volume2 size={18} />
-                      </button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      ))}
+            {total > defaultCategoryLimit && (
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                <span>{t.showingCount(visibleCount, total)}</span>
+                <div className="flex items-center gap-2">
+                  {canShowLess && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVisibleCountsByCategory((prev) => {
+                          if (!(category in prev)) return prev;
+                          const next = { ...prev };
+                          delete next[category];
+                          return next;
+                        })
+                      }
+                      className="px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white/60 dark:bg-slate-800/60 hover:bg-white/80 dark:hover:bg-slate-800/80 transition-colors"
+                    >
+                      {t.showLess}
+                    </button>
+                  )}
+                  {canShowMore && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setVisibleCountsByCategory((prev) => ({
+                          ...prev,
+                          [category]: Math.min(
+                            total,
+                            (prev[category] ?? visibleCount) + CATEGORY_PAGE_SIZE
+                          ),
+                        }))
+                      }
+                      className="px-3 py-1.5 rounded-full border border-primary-200 dark:border-primary-800 bg-primary-50/80 dark:bg-primary-900/40 text-primary-700 dark:text-primary-200 hover:bg-primary-100/80 dark:hover:bg-primary-900/60 transition-colors"
+                    >
+                      {t.showMore}
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       {filteredVocabulary.length === 0 && (
         <div className="text-center py-12">

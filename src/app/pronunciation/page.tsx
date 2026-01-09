@@ -1131,7 +1131,7 @@ export default function PronunciationPage() {
         <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl" />
         <div className="absolute bottom-1/4 left-0 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl" />
 
-        <div className="relative z-10 p-4 space-y-6 max-w-2xl mx-auto">
+        <div className="relative z-10 p-4 space-y-6 max-w-2xl mx-auto pb-32 md:pb-36">
           {/* Header */}
           <div className="flex items-center gap-4">
             <Link href="/">
@@ -1354,17 +1354,6 @@ export default function PronunciationPage() {
             </Card>
           )}
 
-          {/* Start button */}
-          <Button
-            variant="gradient"
-            onClick={startSession}
-            className="w-full py-4 text-lg shadow-xl shadow-primary-500/25"
-            disabled={selectedFocusMode === 'phoneme_specific' && !selectedPhoneme}
-          >
-            <Mic size={24} className="mr-2" />
-            {t.startSession}
-          </Button>
-
           {/* Link to phoneme drills */}
           {enablePhonemeDrills && (
             <Link href="/pronunciation/drills">
@@ -1374,6 +1363,22 @@ export default function PronunciationPage() {
               </Button>
             </Link>
           )}
+        </div>
+
+        <div className="fixed left-0 right-0 md:left-24 bottom-[calc(var(--fullscreen-offset)+0.75rem)] z-40 px-4">
+          <div className="max-w-2xl mx-auto">
+            <div className="rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/30 dark:border-slate-700/50 shadow-lg p-3">
+              <Button
+                variant="gradient"
+                onClick={startSession}
+                className="w-full py-4 text-lg shadow-xl shadow-primary-500/25"
+                disabled={selectedFocusMode === 'phoneme_specific' && !selectedPhoneme}
+              >
+                <Mic size={24} className="mr-2" />
+                {t.startSession}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     );

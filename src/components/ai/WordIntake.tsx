@@ -6,6 +6,7 @@ import {
   X,
   Plus,
   Paperclip,
+  Search,
   Loader2,
   Image as ImageIcon,
   Camera,
@@ -424,6 +425,10 @@ export const wordIntakeCopy = {
     minWords: (min: number) => `Wymagane min. ${min}`,
     selectAll: 'Zaznacz wszystkie',
     deselectAll: 'Odznacz',
+    reviewSearchPlaceholder: 'Szukaj na liście...',
+    selectedOnlyLabel: 'Tylko zaznaczone',
+    noMatches: 'Brak dopasowań.',
+    clearSearchLabel: 'Wyczyść wyszukiwanie',
     imageLabel: 'Zdjęcie',
     cameraLabel: 'Aparat',
     fileLabel: 'Plik',
@@ -541,6 +546,10 @@ export const wordIntakeCopy = {
     minWords: (min: number) => `Required min. ${min}`,
     selectAll: 'Select all',
     deselectAll: 'Deselect',
+    reviewSearchPlaceholder: 'Search the list...',
+    selectedOnlyLabel: 'Selected only',
+    noMatches: 'No matches.',
+    clearSearchLabel: 'Clear search',
     imageLabel: 'Photo',
     cameraLabel: 'Camera',
     fileLabel: 'File',
@@ -659,6 +668,10 @@ export const wordIntakeCopy = {
     minWords: (min: number) => `Потрібно мін. ${min}`,
     selectAll: 'Вибрати всі',
     deselectAll: 'Зняти вибір',
+    reviewSearchPlaceholder: 'Пошук у списку...',
+    selectedOnlyLabel: 'Лише вибрані',
+    noMatches: 'Нічого не знайдено.',
+    clearSearchLabel: 'Очистити пошук',
     imageLabel: 'Фото',
     cameraLabel: 'Камера',
     fileLabel: 'Файл',
@@ -729,6 +742,8 @@ export function WordIntake({
   const [suggestedSetName, setSuggestedSetName] = useState('');
   const [selectedSetOption, setSelectedSetOption] = useState(NEW_SET_OPTION);
   const [attachmentsOpen, setAttachmentsOpen] = useState(false);
+  const [reviewQuery, setReviewQuery] = useState('');
+  const [reviewSelectedOnly, setReviewSelectedOnly] = useState(false);
 
   const chatScrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -787,6 +802,22 @@ export function WordIntake({
   const requiresSetName = selectedSetOption === NEW_SET_OPTION;
   const hasSetName = suggestedSetName.trim().length > 0;
   const canAddWords = selectedWordCount >= minWords && (!requiresSetName || hasSetName);
+  const reviewQueryNormalized = useMemo(() => normalizeForMatch(reviewQuery), [reviewQuery]);
+  const filteredParsedWords = useMemo(() => {
+    const needle = reviewQueryNormalized;
+    return parsedWords
+      .map((word, index) => ({ word, index }))
+      .filter(({ word }) => (!reviewSelectedOnly ? true : word.selected))
+      .filter(({ word }) => {
+        if (!needle) return true;
+        const haystack = normalizeForMatch(
+          `${word.target} ${word.native} ${word.phonetic} ${word.example_target ?? ''} ${word.example_native ?? ''}`
+        );
+        return haystack.includes(needle) || hasLooseMatch(haystack, needle);
+      });
+  }, [parsedWords, reviewQueryNormalized, reviewSelectedOnly]);
+  const shouldShowReviewFilters =
+    parsedWords.length >= 12 || reviewQuery.trim().length > 0 || reviewSelectedOnly;
 
   useEffect(() => {
     // Nie scrolluj przy początkowym renderowaniu (tylko welcome message)
@@ -808,6 +839,12 @@ export function WordIntake({
       });
     }
   }, [messages, parsedWords, isProcessing]);
+
+  useEffect(() => {
+    if (parsedWords.length > 0) return;
+    setReviewQuery('');
+    setReviewSelectedOnly(false);
+  }, [parsedWords.length]);
 
   useEffect(() => {
     return () => {
@@ -1811,12 +1848,17 @@ export function WordIntake({
     <div className="space-y-4">
       <div className="space-y-3">
         <p className="text-xs text-slate-500">{selectionHint}</p>
+
         <div className="flex items-center justify-between text-xs text-slate-500">
           <span>{t.selectedCount(selectedWordCount)}</span>
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => setParsedWords((words) => words.map((word) => ({ ...word, selected: true })))}
+              onClick={() =>
+                setParsedWords((words) =>
+                  words.map((word) => ({ ...word, selected: true }))
+                )
+              }
               className="text-primary-600 dark:text-primary-400 hover:underline"
             >
               {t.selectAll}
@@ -1824,7 +1866,11 @@ export function WordIntake({
             <span className="text-slate-300 dark:text-slate-600">|</span>
             <button
               type="button"
-              onClick={() => setParsedWords((words) => words.map((word) => ({ ...word, selected: false })))}
+              onClick={() =>
+                setParsedWords((words) =>
+                  words.map((word) => ({ ...word, selected: false }))
+                )
+              }
               className="text-slate-500 hover:underline"
             >
               {t.deselectAll}
@@ -1837,6 +1883,7 @@ export function WordIntake({
             )}
           </div>
         </div>
+
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:min-w-[80px]">
             {t.setLabel}
@@ -1855,6 +1902,7 @@ export function WordIntake({
             ))}
           </select>
         </div>
+
         {selectedSetOption === NEW_SET_OPTION && (
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <p className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:min-w-[80px]">
@@ -1869,6 +1917,7 @@ export function WordIntake({
             />
           </div>
         )}
+
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <p className="text-sm font-medium text-slate-600 dark:text-slate-400 sm:min-w-[80px]">
             {t.categoryLabel}
@@ -1881,47 +1930,88 @@ export function WordIntake({
             placeholder={t.categoryPlaceholder}
           />
         </div>
+
+        {shouldShowReviewFilters && (
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+            <div className="relative flex-1 min-w-0">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+              />
+              <input
+                type="text"
+                value={reviewQuery}
+                onChange={(e) => setReviewQuery(e.target.value)}
+                className="w-full min-w-0 text-sm px-3 py-2 pl-9 pr-10 border border-slate-200 dark:border-slate-600 rounded-xl bg-white dark:bg-slate-800"
+                placeholder={t.reviewSearchPlaceholder}
+              />
+              {reviewQuery.trim().length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setReviewQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  aria-label={t.clearSearchLabel}
+                >
+                  <X size={16} />
+                </button>
+              )}
+            </div>
+            <label className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400 select-none">
+              <input
+                type="checkbox"
+                checked={reviewSelectedOnly}
+                onChange={(e) => setReviewSelectedOnly(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-primary-600 focus:ring-primary-500"
+              />
+              {t.selectedOnlyLabel}
+            </label>
+          </div>
+        )}
       </div>
 
-      <div className="space-y-2">
-        {parsedWords.map((word, index) => (
-          <button
-            key={`${word.target}-${word.native}-${index}`}
-            onClick={() => toggleWord(index)}
-            className={cn(
-              'w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left',
-              word.selected
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900'
-                : 'border-slate-200 dark:border-slate-700'
-            )}
-          >
-            <div
+      {filteredParsedWords.length === 0 ? (
+        <p className="text-sm text-slate-500">{t.noMatches}</p>
+      ) : (
+        <div className="grid gap-2 sm:grid-cols-2">
+          {filteredParsedWords.map(({ word, index }) => (
+            <button
+              key={`${word.target}-${word.native}-${index}`}
+              onClick={() => toggleWord(index)}
               className={cn(
-                'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+                'w-full flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-left',
                 word.selected
-                  ? 'bg-primary-500 border-primary-500'
-                  : 'border-slate-300 dark:border-slate-600'
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900'
+                  : 'border-slate-200 dark:border-slate-700'
               )}
             >
-              {word.selected && <Check size={12} className="text-white" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-slate-800 dark:text-slate-100">
-                {word.target}{' '}
-                <span className="text-slate-500 font-normal text-sm">
-                  {word.phonetic}
-                </span>
-              </p>
-              <p className="text-sm text-slate-500 truncate">{word.native}</p>
-              {word.example_target && (
-                <p className="text-xs text-slate-400 italic mt-1 truncate">
-                  "{word.example_target}"
+              <div
+                className={cn(
+                  'w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0',
+                  word.selected
+                    ? 'bg-primary-500 border-primary-500'
+                    : 'border-slate-300 dark:border-slate-600'
+                )}
+              >
+                {word.selected && <Check size={12} className="text-white" />}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-slate-800 dark:text-slate-100">
+                  {word.target}{' '}
+                  <span className="text-slate-500 font-normal text-sm">
+                    {word.phonetic}
+                  </span>
                 </p>
-              )}
-            </div>
-          </button>
-        ))}
-      </div>
+                <p className="text-sm text-slate-500 truncate">{word.native}</p>
+                {word.example_target && (
+                  <p className="text-xs text-slate-400 italic mt-1 truncate">
+                    "{word.example_target}"
+                  </p>
+                )}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 
@@ -1931,7 +2021,12 @@ export function WordIntake({
         <X size={16} className="mr-2 sm:size-4" />
         {t.cancel}
       </Button>
-      <Button size="sm" onClick={addSelectedWords} className="flex-1" disabled={!canAddWords}>
+      <Button
+        size="sm"
+        onClick={addSelectedWords}
+        className="flex-1"
+        disabled={!canAddWords}
+      >
         <Plus size={16} className="mr-2 sm:size-4" />
         {addLabel}
       </Button>

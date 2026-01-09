@@ -525,120 +525,136 @@ export default function PhonemeDrillsPage() {
   // LEARN PHASE
   if (drillState === 'learn' && selectedDrill) {
     return (
-      <div className="p-4 space-y-6 max-w-lg mx-auto">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setDrillState('select')}
-            className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-              {getDrillName(selectedDrill)}
-            </h1>
-            <p className="text-sm text-slate-500">{t.learnTitle}</p>
+      <>
+        <div className="p-4 space-y-6 max-w-lg mx-auto pb-32 md:pb-36">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setDrillState('select')}
+              className="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800"
+            >
+              <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
+                {getDrillName(selectedDrill)}
+              </h1>
+              <p className="text-sm text-slate-500">{t.learnTitle}</p>
+            </div>
           </div>
+
+          {/* Phoneme info */}
+          <Card variant="elevated">
+            <CardContent className="p-6 space-y-4">
+              <div className="text-center">
+                <span className="text-5xl font-mono font-bold text-primary-600 dark:text-primary-400">
+                  {selectedDrill.phonemeSymbol}
+                </span>
+                <p className="text-lg text-slate-600 dark:text-slate-300 mt-2">
+                  {getDrillName(selectedDrill)}
+                </p>
+              </div>
+
+              <div className="space-y-3 text-sm">
+                {getDrillPolishEquivalent(selectedDrill) && (
+                  <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
+                    <p className="font-medium text-slate-700 dark:text-slate-200">
+                      {t.polishEquivalent}
+                    </p>
+                    <p className="text-slate-600 dark:text-slate-300">
+                      {getDrillPolishEquivalent(selectedDrill)}
+                    </p>
+                  </div>
+                )}
+
+                <div className="p-3 bg-error-50 dark:bg-error-900/30 rounded-lg">
+                  <p className="font-medium text-error-700 dark:text-error-300">
+                    {t.commonMistake}
+                  </p>
+                  <p className="text-error-600 dark:text-error-400">
+                    {getDrillCommonMistake(selectedDrill)}
+                  </p>
+                </div>
+
+                <div className="p-3 bg-primary-50 dark:bg-primary-900/30 rounded-lg">
+                  <p className="font-medium text-primary-700 dark:text-primary-300">
+                    {t.howTo}
+                  </p>
+                  <p className="text-primary-600 dark:text-primary-400">
+                    {getDrillInstruction(selectedDrill)}
+                  </p>
+                </div>
+
+                <div className="p-3 bg-success-50 dark:bg-success-900/30 rounded-lg">
+                  <p className="font-medium text-success-700 dark:text-success-300">
+                    {t.mouthPosition}
+                  </p>
+                  <p className="text-success-600 dark:text-success-400">
+                    {getDrillMouthTip(selectedDrill)}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Minimal pairs */}
+          <Card>
+            <CardContent className="p-4 space-y-3">
+              <h3 className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <BookOpen size={18} />
+                {t.minimalPairs}
+              </h3>
+              <p className="text-sm text-slate-500">{t.minimalPairsDesc}</p>
+              <div className="space-y-2">
+                {selectedDrill.minimalPairs.slice(0, 3).map((pair, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg"
+                  >
+                    <div className="flex-1">
+                      <button
+                        onClick={() => handleSpeak(pair.word1)}
+                        className="flex items-center gap-2 text-primary-600 dark:text-primary-400 hover:underline"
+                      >
+                        <Volume2 size={16} />
+                        <span className="font-medium">{pair.word1}</span>
+                        <span className="text-xs text-slate-500">{pair.phonetic1}</span>
+                      </button>
+                      <p className="text-xs text-slate-500 ml-6">{pair.meaningPl1}</p>
+                    </div>
+                    <span className="text-slate-400 mx-2">vs</span>
+                    <div className="flex-1 text-right">
+                      <button
+                        onClick={() => handleSpeak(pair.word2)}
+                        className="flex items-center gap-2 text-primary-600 dark:text-primary-400 hover:underline justify-end"
+                      >
+                        <span className="font-medium">{pair.word2}</span>
+                        <span className="text-xs text-slate-500">{pair.phonetic2}</span>
+                        <Volume2 size={16} />
+                      </button>
+                      <p className="text-xs text-slate-500 mr-6">{pair.meaningPl2}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Phoneme info */}
-        <Card variant="elevated">
-          <CardContent className="p-6 space-y-4">
-            <div className="text-center">
-              <span className="text-5xl font-mono font-bold text-primary-600 dark:text-primary-400">
-                {selectedDrill.phonemeSymbol}
-              </span>
-              <p className="text-lg text-slate-600 dark:text-slate-300 mt-2">
-                {getDrillName(selectedDrill)}
-              </p>
+        <div className="fixed left-0 right-0 md:left-24 bottom-[calc(var(--fullscreen-offset)+0.75rem)] z-40 px-4">
+          <div className="max-w-lg mx-auto">
+            <div className="rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/30 dark:border-slate-700/50 shadow-lg p-3">
+              <Button
+                variant="gradient"
+                onClick={() => setDrillState('practice')}
+                className="w-full py-4 text-lg shadow-xl shadow-primary-500/25"
+              >
+                <Mic size={24} className="mr-2" />
+                {t.startPractice}
+              </Button>
             </div>
-
-            <div className="space-y-3 text-sm">
-              {getDrillPolishEquivalent(selectedDrill) && (
-                <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                  <p className="font-medium text-slate-700 dark:text-slate-200">
-                    {t.polishEquivalent}
-                  </p>
-                  <p className="text-slate-600 dark:text-slate-300">
-                    {getDrillPolishEquivalent(selectedDrill)}
-                  </p>
-                </div>
-              )}
-
-              <div className="p-3 bg-error-50 dark:bg-error-900/30 rounded-lg">
-                <p className="font-medium text-error-700 dark:text-error-300">{t.commonMistake}</p>
-                <p className="text-error-600 dark:text-error-400">
-                  {getDrillCommonMistake(selectedDrill)}
-                </p>
-              </div>
-
-              <div className="p-3 bg-primary-50 dark:bg-primary-900/30 rounded-lg">
-                <p className="font-medium text-primary-700 dark:text-primary-300">{t.howTo}</p>
-                <p className="text-primary-600 dark:text-primary-400">
-                  {getDrillInstruction(selectedDrill)}
-                </p>
-              </div>
-
-              <div className="p-3 bg-success-50 dark:bg-success-900/30 rounded-lg">
-                <p className="font-medium text-success-700 dark:text-success-300">{t.mouthPosition}</p>
-                <p className="text-success-600 dark:text-success-400">
-                  {getDrillMouthTip(selectedDrill)}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Minimal pairs */}
-        <Card>
-          <CardContent className="p-4 space-y-3">
-            <h3 className="font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <BookOpen size={18} />
-              {t.minimalPairs}
-            </h3>
-            <p className="text-sm text-slate-500">
-              {t.minimalPairsDesc}
-            </p>
-            <div className="space-y-2">
-              {selectedDrill.minimalPairs.slice(0, 3).map((pair, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-700 rounded-lg"
-                >
-                  <div className="flex-1">
-                    <button
-                      onClick={() => handleSpeak(pair.word1)}
-                      className="flex items-center gap-2 text-primary-600 dark:text-primary-400 hover:underline"
-                    >
-                      <Volume2 size={16} />
-                      <span className="font-medium">{pair.word1}</span>
-                      <span className="text-xs text-slate-500">{pair.phonetic1}</span>
-                    </button>
-                    <p className="text-xs text-slate-500 ml-6">{pair.meaningPl1}</p>
-                  </div>
-                  <span className="text-slate-400 mx-2">vs</span>
-                  <div className="flex-1 text-right">
-                    <button
-                      onClick={() => handleSpeak(pair.word2)}
-                      className="flex items-center gap-2 text-primary-600 dark:text-primary-400 hover:underline justify-end"
-                    >
-                      <span className="font-medium">{pair.word2}</span>
-                      <span className="text-xs text-slate-500">{pair.phonetic2}</span>
-                      <Volume2 size={16} />
-                    </button>
-                    <p className="text-xs text-slate-500 mr-6">{pair.meaningPl2}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Button onClick={() => setDrillState('practice')} className="w-full py-4 text-lg">
-          <Mic size={24} className="mr-2" />
-          {t.startPractice}
-        </Button>
-      </div>
+          </div>
+        </div>
+      </>
     );
   }
 

@@ -15,6 +15,7 @@ import {
   Pencil,
   Plus,
   ShieldCheck,
+  Settings,
   Sparkles,
   Star,
   Target,
@@ -30,6 +31,7 @@ import { CircularProgress, ProgressBar } from '@/components/ui/ProgressBar';
 import { CountSelector } from '@/components/session/CountSelector';
 import { PricingSection } from '@/components/billing/PricingSection';
 import { UsageDisplay } from '@/components/billing/UsageDisplay';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
 import { useHydration, useVocabStore } from '@/lib/store';
 import { useLanguage } from '@/lib/i18n';
 import { mascotSkins } from '@/data/mascotSkins';
@@ -147,6 +149,13 @@ const profileCopy = {
     userFallback: 'Użytkownik',
     emailFallback: 'Brak e-maila',
     logout: 'Wyloguj',
+    tabs: {
+      overview: 'Przegląd',
+      collection: 'Kolekcja',
+      sets: 'Zestawy',
+      settings: 'Ustawienia',
+      account: 'Konto',
+    },
     dailyMission: 'Zadanie dnia',
     missionStart: 'Start zadania',
     missionContinue: 'Kontynuuj zadanie',
@@ -166,6 +175,8 @@ const profileCopy = {
     newSetPlaceholder: 'Nowy zestaw (np. Klasówka z biologii)',
     addSet: 'Dodaj zestaw',
     noSets: 'Brak zestawów. Dodaj pierwszy, aby szybciej wybierać słówka do testów.',
+    setSearchPlaceholder: 'Szukaj zestawów...',
+    noSetMatches: 'Nie znaleziono zestawów.',
     wordsCount: (count: number) => `${count} słówek`,
     save: 'Zapisz',
     cancel: 'Anuluj',
@@ -266,6 +277,13 @@ const profileCopy = {
     userFallback: 'User',
     emailFallback: 'No email',
     logout: 'Log out',
+    tabs: {
+      overview: 'Overview',
+      collection: 'Collection',
+      sets: 'Sets',
+      settings: 'Settings',
+      account: 'Account',
+    },
     dailyMission: 'Task of the day',
     missionStart: 'Start task',
     missionContinue: 'Continue task',
@@ -285,6 +303,8 @@ const profileCopy = {
     newSetPlaceholder: 'New set (e.g. Biology test)',
     addSet: 'Add set',
     noSets: 'No sets yet. Add one to quickly pick words for tests.',
+    setSearchPlaceholder: 'Search sets...',
+    noSetMatches: 'No sets found.',
     wordsCount: (count: number) => `${count} words`,
     save: 'Save',
     cancel: 'Cancel',
@@ -384,6 +404,13 @@ const profileCopy = {
     userFallback: 'Користувач',
     emailFallback: 'Немає e-mail',
     logout: 'Вийти',
+    tabs: {
+      overview: 'Огляд',
+      collection: 'Колекція',
+      sets: 'Набори',
+      settings: 'Налаштування',
+      account: 'Обліковий запис',
+    },
     dailyMission: 'Завдання дня',
     missionStart: 'Почати завдання',
     missionContinue: 'Продовжити завдання',
@@ -403,6 +430,8 @@ const profileCopy = {
     newSetPlaceholder: 'Новий набір (напр. Контрольна з біології)',
     addSet: 'Додати набір',
     noSets: 'Немає наборів. Додай перший, щоб швидше обирати слова для тестів.',
+    setSearchPlaceholder: 'Пошук наборів...',
+    noSetMatches: 'Наборів не знайдено.',
     wordsCount: (count: number) => `${count} слів`,
     save: 'Зберегти',
     cancel: 'Скасувати',
@@ -499,6 +528,7 @@ const profileCopy = {
 } as const;
 
 type ProfileCopy = typeof profileCopy.pl;
+type ProfileTab = 'overview' | 'collection' | 'sets' | 'settings' | 'account';
 
 const AUTO_SAVE_DEBOUNCE_MS = 900;
 const AUTO_SAVE_IDLE_DELAY_MS = 2200;
@@ -525,6 +555,7 @@ export default function ProfilePage() {
   const hasMountedRef = useRef(false);
   const isManualSaveRef = useRef(false);
   const [saveState, setSaveState] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [activeTab, setActiveTab] = useState<ProfileTab>('overview');
 
   const settings = useVocabStore((state) => state.settings);
   const updateSettings = useVocabStore((state) => state.updateSettings);
@@ -538,8 +569,15 @@ export default function ProfilePage() {
   const dailyMission = useVocabStore((state) => state.dailyMission);
   const setLearningPair = useVocabStore((state) => state.setLearningPair);
   const [newSetName, setNewSetName] = useState('');
+  const [setSearchQuery, setSetSearchQuery] = useState('');
   const [editingSetId, setEditingSetId] = useState<string | null>(null);
   const [editingSetName, setEditingSetName] = useState('');
+  const normalizedSetSearchQuery = setSearchQuery.trim().toLowerCase();
+  const filteredSets = useMemo(() => {
+    if (!normalizedSetSearchQuery) return sets;
+    return sets.filter((set) => set.name.toLowerCase().includes(normalizedSetSearchQuery));
+  }, [normalizedSetSearchQuery, sets]);
+  const shouldShowSetSearch = sets.length >= 8 || setSearchQuery.trim().length > 0;
 
   useEffect(() => {
     if (session?.user?.mascotSkin) {
@@ -553,6 +591,51 @@ export default function ProfilePage() {
       .then(setSubscriptionData)
       .catch(console.error);
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const resolveTab = (value: string): ProfileTab | null => {
+      const normalized = value.trim().toLowerCase();
+      if (!normalized) return null;
+      if (normalized === 'overview' || normalized === 'profil' || normalized === 'profile') {
+        return 'overview';
+      }
+      if (normalized === 'collection' || normalized === 'kolekcja') {
+        return 'collection';
+      }
+      if (normalized === 'sets' || normalized === 'zestawy') {
+        return 'sets';
+      }
+      if (normalized === 'settings' || normalized === 'ustawienia') {
+        return 'settings';
+      }
+      if (normalized === 'account' || normalized === 'konto' || normalized === 'billing') {
+        return 'account';
+      }
+      return null;
+    };
+
+    const applyTabFromHash = () => {
+      const hash = window.location.hash.replace('#', '');
+      const resolved = resolveTab(hash);
+      if (resolved) {
+        setActiveTab(resolved);
+      }
+    };
+
+    applyTabFromHash();
+    window.addEventListener('hashchange', applyTabFromHash);
+    return () => window.removeEventListener('hashchange', applyTabFromHash);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const desiredHash = activeTab === 'overview' ? '' : `#${activeTab}`;
+    if (window.location.hash === desiredHash) return;
+    const nextUrl = `${window.location.pathname}${window.location.search}${desiredHash}`;
+    window.history.replaceState(null, '', nextUrl);
+  }, [activeTab]);
 
   useEffect(() => {
     return () => {
@@ -891,6 +974,44 @@ export default function ProfilePage() {
         </Button>
       </header>
 
+      <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as ProfileTab)}>
+        <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <TabsList className="min-w-max">
+            <TabsTrigger value="overview">
+              <span className="inline-flex items-center gap-2">
+                <Sparkles size={16} />
+                {t.tabs.overview}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="collection">
+              <span className="inline-flex items-center gap-2">
+                <Trophy size={16} />
+                {t.tabs.collection}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="sets">
+              <span className="inline-flex items-center gap-2">
+                <Folder size={16} />
+                {t.tabs.sets}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="settings">
+              <span className="inline-flex items-center gap-2">
+                <Settings size={16} />
+                {t.tabs.settings}
+              </span>
+            </TabsTrigger>
+            <TabsTrigger value="account">
+              <span className="inline-flex items-center gap-2">
+                <ShieldCheck size={16} />
+                {t.tabs.account}
+              </span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="overview">
+          <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
         <Card variant="glass" className="overflow-hidden">
           <CardContent className="p-4 sm:p-6 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 text-white">
@@ -970,6 +1091,11 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="collection">
+          <div className="space-y-6">
 
       <Card variant="glass">
         <CardHeader>
@@ -1027,6 +1153,11 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sets">
+          <div className="space-y-6">
 
       <Card variant="glass">
         <CardHeader>
@@ -1052,13 +1183,27 @@ export default function ProfilePage() {
             </Button>
           </div>
 
+          {shouldShowSetSearch && (
+            <input
+              type="text"
+              value={setSearchQuery}
+              onChange={(e) => setSetSearchQuery(e.target.value)}
+              placeholder={t.setSearchPlaceholder}
+              className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          )}
+
           {sets.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-slate-400">
               {t.noSets}
             </p>
+          ) : filteredSets.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {t.noSetMatches}
+            </p>
           ) : (
-            <div className="space-y-3">
-              {sets.map((set) => {
+            <div className="grid gap-3 md:grid-cols-2">
+              {filteredSets.map((set) => {
                 const count = setCounts[set.id] ?? 0;
                 const isEditing = editingSetId === set.id;
 
@@ -1129,26 +1274,12 @@ export default function ProfilePage() {
           </p>
         </CardContent>
       </Card>
+          </div>
+        </TabsContent>
 
-      {/* Billing Section */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <PricingSection
-          currentPlan={subscriptionData?.plan ?? 'FREE'}
-          subscriptionStatus={subscriptionData?.status}
-          cancelAtPeriodEnd={subscriptionData?.cancelAtPeriodEnd}
-          onUpgrade={handleUpgrade}
-          onManage={handleManageSubscription}
-        />
-        {subscriptionData?.usage && (
-          <UsageDisplay
-            used={subscriptionData.usage.used}
-            limit={subscriptionData.usage.limit}
-            resetDate={subscriptionData.usage.resetDate}
-          />
-        )}
-      </div>
-
-      <section id="settings" className="scroll-mt-24 space-y-6">
+        <TabsContent value="settings">
+          <div className="space-y-6">
+      <section className="space-y-6">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{t.settingsTitle}</h2>
@@ -1510,6 +1641,28 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
       </section>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="account">
+          <div className="space-y-6">
+            {/* Billing Section */}
+            <div className="grid gap-4 md:grid-cols-2">
+              <PricingSection
+                currentPlan={subscriptionData?.plan ?? 'FREE'}
+                subscriptionStatus={subscriptionData?.status}
+                cancelAtPeriodEnd={subscriptionData?.cancelAtPeriodEnd}
+                onUpgrade={handleUpgrade}
+                onManage={handleManageSubscription}
+              />
+              {subscriptionData?.usage && (
+                <UsageDisplay
+                  used={subscriptionData.usage.used}
+                  limit={subscriptionData.usage.limit}
+                  resetDate={subscriptionData.usage.resetDate}
+                />
+              )}
+            </div>
 
       <Card variant="glass">
         <CardHeader>
@@ -1568,6 +1721,9 @@ export default function ProfilePage() {
           </SettingRow>
         </CardContent>
       </Card>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       {/* Delete Account Confirmation Modal */}
       {showDeleteAccountModal && (

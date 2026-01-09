@@ -11,6 +11,7 @@ const PROFILE_LINK = /Profil|Profile|Профіль/i;
 const HOME_LINK = /Start|Home|Старт/i;
 const QUIZ_LINK = /Quiz|Квіз/i;
 const UNASSIGNED_SET = /Bez zestawu|Unassigned|Без набору/i;
+const SETS_TAB = /Zestawy|Sets|Набори/i;
 const EIGHT_WORDS = /8\s+(słów|words|слів)/i;
 const DELETE_BUTTON = /Usuń|Delete|Видал/i;
 
@@ -112,6 +113,7 @@ test('tworzy zestaw z czatu i filtruje w quizie', async ({ page }, testInfo) => 
 
   await page.getByRole('link', { name: PROFILE_LINK }).click();
   await expect(page).toHaveURL(/\/profile/);
+  await page.getByRole('button', { name: SETS_TAB }).click();
   const setRow = page
     .getByTestId('set-row')
     .filter({ hasText: 'Biologia - kartkowka' });
@@ -164,6 +166,7 @@ test('usuwa zestaw i pozostawia slowka bez przypisania', async ({ page }, testIn
 
   await page.getByRole('link', { name: PROFILE_LINK }).click();
   await expect(page).toHaveURL(/\/profile/);
+  await page.getByRole('button', { name: SETS_TAB }).click();
   const setRow = page
     .getByTestId('set-row')
     .filter({ hasText: 'Chemia - kartkowka' });

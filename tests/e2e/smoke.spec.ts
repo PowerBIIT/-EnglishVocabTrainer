@@ -5,6 +5,7 @@ const HOME_HEADING = /Dzisiejsza lekcja|Your lesson today|Твоя сьогод�
 const CHAT_HEADING = /Asystent AI|AI Assistant|AI Асистент/i;
 const CHAT_PLACEHOLDER = /Wpisz słówka|Type words|Введи слова/i;
 const PROFILE_HEADING = /Profil nauki|Learning profile|Профіль навчання/i;
+const SETTINGS_TAB = /Ustawienia|Settings|Налаштування/i;
 
 const login = async (page: Page, email: string) => {
   await page.goto('/login');
@@ -53,5 +54,6 @@ test('smoke: core pages load', async ({ page }, testInfo) => {
   await expect(page.getByPlaceholder(CHAT_PLACEHOLDER)).toBeVisible();
 
   await page.goto('/profile');
+  await page.getByRole('button', { name: SETTINGS_TAB }).click();
   await expect(page.getByRole('heading', { name: PROFILE_HEADING })).toBeVisible();
 });
