@@ -2105,7 +2105,8 @@ export function WordIntake({
         <div
           className={cn(
             'flex flex-1 min-h-0 flex-col',
-            hasParsedWords && 'md:grid md:grid-cols-[0.9fr_1.1fr] md:gap-4'
+            hasParsedWords &&
+              'md:grid md:grid-cols-[0.9fr_1.1fr] md:grid-rows-[minmax(0,1fr)] md:gap-4'
           )}
         >
           <div className="flex flex-col min-h-0">
