@@ -7,6 +7,7 @@ import { ArrowLeft, CheckCircle2, Mic, Sparkles, Target } from 'lucide-react';
 import { WordIntake } from '@/components/ai/WordIntake';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent } from '@/components/ui/Card';
+import { BottomActionBar } from '@/components/layout/BottomActionBar';
 import { useHydration, useVocabStore } from '@/lib/store';
 import { useLanguage } from '@/lib/i18n';
 import { getCategoryLabel } from '@/lib/categories';
@@ -211,25 +212,41 @@ export default function KlasowkaPage() {
               </CardContent>
             </Card>
 
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur-sm border-t border-slate-200 dark:border-slate-700 p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] shadow-[0_-4px_12px_rgba(0,0,0,0.1)] z-50">
-              <div className="flex flex-wrap gap-3 max-w-5xl mx-auto">
-                <Button variant="secondary" onClick={handleBack} className="flex-1 min-w-[140px]">
-                  {t.back}
-                </Button>
-                <Button variant="secondary" onClick={handleStartPronunciation} className="flex-1 min-w-[140px]">
-                  <Mic size={18} className="mr-2" />
-                  {t.startPronunciation}
-                </Button>
-                <Button size="lg" onClick={handleStartQuiz} className="flex-1 min-w-[140px]">
-                  <Target size={18} className="mr-2" />
-                  {t.startQuiz}
-                </Button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <Card className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl">
-            <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+	            <BottomActionBar
+	              className="md:hidden"
+	              maxWidthClassName="max-w-5xl"
+	              contentClassName="bg-white/95 dark:bg-slate-900/95 border border-slate-200 dark:border-slate-700 shadow-[0_-4px_12px_rgba(0,0,0,0.1)] p-4"
+	            >
+	              <div className="flex flex-wrap gap-3">
+	                <Button
+	                  variant="secondary"
+	                  onClick={handleBack}
+	                  className="flex-1 min-w-[140px]"
+	                >
+	                  {t.back}
+	                </Button>
+	                <Button
+	                  variant="secondary"
+	                  onClick={handleStartPronunciation}
+	                  className="flex-1 min-w-[140px]"
+	                >
+	                  <Mic size={18} className="mr-2" />
+	                  {t.startPronunciation}
+	                </Button>
+	                <Button
+	                  size="lg"
+	                  onClick={handleStartQuiz}
+	                  className="flex-1 min-w-[140px]"
+	                >
+	                  <Target size={18} className="mr-2" />
+	                  {t.startQuiz}
+	                </Button>
+	              </div>
+	            </BottomActionBar>
+	          </>
+	        ) : (
+	          <Card className="rounded-3xl bg-white/80 dark:bg-slate-900/70 border border-white/50 shadow-xl">
+	            <CardContent className="p-4 sm:p-6 space-y-4 sm:space-y-6">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <h2 className="font-semibold text-slate-800 dark:text-slate-100">

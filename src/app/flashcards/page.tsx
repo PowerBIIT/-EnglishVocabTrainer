@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { FlashcardSession } from '@/components/flashcard/Flashcard';
+import { BottomActionBar } from '@/components/layout/BottomActionBar';
 import { CountSelector } from '@/components/session/CountSelector';
 import { useVocabStore, useHydration } from '@/lib/store';
 import { cn } from '@/lib/utils';
@@ -299,7 +300,8 @@ export default function FlashcardsPage() {
   }
 
   return (
-    <div className="p-4 space-y-6 max-w-2xl mx-auto">
+    <>
+    <div className="p-4 space-y-6 max-w-2xl mx-auto pb-32">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Link href="/">
@@ -451,12 +453,6 @@ export default function FlashcardsPage() {
         </CardContent>
       </Card>
 
-      {/* Start button */}
-      <Button onClick={startSession} size="lg" className="w-full">
-        <Shuffle size={20} className="mr-2" />
-        {t.startSession}
-      </Button>
-
       {/* Tips */}
       <Card className="bg-primary-50 dark:bg-primary-900 border-0">
         <CardContent className="p-4">
@@ -466,5 +462,13 @@ export default function FlashcardsPage() {
         </CardContent>
       </Card>
     </div>
+
+    <BottomActionBar>
+      <Button onClick={startSession} size="lg" className="w-full">
+        <Shuffle size={20} className="mr-2" />
+        {t.startSession}
+      </Button>
+    </BottomActionBar>
+    </>
   );
 }

@@ -23,6 +23,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { BottomActionBar } from '@/components/layout/BottomActionBar';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useVocabStore, useHydration } from '@/lib/store';
 import { VocabularyItem, PronunciationFocusMode, PhonemeType, PronunciationAttempt } from '@/types';
@@ -1365,21 +1366,17 @@ export default function PronunciationPage() {
           )}
         </div>
 
-        <div className="fixed left-0 right-0 md:left-24 bottom-[calc(var(--fullscreen-offset)+0.75rem)] z-40 px-4">
-          <div className="max-w-2xl mx-auto">
-            <div className="rounded-2xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/30 dark:border-slate-700/50 shadow-lg p-3">
-              <Button
-                variant="gradient"
-                onClick={startSession}
-                className="w-full py-4 text-lg shadow-xl shadow-primary-500/25"
-                disabled={selectedFocusMode === 'phoneme_specific' && !selectedPhoneme}
-              >
-                <Mic size={24} className="mr-2" />
-                {t.startSession}
-              </Button>
-            </div>
-          </div>
-        </div>
+        <BottomActionBar>
+          <Button
+            variant="gradient"
+            onClick={startSession}
+            className="w-full py-4 text-lg shadow-xl shadow-primary-500/25"
+            disabled={selectedFocusMode === 'phoneme_specific' && !selectedPhoneme}
+          >
+            <Mic size={24} className="mr-2" />
+            {t.startSession}
+          </Button>
+        </BottomActionBar>
       </div>
     );
   }

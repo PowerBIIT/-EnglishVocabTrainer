@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { QuizSession, QuizResults } from '@/components/quiz/Quiz';
 import { FullscreenPage } from '@/components/layout/FullscreenPage';
+import { BottomActionBar } from '@/components/layout/BottomActionBar';
 import { CountSelector } from '@/components/session/CountSelector';
 import { useVocabStore, useHydration } from '@/lib/store';
 import { VocabularyItem, QuizMode, QuizResult } from '@/types';
@@ -330,8 +331,8 @@ export default function QuizPage() {
   };
 
   if (sessionState === 'active') {
-    return (
-      <FullscreenPage className="relative">
+	  return (
+	    <FullscreenPage className="relative">
         {/* Gradient backdrop */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 opacity-5 dark:opacity-10" />
 
@@ -399,12 +400,12 @@ export default function QuizPage() {
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 left-0 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl" />
 
-      <div className="relative z-10 flex-1 min-h-0 overflow-y-auto overscroll-contain">
-        <div className="p-4 space-y-6 max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center gap-4">
-            <Link href="/">
-              <button className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 shadow-lg shadow-primary-500/10 transition-all">
+	      <div className="relative z-10 flex-1 min-h-0 overflow-y-auto overscroll-contain">
+	        <div className="p-4 space-y-6 max-w-2xl mx-auto pb-32">
+	          {/* Header */}
+	          <div className="flex items-center gap-4">
+	            <Link href="/">
+	              <button className="p-2 rounded-xl bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800 shadow-lg shadow-primary-500/10 transition-all">
                 <ArrowLeft size={24} className="text-slate-600 dark:text-slate-400" />
               </button>
             </Link>
@@ -581,17 +582,18 @@ export default function QuizPage() {
                   </div>
                   <span>{settings.session.timeLimit}s</span>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+	              )}
+	            </CardContent>
+	          </Card>
+	        </div>
+	      </div>
 
-          {/* Start button */}
-          <Button variant="gradient" onClick={startQuiz} size="lg" className="w-full">
-            <Target size={20} className="mr-2" />
-            {t.startQuiz}
-          </Button>
-        </div>
-      </div>
-    </FullscreenPage>
-  );
-}
+	      <BottomActionBar>
+	        <Button variant="gradient" onClick={startQuiz} size="lg" className="w-full">
+	          <Target size={20} className="mr-2" />
+	          {t.startQuiz}
+	        </Button>
+	      </BottomActionBar>
+	    </FullscreenPage>
+	  );
+	}
