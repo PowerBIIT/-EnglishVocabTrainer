@@ -134,18 +134,39 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === 'google') {
         const profileVerifiedRaw = (profile as { email_verified?: unknown })?.email_verified;
         const profileVerified =
-          typeof profileVerifiedRaw === 'boolean' ? profileVerifiedRaw : true;
-        const userVerified =
-          user && 'emailVerified' in user ? (user.emailVerified as Date | null) : null;
+          typeof profileVerifiedRaw === 'boolean' ? profileVerifiedRaw : false;
 
-        if (profileVerified && user?.id && !userVerified) {
+        // Block unverified Google accounts (and avoid unsafe account-linking scenarios).
+        if (!profileVerified) {
+          return false;
+        }
+
+        if (user?.id) {
           try {
-            await prisma.user.update({
+            const existing = await prisma.user.findUnique({
               where: { id: user.id },
-              data: { emailVerified: new Date() },
+              select: { emailVerified: true, password: true, email: true },
             });
+
+            // If this Google sign-in landed on an unverified credentials user, drop the password.
+            // This prevents account takeover via "pre-registration" with someone else's email.
+            if (!existing?.emailVerified) {
+              await prisma.user.update({
+                where: { id: user.id },
+                data: {
+                  emailVerified: new Date(),
+                  ...(existing?.password
+                    ? {
+                        password: null,
+                        passwordResetToken: null,
+                        passwordResetExpires: null,
+                      }
+                    : {}),
+                },
+              });
+            }
           } catch (error) {
-            console.error('Failed to mark Google user as verified:', error);
+            console.error('Failed to sync Google user verification state:', error);
           }
         }
       }

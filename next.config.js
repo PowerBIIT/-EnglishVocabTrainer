@@ -3,13 +3,35 @@ const isDev = process.env.NODE_ENV !== 'production';
 const e2eUiFlag =
   process.env.NEXT_PUBLIC_E2E_TEST ?? process.env.E2E_TEST ?? 'false';
 
+const googleAdsSources = process.env.NEXT_PUBLIC_GOOGLE_ADS_ID
+  ? [
+      'https://www.googletagmanager.com',
+      'https://www.google-analytics.com',
+      'https://stats.g.doubleclick.net',
+      'https://www.googleadservices.com',
+    ]
+  : [];
+
+const scriptSrc = [
+  "'self'",
+  "'unsafe-inline'",
+  ...(isDev ? ["'unsafe-eval'"] : []),
+  ...googleAdsSources,
+].join(' ');
+
+const connectSrc = [
+  "'self'",
+  ...(isDev ? ['ws:'] : []),
+  ...googleAdsSources,
+].join(' ');
+
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
+  `script-src ${scriptSrc}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self'",
-  `connect-src 'self'${isDev ? ' ws:' : ''}`,
+  `connect-src ${connectSrc}`,
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",

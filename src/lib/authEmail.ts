@@ -10,7 +10,7 @@ const emailTemplates = {
     pl: {
       subject: 'Potwierdź swój adres email - Henio',
       heading: 'Witaj w Henio!',
-      intro: 'Dziękujemy za rejestrację. Kliknij przycisk poniżej, aby potwierdzić swój adres email:',
+      intro: 'Dziękujemy za rejestrację. Kliknij przycisk poniżej, aby potwierdzić swój adres email i ustawić hasło:',
       button: 'Potwierdź email',
       expiry: 'Link jest ważny przez 24 godziny.',
       ignore: 'Jeśli nie rejestrowałeś się w Henio, zignoruj tę wiadomość.',
@@ -18,7 +18,7 @@ const emailTemplates = {
     en: {
       subject: 'Confirm your email - Henio',
       heading: 'Welcome to Henio!',
-      intro: 'Thanks for signing up. Click the button below to confirm your email address:',
+      intro: 'Thanks for signing up. Click the button below to confirm your email address and set your password:',
       button: 'Confirm email',
       expiry: 'This link is valid for 24 hours.',
       ignore: "If you didn't sign up for Henio, please ignore this email.",
@@ -26,7 +26,7 @@ const emailTemplates = {
     uk: {
       subject: 'Підтвердіть свою електронну пошту - Henio',
       heading: 'Ласкаво просимо до Henio!',
-      intro: 'Дякуємо за реєстрацію. Натисніть кнопку нижче, щоб підтвердити свою електронну адресу:',
+      intro: 'Дякуємо за реєстрацію. Натисніть кнопку нижче, щоб підтвердити електронну адресу та встановити пароль:',
       button: 'Підтвердити email',
       expiry: 'Посилання дійсне протягом 24 годин.',
       ignore: 'Якщо ви не реєструвалися в Henio, проігноруйте цей лист.',

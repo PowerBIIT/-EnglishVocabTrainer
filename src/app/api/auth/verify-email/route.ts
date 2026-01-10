@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { hashToken } from '@/lib/passwordAuth';
+import {
+  generateSecureToken,
+  getPasswordResetExpiry,
+  hashToken,
+} from '@/lib/passwordAuth';
 import { ensureUserPlan } from '@/lib/userPlan';
 
 const getBaseUrl = (request: NextRequest): string => {
@@ -56,11 +60,36 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/login?error=user_not_found', baseUrl));
     }
 
-    // Update user's emailVerified timestamp
-    await prisma.user.update({
-      where: { id: user.id },
-      data: { emailVerified: new Date() },
-    });
+    if (!user.emailVerified) {
+      // SECURITY: Avoid account-takeover via "pre-registration" with someone else's email.
+      // Email verification must not keep an attacker-chosen password.
+      // After verifying, require the email owner to set a password via the reset flow.
+      const resetToken = generateSecureToken();
+      const hashedResetToken = hashToken(resetToken);
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          emailVerified: new Date(),
+          password: null,
+          passwordResetToken: hashedResetToken,
+          passwordResetExpires: getPasswordResetExpiry(),
+        },
+      });
+
+      // Ensure user plan (handles waitlist/access control)
+      await ensureUserPlan(user.id, user.email);
+
+      // Delete the verification token
+      await prisma.emailVerificationToken.delete({
+        where: { id: verificationToken.id },
+      });
+
+      // Redirect to password setup page (reuses reset-password flow)
+      return NextResponse.redirect(
+        new URL(`/reset-password?token=${resetToken}&verified=true`, baseUrl)
+      );
+    }
 
     // Ensure user plan (handles waitlist/access control)
     await ensureUserPlan(user.id, user.email);

@@ -5,6 +5,8 @@ import { prisma } from '@/lib/db';
 import { getUserSubscription } from '@/lib/subscription';
 import { getPlanLimits } from '@/lib/plans';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
