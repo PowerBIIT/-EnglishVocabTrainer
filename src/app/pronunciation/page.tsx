@@ -1333,18 +1333,20 @@ export default function PronunciationPage() {
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               variant="gradient"
+              size="lg"
               onClick={startSession}
-              className="w-full py-4 text-lg shadow-xl shadow-primary-500/25 sm:flex-1"
+              className="w-full sm:flex-1"
               disabled={selectedFocusMode === 'phoneme_specific' && !selectedPhoneme}
             >
-              <Mic size={24} className="mr-2" />
+              <Mic size={20} className="mr-2" />
               {t.startSession}
             </Button>
             {enablePhonemeDrills && (
               <Link href="/pronunciation/drills" className="w-full sm:flex-1">
                 <Button
                   variant="secondary"
-                  className="w-full py-4 text-lg bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800"
+                  size="lg"
+                  className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800"
                 >
                   <BookOpen size={20} className="mr-2" />
                   {t.phonemeDrills}
