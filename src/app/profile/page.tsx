@@ -64,7 +64,7 @@ function Select({ value, options, onChange }: SelectProps) {
         const numVal = Number(val);
         onChange(isNaN(numVal) ? val : numVal);
       }}
-      className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+      className="w-full max-w-full sm:w-72 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
     >
       {options.map((opt) => (
         <option key={opt.value} value={opt.value}>
@@ -107,14 +107,14 @@ interface SettingRowProps {
 
 function SettingRow({ label, description, children }: SettingRowProps) {
   return (
-    <div className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex-1">
-        <p className="font-medium text-slate-800 dark:text-slate-100">{label}</p>
+    <div className="flex flex-col gap-2 py-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-slate-800 dark:text-slate-100 break-words">{label}</p>
         {description && (
-          <p className="text-sm text-slate-500 dark:text-slate-400">{description}</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 break-words">{description}</p>
         )}
       </div>
-      <div className="flex w-full justify-start sm:w-auto sm:justify-end">
+      <div className="flex w-full max-w-full justify-start sm:w-auto sm:max-w-full sm:flex-shrink-0 sm:justify-end">
         {children}
       </div>
     </div>

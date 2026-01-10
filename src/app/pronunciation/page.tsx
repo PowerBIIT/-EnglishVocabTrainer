@@ -23,6 +23,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 import { BottomActionBar } from '@/components/layout/BottomActionBar';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useVocabStore, useHydration } from '@/lib/store';
@@ -1215,44 +1216,15 @@ export default function PronunciationPage() {
                 </div>
                 {t.setLabel}
               </h3>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedSetId('all')}
-                  className={cn(
-                    'px-4 py-2 rounded-full text-sm font-medium transition-all',
-                    selectedSetId === 'all'
-                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
-                      : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                  )}
-                  >
-                  {t.allSets(vocabulary.length)}
-                </button>
-                <button
-                  onClick={() => setSelectedSetId('unassigned')}
-                  className={cn(
-                    'px-4 py-2 rounded-full text-sm font-medium transition-all',
-                    selectedSetId === 'unassigned'
-                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
-                      : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                  )}
-                  >
-                  {t.unassigned(unassignedCount)}
-                </button>
+              <Select value={selectedSetId} onChange={(event) => setSelectedSetId(event.target.value)}>
+                <option value="all">{t.allSets(vocabulary.length)}</option>
+                <option value="unassigned">{t.unassigned(unassignedCount)}</option>
                 {sets.map((set) => (
-                  <button
-                    key={set.id}
-                    onClick={() => setSelectedSetId(set.id)}
-                    className={cn(
-                      'px-4 py-2 rounded-full text-sm font-medium transition-all',
-                      selectedSetId === set.id
-                        ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
-                        : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                    )}
-                  >
+                  <option key={set.id} value={set.id}>
                     {set.name} ({setCounts[set.id] ?? 0})
-                  </button>
+                  </option>
                 ))}
-              </div>
+              </Select>
             </CardContent>
           </Card>
 
@@ -1355,27 +1327,31 @@ export default function PronunciationPage() {
             </Card>
           )}
 
-          {/* Link to phoneme drills */}
-          {enablePhonemeDrills && (
-            <Link href="/pronunciation/drills">
-              <Button variant="secondary" className="w-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800">
-                <BookOpen size={18} className="mr-2" />
-                {t.phonemeDrills}
-              </Button>
-            </Link>
-          )}
         </div>
 
         <BottomActionBar>
-          <Button
-            variant="gradient"
-            onClick={startSession}
-            className="w-full py-4 text-lg shadow-xl shadow-primary-500/25"
-            disabled={selectedFocusMode === 'phoneme_specific' && !selectedPhoneme}
-          >
-            <Mic size={24} className="mr-2" />
-            {t.startSession}
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              variant="gradient"
+              onClick={startSession}
+              className="w-full py-4 text-lg shadow-xl shadow-primary-500/25 sm:flex-1"
+              disabled={selectedFocusMode === 'phoneme_specific' && !selectedPhoneme}
+            >
+              <Mic size={24} className="mr-2" />
+              {t.startSession}
+            </Button>
+            {enablePhonemeDrills && (
+              <Link href="/pronunciation/drills" className="w-full sm:flex-1">
+                <Button
+                  variant="secondary"
+                  className="w-full py-4 text-lg bg-white/70 dark:bg-slate-800/70 backdrop-blur-sm hover:bg-white dark:hover:bg-slate-800"
+                >
+                  <BookOpen size={20} className="mr-2" />
+                  {t.phonemeDrills}
+                </Button>
+              </Link>
+            )}
+          </div>
         </BottomActionBar>
       </div>
     );

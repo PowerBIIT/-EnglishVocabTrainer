@@ -106,7 +106,7 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
     <div className="w-full max-w-md mx-auto">
       <div
         className={cn(
-          'flashcard-container w-full aspect-[3/4] cursor-pointer',
+          'flashcard-container w-full aspect-[4/5] sm:aspect-[3/4] cursor-pointer',
           animationClass
         )}
         onClick={() => !isAnimating && setIsFlipped(!isFlipped)}
@@ -115,9 +115,9 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
           {/* Front */}
           <Card
             variant="elevated"
-            className="flashcard-front flex flex-col items-center justify-center p-6 border-2 border-transparent hover:border-primary-200 dark:hover:border-primary-700 transition-colors"
+            className="flashcard-front flex flex-col items-center justify-center p-4 sm:p-6 border-2 border-transparent hover:border-primary-200 dark:hover:border-primary-700 transition-colors"
           >
-            <div className="absolute top-4 right-4">
+            <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
               <button
                 onClick={handleSpeak}
                 className="p-2 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40 transition-all hover:-translate-y-0.5"
@@ -126,16 +126,16 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
               </button>
             </div>
 
-            <div className="text-center space-y-4">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
+            <div className="text-center space-y-3 sm:space-y-4">
+              <h2 className="text-2xl sm:text-3xl leading-tight font-bold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                 {getTargetText(item)}
               </h2>
-              <p className="text-lg text-slate-500 dark:text-slate-400 font-mono">
+              <p className="text-base sm:text-lg text-slate-500 dark:text-slate-400 font-mono">
                 {item.phonetic}
               </p>
             </div>
 
-            <p className="absolute bottom-6 text-sm text-slate-400 dark:text-slate-500">
+            <p className="absolute bottom-4 sm:bottom-6 text-sm text-slate-400 dark:text-slate-500">
               {t.tapToReveal}
             </p>
           </Card>
@@ -143,9 +143,9 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
           {/* Back */}
           <Card
             variant="gradient"
-            className="flashcard-back flex flex-col items-center justify-center p-6"
+            className="flashcard-back flex flex-col items-center justify-center p-4 sm:p-6"
           >
-            <div className="absolute top-4 right-4">
+            <div className="absolute top-3 right-3 sm:top-4 sm:right-4">
               <button
                 onClick={handleSpeak}
                 className="p-2 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/30 hover:shadow-xl hover:shadow-primary-500/40 transition-all hover:-translate-y-0.5"
@@ -154,18 +154,18 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
               </button>
             </div>
 
-            <div className="text-center space-y-4">
-              <h2 className="text-2xl font-bold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
+            <div className="text-center space-y-3 sm:space-y-4">
+              <h2 className="text-xl sm:text-2xl leading-tight font-bold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                 {getNativeText(item)}
               </h2>
 
               {getTargetExample(item) && (
-                <div className="mt-6 p-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl border border-primary-100 dark:border-primary-800/50">
-                  <p className="text-slate-700 dark:text-slate-300 italic">
+                <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm rounded-xl border border-primary-100 dark:border-primary-800/50">
+                  <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 italic">
                     "{getTargetExample(item)}"
                   </p>
                   {getNativeExample(item) && (
-                    <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">
+                    <p className="text-slate-500 dark:text-slate-400 mt-2 text-xs sm:text-sm">
                       "{getNativeExample(item)}"
                     </p>
                   )}
@@ -201,7 +201,7 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
 
       {/* Action buttons */}
       {showActions && (
-        <div className="flex justify-center gap-2 sm:gap-3 mt-4 sm:mt-6">
+        <div className="flex justify-center gap-2 sm:gap-3 mt-3 sm:mt-6">
           <Button
             variant="danger"
             size="sm"
@@ -209,7 +209,7 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
             className="flex flex-1 items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:flex-none sm:min-w-[120px] sm:text-base"
           >
             <X size={18} className="shrink-0" />
-            <span className="hidden min-[400px]:inline">{t.repeat}</span>
+            <span className="hidden min-[360px]:inline">{t.repeat}</span>
           </Button>
 
           <Button
@@ -219,7 +219,7 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
             className="flex flex-1 items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:flex-none sm:min-w-[120px] sm:text-base"
           >
             <AlertTriangle size={18} className="shrink-0" />
-            <span className="hidden min-[400px]:inline">{t.difficult}</span>
+            <span className="hidden min-[360px]:inline">{t.difficult}</span>
           </Button>
 
           <Button
@@ -229,7 +229,7 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
             className="flex flex-1 items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 text-sm sm:flex-none sm:min-w-[120px] sm:text-base"
           >
             <Check size={18} className="shrink-0" />
-            <span className="hidden min-[400px]:inline">{t.know}</span>
+            <span className="hidden min-[360px]:inline">{t.know}</span>
           </Button>
         </div>
       )}
@@ -240,9 +240,14 @@ export function Flashcard({ item, onAction, showActions = true }: FlashcardProps
 interface FlashcardSessionProps {
   words: VocabularyItem[];
   onComplete: () => void;
+  showNavigationHint?: boolean;
 }
 
-export function FlashcardSession({ words, onComplete }: FlashcardSessionProps) {
+export function FlashcardSession({
+  words,
+  onComplete,
+  showNavigationHint = true,
+}: FlashcardSessionProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [repeatQueue, setRepeatQueue] = useState<VocabularyItem[]>([]);
   const language = useLanguage();
@@ -278,9 +283,9 @@ export function FlashcardSession({ words, onComplete }: FlashcardSessionProps) {
   }
 
   return (
-    <div className="p-4 overflow-x-hidden">
+    <div className="p-3 sm:p-4 overflow-x-hidden">
       {/* Progress bar */}
-      <div className="mb-6">
+      <div className="mb-4 sm:mb-6">
         <div className="flex justify-between text-sm text-slate-600 dark:text-slate-400 mb-2">
           <span>{t.progressLabel(currentIndex + 1, allWords.length)}</span>
           <span className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">{Math.round(progress)}%</span>
@@ -296,22 +301,24 @@ export function FlashcardSession({ words, onComplete }: FlashcardSessionProps) {
       <Flashcard item={currentWord} onAction={handleAction} />
 
       {/* Navigation hint - only on screens where button text is hidden */}
-      <div className="flex min-[400px]:hidden justify-center gap-6 mt-6 text-slate-400 dark:text-slate-500 text-xs">
-        <div className="flex items-center gap-1">
-          <ChevronLeft size={14} />
-          {t.repeat}
-        </div>
-        <div className="flex items-center gap-1">
-          {t.difficult}
-          <span className="rotate-90">
+      {showNavigationHint && (
+        <div className="flex min-[360px]:hidden justify-center gap-6 mt-4 sm:mt-6 text-slate-400 dark:text-slate-500 text-xs">
+          <div className="flex items-center gap-1">
+            <ChevronLeft size={14} />
+            {t.repeat}
+          </div>
+          <div className="flex items-center gap-1">
+            {t.difficult}
+            <span className="rotate-90">
+              <ChevronRight size={14} />
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            {t.know}
             <ChevronRight size={14} />
-          </span>
+          </div>
         </div>
-        <div className="flex items-center gap-1">
-          {t.know}
-          <ChevronRight size={14} />
-        </div>
-      </div>
+      )}
     </div>
   );
 }

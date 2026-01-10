@@ -464,79 +464,94 @@ export default function OnboardingPage() {
     router.push('/');
   };
 
+  const usesFixedFooter =
+    step !== 'mission' &&
+    step !== 'done';
+
+  const showMainHeader = step !== 'mission' && step !== 'done';
+
   return (
-    <div className="min-h-screen px-4 py-10 pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-10 relative overflow-hidden">
+    <div
+      className={cn(
+        'min-h-screen px-4 py-6 md:py-10 relative overflow-hidden',
+        usesFixedFooter
+          ? 'pb-[calc(5rem+env(safe-area-inset-bottom))] md:pb-10'
+          : 'pb-[calc(1.5rem+env(safe-area-inset-bottom))]'
+      )}
+    >
       {/* Gradient backdrop */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary-600 via-blue-500 to-pink-500 opacity-5 dark:opacity-10" />
       <div className="absolute top-0 right-1/4 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 left-0 w-80 h-80 bg-pink-500/15 rounded-full blur-3xl" />
 
-      <div className="mx-auto w-full max-w-4xl space-y-8 relative z-10">
-        <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">{t.onboardingLabel}</p>
-            <h1 className="font-display text-3xl bg-gradient-to-r from-primary-600 via-blue-500 to-pink-500 bg-clip-text text-transparent">
-              {t.title}
-            </h1>
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm px-4 py-2 text-sm text-slate-600 dark:text-slate-300 shadow-lg shadow-primary-500/10">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center">
-                <Flag size={12} className="text-white" />
-              </div>
-              <span className="font-medium">{t.stepLabel(stepIndex, totalSteps)}</span>
+      <div className="mx-auto w-full max-w-4xl space-y-6 md:space-y-8 relative z-10">
+        {showMainHeader && (
+          <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="text-sm text-primary-600 dark:text-primary-400 font-medium">{t.onboardingLabel}</p>
+              <h1 className="font-display text-3xl bg-gradient-to-r from-primary-600 via-blue-500 to-pink-500 bg-clip-text text-transparent">
+                {t.title}
+              </h1>
             </div>
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm px-3 py-2 text-xs text-slate-600 dark:text-slate-300 shadow-lg shadow-primary-500/10">
-              <span className="uppercase tracking-wide text-slate-500">{t.languageLabel}</span>
-              <div className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 p-1">
-                <button
-                  type="button"
-                  onClick={() => updateSettings('general', { language: 'pl' })}
-                  className={cn(
-                    'px-2.5 py-1 rounded-full text-xs font-semibold transition-all',
-                    language === 'pl'
-                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-md'
-                      : 'text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400'
-                  )}
-                >
-                  PL
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateSettings('general', { language: 'en' })}
-                  className={cn(
-                    'px-2.5 py-1 rounded-full text-xs font-semibold transition-all',
-                    language === 'en'
-                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-md'
-                      : 'text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400'
-                  )}
-                >
-                  EN
-                </button>
-                <button
-                  type="button"
-                  onClick={() => updateSettings('general', { language: 'uk' })}
-                  className={cn(
-                    'px-2.5 py-1 rounded-full text-xs font-semibold transition-all',
-                    language === 'uk'
-                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-md'
-                      : 'text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400'
-                  )}
-                >
-                  UA
-                </button>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm px-4 py-2 text-sm text-slate-600 dark:text-slate-300 shadow-lg shadow-primary-500/10">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center">
+                  <Flag size={12} className="text-white" />
+                </div>
+                <span className="font-medium">{t.stepLabel(stepIndex, totalSteps)}</span>
               </div>
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm px-3 py-2 text-xs text-slate-600 dark:text-slate-300 shadow-lg shadow-primary-500/10">
+                <span className="uppercase tracking-wide text-slate-500">{t.languageLabel}</span>
+                <div className="inline-flex items-center rounded-full bg-slate-100 dark:bg-slate-800 p-1">
+                  <button
+                    type="button"
+                    onClick={() => updateSettings('general', { language: 'pl' })}
+                    className={cn(
+                      'px-2.5 py-1 rounded-full text-xs font-semibold transition-all',
+                      language === 'pl'
+                        ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-md'
+                        : 'text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400'
+                    )}
+                  >
+                    PL
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateSettings('general', { language: 'en' })}
+                    className={cn(
+                      'px-2.5 py-1 rounded-full text-xs font-semibold transition-all',
+                      language === 'en'
+                        ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-md'
+                        : 'text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400'
+                    )}
+                  >
+                    EN
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => updateSettings('general', { language: 'uk' })}
+                    className={cn(
+                      'px-2.5 py-1 rounded-full text-xs font-semibold transition-all',
+                      language === 'uk'
+                        ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-md'
+                        : 'text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400'
+                    )}
+                  >
+                    UA
+                  </button>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => signOut({ callbackUrl: '/login' })}
+              >
+                {t.signOut}
+              </Button>
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => signOut({ callbackUrl: '/login' })}
-            >
-              {t.signOut}
-            </Button>
-          </div>
-        </header>
+          </header>
+        )}
 
         {step === 'consent' && (
           <section className="space-y-6">
@@ -965,22 +980,22 @@ export default function OnboardingPage() {
         )}
 
         {step === 'mission' && (
-          <section className="space-y-6">
-            <div className="rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-primary-500/5 p-6">
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <section className="space-y-4 sm:space-y-6">
+            <div className="rounded-3xl bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/50 dark:border-slate-700/50 shadow-xl shadow-primary-500/5 p-3 sm:p-6">
+              <div className="flex items-start justify-between gap-4">
                 <div>
                   <h2 className="font-semibold bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                     {t.firstMission}
                   </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                  <p className="hidden sm:block text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                     {t.firstMissionDesc(onboardingSetName)}
                   </p>
                 </div>
-                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-success-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-success-500/30">
-                  <Sparkles className="text-white" size={18} />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-br from-success-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-success-500/30">
+                  <Sparkles className="text-white" size={16} />
                 </div>
               </div>
-              <div className="mt-6">
+              <div className="mt-3 sm:mt-6">
                 {missionWords.length > 0 ? (
                   <FlashcardSession
                     words={missionWords}
