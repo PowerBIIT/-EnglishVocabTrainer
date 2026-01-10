@@ -51,9 +51,10 @@ export function CountSelector({
 
   return (
     <div className={cn('space-y-2', className)}>
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {options.map((count) => (
           <button
+            type="button"
             key={count}
             onClick={() => onChange(count)}
             className={cn(
@@ -67,9 +68,10 @@ export function CountSelector({
           </button>
         ))}
         <button
+          type="button"
           onClick={() => onChange('all')}
           className={cn(
-            'py-2 px-3 rounded-xl font-medium transition-all',
+            'py-2 px-3 rounded-xl font-medium transition-all col-span-2 sm:col-span-4',
             value === 'all'
               ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
               : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
