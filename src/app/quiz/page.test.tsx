@@ -47,9 +47,8 @@ describe('QuizPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'Quiz' })).toBeVisible();
 
-    const setButton = screen.getByRole('button', { name: /Biologia/ });
     await waitFor(() => {
-      expect(setButton).toHaveClass('from-primary-500');
+      expect(screen.getByTestId('set-filter')).toHaveValue(setId);
     });
   });
 });

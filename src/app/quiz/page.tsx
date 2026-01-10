@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 import { QuizSession, QuizResults } from '@/components/quiz/Quiz';
 import { FullscreenPage } from '@/components/layout/FullscreenPage';
 import { BottomActionBar } from '@/components/layout/BottomActionBar';
@@ -472,44 +473,24 @@ export default function QuizPage() {
               <h3 className="font-medium bg-gradient-to-r from-primary-600 to-pink-500 bg-clip-text text-transparent">
                 {t.setTitle}
               </h3>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedSetId('all')}
-                  className={cn(
-                    'px-4 py-2 rounded-full text-sm font-medium transition-all',
-                    selectedSetId === 'all'
-                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
-                      : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                  )}
-                >
+              <Select
+                aria-label={t.setTitle}
+                data-testid="set-filter"
+                value={selectedSetId}
+                onChange={(event) => setSelectedSetId(event.target.value)}
+              >
+                <option value="all">
                   {t.all} ({vocabulary.length})
-                </button>
-                <button
-                  onClick={() => setSelectedSetId('unassigned')}
-                  className={cn(
-                    'px-4 py-2 rounded-full text-sm font-medium transition-all',
-                    selectedSetId === 'unassigned'
-                      ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
-                      : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                  )}
-                >
+                </option>
+                <option value="unassigned">
                   {t.unassigned} ({unassignedCount})
-                </button>
+                </option>
                 {sets.map((set) => (
-                  <button
-                    key={set.id}
-                    onClick={() => setSelectedSetId(set.id)}
-                    className={cn(
-                      'px-4 py-2 rounded-full text-sm font-medium transition-all',
-                      selectedSetId === set.id
-                        ? 'bg-gradient-to-r from-primary-500 to-pink-500 text-white shadow-lg shadow-primary-500/25'
-                        : 'bg-white/70 dark:bg-slate-700/70 text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                    )}
-                  >
+                  <option key={set.id} value={set.id}>
                     {set.name} ({setCounts[set.id] ?? 0})
-                  </button>
+                  </option>
                 ))}
-              </div>
+              </Select>
             </CardContent>
           </Card>
 

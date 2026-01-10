@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/ui/Select';
 import { FlashcardSession } from '@/components/flashcard/Flashcard';
 import { BottomActionBar } from '@/components/layout/BottomActionBar';
 import { CountSelector } from '@/components/session/CountSelector';
@@ -327,44 +328,24 @@ export default function FlashcardsPage() {
             <span className="text-sm font-medium">{t.setTitle}</span>
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => setSelectedSetId('all')}
-              className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                selectedSetId === 'all'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-              )}
-            >
+          <Select
+            aria-label={t.setTitle}
+            data-testid="set-filter"
+            value={selectedSetId}
+            onChange={(event) => setSelectedSetId(event.target.value)}
+          >
+            <option value="all">
               {t.all} ({vocabulary.length})
-            </button>
-            <button
-              onClick={() => setSelectedSetId('unassigned')}
-              className={cn(
-                'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                selectedSetId === 'unassigned'
-                  ? 'bg-primary-500 text-white'
-                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-              )}
-            >
+            </option>
+            <option value="unassigned">
               {t.unassigned} ({unassignedCount})
-            </button>
+            </option>
             {sets.map((set) => (
-              <button
-                key={set.id}
-                onClick={() => setSelectedSetId(set.id)}
-                className={cn(
-                  'px-4 py-2 rounded-full text-sm font-medium transition-colors',
-                  selectedSetId === set.id
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
-                )}
-              >
+              <option key={set.id} value={set.id}>
                 {set.name} ({setCounts[set.id] ?? 0})
-              </button>
+              </option>
             ))}
-          </div>
+          </Select>
         </CardContent>
       </Card>
 

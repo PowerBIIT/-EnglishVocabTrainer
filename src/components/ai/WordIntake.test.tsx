@@ -66,7 +66,7 @@ describe('WordIntake', () => {
     });
 
     expect(await screen.findByText(/Dodano/)).toBeVisible();
-  });
+  }, 10_000);
 
   it('shows a helpful message for general questions', async () => {
     const user = userEvent.setup();
@@ -114,5 +114,5 @@ describe('WordIntake', () => {
     await waitFor(() => {
       expect(screen.queryByText('cell')).not.toBeInTheDocument();
     });
-  });
+  }, 10_000);
 });

@@ -126,9 +126,9 @@ test('tworzy zestaw z czatu i filtruje w quizie', async ({ page }, testInfo) => 
   await expect(page).toHaveURL(/\/$/);
   await page.getByRole('link', { name: QUIZ_LINK }).first().click();
   await expect(page).toHaveURL(/\/quiz/);
-  await expect(
-    page.getByRole('button', { name: /Biologia - kartkowka \(8\)/ })
-  ).toBeVisible();
+  const setFilter = page.getByTestId('set-filter');
+  await expect(setFilter).toBeVisible();
+  await expect(setFilter.locator('option', { hasText: /Biologia - kartkowka \(8\)/ })).toHaveCount(1);
 });
 
 test('usuwa zestaw i pozostawia slowka bez przypisania', async ({ page }, testInfo) => {
@@ -183,11 +183,11 @@ test('usuwa zestaw i pozostawia slowka bez przypisania', async ({ page }, testIn
   await page.getByRole('link', { name: QUIZ_LINK }).first().click();
   await expect(page).toHaveURL(/\/quiz/);
   await expect(
-    page.getByRole('button', { name: /Chemia - kartkowka/ })
+    page.getByTestId('set-filter').locator('option', { hasText: /Chemia - kartkowka/ })
   ).toHaveCount(0);
   await expect(
-    page.getByRole('button', { name: new RegExp(`${UNASSIGNED_SET.source} \\(`, 'i') })
-  ).toBeVisible();
+    page.getByTestId('set-filter').locator('option', { hasText: new RegExp(`${UNASSIGNED_SET.source} \\(`, 'i') })
+  ).toHaveCount(1);
   await expect(
     page.getByRole('button', { name: /Chemia \(4\)/ })
   ).toBeVisible();
