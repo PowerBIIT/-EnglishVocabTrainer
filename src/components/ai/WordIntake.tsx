@@ -1198,6 +1198,7 @@ export function WordIntake({
     const hasTopicHint = containsKeyword(normalizedText, TOPIC_HINTS);
     const topicPatterns = [
       /o\s+([^\d]+?)(?:\s+poziom|\s+level|\s*$)/i,
+      /z(?:e)?\s+([^\d]+?)(?:\s+poziom|\s+level|\s*$)/i,
       /na temat\s+(.+?)(?:\s+poziom|\s+level|\s*$)/i,
       /t.?e.?m.?a.?t[:\s]+(.+?)(?:\s+poziom|\s+level|\s*$)/i,
       /tema[:\s]+(.+?)(?:\s+poziom|\s+level|\s*$)/i,
@@ -1236,7 +1237,7 @@ export function WordIntake({
         text.match(/(\d+)\s+sł[oó]w/i) ||
         text.match(/(\d+)\s+slow/i) ||
         text.match(/(\d+)\s+word/i) ||
-        text.match(/(\d+)\s+слов/i);
+        text.match(/(\d+)\s+(?:слов|слів)/i);
       const count = match ? parseInt(match[1]) : 10;
 
       let topic: string = t.defaultTopic;
@@ -1263,6 +1264,10 @@ export function WordIntake({
         .replace(/\b(A1|A2|B1|B2)\b/gi, '')
         .replace(/[?؟!]+$/g, '')
         .replace(/\s+/g, ' ')
+        .trim();
+      topic = topic
+        .replace(/\(\s*\)/g, '')
+        .replace(/^[\s,;:–-]+|[\s,;:–-]+$/g, '')
         .trim();
       if (!topic) {
         topic = t.defaultTopic;

@@ -98,6 +98,64 @@ describe('WordIntake', () => {
     });
   });
 
+  it('parses Polish "z <topic>" generation requests (quick actions)', async () => {
+    const user = userEvent.setup();
+    render(<WordIntake variant="chat" />);
+
+    const input = await screen.findByPlaceholderText('Wpisz słówka lub temat...');
+    await user.type(input, 'Wygeneruj 12 słówek z biologii');
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        '/api/ai/generate-words',
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
+
+    const fetchMock = globalThis.fetch as unknown as {
+      mock: { calls: Array<[RequestInfo, RequestInit?]> };
+    };
+    const call = fetchMock.mock.calls.find(([input]) => input === '/api/ai/generate-words');
+    expect(call).toBeTruthy();
+    const body = JSON.parse((call?.[1]?.body as string) ?? '{}') as {
+      topic?: string;
+      count?: number;
+    };
+    expect(body.topic).toBe('biologii');
+    expect(body.count).toBe(12);
+  });
+
+  it('extracts Ukrainian "слів" counts in generation requests', async () => {
+    useVocabStore.getState().updateSettings('general', { language: 'uk' });
+
+    const user = userEvent.setup();
+    render(<WordIntake variant="chat" />);
+
+    const input = await screen.findByPlaceholderText('Введи слова або тему...');
+    await user.type(input, 'Згенеруй 12 слів на тему школа');
+    await user.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        '/api/ai/generate-words',
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
+
+    const fetchMock = globalThis.fetch as unknown as {
+      mock: { calls: Array<[RequestInfo, RequestInit?]> };
+    };
+    const call = fetchMock.mock.calls.find(([input]) => input === '/api/ai/generate-words');
+    expect(call).toBeTruthy();
+    const body = JSON.parse((call?.[1]?.body as string) ?? '{}') as {
+      topic?: string;
+      count?: number;
+    };
+    expect(body.topic).toBe('школа');
+    expect(body.count).toBe(12);
+  });
+
   it('clears generated words after canceling onboarding review', async () => {
     const user = userEvent.setup();
     render(<WordIntake variant="onboarding" />);

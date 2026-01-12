@@ -39,6 +39,35 @@ const VOCAB_INTAKE_EVENTS = [
 const MAX_ACTIONS = 4;
 const MAX_MESSAGE_CHARS = 2000;
 
+const COPILOT_RESPONSE_SCHEMA = {
+  type: 'object',
+  properties: {
+    reply: { type: 'string' },
+    actions: {
+      type: 'array',
+      maxItems: MAX_ACTIONS,
+      items: {
+        type: 'object',
+        properties: {
+          type: {
+            type: 'string',
+            enum: ['set_config', 'set_model', 'set_overlay'],
+          },
+          key: { type: 'string' },
+          value: { type: 'string' },
+          model: { type: 'string' },
+          scope: { type: 'string', enum: ['global', 'prompt'] },
+          promptId: { type: 'string' },
+          overlay: { type: 'string' },
+          reason: { type: 'string' },
+        },
+        required: ['type'],
+      },
+    },
+  },
+  required: ['reply', 'actions'],
+};
+
 const readEnvValue = (key: string) => {
   const value = process.env[key];
   if (!value) return null;
@@ -440,6 +469,8 @@ export async function POST(request: NextRequest) {
       maxOutputTokens: 1024,
       model,
       responseMimeType: 'application/json',
+      responseSchema: COPILOT_RESPONSE_SCHEMA,
+      thinkingBudget: 0,
     });
     const durationMs = Date.now() - startTime;
     const totalTokens = result.usage.promptTokenCount + result.usage.candidatesTokenCount;
