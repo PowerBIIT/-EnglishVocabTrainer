@@ -416,6 +416,9 @@ This document describes the main user journeys through the Henio vocabulary lear
 │  │ │   Text   │ │  Upload  │ │  Upload  │                  │    │
 │  │ └──────────┘ └──────────┘ └──────────┘                  │    │
 │  │                                                          │    │
+│  │ Quick topics: [Biology] [Math] [Travel] ...              │    │
+│  │ (pre-fills a “generate words” request)                   │    │
+│  │                                                          │    │
 │  │ ┌─────────────────────────────────────────────────┐     │    │
 │  │ │ dom - house                                      │     │    │
 │  │ │ kot - cat                                        │     │    │

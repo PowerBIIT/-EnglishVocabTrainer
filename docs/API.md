@@ -249,6 +249,7 @@ All AI endpoints require authentication and respect usage limits.
 - `401` - Not authenticated
 - `403` - Access not ACTIVE (`waitlisted` or `suspended`)
 - `429` - Usage limit reached (`user_limit_reached` or `global_limit_reached`)
+- `429` - Monthly AI cost hard limit reached (`ai_cost_limit_reached`)
 - `429` - Rate limit exceeded (Retry-After header included)
 - `422` - Response truncated (`response_truncated`) on JSON endpoints
 - `503` - Gemini API key not configured
@@ -341,10 +342,14 @@ Parse manually entered vocabulary text.
     { "native": "kot", "target": "cat", "phonetic": "/kæt/", "difficulty": "easy" },
     { "native": "pies", "target": "dog", "phonetic": "/dɔɡ/", "difficulty": "easy" }
   ],
-  "category_suggestion": "home",
+  "category_suggestion": "dom",
   "parse_errors": []
 }
 ```
+
+**Notes:**
+- `category_suggestion` is a short label used as the default category/set name.
+- `parse_errors` is a list of short reason codes (e.g. `ambiguous_line`, `missing_translation`, `unsafe_item`).
 
 ### POST /api/ai/extract-file
 
@@ -358,7 +363,7 @@ Extract vocabulary from uploaded file (PDF, DOCX, TXT, CSV).
 **Response:**
 ```json
 {
-  "category_suggestion": "home",
+  "category_suggestion": "dom",
   "words": [
     { "native": "dom", "target": "house", "phonetic": "/haʊs/", "difficulty": "easy" }
   ],
@@ -378,7 +383,7 @@ Extract vocabulary from uploaded image (OCR).
 **Response:**
 ```json
 {
-  "category_suggestion": "home",
+  "category_suggestion": "dom",
   "words": [
     { "native": "dom", "target": "house", "phonetic": "/haʊs/", "difficulty": "easy" }
   ],
@@ -895,7 +900,53 @@ List Stripe coupons.
 
 ### POST /api/admin/ai/assist
 
-Get AI assistance for admin tasks.
+Suggest a prompt overlay (admin helper).
+
+**Request:**
+```json
+{
+  "promptId": "generate-words",
+  "goal": "Reduce token usage while keeping quality",
+  "currentOverlay": "Optional current overlay text"
+}
+```
+
+**Response:**
+```json
+{
+  "suggestedOverlay": "Short overlay text...",
+  "notes": "Optional notes"
+}
+```
+
+Notes:
+- `promptId` can be `"global"` or a prompt id from the Admin UI prompt catalog.
+- `suggestedOverlay` is plain text (no markdown / no JSON) and meant to be reviewed by an admin before applying.
+
+### POST /api/admin/ai/copilot
+
+Admin copilot chat that can propose safe configuration/model/overlay actions.
+
+**Request:**
+```json
+{
+  "message": "How can I reduce AI costs? Suggest safe overlay changes.",
+  "sessionId": "adm_...",
+  "language": "pl",
+  "range": { "start": "2026-01-01", "end": "2026-01-31" }
+}
+```
+
+**Response:**
+```json
+{
+  "sessionId": "adm_...",
+  "reply": "Suggested plan...",
+  "actions": [
+    { "type": "set_overlay", "scope": "prompt", "promptId": "generate-words", "overlay": "..." }
+  ]
+}
+```
 
 ### POST /api/admin/ai/revenue-chat
 
@@ -907,31 +958,15 @@ Get revenue chat history.
 
 ---
 
-## Error Response Format
+## Error Responses
 
-All error responses follow this format:
+Most endpoints return a simple error payload:
 
 ```json
-{
-  "error": {
-    "code": "ERROR_CODE",
-    "message": "Human-readable message",
-    "details": {}
-  }
-}
+{ "error": "error_code_or_message" }
 ```
 
-### Common Error Codes
-
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| `UNAUTHORIZED` | 401 | No valid session |
-| `FORBIDDEN` | 403 | Access denied |
-| `NOT_FOUND` | 404 | Resource not found |
-| `VALIDATION_ERROR` | 400 | Invalid request data |
-| `USAGE_LIMIT_REACHED` | 429 | AI usage limit exceeded |
-| `RATE_LIMIT_EXCEEDED` | 429 | Too many requests |
-| `INTERNAL_ERROR` | 500 | Server error |
+Some endpoints include extra metadata (limits, `resetAt`, etc.) — see the specific endpoint sections above.
 
 ---
 

@@ -2,9 +2,9 @@
 
 ## Overview
 
-Henio is a vocabulary learning application for Polish students (PL→EN) and Ukrainian students in Poland (UA→PL). It includes AI-powered word intake, flashcards, quizzes, pronunciation training, and subscription management.
+Henio is a vocabulary learning application that supports multiple learning pairs (e.g. PL→EN, UA→PL, UA→EN, UA→DE, DE→EN). It includes AI-powered word intake, flashcards, quizzes, pronunciation training, and subscription management.
 
-**Version:** 1.0.76 (from `package.json`)
+**Version:** from `package.json` (also exposed via `/api/health`)
 **Repository:** `-EnglishVocabTrainer`
 
 ## System Context
@@ -76,7 +76,8 @@ src/
 │   ├── aiCostAlerts.ts      # Cost alert checks
 │   ├── aiModelCatalog.ts    # Gemini model catalog
 │   ├── aiModelResolver.ts   # Model selection
-│   ├── aiPromptCatalog.ts   # Prompt templates
+│   ├── aiPromptCatalog.ts   # Prompt catalog (admin UI)
+│   ├── aiPromptOverlay.ts   # Prompt overlay injection
 │   ├── stripe.ts            # Stripe client
 │   ├── subscription.ts      # Stripe subscription logic
 │   └── rateLimit.ts         # Rate limiting
@@ -150,6 +151,15 @@ Client (Zustand) <-> /api/user/state (GET/POST)
 - Default model: `gemini-2.5-flash`
 - Override via `GEMINI_MODEL` (DB or env; not exposed in Admin UI)
 - Invalid config falls back to the default model
+
+### Prompts, Schemas, Overlays
+- Prompt templates live in `src/lib/gemini.ts` (`AI_PROMPTS`).
+- JSON endpoints (e.g. word generation/parsing) request `responseMimeType: application/json` and provide a `responseSchema` when calling Gemini.
+- Prompts treat user-provided text/images as untrusted input (ignore any instructions inside the user content).
+- Admin prompt overlays are stored in App Config (DB, with env fallback) and injected by `src/lib/aiPromptOverlay.ts`.
+  - Global: `GEMINI_PROMPT_OVERLAY_GLOBAL`
+  - Per-prompt: `GEMINI_PROMPT_OVERLAY_*` (see `src/lib/aiPromptOverlay.ts` for the mapping)
+  - Overlays are inserted before the final `Respond ONLY in JSON` marker (when present) to preserve output format/schemas.
 
 ### Request Flow
 

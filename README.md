@@ -1,8 +1,8 @@
 # Henio
 
-Next.js vocabulary learning app for Polish students (PL→EN) and Ukrainian students in Poland (UA→PL). Features AI-powered word intake, flashcards, quizzes, pronunciation training, and subscription management.
+Next.js vocabulary learning app for language learners. Supports multiple learning pairs (e.g. PL→EN, UA→PL, UA→EN, UA→DE, DE→EN) and includes AI-powered word intake, flashcards, quizzes, pronunciation training, and subscription management.
 
-**Version:** 1.0.63
+**Version:** from `package.json` (also exposed via `/api/health`)
 
 ## Environments
 
