@@ -1,6 +1,9 @@
 const { PrismaClient } = require('@prisma/client');
+const bcrypt = require('bcrypt');
 
 const prisma = new PrismaClient();
+
+const DEMO_PASSWORD = process.env.SEED_PASSWORD || 'demo1234';
 
 const buildSeedState = () => {
   const now = new Date();
@@ -286,9 +289,11 @@ const buildSeedState = () => {
 };
 
 async function main() {
-  const email = process.env.SEED_EMAIL || 'seed@local.test';
-  const name = process.env.SEED_NAME || 'Seed User';
+  const email = process.env.SEED_EMAIL || 'demo@henio.local';
+  const name = process.env.SEED_NAME || 'Demo User';
   const state = buildSeedState();
+  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 12);
+  const now = new Date();
 
   const user = await prisma.user.upsert({
     where: { email },
@@ -296,12 +301,24 @@ async function main() {
       name,
       onboardingComplete: true,
       mascotSkin: 'explorer',
+      password: passwordHash,
+      emailVerified: now,
+      termsAcceptedAt: now,
+      privacyAcceptedAt: now,
+      ageConfirmedAt: now,
+      consentVersion: '1.0',
     },
     create: {
       email,
       name,
       onboardingComplete: true,
       mascotSkin: 'explorer',
+      password: passwordHash,
+      emailVerified: now,
+      termsAcceptedAt: now,
+      privacyAcceptedAt: now,
+      ageConfirmedAt: now,
+      consentVersion: '1.0',
     },
   });
 
@@ -327,7 +344,10 @@ async function main() {
     },
   });
 
-  console.log(`Seeded user ${email} with sample state.`);
+  console.log(`Seeded demo user:`);
+  console.log(`  email:    ${email}`);
+  console.log(`  password: ${DEMO_PASSWORD}`);
+  console.log(`  login at: http://localhost:3000/login`);
 }
 
 main()

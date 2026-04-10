@@ -1,13 +1,12 @@
 # Test Manualny - Autentykacja Email/Hasło
 
 ## Środowisko testowe
-- **UAT**: https://uat.henio.app
-- **PRD**: https://henio.app
+- **Local**: http://localhost:3000 (po `npm run dev`)
 
 ## Wymagania wstępne
-- Dostęp do skrzynki email (do weryfikacji i resetów)
+- Dostęp do skrzynki email (jeśli `SMTP_*` skonfigurowane — w innym przypadku linki weryfikacyjne pojawią się w logach `npm run dev`)
 - Przeglądarka w trybie incognito (czyste ciasteczka)
-- Opcjonalnie: dostęp do bazy danych (Prisma Studio)
+- Opcjonalnie: dostęp do bazy danych (`npx prisma studio`)
 
 ---
 

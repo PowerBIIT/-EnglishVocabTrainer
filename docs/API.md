@@ -5,8 +5,6 @@
 | Environment | URL |
 |-------------|-----|
 | Local | `http://localhost:3000` |
-| UAT | `https://uat.henio.app` |
-| Production | `https://henio.app` |
 
 ## Authentication
 
@@ -510,8 +508,8 @@ Create Stripe checkout session for subscription.
 ```json
 {
   "priceId": "price_xxx",
-  "successUrl": "https://henio.app/profile?success=true",
-  "cancelUrl": "https://henio.app/profile"
+  "successUrl": "http://localhost:3000/profile?success=true",
+  "cancelUrl": "http://localhost:3000/profile"
 }
 ```
 

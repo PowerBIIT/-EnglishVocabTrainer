@@ -1,110 +1,147 @@
-# Henio
+# Henio – AI-powered vocabulary trainer
 
-Next.js vocabulary learning app for language learners. Supports multiple learning pairs (e.g. PL→EN, UA→PL, UA→EN, UA→DE, DE→EN) and includes AI-powered word intake, flashcards, quizzes, pronunciation training, and subscription management.
+Next.js 14 full-stack app for language learners. Flashcards, quizzes,
+pronunciation practice and AI-generated word sets — built as a portfolio
+project showcasing App Router, NextAuth, Prisma, Zustand, Stripe and
+the Gemini API.
 
-**Version:** from `package.json` (also exposed via `/api/health`)
+![Next.js](https://img.shields.io/badge/Next.js-14-black)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)
+![Prisma](https://img.shields.io/badge/Prisma-5-2D3748)
+![Tailwind](https://img.shields.io/badge/Tailwind-3-38B2AC)
 
-## Environments
+## Quick start (≈ 2 minutes)
 
-| Environment | URL |
-|-------------|-----|
-| UAT | https://uat.henio.app |
-| PRD | https://henio.app |
-
-## Quick Start
+You need **Node.js 20+**, **npm** and **Docker**.
 
 ```bash
-# Install dependencies
-npm ci
+# 1. Install dependencies
+npm install
 
-# Configure environment
-cp .env.example .env.local
+# 2. Copy env template (defaults work out of the box)
+cp .env.example .env
 
-# Start PostgreSQL
+# 3. Start PostgreSQL (docker compose)
 docker compose up -d
 
-# Initialize database
+# 4. Apply schema + seed a demo user with sample data
 npx prisma db push
+npm run db:seed
 
-# Run development server
+# 5. Run the dev server
 npm run dev
 ```
 
-## Key Features
+Open [http://localhost:3000](http://localhost:3000) and log in with:
 
-- **Learning Modes:** Flashcards, quizzes, pronunciation training
-- **AI Word Intake:** Paste text, upload photos, or files (PDF, DOCX)
-- **Subscriptions:** FREE and PRO plans via Stripe
-- **Access Control:** Allowlist, capacity limits, waitlist
-- **Admin Panel:** User management, stats, pricing configuration
-- **GDPR Compliance:** Consent management, data export, account deletion
+| Email | Password |
+|-------|----------|
+| `demo@henio.local` | `demo1234` |
 
-## AI Limits & Monitoring
+The demo account is pre-seeded with vocabulary sets, progress stats and a
+streak so every screen has content to show.
 
-- Limits are enforced per plan and globally (requests + tokens), reset monthly (UTC).
-- Configure limits and cost alerts in Admin Panel → Config (stored in DB, override env defaults).
-- Admins (`ADMIN_EMAILS`) bypass limits; retries/fallbacks count as separate usage.
-- Cost alerts use `AI_COST_ALERT_THRESHOLD_USD` and optional webhook + admin email (SMTP).
-- Admin analytics endpoints: `/api/admin/stats`, `/api/admin/stats/ai-tokens`, `/api/admin/stats/ai-trends`, `/api/admin/stats/ai-features`.
+## Guided tour — what to click
 
-## Documentation
+Once you're logged in as `demo@henio.local`, walk through the app in this
+order to see every major feature:
 
-| Document | Description |
-|----------|-------------|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Technical architecture, data models, patterns |
-| [API.md](docs/API.md) | Complete API reference |
-| [USER_FLOWS.md](docs/USER_FLOWS.md) | User journeys and UI flows |
-| [RUNBOOK.md](docs/RUNBOOK.md) | Operations, deployment, troubleshooting |
-| [MANUAL_TESTS.md](docs/MANUAL_TESTS.md) | Manual test cases |
+| # | Where | What you'll see |
+|---|-------|-----------------|
+| 1 | [`/`](http://localhost:3000/) | Home dashboard — streak, level progress, daily mission, quick actions |
+| 2 | [`/flashcards`](http://localhost:3000/flashcards) | Swipe-style flashcards for the seeded words (apple, bread, ticket, hotel…). "I know / I don't know" updates progress |
+| 3 | [`/quiz`](http://localhost:3000/quiz) | Multiple-choice quiz with XP rewards and streak tracking |
+| 4 | [`/pronunciation`](http://localhost:3000/pronunciation) | Web Speech API pronunciation practice. Needs mic permission + a Chromium-based browser |
+| 5 | [`/vocabulary`](http://localhost:3000/vocabulary) | Full word list, category filters, set management |
+| 6 | [`/profile`](http://localhost:3000/profile) | Stats, badges, language pair, XP history, account actions — settings live here under `#settings` |
+| 7 | [`/chat`](http://localhost:3000/chat) | AI tutor powered by Gemini — requires `GEMINI_API_KEY`, otherwise shows a "configure key" message |
+| 8 | [`/klasowka`](http://localhost:3000/klasowka) | "Test mode" — classroom-style assessment over the current word set |
+| 9 | [`/admin`](http://localhost:3000/admin) | Admin panel — only visible if you put your email in `ADMIN_EMAILS` |
 
-## Commands
+**5-minute demo path:** Home → Flashcards (swipe a few cards) → Quiz
+(answer a couple of questions) → Profile (see XP bump from the session) →
+Vocabulary (browse word sets) → Settings (change language pair).
+
+**Reset the demo any time** with `npm run db:seed` — it re-upserts the
+same user and state so you start fresh.
+
+## What works without any API keys
+
+- Email + password login (via the seeded demo user)
+- Flashcards, quiz, pronunciation UI
+- Vocabulary management, progress tracking, daily mission
+- Admin panel stub (add your email to `ADMIN_EMAILS` to unlock it)
+- PL→EN / UK→PL / UK→EN / UK→DE / DE→EN language pairs
+
+## What needs optional keys
+
+Each of these degrades gracefully — the app still boots, the affected
+endpoint simply returns `503 unconfigured` until you plug a key in.
+
+| Feature | Env var(s) | Where to get it |
+|---------|------------|-----------------|
+| Google OAuth login | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
+| AI word generation, tutor, pronunciation summary | `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/app/apikey) — free tier |
+| PRO subscriptions | `STRIPE_*` (5 keys) | [Stripe test keys](https://dashboard.stripe.com/test/apikeys) |
+| Registration / password reset emails | `SMTP_*` | Any SMTP provider |
+
+See `.env.example` for the full list — everything not marked `[REQUIRED]`
+is safe to leave empty.
+
+## Common commands
 
 ```bash
-# Development
-npm run dev                  # Start dev server
-docker compose up -d         # Start PostgreSQL
-
-# Testing
-npm run test:unit           # Unit tests (Vitest)
-npm run test:e2e            # E2E tests (Playwright)
-npm run typecheck           # TypeScript check
-
-# Build
-npm run build               # Production build
-npm run lint                # ESLint
-
-# Database
-npx prisma studio           # DB GUI
-npx prisma migrate dev      # Create migration
+npm run dev              # dev server with hot reload
+npm run build            # production build
+npm run lint             # ESLint
+npm run typecheck        # TypeScript strict check
+npm run test:unit        # Vitest unit tests
+npm run test:e2e         # Playwright end-to-end tests
+npx prisma studio        # database GUI at localhost:5555
+npm run db:seed          # reseed the demo user
 ```
 
-## Deployment
+## Architecture at a glance
 
-- **UAT:** Auto-deploy on push to `main` (E2E tests run after)
-- **PRD:** Manual trigger via `gh workflow run deploy-prd.yml`
+```
+src/
+├── app/               # Next.js App Router (pages + /api routes)
+│   ├── api/           # REST endpoints (ai/, admin/, user/, stripe/, health)
+│   └── [feature]/     # quiz, flashcards, pronunciation, onboarding…
+├── components/        # React components grouped by domain
+├── lib/               # Business logic
+│   ├── auth.ts        # NextAuth config (Google + credentials + E2E)
+│   ├── gemini.ts      # Gemini client + AI prompt catalog
+│   ├── store.ts       # Zustand store synced with server
+│   ├── stripe.ts      # Lazy-initialised Stripe client
+│   └── access.ts      # Allowlist / capacity / waitlist gating
+└── types/             # Shared TypeScript types
+```
 
-Health check: `curl https://henio.app/api/health`
+More in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and
+[`docs/API.md`](docs/API.md).
 
-See [RUNBOOK.md](docs/RUNBOOK.md) for complete deployment guide.
+## Tech stack
 
-## Tech Stack
+- **Framework:** Next.js 14 (App Router, React 18, Server Actions)
+- **Auth:** NextAuth v4 (Google OAuth + bcrypt credentials)
+- **ORM / DB:** Prisma 5 + PostgreSQL 16
+- **State:** Zustand (client) synced with a JSON blob on the server
+- **AI:** Google Gemini via native fetch — no SDK lock-in
+- **Payments:** Stripe subscriptions with webhook-driven state
+- **Styling:** Tailwind CSS + lucide-react icons
+- **Testing:** Vitest (unit) + Playwright (E2E)
 
-- Next.js 14 (App Router) + React 18
-- NextAuth (Google OAuth + Credentials)
-- Prisma + PostgreSQL
-- Zustand (state management)
-- Gemini API (AI features)
-- Stripe (subscriptions)
-- Tailwind CSS
-- Vitest + Playwright
+## Health check
 
-## Environment Variables
+```bash
+curl http://localhost:3000/api/health
+```
 
-See `.env.example` for complete list. Key variables:
+Returns per-subsystem status (`database`, `auth`, `ai`, `stripe`, `smtp`)
+so you can immediately see what is configured vs. what is still disabled.
 
-- `DATABASE_URL` - PostgreSQL connection
-- `NEXTAUTH_SECRET`, `NEXTAUTH_URL` - Auth config
-- `GOOGLE_CLIENT_ID/SECRET` - OAuth
-- `GEMINI_API_KEY` - AI features
-- `STRIPE_*` - Payment integration
-- `ADMIN_EMAILS` - Admin access
+## License
+
+MIT – do whatever you want. If you find this useful, a star on GitHub is
+appreciated.

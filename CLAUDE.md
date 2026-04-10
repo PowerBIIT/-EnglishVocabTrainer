@@ -95,23 +95,12 @@ src/
 - Test login: `E2E_TEST=true` enables mock auth
 - PostgreSQL required for most tests
 
-## Deployment
+## Local Development
 
-- **UAT**: https://uat.henio.app (Azure: https://henio-uat.azurewebsites.net)
-  - Auto-deploy on push to `main`
-  - DB reset on every deploy (data wiped)
-- **PRD**: https://henio.app (Azure: https://henio-prd.azurewebsites.net)
-  - Manual trigger via `gh workflow run deploy-prd.yml`
-  - Migrations only (data preserved)
-- Migrations run on startup: `scripts/ensure-migrations.js` + `prisma migrate deploy`
-- Verify: `curl https://uat.henio.app/api/health`
-- See `docs/RUNBOOK.md` for deployment, operations, and troubleshooting
-
-## Version Management
-
-- Bump version in `package.json` before each deploy
-- After deploy, verify via `/api/health` that correct version is running
-- Health endpoint returns: `status`, `version`, `commit`, `buildTime`
+- Run `docker compose up -d` to start PostgreSQL, then `npm run dev`
+- `npm run db:seed` creates `demo@henio.local / demo1234` with sample vocabulary
+- Verify: `curl http://localhost:3000/api/health`
+- Health endpoint returns per-subsystem status: `database`, `auth`, `ai`, `stripe`, `smtp`
 
 ## Environment Variables
 
