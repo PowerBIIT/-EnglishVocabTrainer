@@ -78,12 +78,41 @@ same user and state so you start fresh.
 Each of these degrades gracefully — the app still boots, the affected
 endpoint simply returns `503 unconfigured` until you plug a key in.
 
-| Feature | Env var(s) | Where to get it |
-|---------|------------|-----------------|
-| Google OAuth login | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | [Google Cloud Console](https://console.cloud.google.com/apis/credentials) |
-| AI word generation, tutor, pronunciation summary | `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/app/apikey) — free tier |
-| PRO subscriptions | `STRIPE_*` (5 keys) | [Stripe test keys](https://dashboard.stripe.com/test/apikeys) |
-| Registration / password reset emails | `SMTP_*` | Any SMTP provider |
+| Feature | Env var(s) | Where to get it | Cost |
+|---------|------------|-----------------|------|
+| Google OAuth login | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | [Google Cloud Console](https://console.cloud.google.com/apis/credentials) | Free |
+| AI word generation, tutor, pronunciation summary | `GEMINI_API_KEY` | [Google AI Studio](https://aistudio.google.com/app/apikey) | Free tier (60 req/min) |
+| PRO subscriptions (Stripe checkout + webhooks) | `STRIPE_*` (5 keys) | [Stripe test keys](https://dashboard.stripe.com/test/apikeys) | Free (test mode) |
+| Registration / password reset emails | `SMTP_*` | Any SMTP provider | Varies |
+
+### Enable AI features in 1 minute
+
+```bash
+# 1. Open https://aistudio.google.com/app/apikey and click "Create API key"
+# 2. Paste it into your .env:
+echo 'GEMINI_API_KEY=your_key_here' >> .env
+# 3. Restart dev server (Ctrl+C then npm run dev)
+```
+
+After that, `/chat` (AI tutor) and the AI word intake in `/vocabulary` start
+working. The free tier is more than enough for local exploration.
+
+### Enable Stripe PRO subscriptions (test mode)
+
+```bash
+# 1. Sign up at https://dashboard.stripe.com (no payment info required)
+# 2. Stay in TEST mode (toggle top-left)
+# 3. Copy test keys from https://dashboard.stripe.com/test/apikeys
+# 4. Create a test Product + recurring Price (monthly + annual)
+# 5. Add a webhook endpoint pointing to http://localhost:3000/api/stripe/webhook
+#    using `stripe listen --forward-to localhost:3000/api/stripe/webhook`
+# 6. Paste all 5 values into .env (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET,
+#    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, STRIPE_PRO_MONTHLY_PRICE_ID,
+#    STRIPE_PRO_ANNUAL_PRICE_ID) and restart dev.
+```
+
+Test cards for Stripe checkout: `4242 4242 4242 4242` (any future expiry,
+any CVC, any ZIP). See [Stripe test cards](https://docs.stripe.com/testing).
 
 See `.env.example` for the full list — everything not marked `[REQUIRED]`
 is safe to leave empty.
